@@ -18,12 +18,19 @@ Use this order when work affects simulation behavior, cognition, architecture, p
 4. `docs/STATE_REQUIREMENTS.md` — persistent/derived state requirements, scopes, lifetimes, decay, offline and resurrection semantics;
 5. `docs/SCENE_VALIDATION.md` — representative-scene evidence, Must-have system matrix and regression suite;
 6. `docs/ARCHITECTURE.md` — system boundaries, composition, contact points and game-loop direction;
-7. `docs/GUARDS_AND_CALIBRATION.md` — invariants, local/cross-system guards, health metrics and bounded self-stabilization;
-8. `docs/AI.md` — runtime LLM authority/fallback contract;
-9. `docs/PRODUCT.md` — overall experience, modes, player role, God Power, UI and rhythm;
-10. `docs/SIMULATION.md` — broader systemic/property/action vocabulary.
+7. `docs/SIMULATION_CONTRACTS.md` — semantic cross-system contracts and persistence/replay implications;
+8. `docs/SIMULATION_ORCHESTRATION.md` — clocks, update phases, reconsideration, interruption, learning timing and offline orchestration;
+9. `docs/MUTATION_AUTHORITY.md` — read/propose/mutate/observe ownership matrix;
+10. `docs/DECISION_TRACES.md` — representative end-to-end architecture regressions;
+11. `docs/IMPLEMENTATION_GATE.md` — implementation-readiness decision and recommended implementation sequence;
+12. `docs/GUARDS_AND_CALIBRATION.md` — invariants, local/cross-system guards, health metrics and bounded self-stabilization;
+13. `docs/AI.md` — runtime LLM authority/fallback contract;
+14. `docs/PRODUCT.md` — overall experience, modes, player role, God Power, UI and rhythm;
+15. `docs/SIMULATION.md` — broader systemic/property/action vocabulary.
 
 Where an older provisional behavioral statement in `PRODUCT.md` or `SIMULATION.md` conflicts with `BEHAVIORAL_MODEL.md`, `STATE_REQUIREMENTS.md` or `SCENE_VALIDATION.md`, the newer behavioral documents win unless a later documented architectural/implementation decision explicitly supersedes them.
+
+Where implementation-oriented wording conflicts with accepted architectural contracts, use `ARCHITECTURE.md`, `SIMULATION_CONTRACTS.md`, `SIMULATION_ORCHESTRATION.md`, `MUTATION_AUTHORITY.md` and the validated regression traces as the current architecture source of truth unless implementation evidence deliberately supersedes them.
 
 ### Visual / asset chain
 
@@ -81,7 +88,22 @@ SCENE_VALIDATION.md
   behavioral evidence and regression tests
 
 ARCHITECTURE.md
-  technical responsibility boundaries / composition / orchestration
+  technical responsibility boundaries / composition / high-level orchestration
+
+SIMULATION_CONTRACTS.md
+  semantic cross-system contract catalog
+
+SIMULATION_ORCHESTRATION.md
+  clocks / ordering / reconsideration / interruption / learning timing / offline flow
+
+MUTATION_AUTHORITY.md
+  durable state ownership and cross-system read/propose/mutate boundaries
+
+DECISION_TRACES.md
+  representative architecture regression traces
+
+IMPLEMENTATION_GATE.md
+  readiness decision and implementation sequence
 
 GUARDS_AND_CALIBRATION.md
   bounds / feedback-loop control / health metrics / adaptive policy
@@ -142,6 +164,8 @@ ActionOutcome
 ```
 
 and an explicit learning/mutation flow.
+
+The contract/orchestration phase has passed its implementation gate. Concrete schemas/classes/package layouts may now be designed, but they must preserve the boundaries in `SIMULATION_CONTRACTS.md`, `SIMULATION_ORCHESTRATION.md` and `MUTATION_AUTHORITY.md` unless implementation evidence justifies a documented change.
 
 Global GOAP, one universal rational utility function, ECS choice, Godot node layout and persistence technology are **not** currently mandated architectural assumptions.
 
