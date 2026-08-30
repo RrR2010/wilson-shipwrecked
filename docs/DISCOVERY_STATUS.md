@@ -2,9 +2,20 @@
 
 ## Current stage
 
-The project is in **contract and orchestration design before implementation**.
+The project has completed the **behavioral discovery → state inventory → architecture → contracts → orchestration → mutation authority → representative trace validation** sequence.
 
-Behavioral discovery, persistent-state inventory, first architectural decomposition, guard analysis, semantic contract catalog and update-phase/orchestration specification are complete enough to stop reopening product psychology from first principles.
+The architecture implementation gate is now **PASS**.
+
+Current work may proceed into:
+
+```text
+concrete domain data model
+module/package dependency layout
+headless first vertical slice
+Godot presentation integration after domain proof
+```
+
+Do not restart product psychology or architecture discovery from first principles unless implementation evidence breaks a documented invariant or representative regression scene.
 
 Completed sequence:
 
@@ -16,20 +27,19 @@ Completed sequence:
 6. 23 Must-have scene × system matrix;
 7. 12-case regression suite;
 8. functional persistent-state inventory;
-9. first architecture responsibility decomposition;
+9. architecture responsibility decomposition;
 10. guard/self-stabilization analysis;
 11. semantic simulation contract catalog;
-12. simulation update-phase/orchestration specification.
-
-Current work is **Deliverable C: mutation authority matrix**, followed by detailed representative decision traces and the architecture implementation gate.
-
-Do not begin by choosing Godot nodes, ECS, GOAP, database schemas, serialization formats or final package/class layouts. Those remain downstream choices until mutation ownership and representative end-to-end traces are validated.
+12. simulation update-phase/orchestration specification;
+13. mutation authority matrix;
+14. detailed representative decision/mutation traces;
+15. architecture implementation gate.
 
 ---
 
 ## Document precedence
 
-For work affecting Wilson behavior, simulation state, architecture or orchestration, use this order:
+For work affecting Wilson behavior, simulation state, architecture or implementation boundaries, use this order:
 
 1. **`BEHAVIORAL_MODEL.md`** — validated functional Wilson model;
 2. **`STATE_REQUIREMENTS.md`** — persistence, scope, lifetime, decay/offline/resurrection semantics;
@@ -37,14 +47,17 @@ For work affecting Wilson behavior, simulation state, architecture or orchestrat
 4. **`ARCHITECTURE.md`** — system boundaries, authority and composition;
 5. **`SIMULATION_CONTRACTS.md`** — semantic cross-system contracts;
 6. **`SIMULATION_ORCHESTRATION.md`** — clocks, ordering, reconsideration, interruption, learning timing and offline orchestration;
-7. **`GUARDS_AND_CALIBRATION.md`** — invariants, bounded contributions and stabilization policy;
-8. **`AI.md`** — runtime LLM authority/fallback boundary;
-9. **`PRODUCT.md`** — overall player experience, modes, intervention rules and presentation intent;
-10. **`SIMULATION.md`** — broader world/property/action vocabulary.
+7. **`MUTATION_AUTHORITY.md`** — read/propose/mutate/observe ownership matrix;
+8. **`DECISION_TRACES.md`** — representative end-to-end architecture regressions;
+9. **`IMPLEMENTATION_GATE.md`** — current readiness decision and implementation sequence;
+10. **`GUARDS_AND_CALIBRATION.md`** — invariants, bounded contributions and stabilization policy;
+11. **`AI.md`** — runtime LLM authority/fallback boundary;
+12. **`PRODUCT.md`** — player experience, modes, intervention rules and presentation intent;
+13. **`SIMULATION.md`** — broader world/property/action vocabulary.
 
 Where older provisional psychology language in `PRODUCT.md` or `SIMULATION.md` conflicts with `BEHAVIORAL_MODEL.md`, `STATE_REQUIREMENTS.md` or `SCENE_VALIDATION.md`, the newer behavioral documents win.
 
-Where implementation-oriented wording conflicts with accepted responsibility boundaries, contracts or orchestration rules, `ARCHITECTURE.md`, `SIMULATION_CONTRACTS.md` and `SIMULATION_ORCHESTRATION.md` win unless a later documented architecture decision explicitly supersedes them.
+Where implementation-oriented wording conflicts with accepted responsibility boundaries/contracts/orchestration, the architecture-contract documents above win unless a later documented implementation decision explicitly supersedes them with regression evidence.
 
 Stage-transition context lives under `docs/handoffs/`; handoffs guide sequencing but are not competing canonical specifications.
 
@@ -113,54 +126,11 @@ environmental ownership
 global mood / persistent valence-arousal
 ```
 
-These visible phenomena may still occur through composition.
+These visible phenomena remain compositional unless new evidence proves otherwise.
 
 ---
 
-## Current player / presence relationship
-
-```text
-presence_belief [0,1]
-trust           [-1,+1]
-dependency      [0,1]
-```
-
-Helpful and harmful unexplained interventions may both strengthen `presence_belief`; `trust` changes according to Wilson's perceived consequence and causal attribution.
-
-`independence` is a stable trait. `dependency` is learned reliance and may change with intervention patterns.
-
-Player private intent is never passed into Wilson cognition.
-
----
-
-## Current LLM contract
-
-The simulation must remain behaviorally complete without an LLM.
-
-Allowed runtime roles are bounded to:
-
-- sparse speech/thought realization;
-- reaction-language realization;
-- diary/history prose realization;
-- optional bounded reweighting of already-valid ambiguous interpretations;
-- rare grounded embellishment among valid candidates.
-
-The LLM does not own world truth, physics, action validity, death, project progress, authoritative memories or Wilson knowledge.
-
-Approximate interpretation calibration remains:
-
-```text
-~70% deterministic
-~30% optional LLM-assisted
-```
-
-for eligible ambiguous interpretation cases, not ticks or actions.
-
----
-
-## Current architecture conclusion
-
-Authoritative mutation is intentionally concentrated.
+## Current architecture summary
 
 ### State-owning / authoritative systems
 
@@ -203,15 +173,11 @@ LLM provider
 analytics / debug tooling
 ```
 
-Do not create one state-owning system per psychology noun.
-
 ---
 
-## Current semantic contract conclusion
+## Current semantic contract summary
 
-`SIMULATION_CONTRACTS.md` is the canonical catalog for cross-system handoffs.
-
-Three central contracts remain especially important:
+Central contracts:
 
 ```text
 ObservedEvent
@@ -219,139 +185,194 @@ SelectedIntention
 ActionOutcome
 ```
 
-The catalog additionally defines semantic responsibilities for world/perception, reconsideration, candidate evaluation, action progress, learning evidence, projects, player intervention, director inputs and presentation projection.
+Additional contract families cover:
 
-Key rules:
+```text
+world/perception
+decision/reconsideration
+action progression
+learning evidence
+projects
+player intervention
+director opportunities
+presentation projection
+```
+
+Key invariants:
 
 - world truth, Wilson observation and Wilson belief remain separate;
-- `SelectedIntention` is an authoritative Wilson-relative choice, not proof of physical success;
-- `ActionOutcome` is grounded authoritative feedback from action resolution;
-- learning crosses boundaries as evidence/proposals, with each persistent state owner mutating only its own state;
-- project progress depends on grounded outcomes;
+- `SelectedIntention` is Wilson-relative choice, not physical success;
+- `ActionOutcome` is grounded authoritative action feedback;
+- learning crosses boundaries as semantic evidence/proposals;
+- each durable state owner mutates only its own state;
 - transient contracts are not persisted merely for convenience;
-- deterministic debug traces preserve candidates, contributions, expectations, observations, evidence and guard effects.
+- deterministic traces preserve decision causality.
 
 ---
 
-## Current orchestration conclusion
-
-`SIMULATION_ORCHESTRATION.md` is canonical for runtime ordering.
+## Current orchestration summary
 
 Accepted update categories:
 
 ```text
 authoritative simulation time
-physical/action progression cadence
-slow simulation cadence
+physical/action progression
+slow simulation state
 event-driven cognition
 event-driven learning
-maintenance cadence
+maintenance/consolidation
 presentation cadence
 offline coarse stepping
 ```
 
-Accepted ordering/interrupt rules include:
+Accepted rules:
 
-- render FPS is never the authoritative simulation clock;
-- current action progresses without full cognition every step;
-- multiple normal reconsideration triggers coalesce into one decision context;
-- immediate threat uses a separate fast path;
-- action interruption semantics distinguish immediate-safe, checkpoint and committed-atomic consequences;
+- render FPS is not authoritative time;
+- Wilson does not fully replan every tick;
+- normal reconsideration triggers coalesce/debounce;
+- current intention receives bounded hysteresis;
+- immediate threat is a separate fast path;
+- actions distinguish immediate-safe, checkpoint and committed-atomic interruption classes;
 - intentions explicitly continue, suspend, complete or discard;
-- committed physics cannot be rewound by late reconsideration;
-- grounded observation/outcome precedes learning;
-- same-chain learning may apply before a reconsideration that depends on the newly learned fact;
-- project progress occurs only from grounded outcomes;
-- maintenance/consolidation stays outside immediate semantic outcome chains;
-- offline simulation reuses normal owners under conservative substitutions and cannot kill Wilson or consume major rare spectacle by default;
-- gameplay RNG ordering remains deterministic and separate from presentation randomness.
+- committed physics cannot be rewound by late cognition;
+- same-chain learning may precede reconsideration when the new knowledge is required for the next decision;
+- maintenance stays outside immediate semantic outcome chains;
+- offline simulation reuses normal owners under conservative substitutions;
+- gameplay RNG order remains deterministic and separate from presentation randomness.
 
 ---
 
-## Guards and calibration conclusion
+## Mutation authority summary
 
-Current non-negotiable rules include:
+`MUTATION_AUTHORITY.md` confirms one normal owner per durable state family.
 
-- normalized state has hard finite bounds;
-- normal update curves saturate/diminish before clamp;
-- evaluator contributions have declared finite influence envelopes;
-- strong contradictory evidence can move high-confidence beliefs;
-- repeated identical evidence has diminishing returns;
-- no arbitrary huge-score / infinity priority hacks;
-- immediate emergency uses a separate decision regime;
-- runtime self-calibration may adjust only explicitly whitelisted pacing/opportunity variables;
-- self-calibration does not rewrite Wilson's traits, beliefs, associations, habits, trust, dependency, project history or memories toward target averages.
+Highest-risk boundaries to preserve during implementation:
+
+1. `Action Resolution ↔ World Simulation` — coordinated physical execution;
+2. `Decision Pipeline → IntentionalState` — selected-intention commit;
+3. `Learning Pipeline → cognition stores` — evidence-based owner-local mutation;
+4. `ActionOutcome → Project System` — grounded project progression;
+5. `Player Intervention → World Simulation` — atomic cost/effect semantics;
+6. `Director → World/Decision` — bounded opportunity influence;
+7. `Persistence → owners` — controlled restore without shadow authority.
 
 ---
 
-## Immediate next work
+## Representative trace validation
 
-### Deliverable C — Mutation authority matrix
-
-Rows should cover all persistent/authoritative state families, including:
-
-```text
-world entity/location/property state
-weather/environment state
-Wilson traits
-Wilson drives
-beliefs
-associations
-habits
-episodic history
-current/suspended intentions
-presence relationship
-projects
-player God Power / intervention state
-director eligibility/cooldown/active-scene state
-active authoritative action state where required
-```
-
-Columns should cover systems/pipelines and classify each relationship as:
-
-```text
-read
-propose
-mutate
-observe only
-```
-
-The goal is to expose hidden circular authority before concrete schemas/classes are introduced.
-
-### Deliverable D — Detailed traces
-
-Run the full contract + phase graph through at least:
+`DECISION_TRACES.md` validates the architecture against:
 
 ```text
 Scientific Method
 Sabotaged Storage
-Brilliant Shortcut or Falling Palm
+Brilliant Shortcut
+Falling Palm
 ```
 
-The traces must show candidate provenance, expectations, trigger batches, interruption semantics, grounded outcome, learning proposals, owner-local mutations and deterministic/debug implications.
+Results:
 
-### Deliverable E — Architecture gate
+- partial experimental failure supports immediate evidence-led strategy refinement;
+- actual cause, observed effect and inferred cause remain separate;
+- presence belief can rise while trust falls;
+- normal risk competition remains bounded/explainable;
+- death/injury derives from grounded physical outcomes;
+- committed action semantics prevent causal rewinds;
+- immediate-threat fast path composes with player intervention;
+- no new broad psychological primitive or shared mutable owner was required.
 
-After C and D, explicitly decide readiness for:
+---
 
-```text
-concrete data model
-Godot/domain package layout
-first implementation vertical slice
-```
+## Guards and calibration summary
 
-and list remaining blockers.
+Non-negotiable rules:
+
+- normalized state has hard finite bounds;
+- update curves saturate/diminish before clamp;
+- evaluator contributions have finite declared envelopes;
+- strong contradictory evidence can move high-confidence beliefs;
+- repeated identical evidence has diminishing returns;
+- no huge-score/infinity priority hacks;
+- immediate emergency is a separate regime;
+- runtime self-calibration only touches explicitly whitelisted pacing/opportunity variables;
+- self-calibration does not rewrite Wilson history/personality toward target averages.
 
 ---
 
 ## Current implementation gate
 
-The project is **not yet gated into implementation**.
+**PASS.** See `IMPLEMENTATION_GATE.md`.
 
-Remaining blockers are narrow architecture-validation blockers rather than unresolved product psychology:
+Readiness:
 
-1. mutation authority has not yet been tabulated across all state families;
-2. representative end-to-end traces have not yet validated the completed contract/orchestration graph;
-3. the architecture implementation gate has not yet been performed.
+```text
+Concrete domain data model              READY
+Package/module dependency layout        READY
+First implementation vertical slice    READY after minimal model/layout kickoff
+```
 
-Do not bypass these by encoding provisional behavior directly into engine classes.
+Remaining unknowns are implementation/calibration choices, not architecture blockers:
+
+- concrete field/value-object representation;
+- proposition/ID/tag representation;
+- exact evaluator/learning formulas;
+- exact clock frequencies;
+- persistence technology/versioning;
+- concrete dependency-injection/package mechanics;
+- final vertical-slice fixture details.
+
+---
+
+## Immediate next work
+
+Follow `IMPLEMENTATION_GATE.md`:
+
+### Step 1 — Concrete domain data model
+
+Define minimal typed structures for:
+
+```text
+stable domain IDs / semantic vocabulary
+world query/result shapes
+Wilson persistent stores/state
+intentional state
+observation → decision → action → learning contracts
+minimal project/player/director state
+seeded RNG + deterministic trace identity
+```
+
+Do not add fields solely for serialization/UI convenience.
+
+### Step 2 — Package/module dependency layout
+
+Enforce:
+
+```text
+domain state/contracts
+↑
+pure domain services/evaluators
+↑
+application orchestration
+↑
+Godot / persistence / LLM / debug adapters
+```
+
+### Step 3 — Headless vertical slice
+
+Prove deterministic time/action/reconsideration/perception/candidate/evaluation/selection/outcome/learning/trace/save-load behavior before visual polish.
+
+### Step 4 — Godot adapter
+
+Presentation maps semantic domain IDs/events and does not duplicate legality/decision authority.
+
+### Step 5 — Architecture regression fixtures
+
+Prioritize headless versions of:
+
+```text
+Scientific Method
+Sabotaged Storage
+Brilliant Shortcut
+Falling Palm
+```
+
+Any implementation change that breaks these invariants must update the owning design document and regression evidence rather than create a silent parallel architecture.
