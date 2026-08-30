@@ -4,7 +4,7 @@
 
 The project is in **contract and orchestration design before implementation**.
 
-Behavioral discovery, persistent-state inventory, first architectural decomposition, guard analysis and the first semantic contract catalog are complete enough to stop reopening product psychology from first principles.
+Behavioral discovery, persistent-state inventory, first architectural decomposition, guard analysis, semantic contract catalog and update-phase/orchestration specification are complete enough to stop reopening product psychology from first principles.
 
 Completed sequence:
 
@@ -18,11 +18,12 @@ Completed sequence:
 8. functional persistent-state inventory;
 9. first architecture responsibility decomposition;
 10. guard/self-stabilization analysis;
-11. semantic simulation contract catalog.
+11. semantic simulation contract catalog;
+12. simulation update-phase/orchestration specification.
 
-Current work is **Deliverable B: update-phase and orchestration specification**.
+Current work is **Deliverable C: mutation authority matrix**, followed by detailed representative decision traces and the architecture implementation gate.
 
-Do not begin by choosing Godot nodes, ECS, GOAP, database schemas, serialization formats or final package/class layouts. Those remain downstream choices after phase ordering, mutation authority and interruption semantics are explicit.
+Do not begin by choosing Godot nodes, ECS, GOAP, database schemas, serialization formats or final package/class layouts. Those remain downstream choices until mutation ownership and representative end-to-end traces are validated.
 
 ---
 
@@ -35,14 +36,15 @@ For work affecting Wilson behavior, simulation state, architecture or orchestrat
 3. **`SCENE_VALIDATION.md`** — behavioral evidence and regression suite;
 4. **`ARCHITECTURE.md`** — system boundaries, authority and composition;
 5. **`SIMULATION_CONTRACTS.md`** — semantic cross-system contracts;
-6. **`GUARDS_AND_CALIBRATION.md`** — invariants, bounded contributions and stabilization policy;
-7. **`AI.md`** — runtime LLM authority/fallback boundary;
-8. **`PRODUCT.md`** — overall player experience, modes, intervention rules and presentation intent;
-9. **`SIMULATION.md`** — broader world/property/action vocabulary.
+6. **`SIMULATION_ORCHESTRATION.md`** — clocks, ordering, reconsideration, interruption, learning timing and offline orchestration;
+7. **`GUARDS_AND_CALIBRATION.md`** — invariants, bounded contributions and stabilization policy;
+8. **`AI.md`** — runtime LLM authority/fallback boundary;
+9. **`PRODUCT.md`** — overall player experience, modes, intervention rules and presentation intent;
+10. **`SIMULATION.md`** — broader world/property/action vocabulary.
 
 Where older provisional psychology language in `PRODUCT.md` or `SIMULATION.md` conflicts with `BEHAVIORAL_MODEL.md`, `STATE_REQUIREMENTS.md` or `SCENE_VALIDATION.md`, the newer behavioral documents win.
 
-Where implementation-oriented wording conflicts with accepted responsibility boundaries or semantic contracts, `ARCHITECTURE.md` and `SIMULATION_CONTRACTS.md` win unless a later documented architecture decision explicitly supersedes them.
+Where implementation-oriented wording conflicts with accepted responsibility boundaries, contracts or orchestration rules, `ARCHITECTURE.md`, `SIMULATION_CONTRACTS.md` and `SIMULATION_ORCHESTRATION.md` win unless a later documented architecture decision explicitly supersedes them.
 
 Stage-transition context lives under `docs/handoffs/`; handoffs guide sequencing but are not competing canonical specifications.
 
@@ -207,7 +209,7 @@ Do not create one state-owning system per psychology noun.
 
 ## Current semantic contract conclusion
 
-`SIMULATION_CONTRACTS.md` is now the canonical catalog for cross-system handoffs.
+`SIMULATION_CONTRACTS.md` is the canonical catalog for cross-system handoffs.
 
 Three central contracts remain especially important:
 
@@ -227,7 +229,42 @@ Key rules:
 - learning crosses boundaries as evidence/proposals, with each persistent state owner mutating only its own state;
 - project progress depends on grounded outcomes;
 - transient contracts are not persisted merely for convenience;
-- deterministic debug traces must preserve candidates, contributions, expectations, observations, evidence and guard effects.
+- deterministic debug traces preserve candidates, contributions, expectations, observations, evidence and guard effects.
+
+---
+
+## Current orchestration conclusion
+
+`SIMULATION_ORCHESTRATION.md` is canonical for runtime ordering.
+
+Accepted update categories:
+
+```text
+authoritative simulation time
+physical/action progression cadence
+slow simulation cadence
+event-driven cognition
+event-driven learning
+maintenance cadence
+presentation cadence
+offline coarse stepping
+```
+
+Accepted ordering/interrupt rules include:
+
+- render FPS is never the authoritative simulation clock;
+- current action progresses without full cognition every step;
+- multiple normal reconsideration triggers coalesce into one decision context;
+- immediate threat uses a separate fast path;
+- action interruption semantics distinguish immediate-safe, checkpoint and committed-atomic consequences;
+- intentions explicitly continue, suspend, complete or discard;
+- committed physics cannot be rewound by late reconsideration;
+- grounded observation/outcome precedes learning;
+- same-chain learning may apply before a reconsideration that depends on the newly learned fact;
+- project progress occurs only from grounded outcomes;
+- maintenance/consolidation stays outside immediate semantic outcome chains;
+- offline simulation reuses normal owners under conservative substitutions and cannot kill Wilson or consume major rare spectacle by default;
+- gameplay RNG ordering remains deterministic and separate from presentation randomness.
 
 ---
 
@@ -249,27 +286,41 @@ Current non-negotiable rules include:
 
 ## Immediate next work
 
-The next canonical artifact is an **update-phase / orchestration specification** built on `SIMULATION_CONTRACTS.md`.
+### Deliverable C — Mutation authority matrix
 
-It must define:
+Rows should cover all persistent/authoritative state families, including:
 
-- simulation clock categories;
-- high-frequency action/physical progression;
-- slow Wilson/world state ticks;
-- event-driven cognition/reconsideration;
-- event-driven learning;
-- maintenance/consolidation passes;
-- offline coarse stepping;
-- ordering constraints between authoritative mutations;
-- reconsideration-trigger coalescing;
-- action versus intention interruption semantics;
-- suspension versus discard of intentions;
-- immediate-threat fast path;
-- project-checkpoint timing;
-- presentation synchronization;
-- deterministic trace/RNG ordering requirements.
+```text
+world entity/location/property state
+weather/environment state
+Wilson traits
+Wilson drives
+beliefs
+associations
+habits
+episodic history
+current/suspended intentions
+presence relationship
+projects
+player God Power / intervention state
+director eligibility/cooldown/active-scene state
+active authoritative action state where required
+```
 
-After that, produce a **mutation authority matrix** and run detailed contract/phase traces for at least:
+Columns should cover systems/pipelines and classify each relationship as:
+
+```text
+read
+propose
+mutate
+observe only
+```
+
+The goal is to expose hidden circular authority before concrete schemas/classes are introduced.
+
+### Deliverable D — Detailed traces
+
+Run the full contract + phase graph through at least:
 
 ```text
 Scientific Method
@@ -277,7 +328,19 @@ Sabotaged Storage
 Brilliant Shortcut or Falling Palm
 ```
 
-Only then perform the architecture gate for concrete data model, package layout and first implementation vertical slice.
+The traces must show candidate provenance, expectations, trigger batches, interruption semantics, grounded outcome, learning proposals, owner-local mutations and deterministic/debug implications.
+
+### Deliverable E — Architecture gate
+
+After C and D, explicitly decide readiness for:
+
+```text
+concrete data model
+Godot/domain package layout
+first implementation vertical slice
+```
+
+and list remaining blockers.
 
 ---
 
@@ -285,13 +348,10 @@ Only then perform the architecture gate for concrete data model, package layout 
 
 The project is **not yet gated into implementation**.
 
-Remaining blockers are architectural/orchestration blockers rather than unresolved product psychology:
+Remaining blockers are narrow architecture-validation blockers rather than unresolved product psychology:
 
-1. update clocks and phase ordering are not yet canonical;
-2. reconsideration trigger coalescing/hysteresis is not yet canonical;
-3. action interruption versus intention suspension/discard is not yet canonical;
-4. mutation authority has not yet been tabulated across all state families;
-5. representative phase traces have not yet validated the completed contract graph;
-6. offline substitutions and maintenance cadence remain to be specified.
+1. mutation authority has not yet been tabulated across all state families;
+2. representative end-to-end traces have not yet validated the completed contract/orchestration graph;
+3. the architecture implementation gate has not yet been performed.
 
 Do not bypass these by encoding provisional behavior directly into engine classes.
