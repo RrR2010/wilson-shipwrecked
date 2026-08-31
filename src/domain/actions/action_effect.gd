@@ -2,6 +2,7 @@ class_name ActionEffect
 extends RefCounted
 
 const DomainId = preload("res://src/domain/core/domain_id.gd")
+const SemanticValueKey = preload("res://src/domain/core/semantic_value_key.gd")
 
 ## Declarative authoritative mutation requested by an ActionOutcome.
 ## Action execution emits effects; only the owning World command port applies them.
@@ -40,3 +41,4 @@ func _init(
 		Kind.CREATE_RELATION, Kind.REMOVE_RELATION:
 			semantic_id.assert_kind(DomainId.Kind.RELATION_TYPE)
 			assert(object_role != &"", "Relation effect requires object role")
+			assert(SemanticValueKey.supports(value), "Relation effect qualifier must be a bounded semantic value")
