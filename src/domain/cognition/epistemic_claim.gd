@@ -101,10 +101,11 @@ func sort_key() -> String:
 func _stable_value_key(p_value: Variant) -> String:
 	if p_value is bool:
 		return "bool:%s" % str(p_value)
-	if p_value is int:
-		return "int:%s" % str(p_value)
-	if p_value is float:
-		return "float:%s" % str(p_value)
+	if p_value is int or p_value is float:
+		# PropertyDefinition.NUMBER intentionally treats int/float as one semantic
+		# family. JSON may reconstruct an authored integer as a float (3 -> 3.0),
+		# so representation type must not participate in durable belief identity.
+		return "number:%s" % str(float(p_value))
 	if p_value is StringName:
 		return "symbol:%s" % String(p_value)
 	if p_value is String:
