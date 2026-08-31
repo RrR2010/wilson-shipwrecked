@@ -13,8 +13,9 @@ func _init(p_event_type: StringName, p_action_id, p_bindings, p_execution_id: St
 	assert(p_event_type != &"", "WorldEvent requires event_type")
 	assert(p_action_id != null, "WorldEvent requires action id")
 	assert(p_bindings != null, "WorldEvent requires bindings")
+	assert(p_bindings.has_method("duplicate_binding"), "WorldEvent bindings must support snapshot duplication")
 	assert(p_execution_id != &"", "WorldEvent requires execution id")
 	event_type = p_event_type
 	action_id = p_action_id
-	bindings = p_bindings
+	bindings = p_bindings.duplicate_binding()
 	execution_id = p_execution_id
