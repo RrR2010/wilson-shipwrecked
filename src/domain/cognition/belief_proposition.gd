@@ -1,29 +1,32 @@
 class_name BeliefProposition
 extends RefCounted
 
-## Stable proposition identity owned by Wilson cognition.
-## Arguments are semantic subjects/values; key() is deterministic and independent
-## from object identity.
+const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 
-var predicate: StringName
-var arguments: Array
+## Durable proposition identity owned by Wilson cognition.
+## Identity is delegated to the closed EpistemicClaim algebra rather than a
+## generic predicate + arguments tuple.
+
+var claim
 
 
-func _init(p_predicate: StringName, p_arguments: Array) -> void:
-	assert(p_predicate != &"", "BeliefProposition requires predicate")
-	predicate = p_predicate
-	arguments = p_arguments.duplicate()
+func _init(p_claim) -> void:
+	assert(p_claim != null, "BeliefProposition requires EpistemicClaim")
+	assert(p_claim.get_script() == EpistemicClaim, "BeliefProposition requires EpistemicClaim")
+	claim = p_claim
 
 
 func key() -> StringName:
-	var parts: Array[String] = [String(predicate)]
-	for argument in arguments:
-		if argument is Object and argument.has_method("sort_key"):
-			parts.append(argument.sort_key())
-		else:
-			parts.append(var_to_str(argument))
-	return StringName("|".join(parts))
+	return claim.key()
 
 
 func sort_key() -> String:
-	return String(key())
+	return claim.sort_key()
+
+
+func tag() -> StringName:
+	return claim.tag()
+
+
+func referenced_subjects() -> Array:
+	return claim.referenced_subjects()
