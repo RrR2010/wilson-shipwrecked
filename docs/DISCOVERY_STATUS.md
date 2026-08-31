@@ -4,7 +4,7 @@
 
 Product/behavior discovery, architecture contracts, the language-neutral functional domain, and the normalized cross-cutting asset catalog are complete enough to support concrete implementation.
 
-The first authoritative vertical implementation is now validated end-to-end under **Godot 4.7.1** with a strict external headless runner that rejects engine/script errors even when an individual test process exits `0`.
+The authoritative vertical implementation is validated end-to-end under **Godot 4.7.1** with a strict external headless runner that rejects engine/script errors even when an individual test process exits `0`.
 
 Current validated implementation chain:
 
@@ -14,14 +14,18 @@ typed IDs / runtime refs
 → authoritative entities + relations
 → reconstructible relation indexes
 → property dependency DAG + EffectivePhysicalProfile
+→ AssemblyBindingProjection + AssemblyValidity
+→ component-aware physical derivation (improvised hammer)
 → SemanticPattern + ActionAttemptability
 → ActionExecution + committed World mutation
+→ SemanticChangeSet + derived-state invalidation
 → WorldEvent → Perception → PerceptualEvidence
 → BeliefStore + EpistemicGraphProjection
 → candidate generation + decision routing
 → durable CurrentIntention
 → application micro-loop orchestration + semantic trace
 → JSON snapshot / restore / rebuild of authoritative runtime causes
+→ mid-action reconstruction across pre/post-commit checkpoints
 ```
 
 Model/content production may proceed independently from the normalized [`asset-catalog/`](asset-catalog/).
@@ -68,7 +72,12 @@ Belief learning / epistemic slice           PASS — Godot 4.7.1 headless
 Decision routing slice                      PASS — Godot 4.7.1 headless
 End-to-end simulation micro-loop            PASS — Godot 4.7.1 headless
 Save/load/rebuild reconstruction slice      PASS — Godot 4.7.1 headless
-Strict headless suite                       PASS — 9 tests
+Mid-action reconstruction slice             PASS — Godot 4.7.1 headless
+Derived invalidation slice                  PASS — Godot 4.7.1 headless
+Semantic snapshot immutability slice        PASS — Godot 4.7.1 headless
+Assembly validity slice                     PASS — Godot 4.7.1 headless
+Improvised hammer composition slice         PASS — Godot 4.7.1 headless
+Strict headless suite                       PASS — 14 tests
 ```
 
 **Functional-domain stabilization gate: PASS.**
@@ -91,7 +100,10 @@ World truth != Wilson observation != Wilson belief
 ActionAttemptability is pure
 ActionExecution does not mutate World directly
 committed action checkpoints emit one ActionOutcome
+pre/post-commit save/load does not rewind or duplicate committed outcomes
 WorldEvent appears only after successful owner commit
+ActionOutcome / WorldEvent snapshot transient role bindings defensively
+World mutations emit semantic change sets for derived invalidation
 Perception projects only accessible event roles
 PerceptualEvidence does not mutate cognition directly
 Belief learning is bounded and revisable
@@ -102,9 +114,13 @@ selected intention is owner-local durable cognition state
 simulation trace is diagnostic-only
 save stores authoritative runtime causes, not reconstructible indexes/caches
 save → JSON → load → rebuild preserves tested semantic queries
+assembly bindings are projected from authoritative World relations
+AssemblyValidity is derived and separate from effective performance
+component condition can degrade effective performance while assembly remains VALID
+component-aware property derivation does not require recipe-specific runtime types
 ```
 
-Property derivation policies are now validated during dependency-graph compilation; unknown authored policies fail bootstrap instead of asserting only during runtime resolution.
+Property derivation policies are validated during dependency-graph compilation; unknown authored policies fail bootstrap instead of asserting only during runtime resolution.
 
 The strict PowerShell runner additionally rejects `SCRIPT ERROR`, parse/compile failures, generic engine `ERROR:` output, explicit `FAIL`, missing expected `PASS`, or nonzero process exit status. This prevents the previously observed Godot false-green class where a script error could be printed before `PASS`.
 
@@ -140,6 +156,7 @@ Luck
 
 World relation indexes
 PropertyDependencyGraph
+AssemblyBindingProjection
 CompositionDependencyProjection
 EpistemicGraphProjection
 bounded SemanticPattern matcher
@@ -154,7 +171,7 @@ graph representation / index / projection
 
 `ARCHITECTURE.md` owns graph placement/dependency boundaries. `DOMAIN_OPERATIONS.md` owns public graph-aware traversal/matching/query operations.
 
-There is intentionally no separate generic GraphSystem/EverythingGraph.
+There is intentionally no separate generic GraphSystem/EverythingGraph or AssemblyStore.
 
 ---
 
@@ -221,7 +238,7 @@ ResolveEffectivePhysicalProfile
 PropertyDependencyGraph compilation/invalidation
 WorldRelationGraph traversal queries
 SemanticPattern matching
-QueryAttemptableActions / QueryActionAttemptability
+QueryActionAttemptability
 DerivePerceivedTacticalOpportunities
 tactical vs intentional candidate operations
 InteractionRegion queries
@@ -236,78 +253,36 @@ project/director/player lifecycle operations
 explainability diagnostics
 ```
 
-`DOMAIN_OPERATION_REFINEMENTS.md` has been retired after consolidation.
-
----
-
-# Documentation consolidation result
-
-This pass deliberately avoided adding permanent canonical files when existing owners could absorb the semantics.
-
-Result:
-
-```text
-DOMAIN_MODULE_LAYOUT.md          not created
-DOMAIN_OPERATION_REFINEMENTS.md retired / absorbed
-DOMAIN_SEMANTIC_GRAPHS.md       retired / absorbed
-```
-
-Ownership remains:
-
-```text
-ARCHITECTURE.md
-  architecture + module/package layout + dependency direction
-  + graph/index placement
-
-DOMAIN_OPERATIONS.md
-  single public domain operation/query surface
-  + graph-aware traversal/matching semantics
-
-existing domain documents
-  own relation/property/composition/epistemic meanings
-```
-
-`docs/README.md` explicitly prefers updating canonical owners over creating `*_REFINEMENTS`, `*_V2` or permanent override chains.
-
 ---
 
 # Current content/catalog state
 
-The normalized `docs/asset-catalog/` provides:
+The normalized `docs/asset-catalog/` provides independent functional `Spec` and production `Status` lifecycles, normalized semantic catalogs, P0/P1 coverage, semantic component roles, scene-regression ownership and parallel art/production information.
 
-- independent functional `Spec` and production `Status` lifecycles;
-- normalized material/property/capability/affordance/relation/assembly/action/evidence semantics;
-- P0/P1 entity/project/living-world coverage;
-- semantic project/component roles rather than recipes;
-- scene-regression ownership for all accepted representative phenomena;
-- art/production information as a parallel concern.
-
-The catalog's semantic density is a primary practical consumer of local typed indexes/pattern matching; it should not cause global Cartesian affordance scans or combinatorial entity subclasses.
+The catalog's semantic density should continue to be served by local typed indexes/pattern matching rather than global Cartesian affordance scans or combinatorial entity subclasses.
 
 ---
 
 # Remaining implementation questions
 
-These are now predominantly concrete runtime/content concerns rather than discovery blockers:
+These are predominantly concrete runtime/content concerns rather than discovery blockers:
 
 1. exact spatial topology/navigation representation;
 2. body mutation proposer API beneath World authority;
 3. concrete shallow animal behavior representation;
 4. environmental/dynamic-process persistence thresholds;
-5. final bounded `PropertyValue` catalogue/schema beyond the current numeric derivation fixture;
+5. bounded `PropertyValue` catalogue/schema and type-safe comparisons;
 6. exact `SemanticConceptId` boundaries;
 7. concrete authored-content serialization/loading format;
 8. presentation adapters for InteractionRegion, anchors, body-slot qualifiers and assembly sockets;
-9. exact deterministic tie-break encoding for simultaneous semantic boundaries beyond current stable-key routing;
-10. reconstruction policy for an **action execution in progress**, especially across committed checkpoints;
-11. coarse representation for protection coverage/gaps;
-12. composition dependency projection / AssemblyValidity implementation;
-13. exact derived-cache invalidation optimization beyond conservative subject invalidation;
-14. candidate source services for drives, projects, habits, Presence and Director;
-15. action interruption classes and broader runtime action lifecycle;
-16. richer physical provenance distinguishing authored base value from runtime override;
-17. bounded type-safe property comparisons instead of unrestricted `Variant` comparison;
-18. spatial/perception access implementation replacing the current explicit access-policy fixture.
+9. deterministic simultaneous-boundary tie-break beyond current stable-key routing;
+10. coarse representation for protection coverage/gaps;
+11. broader composition dependency projection beyond current assembly-slot selectors;
+12. candidate source services for drives, projects, habits, Presence and Director;
+13. action interruption classes and broader runtime action lifecycle;
+14. richer physical provenance distinguishing authored base value from runtime override;
+15. spatial/perception access implementation replacing the current explicit access-policy fixture;
+16. typed epistemic propositions/claims replacing generic durable proposition argument identity.
 
 These are implementation choices, not evidence for new state owners.
 
@@ -320,14 +295,13 @@ Continue from the validated vertical rather than adding parallel scaffolds.
 Recommended sequence:
 
 ```text
-1. authored ActionDefinition / ActionResolutionDefinition registry
-2. mid-action save/load reconstruction with committed-checkpoint invariants
-3. composition dependency projection + AssemblyValidity
-4. bounded PropertyValue schema / comparison policies
-5. concrete spatial query + perception-access adapter
-6. project / drive / habit candidate producers
-7. presentation adapters + representative scene rendering fixtures
-8. deterministic larger regression scenarios
+1. bounded PropertyValue schema / comparison policies
+2. typed epistemic proposition identity before persistence grows further
+3. concrete spatial query + perception-access adapter
+4. project / drive / habit candidate producers
+5. action interruption classes + broader execution lifecycle
+6. presentation adapters + representative scene rendering fixtures
+7. deterministic larger regression scenarios
 ```
 
 The implementation may favor direct GDScript, but it should preserve the language-neutral ownership and dependency boundaries rather than mirror Godot scene structure.
