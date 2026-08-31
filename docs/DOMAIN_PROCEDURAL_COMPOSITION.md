@@ -15,6 +15,8 @@ It formalizes four refinements exposed by the functional asset catalog and the S
 
 `DOMAIN_OPERATION_REFINEMENTS.md` owns the corresponding refined operation surface where older `DOMAIN_OPERATIONS.md` wording is ambiguous.
 
+`DOMAIN_FIXTURE_IMPROVISED_HAMMER.md` validates composite-object semantics and makes `AssemblyValidity` versus effective performance explicit.
+
 The goal is greater procedurality without introducing free-form physics, recipes, universal script callbacks, or hundreds of object-specific state flags.
 
 ---
@@ -30,6 +32,7 @@ authored definition
 + runtime components/relations
 + contents
 --------------------------------
+→ AssemblyValidity where applicable
 → EffectivePhysicalProfile
 → authoritative attemptability/resolution
 ```
@@ -314,11 +317,15 @@ bowling ball:
 
 ---
 
-# 5. AssemblySlotDefinition
+# 5. Assembly semantics
 
 Runtime procedural assembly must remain semantic and bounded.
 
 ```text
+AssemblyDefinition
+  id: AssemblyDefinitionId
+  slots: AssemblySlotDefinition[]
+
 AssemblySlotDefinition
   id: AssemblySlotId
   semantic_role: AssemblyRoleId
@@ -340,7 +347,36 @@ Implementations may realize this through `part_of` / `attached_to` relations plu
 
 Structural composition used by effective-property aggregation must be acyclic; a component cannot transitively contain/assemble itself.
 
-## 5.1 Example — improvised hammer
+## 5.1 AssemblyValidity
+
+Assembly compatibility and assembly performance are separate questions.
+
+`AssemblyValidity` is a derived projection over definition/slot requirements and current authoritative bindings:
+
+```text
+AssemblyValidity =
+  VALID
+  INCOMPLETE
+  INCOMPATIBLE_COMPONENT
+  BROKEN_BINDING
+  INVALID_CONFIGURATION
+```
+
+It answers:
+
+> Are required semantic roles occupied by compatible live components in an admitted configuration?
+
+It does **not** answer:
+
+> Is this a good tool/structure?
+
+A configuration may remain `VALID` while its effective `stability`, `impact_capacity`, `coverage`, `buoyancy` or other properties degrade.
+
+Do not introduce universal `assembly_quality`, `tool_quality` or `structure_quality` scalars when effective properties already express the meaningful consequences.
+
+`AssemblyValidity` normally remains derived. Persist component identities, mutable component state and bindings; recompute validity deterministically.
+
+## 5.2 Example — improvised hammer
 
 ```text
 slot.handle:
@@ -348,15 +384,18 @@ slot.handle:
   length >= LOW
 
 slot.head:
-  requires hard impact-capable component
+  requires impact_surface
+  hardness >= MEDIUM
 
 slot.binding:
   requires binding_component
 ```
 
-The assembly does not encode a `hammer recipe`. Instead, if the configuration produces sufficient effective impact semantics, relevant affordances become available.
+The assembly does not encode a target-specific `hammer recipe`. If the current valid configuration produces sufficient effective impact semantics, relevant affordances become available.
 
-## 5.2 Example — shelter roof slot
+A tiny hard pebble may satisfy the head slot while deriving weak `impact_capacity`; validity must not silently become a performance threshold.
+
+## 5.3 Example — shelter roof slot
 
 ```text
 slot.roof_panel_1:
@@ -366,7 +405,45 @@ slot.roof_panel_1:
 
 Thatch, cloth or compatible salvage may satisfy the same semantic slot with different weather performance.
 
-## 5.3 Presentation sockets are adapters
+## 5.4 Degradation and failure
+
+Component condition can reduce effective performance without invalidating the assembly:
+
+```text
+binding_integrity HIGH → MEDIUM
+AssemblyValidity = VALID
+stability decreases
+impact_capacity may decrease
+```
+
+A grounded failure can later change bindings/configuration:
+
+```text
+binding breaks
+→ head detaches
+→ required slot becomes unbound
+→ AssemblyValidity = INCOMPLETE
+→ use_as_impact_tool disappears
+```
+
+The world mutation occurs through ordinary effects/relations. Presentation follows the authoritative result.
+
+## 5.5 Repair and replacement
+
+Repair should mutate/replace ordinary components and bindings:
+
+```text
+replace binding
+replace handle
+replace head
+reattach compatible component
+```
+
+Recompute `AssemblyValidity` and `EffectivePhysicalProfile` afterward.
+
+Repair does not imply restoration to a pristine authored template. Existing damage on unreplaced components continues contributing to effective semantics.
+
+## 5.6 Presentation sockets are adapters
 
 Asset names such as:
 
@@ -824,6 +901,7 @@ Tests:
 
 ```text
 assembly slots
+assembly validity versus effectiveness
 material/component composition
 derived impact capability
 binding degradation
@@ -834,7 +912,10 @@ Required contrast:
 
 ```text
 tight binding vs loose binding
+valid strong head vs valid weak head
 ```
+
+Canonical fixture: `DOMAIN_FIXTURE_IMPROVISED_HAMMER.md`.
 
 ## 15.3 Barrel
 
@@ -923,6 +1004,7 @@ This refinement passes when:
 
 - new objects can gain useful behavior from existing properties/capabilities rather than type switches;
 - composite objects can change effective physical semantics when parts/contents/condition change;
+- assembly validity remains distinct from effective performance/quality;
 - property derivation is acyclic, typed, deterministic and explainable;
 - assembly compatibility is semantic and bounded rather than free-form universal construction;
 - carrying/throwing/rolling can be derived where practical instead of authored as unrelated flags;
@@ -935,3 +1017,4 @@ This refinement passes when:
 - brainstorming metadata does not inflate the authoritative gameplay schema.
 
 `DOMAIN_MICRO_LOOP.md` validates this gate against a complete Scientific Method frame-group fixture.
+`DOMAIN_FIXTURE_IMPROVISED_HAMMER.md` validates the assembly/effective-profile branch in isolation.
