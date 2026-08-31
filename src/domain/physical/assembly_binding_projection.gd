@@ -31,6 +31,6 @@ func bindings_for_host(host) -> Array:
 func _slot_id_from_qualifier(qualifier):
 	if not (qualifier is Object) or not qualifier.has_method("assert_kind"):
 		return null
-	if not ("kind" in qualifier) or qualifier.kind != DomainId.Kind.ASSEMBLY_SLOT:
+	if qualifier.get("kind") != DomainId.Kind.ASSEMBLY_SLOT:
 		return null
 	return qualifier
