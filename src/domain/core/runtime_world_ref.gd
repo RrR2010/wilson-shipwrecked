@@ -14,10 +14,10 @@ enum Kind {
 }
 
 var kind: int
-var id: DomainId
+var id
 
 
-func _init(p_kind: int, p_id: DomainId = null) -> void:
+func _init(p_kind: int, p_id = null) -> void:
 	kind = p_kind
 	id = p_id
 	match kind:
@@ -48,7 +48,7 @@ func sort_key() -> String:
 	return String(key())
 
 
-func equals(other: RuntimeWorldRef) -> bool:
+func equals(other) -> bool:
 	if other == null or kind != other.kind:
 		return false
 	if kind == Kind.WILSON:
@@ -71,17 +71,20 @@ func _to_string() -> String:
 	return "%s(%s)" % [kind_name(), String(id.value)]
 
 
-static func wilson() -> RuntimeWorldRef:
-	return RuntimeWorldRef.new(Kind.WILSON)
+static func wilson():
+	return new(Kind.WILSON)
 
 
-static func entity(p_id: DomainId) -> RuntimeWorldRef:
-	return RuntimeWorldRef.new(Kind.ENTITY, p_id)
+static func entity(p_id):
+	p_id.assert_kind(DomainId.Kind.ENTITY)
+	return new(Kind.ENTITY, p_id)
 
 
-static func place(p_id: DomainId) -> RuntimeWorldRef:
-	return RuntimeWorldRef.new(Kind.PLACE, p_id)
+static func place(p_id):
+	p_id.assert_kind(DomainId.Kind.PLACE)
+	return new(Kind.PLACE, p_id)
 
 
-static func region(p_id: DomainId) -> RuntimeWorldRef:
-	return RuntimeWorldRef.new(Kind.REGION, p_id)
+static func region(p_id):
+	p_id.assert_kind(DomainId.Kind.REGION)
+	return new(Kind.REGION, p_id)
