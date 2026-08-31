@@ -1,309 +1,78 @@
-# Asset Catalog
+# Cross-Cutting Asset Catalog
 
 ## Purpose
 
-This directory is the cross-cutting source of truth for **which modeled/content families are required, which functional contrasts they must support, and what remains to be produced**.
+`docs/asset-catalog/` is the source of truth for **modeled content requirements** and production status.
 
-It is outside `docs/art/` because one row may connect:
+It answers:
+
+> What content families must exist, what domain semantics must they support, what visual/runtime contrasts must be represented, and what is their production state?
+
+It is deliberately cross-cutting:
 
 ```text
-domain semantics
-+ interactions/composition/lifecycle
-+ Wilson-visible evidence requirements
-+ project/scene coverage
-+ art/adapters
-+ production status
+functional domain
++ interactions/composition
++ environment/evidence
++ art/model requirements
++ runtime adapters
++ production backlog
 ```
 
-The catalog is content specification and production planning, **not a second simulation schema**. Canonical semantics remain in the stabilized `DOMAIN_*` documents.
+It is **not** the authority for domain primitive semantics. Canonical meaning remains in `DOMAIN_*`; visual language remains in `VISUAL_GUIDE.md` + `art/`; runtime asset conventions remain in `ASSET_SPEC.md` / `ASSET_PIPELINE.md`.
 
-Catalog split:
-
-- [`ENTITIES.md`](ENTITIES.md) — physical entities, resources, components, containers, tools, salvage and comfort props;
-- [`PROJECTS.md`](PROJECTS.md) — persistent project goals and composed structures/configurations;
-- [`LIVING_WORLD.md`](LIVING_WORLD.md) — terrain/place presentation, flora, fauna, habitats and cross-family environmental presentation requirements.
-
-The split is organizational, not a runtime inheritance hierarchy.
-
-Historical breadth lives in `../brainstorming/functional-asset-catalog/`; it is recall evidence, not a competing backlog.
+Historical breadth lives in `brainstorming/functional-asset-catalog/`. Do not use those rounds as a production backlog when a normalized row exists here.
 
 ---
 
-# Authority
+## Files
 
-Use the smallest applicable canonical bundle:
-
-```text
-DOMAIN_MODEL.md
-→ DOMAIN_VOCABULARY.md
-→ DOMAIN_CATALOGS.md
-→ DOMAIN_OPERATIONS.md
-→ DOMAIN_OPERATION_REFINEMENTS.md when it supersedes an older signature
-→ DOMAIN_PROCEDURAL_COMPOSITION.md
-```
-
-Then consult specialized appendices only when relevant:
-
-```text
-DOMAIN_ENVIRONMENTAL_PROTECTION.md
-DOMAIN_HAZARD_DYNAMICS.md
-DOMAIN_EPISTEMIC_INVESTIGATION.md
-DOMAIN_MICRO_LOOP.md
-```
-
-Other owners:
-
-- product/Wilson semantics — `PRODUCT.md`, behavioral/state documents;
-- visual language — `VISUAL_GUIDE.md`, `art/`;
-- runtime asset adapters — `ASSET_SPEC.md`;
-- production workflow — `ASSET_PIPELINE.md`.
-
-If a row cannot be expressed using existing domain semantics, document the demonstrated requirement and review the canonical domain owner explicitly. Do not invent a primitive only in the catalog.
+- [`ENTITIES.md`](ENTITIES.md) — physical entities, resources, components, containers, tools, salvage and comfort props.
+- [`PROJECTS.md`](PROJECTS.md) — persistent project goals and composed structures/configurations.
+- [`LIVING_WORLD.md`](LIVING_WORLD.md) — places/terrain, flora, fauna, habitats and cross-family environmental presentation requirements.
+- [`SCENE_COVERAGE.md`](SCENE_COVERAGE.md) — regression of the normalized catalog/domain against the 40 representative historical scenes, including accepted reshapes and remaining content/domain-review gaps.
 
 ---
 
-# Row model
+# 1. Authority rules
 
-Use **compact common columns + terse semantic tokens**. A row should let an agent answer:
+A catalog row may reference:
 
 ```text
-what is it?
-→ what domain definition/configuration owns it?
-→ what physical semantics matter?
-→ how can it compose/be targeted?
-→ which lifecycle/environment/evidence contrasts matter?
-→ which generic actions/projects/scenes need it?
-→ what must production supply?
+EntityDefinition
+ActorProfileDefinition
+PlaceDefinition / PlaceState presentation
+ProjectDefinition
+AssemblyDefinition
+MaterialDefinition
+properties / capabilities / relations
+interaction regions
+actions / transformations
+environmental responses/processes
+perceptual evidence requirements
+presentation adapters
 ```
 
-Not every row needs every token.
+A row must **not** invent a parallel simulation primitive merely because it is convenient for art/content planning.
 
-## Functional specification status
+Before introducing a new semantic term, ask:
 
-`Spec` is independent from model/content production `Status`.
+1. Is it already an admitted property/capability/relation/predicate/effect/action/domain concept?
+2. Is it a derived affordance rather than authored truth?
+3. Is it a presentation band over an authoritative property/process?
+4. Is it Wilson-relative knowledge/association rather than world truth?
+5. Is it an art/runtime adapter rather than domain identity?
+6. Which concrete gameplay requirement fails without a new primitive?
 
-| Spec | Meaning |
-|---|---|
-| `UNREVIEWED` | Identified but not normalized against the current domain. |
-| `PARTIAL` | Direction is valid, but important functional requirements remain underspecified. |
-| `ALIGNED` | Domain mapping and required functional dimensions are explicit enough to brief downstream work. |
-| `BLOCKED` | A demonstrated reusable requirement cannot currently be expressed by the canonical domain. |
-
-`ALIGNED` does not mean the asset/model exists. Use `BLOCKED` only with a concrete domain-gap justification.
+If the answer really requires a new domain concept, use the domain-gap protocol: justify it against product/representative behavior and update the canonical owning domain document explicitly.
 
 ---
 
-# Semantic token grammar
+# 2. Production status versus functional spec
 
-Tokens are documentation shorthand, not implementation syntax.
+These are independent dimensions.
 
-| Token | Use |
-|---|---|
-| `mat:` | Relevant `MaterialDefinition` assumption/default. |
-| `prop:` | Authoritative/effective property values or bands materially used by gameplay. |
-| `cap:` | True capability participation semantics. |
-| `aff:` | Derived/contextual affordances such as carry, drag, throw, roll, stack or use-as-tool. |
-| `rel:` | Relevant authoritative world relations such as `inside`, `on_top_of`, `attached_to`, `part_of`. |
-| `role:` | Semantic assembly/project component role; **not a capability**. |
-| `slot:` | Bounded semantic assembly slot on an authored host/archetype. |
-| `region:` | Semantic `InteractionRegion` requirement such as lid edge, handle, weak joint or repair point. |
-| `xform:` | Content-specific transformation/result triggered by semantic outcomes. |
-| `env:` | Environmental response, protection/exposure or dynamic-process participation. |
-| `band:` | Presentation band derived from authoritative properties/configuration/processes. |
-| `evidence:` | Asset-specific sensory accessibility/recognition requirement; never Wilson belief state. |
-| `act:` | Generic action/participant roles the family must support. |
-| `scene:` | Representative-scene/systemic coverage worth preserving. |
-| `project:` | Project dependency/use when useful for backlog ordering. |
-| `intervention:` | Non-default per-object player-intervention requirement when content must author one explicitly. |
-
-Keep cells terse. If a behavior requires a paragraph, first check whether it belongs in a canonical domain document instead.
-
----
-
-# Normalization rules
-
-Preserve these boundaries:
-
-```text
-Property != Capability != DerivedAffordance
-WorldRelation / AssemblyConfiguration != Capability
-world truth != Wilson observation != Wilson belief
-AssemblyValidity != effective performance
-ActionAttemptability != Wilson expected success
-Effect != WorldEvent != ObservedEvent != Evidence
-PresentationBand != authoritative state machine
-art socket != InteractionRegion != Entity
-Project lifecycle != duplicated physical structure state
-```
-
-Do not add convenience state such as:
-
-```text
-recipe
-favorite
-owned_by_wilson
-explored_percent
-known / unexplored
-rival / sacred
-tool_quality / structure_quality / shelter_quality
-```
-
-unless a later canonical domain change explicitly admits it.
-
-## Properties and materials
-
-Prefer the admitted high-leverage physical vocabulary when applicable:
-
-```text
-mass_class        bulk_class          hardness
-sharpness         rigidity            flexibility
-absorbency        water_resistance    buoyancy
-flammability      heat_resistance     structural_integrity
-binding_integrity stability            moisture
-temperature       freshness           cooking_progress
-burn_level        fill_ratio
-```
-
-Other bounded properties are allowed when real gameplay consumes them; use coarse semantic values rather than invented engineering precision.
-
-Common material IDs include:
-
-```text
-material.wood   material.stone   material.metal
-material.glass  material.cloth   material.fiber
-material.shell  material.bone    material.plant_matter
-```
-
-## Capabilities and affordances
-
-Typical reusable capabilities include:
-
-```text
-graspable        container          liquid_container
-receives_impact  impact_surface     cutting_edge
-binding_component structural_member covering
-fuel             tinder             cookable
-sittable         sleepable          work_surface
-climbable        perchable          harvestable
-habitat
-```
-
-Prefer deriving context-dependent affordances rather than authoring permanent flags:
-
-```text
-carry_one_hand   carry_two_hands   drag   push
-throw            roll              stack  hang
-sit_here         use_as_impact_tool use_as_cutting_tool
-```
-
-A capability permits participation; it does not guarantee effectiveness.
-
-## Assembly and project roles
-
-Use semantic interchangeable roles instead of object-type recipes. Common catalog roles include:
-
-```text
-role.support
-role.frame_member
-role.cross_member
-role.brace
-role.binding
-role.covering
-role.surface
-role.container
-role.float
-role.runner
-role.marker
-role.repair_component
-```
-
-These are content-level `AssemblyRoleId` examples, not new state owners. Slot compatibility is expressed through predicates over capabilities/properties.
-
-Example:
-
-```text
-role.covering
-  requires compatible covering semantics
-  + sufficient effective span/coverage for the configuration
-```
-
-Cloth, thatch or compatible salvage may therefore fulfill the same role with different effective behavior.
-
-## Transformations and detachable components
-
-Create a separate row only when a descendant needs independent authored identity, capability set, interaction geometry or reusable production form.
-
-Prefer a property/presentation band when only condition changes.
-
-Examples:
-
-- coconut shell/contents are transformation descendants with independent reuse;
-- living fish and fish-as-food are distinct because actor semantics disappear;
-- detached fronds/branches reuse their ordinary entity families with changed relations/location.
-
-## Environment and presentation bands
-
-States such as:
-
-```text
-dry / damp / wet / soaked
-fresh / aging / spoiled
-raw / cooked / burned
-intact / damaged / broken
-empty / partial / full
-```
-
-normally derive from smaller authoritative properties/configuration. Drying, spoilage, fire consumption, storm weakening and wave wash-up are processes.
-
-Cross-family outcomes such as displaced props, fallen components, roof leaks or storm debris do not automatically deserve entity rows. `LIVING_WORLD.md` records production requirements for these outcomes without inventing domain identities.
-
-Protection follows configuration:
-
-```text
-covering semantics
-+ attachment/orientation/coverage/integrity
-→ ProtectionProjection
-→ ExposureResult
-```
-
-## Wilson-visible evidence
-
-Use `evidence:` only for content-specific sensory/recognition requirements, for example:
-
-```text
-transparent vs opaque container
-visible lid edge
-rattle-accessible movable contents
-recognizable recurring crab identity
-visible mismatched repair
-```
-
-Never store `inspected`, `known`, `favorite` or `contents_revealed` as physical asset state.
-
-## Player intervention
-
-`EntityDefinition.intervention_capabilities` remains domain/content data. Add `intervention:` to a row only when the family needs a meaningful authored exception or special behavior that downstream agents must preserve.
-
-Do not infer that every graspable/carryable object is player-movable, and do not infer that structures/fires expose direct drag merely from their physical affordances. Product intervention rules remain authoritative.
-
-Exact `InterventionCapabilityId` names should come from the canonical content registry when that registry is concretized; the catalog must not invent a parallel intervention taxonomy just to fill a column.
-
----
-
-# Art and production
-
-Preserve where relevant:
-
-- reference sheet (`Ref NN` / `art/reference/REFERENCE_*.md`);
-- procedural/modular/hybrid/manual strategy;
-- mandatory visible contrasts;
-- interaction-region presentation adapters;
-- assembly/attachment sockets where stable adapters are useful;
-- notes affecting interchangeability/readability.
-
-Art sockets/adapters may map to semantic slots/regions but never define domain identity.
-
-Production `Status` remains:
+## `Status` — model/content production
 
 ```text
 TODO
@@ -315,45 +84,424 @@ APPROVED
 DEFERRED
 ```
 
-A family should normally reach `Spec=ALIGNED` before moving from `TODO` to `BRIEFED`.
+Changing a model does not automatically change the functional brief.
 
-Priority:
-
-- `P0` — vertical-slice/systemic vocabulary;
-- `P1` — meaningful systemic expansion after P0 grammar works;
-- `P2` — authored richness/long-run expansion; normally deferred.
-
----
-
-# Agent workflow
-
-Model/content production:
+## `Spec` — functional normalization
 
 ```text
-catalog row
-→ canonical domain clarification only when needed
-→ art reference
-→ optional family brief for unusual complexity
-→ production/review pipeline
-→ update production Status
+UNREVIEWED  // not yet checked against canonical domain
+PARTIAL     // useful brief exists but material semantics remain unresolved
+ALIGNED     // sufficient and unambiguous under the current canonical domain
+BLOCKED     // a demonstrated domain gap prevents an aligned brief
 ```
 
-Catalog maintenance updates `Spec` independently from production `Status`.
-
-Do not return to brainstorming rounds for routine requirements once a family has an `ALIGNED` row.
+`ALIGNED` means the row is ready to guide content/model/runtime-adapter work. It does **not** mean the asset exists or is approved.
 
 ---
 
-# Initial normalization result — 2026-08-31
+# 3. Priority
 
-The first functional-domain pass:
+```text
+P0  vertical-slice/core systemic grammar
+P1  broad systemic expansion
+P2  later authored richness / expensive expansion
+```
 
-- added the independent `Spec` gate and compact token grammar;
-- normalized current P0/P1 entities, projects and living-world families against the stabilized domain;
-- added missing foundational construction, tinder, water, mushroom, clothing and utility content;
-- normalized tool/project composition toward semantic roles instead of recipes;
-- reclassified fake entity rows that were actually presentation bands, environmental outcomes or adapters;
-- preserved art references and production status separately;
-- found **no new broad domain primitive requirement**.
+Priority expresses content/systemic leverage, not implementation dependency by itself.
 
-Future rows should use the same admission and normalization rules.
+---
+
+# 4. Compact semantic token grammar
+
+Tables intentionally group related dimensions to remain readable. Use these prefixes consistently inside cells.
+
+| Token | Meaning |
+|---|---|
+| `mat:` | material/profile assumption |
+| `prop:` | authoritative/effective physical property |
+| `cap:` | true reusable capability |
+| `aff:` | derived/contextual affordance |
+| `rel:` | world relation/configuration |
+| `role:` | semantic assembly/project role |
+| `slot:` | bounded assembly slot/compatibility role |
+| `region:` | semantic `InteractionRegion` requirement |
+| `xform:` | transformation/lifecycle descendant |
+| `env:` | environmental response/process/exposure requirement |
+| `band:` | visual/presentation band grounded in authoritative semantics |
+| `evidence:` | content-specific perceptual evidence/accessibility requirement |
+| `act:` | generic action participation |
+| `scene:` | representative-scene/behavioral coverage |
+| `project:` | project dependency/use |
+| `intervention:` | authored player intervention support when object-specific |
+
+Tokens are catalog shorthand, **not new domain types**.
+
+Use canonical IDs/names where already admitted. Human-readable action/role shorthand may remain until concrete registries are created, but it must preserve the existing semantic distinction rather than imply an object-pair recipe.
+
+---
+
+# 5. What belongs in each grouped column
+
+## Domain / material
+
+Use for:
+
+- definition kind (`EntityDefinition`, `ActorProfileDefinition`, `PlaceDefinition`, `AssemblyDefinition`, etc.);
+- material/profile source;
+- category/type identity only when useful to the brief.
+
+## Physical semantics
+
+Use for:
+
+```text
+prop:
+cap:
+aff:
+```
+
+Keep them visibly distinct.
+
+Examples:
+
+```text
+prop: hardness=HIGH
+cap: impact_surface
+aff: use-as-impact-tool
+```
+
+Do not write:
+
+```text
+cap: heavy
+cap: throwable
+```
+
+when these are magnitude/context-derived.
+
+## Composition / regions
+
+Use for:
+
+```text
+rel:
+role:
+slot:
+region:
+```
+
+Art sockets/anchors may be mentioned in the production column, but domain identity must never depend on names such as `SOCKET_TOOL_HEAD`.
+
+## Lifecycle / environment / evidence
+
+Use for:
+
+```text
+xform:
+env:
+band:
+evidence:
+```
+
+A presentation word such as `wet`, `broken`, `full`, `open`, `fallen` or `repaired` must make clear what authoritative cause/projection grounds it.
+
+## Actions / coverage
+
+Use for:
+
+```text
+act:
+project:
+scene:
+```
+
+This expresses required participation in the generic grammar, not an object-specific callback list.
+
+## Art / production
+
+Keep:
+
+- art reference/sheet;
+- procedural/modular/manual strategy;
+- mandatory gameplay-camera contrasts;
+- anchor/socket/adapter needs;
+- exceptional asset brief requirement.
+
+Do not repeat the visual guide.
+
+---
+
+# 6. Stable identity rule
+
+The row `Family` value is the intended stable **catalog/content identity** unless explicitly marked as a production-only/presentation family.
+
+Preferred patterns:
+
+```text
+stone_small
+coconut_whole
+project.shelter_basic
+plant.palm_coconut
+animal.crab_recurring
+terrain.sand
+```
+
+One row may map to multiple GLBs/presentation variants.
+
+Do not create new identities for every condition band:
+
+```text
+hammer_loose
+wet_branch
+fallen_frond
+full_barrel
+```
+
+when ordinary state/configuration already distinguishes them.
+
+---
+
+# 7. Transformation descendants
+
+Use a separate row when a transformation result has independent gameplay identity/semantics after the transition.
+
+Good examples:
+
+```text
+coconut_whole
+→ coconut_shell_half + coconut_meat_piece / contained liquid
+
+animal.fish_small
+→ fish_food_small_medium
+```
+
+Do not use a separate row only because art needs another visual band.
+
+Detached reusable components normally keep/reveal their ordinary component family identity:
+
+```text
+palm frond attached to palm
+→ same palm_frond entity detached/fallen
+```
+
+rather than creating `fallen_palm_frond`.
+
+---
+
+# 8. Assembly and project rules
+
+## Assembly
+
+Tool/structure composition uses semantic slots/roles and predicates.
+
+Catalog example:
+
+```text
+slot: role.handle
+slot: role.impact_head
+slot: role.binding
+```
+
+Compatible catalog families may be listed as examples, not as an exhaustive recipe.
+
+```text
+branch_small
+fiber_vine
+stone_small
+```
+
+may satisfy a tool assembly if their effective semantics pass the predicates.
+
+`AssemblyValidity` remains separate from performance.
+
+## Projects
+
+Project rows describe:
+
+```text
+ProjectDefinition intent/lifecycle
++ required semantic contribution roles
++ completion predicate expectations
++ physical/presentation milestones
+```
+
+Physical structure truth remains in World:
+
+```text
+entities
+properties
+relations
+assembly bindings
+protection/exposure
+```
+
+Do not put duplicate roof integrity, container contents, buoyancy or structural quality into Project state.
+
+---
+
+# 9. Environment and presentation bands
+
+State words are often production bands, not lifecycle enums.
+
+Preferred mappings:
+
+```text
+moisture
+→ dry / damp / wet / soaked
+
+freshness
+→ fresh / aging / spoiled
+
+cooking_progress + burn_level
+→ raw / cooked / burned
+
+structural_integrity
+→ intact / damaged / broken
+
+contents quantity / fill_ratio
+→ empty / partial / full
+```
+
+Environment-sensitive content should reference reusable rules/projections:
+
+```text
+EnvironmentalResponseRule
+ProtectionProjection / ExposureResult
+DynamicProcessState where a process spans causal boundaries
+```
+
+Do not create asset rows for results such as `wet_material`, `roof_damage`, `fallen_branch` or `light_prop_displaced` unless the result itself becomes an independently persistent modeled entity with distinct semantics.
+
+`LIVING_WORLD.md` contains the shared production requirements for these cross-family outcomes.
+
+---
+
+# 10. Wilson-facing evidence
+
+Only record evidence in a row when the asset must expose a **content-specific perceptual contrast**.
+
+Examples:
+
+```text
+transparent vs opaque container
+visible dent / lid shift
+rattle from internal movable contents
+palm cracks/lean before a fall
+recognizable recurring animal identity
+```
+
+Do not store:
+
+```text
+explored
+known
+familiar
+favorite
+suspicious
+```
+
+on physical content. Those are Wilson-relative state/projections.
+
+---
+
+# 11. Player intervention
+
+Record `intervention:` only where the content requires a specifically authored intervention capability/constraint.
+
+Ordinary portable-object manipulation may be inherited from a reusable intervention definition when the runtime content registry is implemented.
+
+Rules:
+
+- enough God Power does not make an unsupported entity movable;
+- intervention changes World truth first;
+- Wilson reacts only through perception/attribution afterward;
+- intervention must respect causal windows/action commitment;
+- the catalog must never encode direct trust/dependency/emotion effects from player intent.
+
+---
+
+# 12. Presentation-only rows and production artifacts
+
+Some reusable outputs are legitimate production requirements but not world entities.
+
+Examples:
+
+```text
+PlaceState terrain presentation
+procedural storm-debris placement generator
+perch transform adapters
+shared moisture material treatment
+```
+
+Such rows/sections must explicitly state their mapping and must not receive fake `EntityTypeId`s.
+
+---
+
+# 13. Catalog admission rule
+
+Before adding a family:
+
+1. Is it a reusable gameplay/content identity, transformation descendant, stable place/feature, actor/habitat or justified presentation family?
+2. Can the need be represented as a state/contrast on an existing family instead?
+3. Is it only a process outcome, adapter or generated arrangement?
+4. Which project, generic interaction, environmental rule or representative behavior needs it?
+5. Does it add systemic leverage rather than mere island plausibility?
+6. Is the proposed priority justified?
+
+If a row exists only because a brainstorming round named it, do not admit it automatically.
+
+---
+
+# 14. Production workflow
+
+Typical flow:
+
+```text
+Spec=ALIGNED + Status=TODO
+→ BRIEFED where clarification is actually needed
+→ BLOCKOUT
+→ SELF_REVIEW
+→ INDEPENDENT_REVIEW
+→ APPROVED
+```
+
+Agents should:
+
+1. read this README;
+2. read the row and referenced canonical domain/art docs;
+3. preserve required functional contrasts during modeling;
+4. add only the adapters/regions/variants the row requires;
+5. update `Status` as production advances;
+6. update `Spec` only when the functional brief itself changes.
+
+A row may be `APPROVED` visually while later becoming `PARTIAL` functionally if new gameplay evidence exposes a requirement; these dimensions intentionally do not collapse.
+
+---
+
+# 15. Functional completeness gate
+
+The current normalized catalog gate passes when:
+
+- every P0 row has an explicit domain mapping or explicit presentation-only reason;
+- P1 rows are structured enough to avoid semantic reverse-engineering;
+- properties/capabilities/affordances remain visibly separate;
+- tools and projects use semantic roles/composition rather than recipes;
+- transformations and detachable descendants are explicit where identity matters;
+- environment/protection/hazard requirements are attached to real families/processes;
+- content-specific evidence requirements are represented without duplicating Wilson beliefs;
+- pseudo-assets/process outcomes/adapters are reclassified;
+- art references and production status remain independent;
+- any future domain gap is surfaced rather than hidden in a catalog token.
+
+`SCENE_COVERAGE.md` is the behavioral regression companion for this gate. It currently confirms broad coverage of the accepted 40-scene phenomenon suite while documenting a few localized content extensions, two canonical scene reshapes, and one narrow worn-object semantic review.
+
+The target remains:
+
+```text
+small canonical domain vocabulary
++ normalized cross-cutting content families
++ composition
++ persistent history
++ explicit production status
+= broad emergent scene coverage
+```
