@@ -165,6 +165,8 @@ Two streams can now proceed without changing each other's authority boundaries:
 
 ## Asset-catalog normalization stream
 
+Execution handoff: [`handoffs/asset-catalog-functional-domain-normalization.md`](handoffs/asset-catalog-functional-domain-normalization.md).
+
 1. validate the catalog against product + stabilized domain;
 2. extend the catalog to include missing functional requirements and content families;
 3. resolve ambiguous rows or misplaced semantics;
