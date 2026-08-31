@@ -84,9 +84,9 @@ func _run_slice() -> void:
 	var binding_slot = DomainId.assembly_slot(&"binding")
 
 	var relations = WorldRelationStore.new()
-	var handle_relation = WorldRelation.new(attached_to, handle, host, {"assembly_slot": handle_slot})
-	var head_relation = WorldRelation.new(attached_to, head, host, {"assembly_slot": head_slot})
-	var fiber_relation = WorldRelation.new(attached_to, fiber, host, {"assembly_slot": binding_slot})
+	var handle_relation = WorldRelation.new(attached_to, handle, host, handle_slot)
+	var head_relation = WorldRelation.new(attached_to, head, host, head_slot)
+	var fiber_relation = WorldRelation.new(attached_to, fiber, host, binding_slot)
 	_expect_true(relations.add_relation(handle_relation).ok, "handle attached")
 	_expect_true(relations.add_relation(head_relation).ok, "head attached")
 	_expect_true(relations.add_relation(fiber_relation).ok, "binding attached")
