@@ -2,6 +2,7 @@ class_name EpistemicClaim
 extends RefCounted
 
 const DomainId = preload("res://src/domain/core/domain_id.gd")
+const SemanticValueKey = preload("res://src/domain/core/semantic_value_key.gd")
 
 ## Closed tagged algebra for durable Wilson-relative claims.
 ## Claim identity is explicit and deterministic; no generic predicate/argument
@@ -43,6 +44,7 @@ func _init(
 		Kind.PROPERTY:
 			semantic_id.assert_kind(DomainId.Kind.PROPERTY)
 			assert(value != null, "Property claim requires value")
+			assert(SemanticValueKey.supports(value), "Property claim requires bounded semantic value")
 			assert(object == null and role_name == &"", "Property claim carries only subject/property/value")
 		Kind.RELATION:
 			semantic_id.assert_kind(DomainId.Kind.RELATION_TYPE)
@@ -85,7 +87,7 @@ func referenced_subjects() -> Array:
 func key() -> StringName:
 	match kind:
 		Kind.PROPERTY:
-			return StringName("property|%s|%s|%s" % [subject.sort_key(), semantic_id.sort_key(), _stable_value_key(value)])
+			return StringName("property|%s|%s|%s" % [subject.sort_key(), semantic_id.sort_key(), SemanticValueKey.canonical(value)])
 		Kind.RELATION:
 			return StringName("relation|%s|%s|%s" % [subject.sort_key(), semantic_id.sort_key(), object.sort_key()])
 		Kind.EVENT:
@@ -96,21 +98,3 @@ func key() -> StringName:
 
 func sort_key() -> String:
 	return String(key())
-
-
-func _stable_value_key(p_value: Variant) -> String:
-	if p_value is bool:
-		return "bool:%s" % str(p_value)
-	if p_value is int or p_value is float:
-		# PropertyDefinition.NUMBER intentionally treats int/float as one semantic
-		# family. JSON may reconstruct an authored integer as a float (3 -> 3.0),
-		# so representation type must not participate in durable belief identity.
-		return "number:%s" % str(float(p_value))
-	if p_value is StringName:
-		return "symbol:%s" % String(p_value)
-	if p_value is String:
-		return "string:%s" % p_value
-	if p_value is Object and p_value.has_method("sort_key"):
-		return "semantic:%s" % p_value.sort_key()
-	assert(false, "Unsupported durable property-claim value type")
-	return "unsupported"
