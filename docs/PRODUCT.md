@@ -107,6 +107,25 @@ Player-side intervention affordances are explicitly supported by the affected ob
 
 Resurrection is always available and does not require God Power.
 
+## Luck and chance favorability
+
+Wilson may have an effective **Luck** value used only where the simulation explicitly contains chance-sensitive alternatives.
+
+Luck is **not** a psychological trait, drive or knowledge value. Its intended semantics are:
+
+```text
+luck > neutral  → chance-sensitive outcomes tend to resolve more favorably for Wilson
+luck < neutral  → chance-sensitive outcomes tend to resolve less favorably for Wilson
+```
+
+The preferred model is a neutral Wilson baseline plus bounded active modifiers supplied by world/content state, for example a carried amulet, a temporary event effect or another contextual condition. The effective value may therefore be derived rather than stored as an independently drifting Wilson stat.
+
+Luck must not override established causality. It may choose among genuinely plausible random alternatives, bias a luck-sensitive event variant or influence an uncertain incidental circumstance; it must not make an impossible action succeed, undo committed physics or rewrite an already-grounded consequence.
+
+Luck also does **not** control how many rare events occur. Event rarity/frequency remains a Director/opportunity concern. The design intentionally does not introduce a separate persistent `chaoticity` stat.
+
+Wilson has no privileged access to the effective Luck value. He only observes outcomes and may form ordinary causal beliefs or superstitions about objects/events through the existing belief/attribution model. Such a belief may be correct or incorrect.
+
 ## Interaction grammar
 
 Interactions use a compact grammar of verbs with typed semantic roles. Verbs may have different arities; do not force every interaction into a binary `use X on Y` model.
@@ -616,9 +635,10 @@ The remaining questions should be resolved primarily through implementation and 
 1. **Content minimum:** determine the smallest object/project/animal/event/animation set that produces convincing 15–30 minute autonomous sessions.
 2. **Contextual UX:** prototype click/submenu/drag/suggestion/insistence flows against real interaction examples.
 3. **God Power calibration:** tune generation, streaks, intervention costs and cap without making intervention farming the primary game.
-4. **Survival calibration:** tune hazards, injuries, bodily pressures and long-run mortality exposure without turning the game into a survival-management or level-scaling system.
-5. **Discovery vocabulary:** validate the initial property/capability requirements, transformation rules and generic exploration verbs against the first concrete content set.
-6. **Legacy calibration:** determine eligible knowledge weights and how much Legacy Knowledge should normally survive a completed run.
+4. **Luck calibration:** define the bounded Luck range, modifier composition and which opportunity/outcome classes are explicitly luck-sensitive.
+5. **Survival calibration:** tune hazards, injuries, bodily pressures and long-run mortality exposure without turning the game into a survival-management or level-scaling system.
+6. **Discovery vocabulary:** validate the initial property/capability requirements, transformation rules and generic exploration verbs against the first concrete content set.
+7. **Legacy calibration:** determine eligible knowledge weights and how much Legacy Knowledge should normally survive a completed run.
 
 ## Scene-driven calibration method
 
