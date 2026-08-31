@@ -2,17 +2,17 @@
 
 ## Status and purpose
 
-This document is a canonical, language-neutral companion to the functional-domain documents.
+This document is the canonical language-neutral appendix for bounded Wilson-relative anomaly/investigation reasoning.
 
-It formalizes reusable epistemic contracts exposed by the `Sabotaged Storage` micro-loop:
+It formalizes:
 
 1. negative evidence requires sufficient observation coverage;
-2. multiple observations may be grouped into a bounded temporary investigation context;
-3. causal hypotheses remain Wilson-relative and explainable through supporting/opposing evidence;
-4. causal opportunity reasoning must use Wilson-known context rather than omniscient history;
-5. investigation tactics may be selected for discriminating information value as well as material goal value.
+2. related observations may form a bounded temporary investigation context;
+3. causal hypotheses remain Wilson-relative and explainable;
+4. causal opportunity reasoning uses Wilson-known/perceived context, never omniscient history;
+5. investigation tactics may be valuable for information/discrimination as well as material progress.
 
-No new state-owning system is introduced.
+It introduces no new state-owning system. Durable belief identity follows the typed `EpistemicClaim` model in `DOMAIN_MODEL.md` / `DOMAIN_VOCABULARY.md`.
 
 ---
 
@@ -20,62 +20,84 @@ No new state-owning system is introduced.
 
 ```text
 actual cause
-!=
-current world result
-!=
-Wilson observation
-!=
-Wilson causal attribution
+!= current authoritative World result
+!= Wilson observation/evidence
+!= Wilson belief
+!= Wilson causal attribution
 ```
 
-Private player intent and unobserved authoritative provenance never enter Wilson cognition directly.
+Player-private intent and unobserved authoritative provenance never enter Wilson cognition directly.
 
 ---
 
-# 2. ObservationCoverage
+# 2. Typed claim patterns
+
+Investigation operates over typed Wilson-relative claims/patterns rather than arbitrary `predicate + Variant arguments` identity.
+
+Current durable claim families are:
+
+```text
+PROPERTY(subject, PropertyId, PropertyValue)
+RELATION(subject, RelationTypeId, object)
+EVENT(subject, EventDefinitionId, perceived_role)
+```
+
+Investigation may use **patterns over these typed families**, for example:
+
+```text
+RelationClaimPattern(item?, inside, storage)
+PropertyClaimPattern(target, structural_integrity, expected range)
+EventClaimPattern(subject?, object_moved, target)
+```
+
+A pattern is derived/query syntax, not a durable belief identity by itself.
+
+Causal hypotheses are also derived working projections by default. Do not add a persistent `CAUSAL` claim kind merely because an investigation needs temporary cause comparison; promote a new typed claim family only if representative behavior requires durable causal belief with stable semantics.
+
+---
+
+# 3. ObservationCoverage
 
 Non-observation is not automatically evidence of absence.
 
 ```text
 ObservationCoverage
-  scope: DomainSubjectRef / relation-query scope
-  modality: PerceptionModality
+  scope: DomainSubjectRef / bounded claim-query scope
+  modality
   coverage_class: LOW | MEDIUM | HIGH | EXHAUSTIVE_FOR_QUERY
-  query_pattern?: PropositionPattern
-  diagnostics: bounded semantic values
+  claim_pattern?
+  diagnostics
 ```
 
 Examples:
 
 ```text
 quick glance into cluttered storage
-→ LOW/MEDIUM coverage
+→ LOW/MEDIUM
 
-careful inspection of small open container for a rope-sized item
+careful inspection of a small open container for a rope-sized item
 → EXHAUSTIVE_FOR_QUERY
 ```
 
-Only sufficient coverage may produce strong negative evidence for propositions such as:
+Only sufficient coverage may produce strong contradiction/negative evidence for claims such as:
 
 ```text
-inside(item, container)
-present_at(item, place)
-attached_to(component, host)
+RelationClaim(item, inside, container)
+RelationClaim(item, expected_at, place)
+RelationClaim(component, attached_to, host)
 ```
 
-This prevents false certainty from occlusion, partial inspection or inaccessible contents.
-
-`ObservationCoverage` is derived and normally not persisted.
+Coverage is derived and normally not persisted.
 
 ---
 
-# 3. ExpectationMismatch
+# 4. ExpectationMismatch
 
-Expectation comparison should preserve why a mismatch exists.
+Expectation comparison preserves what was expected and why current evidence conflicts.
 
 ```text
 ExpectationMismatch
-  expected_proposition
+  expected_claim / typed claim pattern
   expectation_confidence
   observed_evidence_refs
   observation_coverage_ref?
@@ -83,7 +105,7 @@ ExpectationMismatch
   mismatch_strength
 ```
 
-Typical mismatch kinds:
+Typical kinds:
 
 ```text
 EXPECTED_PRESENT_BUT_ABSENT
@@ -94,85 +116,74 @@ EXPECTED_EVENT_DID_NOT_OCCUR
 UNEXPECTED_EVENT_OCCURRED
 ```
 
-A mismatch is derived evidence for salience/investigation; it is not itself durable memory.
+Mismatch is derived evidence for salience/investigation, not durable memory by itself.
 
 ---
 
-# 4. InvestigationContext
+# 5. InvestigationContext
 
 A bounded working context groups related observations around one unresolved problem.
 
 ```text
 InvestigationContext
   investigation_id
-  subject/problem pattern
-  originating_expectation_refs
-  collected_evidence_refs
-  active_hypotheses
-  unresolved_questions
-  recent_tactic_signatures
+  subject/problem claim pattern
+  originating expectation refs
+  collected evidence refs
+  active hypotheses
+  unresolved questions
+  recent tactic signatures
   opened_at
   bounded expiration/completion policy
 ```
 
-It is temporary working state/derived orchestration context, not a new psychological trait or global suspicion store.
+It is temporary working/continuation state, not a global suspicion store or new psychological primitive.
 
-Use cases include:
+Example problems:
 
 ```text
 missing storage materials
-mysterious repeated fire failures
-unexpected animal disappearance
-strange object relocation
-shelter damage with unclear cause
+repeated fire failures
+animal disappearance
+unexpected object relocation
+shelter damage of unclear cause
 food repeatedly disappearing
 ```
 
-An InvestigationContext may end because:
-
-```text
-cause becomes sufficiently resolved
-material goal is recovered and curiosity falls
-Wilson abandons/suspends investigation
-context expires/consolidates into a selected Episode
-stronger competing intention interrupts it
-```
+It may end when cause becomes sufficiently resolved, material goal is recovered, Wilson abandons/suspends it, context expires/consolidates or stronger priorities intervene.
 
 ---
 
-# 5. AnomalyPattern
+# 6. AnomalyPattern
 
-Multiple related evidence items may produce a derived pattern summary.
+Multiple evidence items may produce a derived pattern summary.
 
 ```text
 AnomalyPattern
   evidence_refs
-  semantic_features: bounded map
-  support_quality
+  bounded semantic features
+  support quality
 ```
 
 Possible features:
 
 ```text
-repetition count band
-same subject family
-same location family
+repetition band
+same subject/category/place family
 destination diversity
 personal-salience targeting
 physical-direction consistency
 known-actor compatibility
-similarity to prior selected episodes
+similarity to selected prior episodes
 ```
 
-Do not persist arbitrary pattern objects indefinitely.
-
-Durable consequences belong in beliefs/episodes/habits/associations/presence state if admitted by normal learning rules.
+Do not persist arbitrary pattern objects indefinitely. Durable consequences belong in existing cognition owners if normal learning admits them.
 
 ---
 
-# 6. CausalHypothesis
+# 7. CausalHypothesis
 
-Causal attribution should remain inspectable.
+Causal attribution remains inspectable and Wilson-relative.
 
 ```text
 CausalHypothesis
@@ -185,7 +196,7 @@ CausalHypothesis
   unresolved_conflicts
 ```
 
-Canonical cause classes:
+Canonical broad cause classes:
 
 ```text
 SELF
@@ -195,79 +206,70 @@ UNKNOWN_ORDINARY_CAUSE
 UNSEEN_PRESENCE
 ```
 
-Content may register narrower subtypes when representative gameplay requires them, but hypothesis identity must remain bounded and validated.
+`current_support` is not authoritative probability of truth. It is bounded Wilson-relative interpretation.
 
-`current_support` is not authoritative truth probability. It is a bounded Wilson-relative interpretation score/confidence.
+Presence receives no hidden architectural bonus; it wins only when Wilson-accessible evidence/history supports it comparatively.
 
 ---
 
-# 7. PerceivedCausalOpportunity
+# 8. PerceivedCausalOpportunity
 
-A hypothesis may require reasoning about whether a candidate cause could plausibly have acted.
-
-That reasoning must use Wilson-relative knowledge.
+A hypothesis may require asking whether the candidate cause could plausibly have acted.
 
 ```text
 PerceivedCausalOpportunity
-  candidate_hypothesis
-  relevant_time_window
-  known_access_plausibility
-  known_capability_plausibility
-  known_presence/proximity evidence
+  hypothesis
+  relevant time window
+  known access plausibility
+  known capability plausibility
+  known presence/proximity evidence
   diagnostics
 ```
 
-Examples:
+All inputs are Wilson-known/perceived claims/history.
+
+Forbidden inputs unless first converted into accessible evidence:
 
 ```text
-Gerald was recently seen near beach
-+ known to carry small food
-- not known to move heavy stone heads
-
-storm was heard overnight
-+ lightweight objects displaced downwind
-
-Wilson remembers using the work area
-+ self-misplacement plausible there
-- no memory/habit of storing tools on favorite rock
+omniscient actor logs
+private intervention provenance
+unobserved World history
+player intent
+hidden exact physical opportunity
 ```
-
-Actual actor logs, intervention provenance and unobserved world history are forbidden inputs unless first transformed into Wilson-accessible evidence.
 
 ---
 
-# 8. Causal support dimensions
+# 9. Causal support dimensions
 
-Hypothesis evaluation may use bounded contributions such as:
+Hypothesis comparison may combine bounded contributions such as:
 
 ```text
 prior plausibility
 pattern fit
-physical explanation fit
+physical explanation fit as Wilson understands it
 perceived causal opportunity
 personal/semantic targeting fit
 history similarity
 contradictory evidence
-explanation complexity penalty
+explanation-complexity penalty
 ```
 
-No single contribution is infinite or authoritative.
-
-Presence must not receive architectural privilege. It wins only when Wilson-visible evidence/history makes it comparatively plausible.
+No one contribution is infinite/authoritative.
 
 ---
 
-# 9. Investigation tactics and information value
+# 10. Investigation tactics and information value
 
-A tactic may be valuable because it can distinguish hypotheses.
+A tactic may be worthwhile because it distinguishes hypotheses.
 
 ```text
 InvestigationTacticEvaluation
-  immediate_goal_value
-  expected_information_gain
-  hypothesis_discrimination_value
+  immediate goal value
+  expected information gain
+  hypothesis discrimination value
   effort
-  risk
+  perceived risk
   interruption cost
   repetition penalty
 ```
@@ -275,74 +277,58 @@ InvestigationTacticEvaluation
 Examples:
 
 ```text
-search directly beside storage
-→ distinguishes local spill from deliberate relocation
+search beside storage
+→ distinguishes local spill from relocation
 
-inspect animal tracks
-→ may support/oppose known actor hypothesis
+inspect tracks
+→ may support/oppose known actor
 
 check personally meaningful location
-→ may discriminate random displacement from targeting
+→ may distinguish random displacement from targeting
 ```
 
-Exact Bayesian information theory is not required.
-
-Use bounded semantic estimates with clear provenance.
+Exact Bayesian machinery is not required; bounded semantic estimates with provenance are sufficient.
 
 ---
 
-# 10. Evidence diversity and saturation
+# 11. Evidence diversity and saturation
 
-Learning should treat evidence novelty separately from repetition count.
+Evidence novelty/diversity matters separately from repetition count.
 
 ```text
-same evidence pattern repeated many times
+same evidence pattern repeated
 → diminishing marginal update
 
 new independent/discriminating evidence
 → potentially stronger update
 ```
 
-This applies to:
+This applies to belief confidence, Presence belief/trust, association/habit learning and episode admission as appropriate.
 
-```text
-belief confidence
-presence belief
-trust consequence
-habit adaptation
-episode admission
-```
-
-Existing guards against runaway accumulation remain authoritative.
+Strong contradiction must remain capable of revising saturated beliefs.
 
 ---
 
-# 11. Relationship semantics
+# 12. Presence relationship semantics
 
-Presence relationship dimensions remain independent.
+Presence dimensions remain independent.
 
-A single investigation may validly produce:
+One investigation may validly yield:
 
 ```text
 presence_belief ↑
 trust ↓
 ```
 
-because:
-
-```text
-more evidence that an unseen agent exists
-+
-perceived harmful/frustrating consequence
-```
+because Wilson has more evidence an unseen agent exists while perceiving the consequences as harmful/frustrating.
 
 No special sabotage relationship state is required.
 
 ---
 
-# 12. Persistence
+# 13. Persistence
 
-Normally persist only admitted durable outcomes:
+Normally persist only admitted durable owner outcomes:
 
 ```text
 BeliefEntry changes
@@ -350,7 +336,7 @@ Association changes
 Habit changes
 selected Episodes
 Presence relationship changes
-world state
+World state
 ```
 
 Normally derive/reconstruct:
@@ -364,60 +350,54 @@ CausalHypothesis working set
 InvestigationTacticEvaluation
 ```
 
-`InvestigationContext` may be either:
-
-```text
-minimal resumable working state
-```
-
-or reconstructed from current/suspended intention plus recent bounded evidence refs.
-
-The final persistence representation may choose either strategy, but must not promote every investigation to permanent cognition state.
+`InvestigationContext` may be minimal resumable continuation state or reconstructed from current/suspended intention plus bounded recent evidence. Do not promote every anomaly into permanent cognition.
 
 ---
 
-# 13. Debug/explainability queries
+# 14. Debug/explainability
 
-Recommended derived diagnostics:
+Useful diagnostics:
 
 ```text
-ExplainExpectationMismatch(...)
-ExplainNegativeEvidence(...)
-ExplainInvestigationEvidence(...)
-ExplainCausalHypothesis(...)
-ExplainAttributionSelection(...)
-ExplainInvestigationTactic(...)
+ExplainExpectationMismatch
+ExplainNegativeEvidence
+ExplainInvestigationEvidence
+ExplainCausalHypothesis
+ExplainAttributionSelection
+ExplainInvestigationTactic
 ```
 
-A trace should make Wilson's mistake explainable without exposing private player intent as cognition input.
+A trace must explain Wilson's mistaken attribution without exposing hidden player/World truth as a cognition input.
 
 ---
 
-# 14. Anti-patterns
+# 15. Anti-patterns
 
 Do not introduce:
 
 ```text
-player_caused_this = true inside Wilson cognition
+player_caused_this=true inside Wilson cognition
 universal suspicion meter
 persistent investigation object for every anomaly
-presence hypothesis always included/winning with hidden bonus
-not_seen = absent without coverage semantics
-exact omniscient actor opportunity queries for Wilson
-LLM-generated new causes outside registered cause classes
+Presence hypothesis always winning with hidden bonus
+not_seen = absent without coverage
+omniscient actor-opportunity lookup for Wilson
+LLM-generated unrestricted new cause classes
+arbitrary predicate/argument belief identity
 ```
 
 ---
 
-# 15. Regression target
+# 16. Regression target
 
-This contract is sufficient when `Sabotaged Storage` and related anomaly scenes can produce different valid attributions from different histories while preserving:
+`Sabotaged Storage` and related scenes should permit:
 
 ```text
-same authoritative world result
-+
-different Wilson knowledge/history
-→ different causal interpretation
+same authoritative current World result
++ different Wilson-accessible histories/evidence
+→ different plausible causal interpretations
 ```
 
-That variation is a feature, not nondeterministic authority leakage.
+while preserving actual cause separately and keeping all persistent cognition changes grounded in typed claims/evidence/owner-local learning.
+
+**Result: PASS as a domain contract; concrete full investigation runtime remains system breadth, not unfinished structural foundation.**
