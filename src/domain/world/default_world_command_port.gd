@@ -80,12 +80,12 @@ func _validate_effect(effect, bindings, errors: Array[String]) -> void:
 			if not bindings.has(effect.object_role):
 				errors.append("Missing effect object role: %s" % String(effect.object_role))
 				return
-			var object = bindings.get_subject(effect.object_role)
-			var existing: Array = _relations.find_relations(effect.semantic_id, subject, object)
-			if effect.kind == ActionEffect.Kind.CREATE_RELATION and not existing.is_empty():
-				errors.append("Relation already exists: %s" % String(effect.semantic_id.value))
-			if effect.kind == ActionEffect.Kind.REMOVE_RELATION and existing.is_empty():
-				errors.append("Relation does not exist: %s" % String(effect.semantic_id.value))
+			var relation = _relation_for_effect(effect, bindings)
+			var existing = _relations.get_relation(relation.key())
+			if effect.kind == ActionEffect.Kind.CREATE_RELATION and existing != null:
+				errors.append("Exact relation already exists: %s" % relation.sort_key())
+			if effect.kind == ActionEffect.Kind.REMOVE_RELATION and existing == null:
+				errors.append("Exact relation does not exist: %s" % relation.sort_key())
 
 
 func _apply_effect(effect, bindings):
@@ -94,14 +94,19 @@ func _apply_effect(effect, bindings):
 		ActionEffect.Kind.SET_PROPERTY:
 			return _entities.set_property_override(subject.id, effect.semantic_id, effect.value)
 		ActionEffect.Kind.CREATE_RELATION:
-			var object = bindings.get_subject(effect.object_role)
-			return _relations.add_relation(WorldRelation.new(effect.semantic_id, subject, object, effect.value))
+			return _relations.add_relation(_relation_for_effect(effect, bindings))
 		ActionEffect.Kind.REMOVE_RELATION:
-			var object = bindings.get_subject(effect.object_role)
-			var existing: Array = _relations.find_relations(effect.semantic_id, subject, object)
-			return _relations.remove_relation(existing[0])
+			var relation = _relation_for_effect(effect, bindings)
+			var stored = _relations.get_relation(relation.key())
+			return _relations.remove_relation(stored)
 	assert(false, "Unsupported ActionEffect kind")
 	return null
+
+
+func _relation_for_effect(effect, bindings):
+	var subject = bindings.get_subject(effect.subject_role)
+	var object = bindings.get_subject(effect.object_role)
+	return WorldRelation.new(effect.semantic_id, subject, object, effect.value)
 
 
 func _record_change(effect, bindings, change_set) -> void:
