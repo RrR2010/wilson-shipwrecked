@@ -49,9 +49,14 @@ func clear_property_override(entity_id: DomainId, property_id: DomainId) -> Muta
 	return MutationResult.success(&"entity_property_override_cleared", entity)
 
 
+func entities() -> Array:
+	var result: Array = _entities.values()
+	result.sort_custom(func(a, b): return a.id.sort_key() < b.id.sort_key())
+	return result
+
+
 func entity_ids() -> Array[String]:
 	var result: Array[String] = []
-	for entity in _entities.values():
+	for entity in entities():
 		result.append(entity.id.sort_key())
-	result.sort()
 	return result
