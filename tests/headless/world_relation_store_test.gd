@@ -11,14 +11,19 @@ const WorldRelationStore = preload("res://src/domain/world/world_relation_store.
 const DefaultWorldQuery = preload("res://src/domain/world/default_world_query.gd")
 
 var _failures: Array[String] = []
+var _completed := false
 
 
 func _init() -> void:
 	_run_relation_store_slice()
+	if not _completed:
+		_failures.append("Test body did not reach completion; inspect preceding parser/runtime errors")
+
 	if _failures.is_empty():
 		print("PASS world_relation_store_test")
 		quit(0)
 		return
+
 	for failure in _failures:
 		push_error(failure)
 	print("FAIL world_relation_store_test: %d failure(s)" % _failures.size())
@@ -81,6 +86,8 @@ func _run_relation_store_slice() -> void:
 	_expect_true(entities.set_property_override(stone_id, hardness, 4).ok, "property override mutates through owner store")
 	_expect_equal(query.get_instance_property(stone, hardness), 4, "instance override wins over authored property")
 
+	_completed = true
+
 
 func _relation_keys(relations: Array) -> Array[String]:
 	var result: Array[String] = []
@@ -89,19 +96,23 @@ func _relation_keys(relations: Array) -> Array[String]:
 	result.sort()
 	return result
 
+
 func _subject_keys(subjects: Array) -> Array[String]:
 	var result: Array[String] = []
 	for subject in subjects:
 		result.append(subject.sort_key())
 	return result
 
+
 func _expect_true(actual: bool, label: String) -> void:
 	if not actual:
 		_failures.append("Expected true: %s" % label)
 
+
 func _expect_false(actual: bool, label: String) -> void:
 	if actual:
 		_failures.append("Expected false: %s" % label)
+
 
 func _expect_equal(actual: Variant, expected: Variant, label: String) -> void:
 	if actual != expected:
