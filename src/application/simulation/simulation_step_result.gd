@@ -11,6 +11,7 @@ var perception
 var immediate_learning
 var candidates: Array
 var decision
+var intention_commit
 var world_commit
 
 
@@ -22,6 +23,7 @@ func _init(
 	p_immediate_learning,
 	p_candidates: Array,
 	p_decision,
+	p_intention_commit,
 	p_world_commit
 ) -> void:
 	step_id = p_step_id
@@ -31,4 +33,5 @@ func _init(
 	immediate_learning = p_immediate_learning
 	candidates = p_candidates.duplicate()
 	decision = p_decision
+	intention_commit = p_intention_commit
 	world_commit = p_world_commit
