@@ -60,7 +60,8 @@ func _run_slice() -> void:
 
 	if result.observed_events.size() == 1:
 		var observed = result.observed_events[0]
-		_expect_equal(String(observed.event_type), "impact_committed", "observed event keeps semantic event type")
+		_expect_equal(String(observed.event_type.value), "impact_committed", "observed event keeps semantic event type")
+		_expect_equal(observed.event_type.kind, DomainId.Kind.EVENT_DEFINITION, "observed event uses EventDefinitionId")
 		_expect_true(observed.perceived_bindings.has(&"target"), "target role is accessible")
 		_expect_false(observed.perceived_bindings.has(&"tool"), "hidden tool role does not leak from WorldEvent")
 		_expect_false(observed.perceived_bindings.has(&"actor"), "hidden actor role does not leak from WorldEvent")
@@ -73,8 +74,10 @@ func _run_slice() -> void:
 		_expect_equal(String(evidence.predicate), "observed_event", "evidence is an observation proposal, not world truth")
 		_expect_equal(evidence.confidence, 0.75, "access confidence carried into evidence")
 		_expect_equal(String(evidence.modality), "hearing", "evidence records modality")
-		_expect_equal(evidence.value["event_type"], "impact_committed", "evidence references perceived event")
-		_expect_equal(evidence.value["role"], "target", "evidence references perceived role")
+		_expect_equal(String(evidence.value.event_type.value), "impact_committed", "claim references typed perceived event")
+		_expect_equal(String(evidence.value.role_name), "target", "claim references perceived role")
+		_expect_true(evidence.value.sort_key().find("tool") == -1, "claim does not leak hidden tool role")
+		_expect_true(evidence.value.sort_key().find("actor") == -1, "claim does not leak hidden actor role")
 
 	# Authoritative event remains complete; projection does not mutate or redact truth.
 	_expect_true(hit_event.bindings.has(&"tool"), "WorldEvent retains hidden tool truth")
