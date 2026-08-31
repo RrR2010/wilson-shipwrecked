@@ -1,78 +1,61 @@
-# Artistic Asset Brief Template
+# Artistic Brief Template
 
 ## Purpose
 
-Provide the smallest practical task-level specification that connects the functional catalog to visual production.
+An art brief is an optional **visual refinement** of a cross-cutting asset-catalog entry.
 
-The brief should be concise enough for repeated agent use while still resolving the artistic decisions that should not be reinvented per asset.
+It exists only when `docs/asset-catalog/` + approved art references do not resolve an artistic ambiguity. It must not become a second source for functional requirements.
 
-Do not duplicate entire project documents inside a brief. Link to the relevant grammar/reference instead.
+Do **not** duplicate into an art brief:
 
----
+- domain identity;
+- capabilities/properties;
+- required gameplay interactions;
+- project semantics;
+- authoritative state definitions;
+- anchor/socket requirements already defined by the cross-cutting catalog or `ASSET_SPEC.md`.
 
-# 1. Recommended brief
+Link to the catalog row and record only visual decisions that are genuinely task-specific.
+
+## Minimal template
 
 ```yaml
-asset_id: <stable_asset_id>
-family: <family_name>
-priority: P0 | P1 | P2
-brief_level: grammar_only | family | asset_specific
+catalog_entry: <asset/family id from docs/asset-catalog>
+brief_level: family_art | asset_art
 
-role:
-  - <primary gameplay/visual role>
-
-primary_read: <one short silhouette/function sentence>
+primary_read: <one short silhouette/function-visible sentence>
 
 references:
   textual:
-    - <relevant art/reference document>
+    - <relevant docs/art/reference file>
   visual:
-    - <relevant visual sheet filename if available>
+    - <relevant approved sheet>
 
-scale:
-  approximate_dimensions_m: <x/y/z or useful dimensions>
-  compare_against: <Wilson / crate / coconut / etc.>
+visual_scale:
+  compare_against: <Wilson / crate / coconut / sibling asset>
+  exaggeration_notes: <only if catalog/runtime dimensions need artistic readability guidance>
 
-composition:
-  major_parts:
-    - <part>
-  modular: true | false
-  notes: <only if needed>
+shape_constraints:
+  dominant_forms:
+    - <form>
+  required_visible_connections:
+    - <connection if relevant>
+  asymmetry_or_variation_bounds: <optional>
 
 materials:
-  families:
+  preferred_roles:
     - <wood / stone / rope / metal / etc.>
   unique_texture_allowed: false
-  exceptions: <semantic decal or special functional need, otherwise none>
+  exceptions: <semantic decal/special shader only if justified>
 
-variants:
-  required:
-    - <variant>
-  optional:
-    - <variant>
-
-states:
-  required:
-    - <state>
-
-anchors:
-  required:
-    - <semantic anchor if relevant>
-
-sockets:
-  required:
-    - <semantic socket if relevant>
-
-visual_history:
-  persistent_repairs: true | false
-  persistent_wear: true | false
-  notes: <if relevant>
+visible_state_notes:
+  - <only how a catalog-required state should read visually>
 
 must_read_from_gameplay_camera:
-  - <critical feature>
+  - <critical visual feature>
 
 avoid:
-  - <asset-specific visual trap>
+  - <task-specific visual trap>
 
 review_extras:
   state_strip: true | false
@@ -81,251 +64,123 @@ review_extras:
   anchor_diagnostic: true | false
 ```
 
----
+Fields that add no information beyond the catalog/reference should be omitted.
 
-# 2. Grammar-only brief example
+## When no brief is needed
+
+Do not create a brief for a simple variant when the catalog row + reference grammar already specify enough information.
+
+Typical no-brief examples:
+
+```text
+rock variant
+simple log
+plank
+rope coil
+coconut variant
+basic bowl
+```
+
+The task may simply name the catalog entry and requested variant/seed.
+
+## Family art brief
+
+Use when several catalog entries share a visual rule not already cleanly expressed by an approved reference.
+
+Examples:
+
+- bounded silhouette variation among generated rocks;
+- allowed trunk/crown proportion ranges for palms;
+- shared visual joinery language for a seating family.
+
+A family art brief must not redefine the functional family taxonomy.
+
+## Asset-specific art brief
+
+Use rarely, for assets with unusual visual risk or identity:
+
+- Wilson final character design;
+- distinctive recurring animal if required;
+- rare hero salvage;
+- a landmark whose exact silhouette needs explicit approval.
+
+Large projects such as shelter/raft/dock do **not** automatically require a separate art brief if the cross-cutting project catalog + project reference sheet already resolve their visual construction.
+
+## Example
 
 ```yaml
-asset_id: stone_small_01
-family: rock_small
-priority: P0
-brief_level: grammar_only
+catalog_entry: tool_improvised_hammer
+brief_level: asset_art
 
-role:
-  - portable stone
-  - generic impact object
-
-primary_read: Small chunky irregular stone with a few dominant planes.
+primary_read: Thick wooden handle, oversized heavy stone head and one broad readable binding zone.
 
 references:
   textual:
-    - reference/REFERENCE_02_NATURAL_ISLAND_VOCABULARY.md
+    - reference/REFERENCE_05_TOOL_GRAMMAR.md
   visual:
-    - reference/visual/REFERENCE_02_NATURAL_ISLAND_VOCABULARY.png
+    - reference/visual/REFERENCE_05_TOOL_GRAMMAR.png
 
-scale:
-  approximate_dimensions_m: 0.12 x 0.10 x 0.08
+visual_scale:
   compare_against: Wilson hand
+  exaggeration_notes: Head should read clearly at gameplay distance without becoming comedic unless the catalog variant says so.
+
+shape_constraints:
+  dominant_forms:
+    - thick faceted handle
+    - chunky low-plane stone head
+  required_visible_connections:
+    - binding must visibly explain head-to-handle attachment
 
 materials:
-  families:
-    - stone
-  unique_texture_allowed: false
-
-variants:
-  required:
-    - angular
-
-states:
-  required:
-    - dry
-    - wet
-
-must_read_from_gameplay_camera:
-  - broad faceted shape
-
-avoid:
-  - tiny facets
-  - perfect sphere
-```
-
-This is enough because the rock grammar already defines most decisions.
-
----
-
-# 3. Family brief example
-
-```yaml
-asset_id: FAMILY_crude_seating
-family: crude_seating
-priority: P0
-brief_level: family
-
-role:
-  - sittable locations
-  - preference alternatives
-
-primary_read: Thick simple seating forms built from obvious primitive materials.
-
-references:
-  textual:
-    - reference/REFERENCE_03_CAMP_PRIMITIVE_PROPS.md
-  visual:
-    - reference/visual/REFERENCE_03_CAMP_PRIMITIVE_PROPS.png
-
-scale:
-  compare_against: Wilson seated mannequin
-
-composition:
-  major_parts:
-    - support
-    - sitting surface
-  modular: false
-
-materials:
-  families:
+  preferred_roles:
     - wood
     - stone
+    - fiber
   unique_texture_allowed: false
 
-variants:
-  required:
-    - log seat
-    - stump seat
-    - crude stool
-    - simple bench
-
-anchors:
-  required:
-    - ANCHOR_SIT
+visible_state_notes:
+  - Loose/repaired binding should change the broad binding silhouette, not rely on tiny fray texture.
 
 must_read_from_gameplay_camera:
-  - stable seat surface
-  - distinct alternatives for preference behavior
+  - head mass
+  - grip direction
+  - binding connection
 
 avoid:
-  - thin furniture proportions
-  - ornate joinery
-```
-
-Individual stool variants should inherit this family brief rather than each receiving a long independent document.
-
----
-
-# 4. Asset-specific brief example
-
-```yaml
-asset_id: shelter_basic
-family: shelter
-priority: P0
-brief_level: asset_specific
-
-role:
-  - weather protection
-  - sleep location
-  - persistent camp landmark
-  - evolving project
-
-primary_read: Compact improvised shelter with a readable tied-pole frame and broad roof mass.
-
-references:
-  textual:
-    - reference/REFERENCE_06_SHELTER_EVOLUTION.md
-    - reference/REFERENCE_08_WEATHER_DAMAGE.md
-    - reference/REFERENCE_09_WILSON_SCALE_INTERACTION.md
-  visual:
-    - reference/visual/REFERENCE_06_SHELTER_EVOLUTION.png
-    - reference/visual/REFERENCE_08_WEATHER_DAMAGE.png
-
-scale:
-  approximate_dimensions_m: 2.3 x 2.0 x 2.1
-  compare_against: Wilson standing and sleeping
-
-composition:
-  major_parts:
-    - foundation markers
-    - posts
-    - ridge beam
-    - braces
-    - bindings
-    - roof panels
-    - optional wall panels
-    - floor/sleeping area
-  modular: true
-
-materials:
-  families:
-    - wood
-    - rope_fiber
-    - thatch
-    - optional salvage cloth
-  unique_texture_allowed: false
-
-states:
-  required:
-    - site_marked
-    - partial_frame
-    - complete_frame
-    - partial_roof
-    - basic_complete
-    - damaged_roof
-    - repaired_patch
-
-anchors:
-  required:
-    - ANCHOR_APPROACH
-    - ANCHOR_BUILD
-    - ANCHOR_REPAIR
-    - ANCHOR_SLEEP
-
-sockets:
-  required:
-    - SOCKET_ROOF
-    - SOCKET_WALL
-    - SOCKET_EXTENSION
-
-visual_history:
-  persistent_repairs: true
-  persistent_wear: true
-
-must_read_from_gameplay_camera:
-  - triangular/roof shelter silhouette
-  - visible construction progress
-  - repair patches
-
-avoid:
-  - monolithic hut mesh
-  - dense thatch fibers
-  - realistic woven textures
+  - thin realistic handle
+  - tiny rope strands
+  - many random stone facets
 
 review_extras:
   state_strip: true
   scale_comparison: true
-  exploded_view: true
-  anchor_diagnostic: true
+  exploded_view: false
+  anchor_diagnostic: false
 ```
 
----
+## Storage recommendation
 
-# 5. Where briefs should live
-
-Recommended future organization:
+If briefs become necessary:
 
 ```text
 docs/art/briefs/
 ├── families/
-│   ├── rocks.md
-│   ├── palms.md
-│   ├── crude-seating.md
-│   └── ...
 └── assets/
-    ├── shelter-basic.md
-    ├── raft-basic.md
-    └── ...
 ```
 
-Do not populate hundreds of briefs in advance.
+Create them just-in-time. Do not pre-author hundreds of art briefs.
 
-Create them **just before a production batch** using the functional catalog and approved references.
+## Rule
 
----
+```text
+Asset Catalog
+  = what the model is and must support across concerns
 
-# 6. Brief-generation rule
+Art references
+  = shared visual language
 
-The functional brainstorming rounds are upstream design evidence.
+Art brief
+  = exceptional task-specific visual clarification
+```
 
-They answer:
-
-> What kinds of things should exist and what should they be capable of?
-
-The art brief answers:
-
-> What exactly should this production task create while staying inside the approved art system?
-
-Therefore:
-
-- rounds should not be fed alone as modeling instructions;
-- family briefs should distill repeated rules;
-- asset-specific briefs should exist only where ambiguity/risk warrants them.
-
-This prevents both under-specification and documentation explosion.
+If an art brief starts restating the asset catalog, delete the duplicated fields rather than maintaining both.
