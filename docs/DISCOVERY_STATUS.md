@@ -6,7 +6,7 @@ Wilson Shipwrecked has completed the product/behavior/architecture discovery gat
 
 The current design phase is **functional-domain stabilization through concrete scenario fixtures/micro-loops**, immediately before package/module layout and implementation-language-specific code.
 
-The project is no longer waiting for a first domain model: structural, operation, vocabulary, procedural-composition, Scientific Method and Falling Palm micro-loop regressions now exist.
+The project is no longer waiting for a first domain model: structural, operation, vocabulary, procedural-composition, Scientific Method, Falling Palm and Sabotaged Storage micro-loop regressions now exist.
 
 ---
 
@@ -30,12 +30,14 @@ For work that changes simulation/domain behavior, read:
 14. `DOMAIN_OPERATIONS.md`
 15. `DOMAIN_PROCEDURAL_COMPOSITION.md`
 16. `DOMAIN_HAZARD_DYNAMICS.md`
-17. `DOMAIN_MICRO_LOOP.md`
-18. `DOMAIN_MICRO_LOOP_FALLING_PALM.md`
-19. `DOMAIN_OPERATION_REFINEMENTS.md`
-20. `DOMAIN_REGRESSION.md`
-21. `DOMAIN_OPERATION_TRACES.md`
-22. `DOMAIN_VOCABULARY_REGRESSION.md`
+17. `DOMAIN_EPISTEMIC_INVESTIGATION.md`
+18. `DOMAIN_MICRO_LOOP.md`
+19. `DOMAIN_MICRO_LOOP_FALLING_PALM.md`
+20. `DOMAIN_MICRO_LOOP_SABOTAGED_STORAGE.md`
+21. `DOMAIN_OPERATION_REFINEMENTS.md`
+22. `DOMAIN_REGRESSION.md`
+23. `DOMAIN_OPERATION_TRACES.md`
+24. `DOMAIN_VOCABULARY_REGRESSION.md`
 
 `DOMAIN_SCHEMA.dbml` is a visualization aid only and is not a persistence/database mandate.
 
@@ -82,6 +84,9 @@ Derived/non-owning services include:
 ```text
 Perception
 Perceptual Evidence derivation
+Observation coverage / expectation mismatch
+Investigation / anomaly pattern derivation
+Causal hypothesis / attribution
 Expectation
 Salience
 Effective physical profile derivation
@@ -90,7 +95,6 @@ Hazard projection
 Perceived threat derivation
 Tactical candidate generation/evaluation
 Intentional candidate generation/evaluation
-Causal attribution
 Reaction
 Learning proposal derivation
 Luck
@@ -228,6 +232,37 @@ A palm may already be irreversibly falling while Wilson/player actions can still
 
 Falling Palm regression: **PASS with incorporated hazard-dynamics refinements**.
 
+## Sabotaged Storage micro-loop / epistemic investigation
+
+`DOMAIN_MICRO_LOOP_SABOTAGED_STORAGE.md` validates an offscreen player intervention whose causal identity is hidden from Wilson.
+
+`DOMAIN_EPISTEMIC_INVESTIGATION.md` promotes the reusable semantics exposed by that fixture:
+
+```text
+ObservationCoverage
+ExpectationMismatch
+InvestigationContext
+AnomalyPattern
+CausalHypothesis with supporting/opposing evidence
+PerceivedCausalOpportunity
+information/discrimination value for investigation tactics
+```
+
+The key invariant is explicit:
+
+```text
+actual cause
+!= current world result
+!= Wilson observation
+!= Wilson causal attribution
+```
+
+Negative evidence now requires sufficient observation coverage: `not observed` does not automatically mean `absent`.
+
+Multiple related anomalies may be grouped in a bounded temporary investigation context without creating a persistent suspicion system. Presence attribution receives no hidden privilege and may lose to self, known actor, natural process or unknown ordinary cause depending on Wilson-visible evidence/history.
+
+Sabotaged Storage regression: **PASS with incorporated epistemic-investigation refinements**.
+
 ---
 
 # Functional asset catalog status
@@ -260,15 +295,16 @@ stone vs bowling-ball impact grammar
 Current status:
 
 ```text
-Structural domain                  PASS
-Vocabulary normalization          PASS
-Representative scene regression   PASS
-Operation regression              PASS
-Functional asset breadth          PASS + normalized procedural contracts
-Gradual exploration               PASS after evidence refinement
-Composite object semantics        PASS after EffectivePhysicalProfile refinement
-Scientific Method micro-loop      PASS
-Falling Palm hazard micro-loop    PASS
+Structural domain                    PASS
+Vocabulary normalization            PASS
+Representative scene regression     PASS
+Operation regression                PASS
+Functional asset breadth            PASS + normalized procedural contracts
+Gradual exploration                 PASS after evidence refinement
+Composite object semantics          PASS after EffectivePhysicalProfile refinement
+Scientific Method micro-loop        PASS
+Falling Palm hazard micro-loop      PASS
+Sabotaged Storage epistemic loop    PASS
 ```
 
 No new state-owning system was required for:
@@ -282,6 +318,8 @@ material physics
 interaction sub-regions
 hazard projection
 immediate threat handling
+epistemic investigation
+causal attribution working context
 ```
 
 These remain composition/derivation concerns inside existing authority boundaries. Only time-extended authoritative physical evolution may require durable `DynamicProcessState` while active.
@@ -300,7 +338,8 @@ The following may still be refined during concrete fixtures/implementation, but 
 6. exact semantic concept vocabulary boundaries;
 7. concrete content serialization format;
 8. exact presentation adapters for `InteractionRegion` / anchors / sockets;
-9. exact deterministic tie-break encoding for simultaneous semantic boundaries.
+9. exact deterministic tie-break encoding for simultaneous semantic boundaries;
+10. exact minimal serialization/reconstruction policy for a save occurring mid-investigation.
 
 ---
 
@@ -312,7 +351,7 @@ Before implementation-specific package layout:
 2. include at least:
    - Scientific Method (traced at frame-group level),
    - Falling Palm (traced at hazard frame-group level),
-   - Sabotaged Storage,
+   - Sabotaged Storage (traced at epistemic frame-group level),
    - one composite-object fixture (improvised hammer or barrel),
    - one environment/composition fixture (cloth/shelter in rain/wind);
 3. validate that each fixture can be represented without new bypass flags/classes;
