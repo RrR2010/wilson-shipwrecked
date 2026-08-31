@@ -1,10 +1,10 @@
 class_name SimulationSnapshotService
 extends RefCounted
 
-const DomainId = preload("res://src/domain/core/domain_id.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const EntityInstance = preload("res://src/domain/world/entity_instance.gd")
 const EntityStore = preload("res://src/domain/world/entity_store.gd")
+const WilsonWorldState = preload("res://src/domain/world/wilson_world_state.gd")
 const WorldRelation = preload("res://src/domain/world/world_relation.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
 const BeliefProposition = preload("res://src/domain/cognition/belief_proposition.gd")
@@ -14,7 +14,7 @@ const EpistemicGraphProjection = preload("res://src/domain/cognition/epistemic_g
 const DomainValueCodec = preload("res://src/infrastructure/persistence/domain_value_codec.gd")
 const RestoredSimulationState = preload("res://src/infrastructure/persistence/restored_simulation_state.gd")
 
-const SCHEMA_VERSION := 2
+const SCHEMA_VERSION := 3
 
 var _codec
 
@@ -23,15 +23,17 @@ func _init(codec = null) -> void:
 	_codec = codec if codec != null else DomainValueCodec.new()
 
 
-func capture(entity_store, relation_store, belief_store, intention_store) -> Dictionary:
+func capture(entity_store, relation_store, wilson_world_state, belief_store, intention_store) -> Dictionary:
 	assert(entity_store != null, "capture requires EntityStore")
 	assert(relation_store != null, "capture requires WorldRelationStore")
+	assert(wilson_world_state != null, "capture requires WilsonWorldState")
 	assert(belief_store != null, "capture requires BeliefStore")
 	assert(intention_store != null, "capture requires CurrentIntentionStore")
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"entities": _capture_entities(entity_store),
 		"relations": _capture_relations(relation_store),
+		"wilson_world": {"place_id": _codec.encode(wilson_world_state.place_id)},
 		"beliefs": _capture_beliefs(belief_store),
 		"current_intention": _capture_intention(intention_store),
 	}
@@ -65,6 +67,10 @@ func restore(snapshot: Dictionary):
 	relations.rebuild_indexes()
 	assert(relations.validate_indexes().ok, "Restored relation indexes invalid")
 
+	var wilson_record = snapshot.get("wilson_world")
+	assert(wilson_record is Dictionary and wilson_record.has("place_id"), "Snapshot missing Wilson world state")
+	var wilson_world_state = WilsonWorldState.new(_codec.decode(wilson_record["place_id"]))
+
 	var beliefs = BeliefStore.new()
 	for record in snapshot.get("beliefs", []):
 		var proposition = BeliefProposition.new(_codec.decode(record["claim"]))
@@ -90,7 +96,7 @@ func restore(snapshot: Dictionary):
 
 	var epistemic_projection = EpistemicGraphProjection.new()
 	epistemic_projection.rebuild(beliefs)
-	return RestoredSimulationState.new(entities, relations, beliefs, intention_store, epistemic_projection)
+	return RestoredSimulationState.new(entities, relations, wilson_world_state, beliefs, intention_store, epistemic_projection)
 
 
 func _capture_entities(entity_store) -> Array:
