@@ -10,8 +10,8 @@ const SemanticChange = preload("res://src/domain/world/semantic_change.gd")
 const SemanticChangeSet = preload("res://src/domain/world/semantic_change_set.gd")
 
 ## Owner-local mutation boundary for committed ActionOutcome effects.
-## Validates the entire effect batch before applying it so one outcome cannot
-## intentionally leave a partially applied World mutation set.
+## Prevalidation simulates relation presence in effect order so the supported
+## mutation set is logically transactional without requiring generic rollback.
 
 var _entities
 var _relations
@@ -29,8 +29,9 @@ func _init(entities, relations, property_schema_query = null) -> void:
 func apply_outcome(outcome):
 	assert(outcome != null, "apply_outcome requires ActionOutcome")
 	var validation_errors: Array[String] = []
+	var relation_shadow: Dictionary = {}
 	for effect in outcome.effects:
-		_validate_effect(effect, outcome.bindings, validation_errors)
+		_validate_effect(effect, outcome.bindings, validation_errors, relation_shadow)
 	if not validation_errors.is_empty():
 		return WorldCommitResult.new(false, [], [], validation_errors)
 
@@ -46,7 +47,7 @@ func apply_outcome(outcome):
 				false,
 				mutation_results,
 				[],
-				["World mutation failed after successful prevalidation: %s" % String(result.code)],
+				["World mutation failed after successful sequential prevalidation: %s" % String(result.code)],
 				change_set
 			)
 
@@ -59,7 +60,12 @@ func apply_outcome(outcome):
 	return WorldCommitResult.new(true, mutation_results, [event], [], change_set)
 
 
-func _validate_effect(effect, bindings, errors: Array[String]) -> void:
+func _validate_effect(
+	effect,
+	bindings,
+	errors: Array[String],
+	relation_shadow: Dictionary
+) -> void:
 	assert(effect != null, "ActionOutcome effects cannot contain null")
 	if not bindings.has(effect.subject_role):
 		errors.append("Missing effect subject role: %s" % String(effect.subject_role))
@@ -81,11 +87,22 @@ func _validate_effect(effect, bindings, errors: Array[String]) -> void:
 				errors.append("Missing effect object role: %s" % String(effect.object_role))
 				return
 			var relation = _relation_for_effect(effect, bindings)
-			var existing = _relations.get_relation(relation.key())
-			if effect.kind == ActionEffect.Kind.CREATE_RELATION and existing != null:
-				errors.append("Exact relation already exists: %s" % relation.sort_key())
-			if effect.kind == ActionEffect.Kind.REMOVE_RELATION and existing == null:
-				errors.append("Exact relation does not exist: %s" % relation.sort_key())
+			var relation_key = relation.key()
+			var present: bool
+			if relation_shadow.has(relation_key):
+				present = bool(relation_shadow[relation_key])
+			else:
+				present = _relations.get_relation(relation_key) != null
+			if effect.kind == ActionEffect.Kind.CREATE_RELATION:
+				if present:
+					errors.append("Exact relation already exists in sequential batch state: %s" % relation.sort_key())
+					return
+				relation_shadow[relation_key] = true
+			else:
+				if not present:
+					errors.append("Exact relation does not exist in sequential batch state: %s" % relation.sort_key())
+					return
+				relation_shadow[relation_key] = false
 
 
 func _apply_effect(effect, bindings):
