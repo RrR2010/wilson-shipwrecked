@@ -49,7 +49,7 @@ func _run_slice() -> void:
 		1.0,
 		0.5,
 		[],
-		&"inspection_committed",
+		DomainId.event_definition(&"inspection_committed"),
 		&"inspect_basic_v1"
 	)
 
