@@ -2,7 +2,7 @@ class_name PerceptionService
 extends RefCounted
 
 const ObservedEvent = preload("res://src/domain/cognition/observed_event.gd")
-const ObservedEventClaim = preload("res://src/domain/cognition/observed_event_claim.gd")
+const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 const PerceptualEvidence = preload("res://src/domain/cognition/perceptual_evidence.gd")
 const PerceptionResult = preload("res://src/domain/cognition/perception_result.gd")
 
@@ -34,9 +34,7 @@ func perceive(world_events: Array, access_by_execution: Dictionary):
 			if not access.modalities.is_empty():
 				modality = access.modalities[0]
 			evidence.append(PerceptualEvidence.new(
-				subject,
-				&"observed_event",
-				ObservedEventClaim.new(world_event.event_type, role_name),
+				EpistemicClaim.event_claim(subject, world_event.event_type, role_name),
 				access.confidence,
 				world_event.execution_id,
 				modality
