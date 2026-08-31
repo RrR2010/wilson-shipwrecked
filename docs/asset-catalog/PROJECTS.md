@@ -86,6 +86,14 @@ These are valid `ProjectDefinition`s when Wilson deliberately pursues the arrang
 
 ---
 
+## Personalization and symbolic arrangements
+
+| Status | Spec | Pri | Project / domain mapping | Required roles / compatible families | Completion / effective semantics | Composition / interaction regions | World-readable milestones / environment | Actions / coverage | Art / production |
+|---|---|---:|---|---|---|---|---|---|---|
+| TODO | ALIGNED | P1 | `project.decorative_arrangement`; generic `ProjectDefinition` for persistent multi-session aesthetic/symbolic layouts | role.decorative_piece: `shell_decorative`, `stone_small` or any compatible persistent small entity; role.support_or_site: `flat_rock`, shelf, ground/place or compatible surface; optional authored arrangement/shape target | completion reads grounded positions/relations against the authored arrangement goal; no `beauty`, `favorite`, `statue_quality` or duplicate layout state; single-session arrangements may use an ordinary intention without a `ProjectInstance` | rel: pieces remain ordinary independent entities using spatial/`on_top_of` relations; project never owns their transforms; optional placement regions/adapters only for presentation/readability | staged pieces -> recognizable arrangement -> adjusted/expanded/damaged/missing-piece variants derived from world truth; weather/animals/player can disrupt ordinary pieces | act: collect, put/move/remove, inspect, continue/repair arrangement; scene: Interior Design, Statue of Gerald; Scene 40 uses the same actions without requiring a project | Low-cost systemic project pattern; avoid bespoke `project.gerald_statue` definitions |
+
+---
+
 ## Normalization notes
 
 - Component lists are intentionally expressed as **semantic roles with compatible family examples**. They are not recipes.
