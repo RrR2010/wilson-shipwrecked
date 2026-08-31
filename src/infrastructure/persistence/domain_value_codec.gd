@@ -3,6 +3,7 @@ extends RefCounted
 
 const DomainId = preload("res://src/domain/core/domain_id.gd")
 const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
+const ObservedEventClaim = preload("res://src/domain/cognition/observed_event_claim.gd")
 
 ## JSON-friendly recursive codec for semantic values used by persistence.
 ## Persistence never relies on Object identity or var_to_str() reconstruction.
@@ -24,6 +25,12 @@ func encode(value: Variant) -> Variant:
 				"$type": "runtime_world_ref",
 				"kind": value.kind,
 				"id": null if value.id == null else encode(value.id),
+			}
+		if value.get_script() == ObservedEventClaim:
+			return {
+				"$type": "observed_event_claim",
+				"event_type": encode(value.event_type),
+				"role": String(value.role_name),
 			}
 		assert(false, "Unsupported Object persistence value: %s" % value)
 		return null
@@ -56,6 +63,8 @@ func decode(encoded: Variant) -> Variant:
 		"runtime_world_ref":
 			var decoded_id = null if encoded.get("id") == null else decode(encoded["id"])
 			return RuntimeWorldRef.new(int(encoded["kind"]), decoded_id)
+		"observed_event_claim":
+			return ObservedEventClaim.new(decode(encoded["event_type"]), StringName(encoded["role"]))
 		"array":
 			var decoded_array: Array = []
 			for item in encoded.get("items", []):
