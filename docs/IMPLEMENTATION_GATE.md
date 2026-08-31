@@ -2,7 +2,7 @@
 
 ## Decision
 
-The behavioral/architecture contract phase is **complete enough to proceed into concrete implementation design**.
+The behavioral/architecture contract phase, including the final pre-domain gameplay review, is **complete enough to proceed into concrete implementation design**.
 
 Current gate status:
 
@@ -14,6 +14,19 @@ Current gate status:
 
 There are no remaining product-psychology or cross-system-authority blockers that require another discovery cycle before implementation design begins.
 
+The final gameplay review added/refined several implementation-facing contracts without reopening the architecture:
+
+- interaction/crafting resolution is property/capability/context-driven rather than an object-pair recipe catalog;
+- eligible exploration produces knowledge from observed results rather than a separate random discovery gate;
+- player-facing semantic interaction knowledge normally follows Wilson's discovered knowledge;
+- God Power amount does not unlock new intervention capabilities;
+- supported player interventions may have lethal grounded consequences;
+- resurrection is free and unlimited, while End Run permanently closes the world;
+- selected cross-run Legacy Knowledge is player-side global state, not Wilson autobiographical memory;
+- one Diary surface combines Wilson-grounded run narrative with clearly player-level statistics/archive records;
+- Luck is bounded chance favorability derived from normally-owned modifiers, not a Wilson psychological trait or event-frequency control;
+- no persistent `chaoticity` state is required for pacing.
+
 This does **not** mean the architecture is immutable or that all balance/formulas are known. It means the responsibility graph, semantic handoffs, update ordering and mutation ownership are specific enough that concrete types can now be designed without encoding known ambiguity.
 
 ---
@@ -23,14 +36,15 @@ This does **not** mean the architecture is immutable or that all balance/formula
 The gate is based on the following canonical artifacts:
 
 1. `BEHAVIORAL_MODEL.md` — validated minimum behavioral model;
-2. `STATE_REQUIREMENTS.md` — persistent/derived state inventory;
+2. `STATE_REQUIREMENTS.md` — persistent/derived state inventory and cross-run Legacy semantics;
 3. `SCENE_VALIDATION.md` — Must-have matrix and regression suite;
 4. `ARCHITECTURE.md` — system boundaries and composition strategy;
 5. `GUARDS_AND_CALIBRATION.md` — bounds and self-stabilization constraints;
 6. `SIMULATION_CONTRACTS.md` — semantic cross-system contract catalog;
 7. `SIMULATION_ORCHESTRATION.md` — clocks, ordering, reconsideration and interruption semantics;
-8. `MUTATION_AUTHORITY.md` — explicit read/propose/mutate/observe authority matrix;
-9. `DECISION_TRACES.md` — end-to-end validation across representative integration scenes.
+8. `MUTATION_AUTHORITY.md` — explicit read/propose/mutate/observe authority matrix, including player-profile/Legacy/Diary boundaries;
+9. `DECISION_TRACES.md` — end-to-end validation across representative integration scenes;
+10. `PRODUCT.md` and `SIMULATION.md` — final gameplay envelope for open-ended progression, property-driven interaction/discovery, Luck, God Power, death and cross-run history.
 
 The validated traces cover:
 
@@ -56,16 +70,18 @@ Critical ownership boundaries are explicit:
 ```text
 World Simulation
   → authoritative physical/world truth
+  → source state for world/content Luck modifiers
 
 Wilson Cognition
-  → traits, drives, beliefs, associations, habits,
+  → traits, drives, beliefs/knowledge, associations, habits,
     episodic history, intentions, presence relationship
 
 Project System
   → project lifecycle/progress metadata
 
-Player Intervention
-  → God Power, permissions, suggestion/intervention state
+Player-side domain
+  → active-run God Power/permissions/suggestion state
+  → global Legacy Knowledge / lifetime statistics / Diary archive metadata
 
 Event / Scene Director
   → event eligibility/cooldowns/active authored premise state
@@ -74,7 +90,11 @@ Action Resolution
   → authoritative action validation/execution state/result semantics
 ```
 
-Cross-owner effects use proposals/results rather than arbitrary shared writes.
+`Player-side domain` is an authority family, not a requirement for one giant class. Concrete layout may separate intervention and player-profile aggregates/modules.
+
+Persistence serializes/restores these owners but does not become an owner itself.
+
+Cross-owner effects use proposals/results/bootstrap projections rather than arbitrary shared writes.
 
 ---
 
@@ -97,11 +117,68 @@ The architecture supports:
 - incorrect category inference;
 - causal ambiguity;
 - presence attribution;
-- player knowledge differing from Wilson knowledge.
+- player knowledge differing from Wilson knowledge;
+- hidden Luck modifiers existing without automatically becoming Wilson knowledge.
 
 ---
 
-## 2.3 Decision contract is explainable and bounded — PASS
+## 2.3 Property-driven interaction/crafting boundary is explicit — PASS
+
+The generic interaction model is not an object-pair recipe table.
+
+Canonical direction:
+
+```text
+semantic action roles
++ participant properties/capabilities
++ contextual predicates
+→ authoritative effect/transformation
+```
+
+Example intent:
+
+```text
+impact-tool capability + sufficient hardness/impact
++
+breakable target + compatible resistance
+→ target transformation
+```
+
+rather than:
+
+```text
+stone + coconut = opened coconut
+hammer + coconut = opened coconut
+...
+```
+
+Transformation forms and exceptional content remain authored/bounded, but compatible source participants may satisfy reusable predicates procedurally.
+
+Wilson's learned semantic interaction is separate from the authoritative physical rule.
+
+---
+
+## 2.4 Discovery boundary is explicit — PASS
+
+Content may gate an exploration/hidden possibility through semantic prerequisites such as knowledge, equipment, properties, location, proximity and environmental state.
+
+Required chain:
+
+```text
+prerequisites satisfied
+→ physical/generic exploration becomes available when encountered
+→ Wilson performs/encounters it
+→ grounded result is observed
+→ semantic knowledge is acquired/generalized according to content scope
+```
+
+There is no additional RNG gate whose only purpose is to hide an already-observed meaningful result.
+
+The normal player-facing rule is that semantic interaction knowledge becomes visible when Wilson learns it. Generic exploration may be suggested before its result is known.
+
+---
+
+## 2.5 Decision contract is explainable and bounded — PASS
 
 Normal decision flow is explicit:
 
@@ -118,11 +195,13 @@ Each semantic contribution has finite influence.
 
 Traits modulate only semantically related evaluators.
 
+Hidden effective Luck does not directly modify Wilson intention score.
+
 The design does not require one opaque universal rational score or global GOAP brain.
 
 ---
 
-## 2.4 Reconsideration semantics are explicit — PASS
+## 2.6 Reconsideration semantics are explicit — PASS
 
 Wilson does not replan every render/simulation tick.
 
@@ -143,7 +222,7 @@ This is sufficient to model persistent curiosity/projects while avoiding near-eq
 
 ---
 
-## 2.5 Action progression / interruption semantics are explicit — PASS
+## 2.7 Action progression / interruption semantics are explicit — PASS
 
 The architecture distinguishes:
 
@@ -163,9 +242,11 @@ committed atomic consequence
 
 This prevents causality-breaking rewinds after physical commitment.
 
+A Luck-sensitive random choice must resolve before authoritative commitment and only among already-valid unresolved alternatives.
+
 ---
 
-## 2.6 Immediate threat is separate from normal utility — PASS
+## 2.8 Immediate threat is separate from normal utility — PASS
 
 Emergency flow is explicit:
 
@@ -181,7 +262,7 @@ No `+Infinity` / giant score hack or accumulating safety drive is required.
 
 ---
 
-## 2.7 Learning mutation flow is explicit — PASS
+## 2.9 Learning mutation flow is explicit — PASS
 
 Grounded evidence is decomposed into bounded owner-specific proposals:
 
@@ -199,7 +280,7 @@ Same-outcome-chain learning may occur before reconsideration when the next decis
 
 ---
 
-## 2.8 Projects compose without becoming the brain — PASS
+## 2.10 Projects compose without becoming the brain — PASS
 
 Canonical flow:
 
@@ -214,9 +295,11 @@ ProjectOpportunity
 
 Project state does not command Wilson and does not duplicate authoritative world physics.
 
+Authored project form does not require pair-wise crafting rules; material/tool contributions should reuse property/capability interaction rules where practical.
+
 ---
 
-## 2.9 Player influence remains indirect — PASS
+## 2.11 Player influence remains indirect — PASS
 
 Suggestions:
 
@@ -228,7 +311,7 @@ SuggestionSignal
 Physical intervention:
 
 ```text
-ValidatedIntervention
+validated player-side affordance + God Power
 → world mutation
 → Wilson observation if perceivable
 → causal attribution
@@ -237,9 +320,90 @@ ValidatedIntervention
 
 Player private intent does not enter Wilson cognition.
 
+Having enough God Power does not create an unsupported affordance. A supported intervention is not rejected merely because its grounded consequence may injure or kill Wilson.
+
 ---
 
-## 2.10 Headless determinism/debuggability is preserved — PASS
+## 2.12 Death, resurrection and run termination boundaries are explicit — PASS
+
+Death resolves enough visible consequence for scene coherence, then offers:
+
+```text
+Resurrect
+or
+End Run
+```
+
+Resurrection is free and unlimited and preserves learned caution/negative association where appropriate without conscious death recall.
+
+End Run permanently closes the active world and performs a player-side lifecycle transition rather than a persistence-adapter trick.
+
+---
+
+## 2.13 Cross-run Legacy ownership is explicit — PASS
+
+Canonical boundary:
+
+```text
+current-run Wilson knowledge
+→ filter legacy_eligible
+→ player-profile weighted bounded selection
+→ global Legacy Knowledge
+→ next-run bootstrap projection
+→ new Wilson knowledge owner
+```
+
+Legacy Knowledge is operational semantic knowledge only. It does not carry episodes, relationships, previous object instances, previous death facts or autobiographical source memories.
+
+The player may clear this global progression.
+
+---
+
+## 2.14 Diary information classes are explicit — PASS
+
+There is one player-facing Diary surface, but not one undifferentiated truth store.
+
+```text
+Wilson-grounded run narrative/history
+→ cognition/history semantics
+
+player lifetime statistics / run summaries / rare-event records / achievements
+→ player-profile archive semantics
+
+screenshot rendering/file bytes
+→ presentation/storage adapter
+```
+
+UI co-location does not create shared mutation authority.
+
+---
+
+## 2.15 Luck is bounded and non-authoritative over causality — PASS
+
+Preferred semantic model:
+
+```text
+neutral baseline
++ bounded active world/content modifiers
+→ derived effective_luck
+```
+
+Luck may influence only explicitly luck-sensitive unresolved alternatives.
+
+It cannot:
+
+- legalize invalid actions;
+- change Wilson's private decision score directly;
+- create event eligibility;
+- control rare-event frequency;
+- reverse committed physics;
+- rewrite a grounded outcome.
+
+No separate persistent `chaoticity` state is required; ordinary pacing pressure remains bounded Director/opportunity logic.
+
+---
+
+## 2.16 Headless determinism/debuggability is preserved — PASS
 
 The architecture can retain/reconstruct a causal trace linking:
 
@@ -253,6 +417,7 @@ contributions
 seeded selection
 intention
 action
+luck-sensitive random variant when applicable
 outcome
 observation
 learning evidence
@@ -264,7 +429,7 @@ Presentation randomness and optional LLM behavior need not alter authoritative g
 
 ---
 
-## 2.11 Offline policy remains compatible — PASS
+## 2.17 Offline policy remains compatible — PASS
 
 Offline catch-up reuses normal owners under conservative substitutions.
 
@@ -288,12 +453,17 @@ The following are **implementation/calibration decisions**, not blockers to impl
 Still open:
 
 - ID types;
-- enum/tag/property representation;
-- belief proposition representation;
+- enum/tag/property/capability representation;
+- semantic predicate/requirement representation;
+- transformation rule representation;
+- belief proposition and learned-interaction representation;
 - typed value objects;
 - collection/index structures;
 - action/project identifiers;
-- contract concrete type boundaries.
+- contract concrete type boundaries;
+- player-profile / Legacy Knowledge representation;
+- Diary archive record identity;
+- Luck modifier/value-object representation.
 
 ## 3.2 Numeric formulas and calibration
 
@@ -306,7 +476,11 @@ Still open:
 - association/habit learning rates;
 - hysteresis thresholds;
 - maintenance/decay rates;
-- actual clock frequencies.
+- actual clock frequencies;
+- God Power generation/cost/cap values;
+- Luck bounds/modifier composition and sensitive outcome classes;
+- long-run dangerous-opportunity exposure ceiling;
+- Legacy eligibility weights/selection count.
 
 Implementation should expose these for deterministic testing/calibration rather than hardcode magic values throughout domain logic.
 
@@ -315,9 +489,11 @@ Implementation should expose these for deterministic testing/calibration rather 
 Still open:
 
 - serialization technology;
-- save schema/versioning;
+- run save schema/versioning;
+- global player-profile schema/versioning;
 - migration strategy;
-- exact mid-action resume representation.
+- exact mid-action resume representation;
+- Diary screenshot/media retention strategy.
 
 The semantic persistence boundary is already known.
 
@@ -329,7 +505,8 @@ Still open:
 - domain language/runtime choice where not already fixed by project constraints;
 - dependency-injection mechanism;
 - concrete adapters;
-- test harness organization.
+- test harness organization;
+- whether player intervention and player profile are separate aggregates/modules behind one player-domain facade.
 
 These may now be designed from the responsibility graph rather than guessed from product prose.
 
@@ -337,10 +514,11 @@ These may now be designed from the responsibility graph rather than guessed from
 
 The vertical slice should be chosen to exercise architecture contact points rather than maximize content.
 
-A good slice must cover at minimum:
+A good first slice must cover at minimum:
 
 ```text
 world truth
+property/capability-driven physical interaction
 perception
 one drive
 belief/expectation
@@ -353,6 +531,8 @@ presentation adapter boundary
 ```
 
 It should also include at least one interruption/reconsideration case.
+
+Legacy run termination, Diary archival breadth and Luck do not all need to be implemented in the very first headless slice, provided their domain boundaries are represented cleanly and subsequent slices can add them without breaking ownership.
 
 ---
 
@@ -368,11 +548,16 @@ Priority:
 
 ```text
 stable IDs / semantic vocabulary
+properties / capabilities / semantic role requirements
+interaction eligibility + transformation rules
 world query/result shapes
-Wilson persistent stores/state
+Wilson persistent stores/state + learned semantic interactions
 intentional state
 contracts: observation → decision → action → learning
-project/player/director minimal state
+minimal project/director state
+player intervention + player-profile/Legacy boundary
+Luck modifier/effective-value query boundary
+Diary semantic record boundaries
 trace identity / seeded RNG abstraction
 ```
 
@@ -394,20 +579,24 @@ Godot/persistence/LLM/debug adapters
 
 Prevent Godot scene objects from becoming domain identity/state owners.
 
+Keep player-profile/global progression separable from active-run intervention even if both live under a broader player-domain package.
+
 ## Step 3 — Headless vertical slice first
 
 Before visual polish, prove a deterministic headless loop that can:
 
 1. advance time;
-2. progress one action;
-3. trigger reconsideration;
-4. perceive bounded context;
-5. generate/evaluate candidates;
-6. select an intention with seeded RNG;
-7. resolve a grounded outcome;
-8. apply one belief/association/habit update path;
-9. emit a complete decision trace;
-10. save/load canonical state and reproduce behavior.
+2. derive a physical exploration affordance from reusable properties/capabilities;
+3. progress one action;
+4. trigger reconsideration;
+5. perceive bounded context;
+6. generate/evaluate candidates;
+7. select an intention with seeded RNG;
+8. resolve a grounded property-driven outcome/transformation;
+9. apply one belief/association/habit update path;
+10. expose the learned semantic interaction after the observed result;
+11. emit a complete decision trace;
+12. save/load canonical state and reproduce behavior.
 
 ## Step 4 — Godot presentation adapter
 
@@ -415,7 +604,7 @@ Map the proven domain loop to presentation through semantic IDs/events.
 
 Do not reimplement domain legality/decision logic in nodes/scripts.
 
-## Step 5 — Regression scenes
+## Step 5 — Regression scenes and lifecycle slices
 
 Encode representative architecture regressions early:
 
@@ -426,21 +615,35 @@ Brilliant Shortcut deterministic risk trace
 Falling Palm emergency fast path
 ```
 
+Then add focused lifecycle regressions for:
+
+```text
+property-composed coconut opening with multiple valid tools
+unknown exploration → learned semantic interaction
+God Power unsupported-vs-supported affordance
+lethal player intervention
+unlimited resurrection with retained danger learning
+End Run → weighted Legacy selection → new-run knowledge seed
+single Diary surface with distinct Wilson/player record semantics
+bounded Luck-sensitive variant selection
+```
+
 The first versions may be headless fixtures rather than full authored scenes.
 
 ---
 
 # 5. Recommended first vertical slice
 
-The strongest first slice is a **small headless island micro-scenario centered on object experimentation and interruption**.
+The strongest first slice remains a **small headless island micro-scenario centered on object experimentation and interruption**.
 
 Suggested capabilities:
 
 ```text
 Wilson with hunger + curiosity + risk_tolerance
-2–4 world objects with semantic affordances/properties
+2–4 world objects with semantic properties/capabilities
 one food target
 one uncertain tool/material interaction
+at least two objects capable of satisfying one reusable interaction rule
 one safe rest/idle option
 one player suggestion signal
 one environmental interruption/threat trigger
@@ -453,13 +656,14 @@ save/load
 Why this slice:
 
 - exercises the universal behavioral loop;
+- proves the property/capability interaction model before a recipe catalog can leak into code;
 - tests world truth vs Wilson belief;
 - validates candidate composition;
 - validates same-chain learning/reconsideration;
 - validates interruption/hysteresis;
 - can run entirely headless;
-- does not require director/project/LLM complexity immediately;
-- leaves room to add project/player-presence verticals next without changing core boundaries.
+- does not require director/project/LLM/global-profile breadth immediately;
+- leaves room to add player-presence, Luck and run-lifecycle verticals next without changing core boundaries.
 
 Do **not** begin the first slice with `Sabotaged Storage` as the only scenario. It is an excellent integration regression but depends on more subsystems at once and would encourage premature implementation breadth.
 
@@ -473,25 +677,33 @@ The implementation phase must preserve these architecture invariants:
 2. rendering FPS is not authoritative time;
 3. all gameplay randomness is seeded/injected;
 4. LLM paths are optional, bounded and non-authoritative;
-5. world truth, observation, belief and player knowledge remain distinct;
+5. world truth, observation, Wilson belief/knowledge and player knowledge remain distinct;
 6. no system freely mutates another system's durable state;
-7. transient salience/expectation/evaluation values are recomputed rather than persisted by default;
-8. projects generate opportunities, not Wilson commands;
-9. suggestions influence, never directly command Wilson;
-10. immediate threat is a separate decision regime;
-11. action commitment boundaries prevent causal rewinds;
-12. decision traces remain semantically explainable;
-13. guards use bounded contributions/saturation, not hidden normalization;
-14. health monitoring is read-only by default;
-15. adapters do not become domain owners.
+7. transient salience/expectation/evaluation/effective-Luck values are recomputed rather than persisted by default;
+8. generic physical/crafting interactions derive from properties/capabilities/context rather than an object-pair recipe catalog;
+9. projects generate opportunities, not Wilson commands;
+10. suggestions influence, never directly command Wilson;
+11. God Power amount does not grant unsupported player affordances;
+12. player private intent never becomes Wilson psychology;
+13. immediate threat is a separate decision regime;
+14. action commitment boundaries prevent causal rewinds;
+15. Luck may bias only declared unresolved alternatives and never override causality;
+16. resurrection remains free/unlimited and its long-term effects compose through normal learned state;
+17. End Run is a domain lifecycle transition, not save-file deletion semantics;
+18. Legacy Knowledge is player-global seed state, never shared mutable autobiographical memory;
+19. the single Diary UI preserves separate Wilson-grounded and player-level truth classes;
+20. decision traces remain semantically explainable;
+21. guards use bounded contributions/saturation, not hidden normalization;
+22. health monitoring is read-only by default;
+23. adapters do not become domain owners.
 
 ---
 
 # 7. Gate conclusion
 
-**Architecture gate: PASS.**
+**Architecture gate: PASS after final gameplay-design regression.**
 
-Wilson Shipwrecked is ready to leave contract/orchestration discovery and enter **concrete domain-model + implementation-layout design**.
+Wilson Shipwrecked is ready to enter **concrete domain-model + implementation-layout design**.
 
 No additional broad discovery phase is recommended before that work.
 
