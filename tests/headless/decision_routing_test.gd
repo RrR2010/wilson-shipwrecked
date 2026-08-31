@@ -3,6 +3,7 @@ extends SceneTree
 const DomainId = preload("res://src/domain/core/domain_id.gd")
 const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
+const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 const PerceptualEvidence = preload("res://src/domain/cognition/perceptual_evidence.gd")
 const PerceptionResult = preload("res://src/domain/cognition/perception_result.gd")
 const BeliefLearningService = preload("res://src/domain/cognition/belief_learning_service.gd")
@@ -30,7 +31,9 @@ func _init() -> void:
 
 func _run_slice() -> void:
 	var crate = RuntimeWorldRef.entity(DomainId.entity(&"crate_4"))
-	var impact_evidence = PerceptualEvidence.new(crate, &"was_impacted", true, 0.5, &"exec_1", &"hearing")
+	var impact_event = DomainId.event_definition(&"impact_committed")
+	var impact_claim = EpistemicClaim.event_claim(crate, impact_event, &"target")
+	var impact_evidence = PerceptualEvidence.new(impact_claim, 0.5, &"exec_1", &"hearing")
 	var perception = PerceptionResult.new([], [impact_evidence])
 
 	var learner = BeliefLearningService.new()
@@ -51,7 +54,8 @@ func _run_slice() -> void:
 	var current_id = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"open_container")
 
 	var opportunity = PerceivedOpportunityDefinition.new(
-		&"was_impacted",
+		EpistemicClaim.Kind.EVENT,
+		impact_event,
 		investigate_id,
 		DecisionCandidate.Scope.TACTICAL,
 		0.2
@@ -67,12 +71,7 @@ func _run_slice() -> void:
 	_expect_equal(investigate.belief_score, 0.5, "belief confidence contributes support")
 
 	var empty_binding = RoleBinding.new()
-	var rest = DecisionCandidate.new(
-		rest_id,
-		empty_binding,
-		DecisionCandidate.Scope.INTENTIONAL,
-		5.0
-	)
+	var rest = DecisionCandidate.new(rest_id, empty_binding, DecisionCandidate.Scope.INTENTIONAL, 5.0)
 	var router = DecisionRouter.new()
 	var tactical_result = router.resolve([rest, investigate], current_id)
 	_expect_true(tactical_result.has_selection(), "router selects with active intention")
@@ -84,12 +83,7 @@ func _run_slice() -> void:
 	_expect_equal(String(no_current_result.regime), "intentional", "no active intention routes broadly")
 	_expect_equal(no_current_result.selected_candidate.intention_id.key(), rest_id.key(), "intentional candidate selected")
 
-	var threat = DecisionCandidate.new(
-		evade_id,
-		empty_binding,
-		DecisionCandidate.Scope.IMMEDIATE_THREAT,
-		-10.0
-	)
+	var threat = DecisionCandidate.new(evade_id, empty_binding, DecisionCandidate.Scope.IMMEDIATE_THREAT, -10.0)
 	var threat_result = router.resolve([rest, investigate, threat], current_id)
 	_expect_equal(String(threat_result.regime), "immediate_threat", "threat uses separate fast-path regime")
 	_expect_equal(threat_result.selected_candidate.intention_id.key(), evade_id.key(), "threat wins regardless cross-regime score")
