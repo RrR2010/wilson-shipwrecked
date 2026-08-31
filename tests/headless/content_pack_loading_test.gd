@@ -16,6 +16,7 @@ const AssemblyValidityService = preload("res://src/domain/physical/assembly_vali
 const RequirementPredicateEvaluator = preload("res://src/domain/actions/requirement_predicate_evaluator.gd")
 const ActionAttemptabilityService = preload("res://src/domain/actions/action_attemptability_service.gd")
 const ActionExecutionService = preload("res://src/domain/actions/action_execution_service.gd")
+const ActionEffect = preload("res://src/domain/actions/action_effect.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const ContentPackLoader = preload("res://src/infrastructure/content_loading/content_pack_loader.gd")
 
@@ -54,6 +55,12 @@ func _run_slice() -> void:
 	_expect_equal(content.action_definition_ids().size(), 1, "action definition loaded")
 	_expect_equal(content.action_resolution_definition_ids(), ["hit_basic_v1"], "resolution definition loaded")
 
+	var loaded_resolution = content.get_action_resolution_definition(&"hit_basic_v1")
+	_expect_equal(loaded_resolution.effects.size(), 2, "resolution loads property and relation effects")
+	_expect_equal(loaded_resolution.effects[1].kind, ActionEffect.Kind.CREATE_RELATION, "relation effect kind loaded")
+	_expect_equal(loaded_resolution.effects[1].value.kind, DomainId.Kind.ASSEMBLY_SLOT, "typed relation qualifier normalized to AssemblySlotId")
+	_expect_equal(String(loaded_resolution.effects[1].value.value), "head", "typed relation qualifier preserves id")
+
 	var camp = DomainId.place(&"camp")
 	var crate_id = DomainId.entity(&"crate_1")
 	var host_id = DomainId.entity(&"tool_host_1")
@@ -70,8 +77,8 @@ func _run_slice() -> void:
 	var host = RuntimeWorldRef.entity(host_id)
 	var head = RuntimeWorldRef.entity(head_id)
 	var handle = RuntimeWorldRef.entity(handle_id)
-	_expect_true(relations.add_relation(WorldRelation.new(attached_to, head, host, {"assembly_slot": DomainId.assembly_slot(&"head")})).ok, "head binding relation added")
-	_expect_true(relations.add_relation(WorldRelation.new(attached_to, handle, host, {"assembly_slot": DomainId.assembly_slot(&"handle")})).ok, "handle binding relation added")
+	_expect_true(relations.add_relation(WorldRelation.new(attached_to, head, host, DomainId.assembly_slot(&"head"))).ok, "head binding relation added")
+	_expect_true(relations.add_relation(WorldRelation.new(attached_to, handle, host, DomainId.assembly_slot(&"handle"))).ok, "handle binding relation added")
 
 	var query = DefaultWorldQuery.new(entities, relations, content)
 	var policies = PhysicalDerivationPolicyRegistry.new()
@@ -117,6 +124,12 @@ func _run_slice() -> void:
 	var unknown_selector = _valid_pack()
 	unknown_selector["property_derivations"][0]["inputs"][0]["kind"] = "global_scan"
 	_expect_false(loader.load_dictionary(unknown_selector).ok, "unbounded property selector kind is rejected")
+
+	var invalid_qualifier = _valid_pack()
+	invalid_qualifier["resolutions"][0]["effects"][1]["qualifier"] = {"arbitrary": "dictionary"}
+	var invalid_qualifier_result = loader.load_dictionary(invalid_qualifier)
+	_expect_false(invalid_qualifier_result.ok, "arbitrary relation qualifier dictionary is rejected")
+	_expect_equal(String(invalid_qualifier_result.code), "invalid_relation_qualifier", "invalid qualifier has explicit diagnostic code")
 
 	_completed = true
 
@@ -176,6 +189,13 @@ func _valid_pack() -> Dictionary:
 				"event": "impact_committed",
 				"effects": [
 					{"kind": "set_property", "subject_role": "target", "property": "structural_integrity", "value": 3},
+					{
+						"kind": "create_relation",
+						"subject_role": "target",
+						"relation": "attached_to",
+						"object_role": "actor",
+						"qualifier": {"kind": "assembly_slot", "id": "head"},
+					},
 				],
 			},
 		],
