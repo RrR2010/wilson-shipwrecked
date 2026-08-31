@@ -83,7 +83,10 @@ func _evaluate_node(predicate, bindings):
 				return PredicateEvaluationResult.failure([
 					"%s property %s absent" % [String(predicate.role_name), String(predicate.semantic_id.value)]
 				])
-			var comparison := _compare(actual, predicate.compare_op, predicate.expected_value)
+			var schema_failure = _validate_typed_comparison(predicate.semantic_id, actual, predicate.compare_op, predicate.expected_value)
+			if schema_failure != null:
+				return schema_failure
+			var comparison = _compare(actual, predicate.compare_op, predicate.expected_value)
 			return PredicateEvaluationResult.new(
 				comparison,
 				["%s.%s %s %s => %s (actual=%s)" % [
@@ -117,6 +120,28 @@ func _evaluate_node(predicate, bindings):
 		_:
 			assert(false, "Unsupported RequirementPredicate kind")
 			return PredicateEvaluationResult.failure(["unsupported predicate"])
+
+
+func _validate_typed_comparison(property_id, actual: Variant, compare_op: int, expected: Variant):
+	if not _world_query.has_method("get_property_definition"):
+		return null
+	var definition = _world_query.get_property_definition(property_id)
+	if definition == null:
+		return null
+	if not definition.validate_value(actual):
+		return PredicateEvaluationResult.failure(["actual value violates property schema: %s" % property_id.sort_key()])
+	if not definition.validate_value(expected):
+		return PredicateEvaluationResult.failure(["expected value violates property schema: %s" % property_id.sort_key()])
+	if _is_ordered_compare(compare_op) and not definition.supports_ordering():
+		return PredicateEvaluationResult.failure(["property does not support ordered comparison: %s" % property_id.sort_key()])
+	return null
+
+
+func _is_ordered_compare(compare_op: int) -> bool:
+	return compare_op == RequirementPredicate.CompareOp.LT \
+		or compare_op == RequirementPredicate.CompareOp.LTE \
+		or compare_op == RequirementPredicate.CompareOp.GT \
+		or compare_op == RequirementPredicate.CompareOp.GTE
 
 
 func _require_role(bindings, role_name: StringName):
