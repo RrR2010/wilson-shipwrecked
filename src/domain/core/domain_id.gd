@@ -134,6 +134,10 @@ static func role(p_value: StringName):
 	return new(Kind.ROLE, p_value)
 
 
+static func event_definition(p_value: StringName):
+	return new(Kind.EVENT_DEFINITION, p_value)
+
+
 static func assembly_definition(p_value: StringName):
 	return new(Kind.ASSEMBLY_DEFINITION, p_value)
 
