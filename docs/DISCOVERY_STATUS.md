@@ -21,7 +21,8 @@ typed IDs / runtime refs
 → ActionExecution + committed World mutation
 → PropertyValue validation at World mutation boundary
 → SemanticChangeSet + derived-state invalidation
-→ WorldEvent → Perception → PerceptualEvidence
+→ EventDefinitionId → WorldEvent → ObservedEvent → ObservedEventClaim
+→ Perception → PerceptualEvidence
 → BeliefStore + EpistemicGraphProjection
 → candidate generation + decision routing
 → durable CurrentIntention
@@ -81,7 +82,8 @@ Assembly validity slice                     PASS — Godot 4.7.1 headless
 Improvised hammer composition slice         PASS — Godot 4.7.1 headless
 Property schema/bootstrap slice             PASS — Godot 4.7.1 headless
 Property runtime schema/comparison slice    PASS — Godot 4.7.1 headless
-Strict headless suite                       PASS — 16 tests
+Typed event claim persistence slice         PASS — Godot 4.7.1 headless
+Strict headless suite                       PASS — 17 tests
 ```
 
 **Functional-domain stabilization gate: PASS.**
@@ -126,6 +128,9 @@ PropertyDefinition validates authored values during sealed content bootstrap
 SET_PROPERTY validates typed values/bounds before authoritative mutation
 ordered property comparisons are limited to compatible ordered families
 invalid property mutations emit no WorldEvent or SemanticChange
+EventDefinitionId survives World → observation → perceptual claim without string conversion
+ObservedEventClaim has deterministic semantic identity and JSON round-trip support
+perceptual event claims contain only accessible role semantics
 ```
 
 Property derivation policies are validated during dependency-graph compilation; unknown authored policies fail bootstrap instead of asserting only during runtime resolution.
@@ -289,8 +294,7 @@ These are predominantly concrete runtime/content concerns rather than discovery 
 12. action interruption classes and broader runtime action lifecycle;
 13. richer physical provenance distinguishing authored base value from runtime override;
 14. spatial/perception access implementation replacing the current explicit access-policy fixture;
-15. typed epistemic propositions/claims replacing generic durable proposition argument identity;
-16. typed EventDefinition identity through World → perception → cognition.
+15. typed epistemic proposition algebra replacing generic durable predicate/argument identity.
 
 These are implementation choices, not evidence for new state owners.
 
@@ -303,13 +307,12 @@ Continue from the validated vertical rather than adding parallel scaffolds.
 Recommended sequence:
 
 ```text
-1. typed EventDefinition / epistemic event claim identity
-2. typed epistemic proposition identity before persistence grows further
-3. concrete spatial query + perception-access adapter
-4. project / drive / habit candidate producers
-5. action interruption classes + broader execution lifecycle
-6. presentation adapters + representative scene rendering fixtures
-7. deterministic larger regression scenarios
+1. typed epistemic proposition algebra before persistence grows further
+2. concrete spatial query + perception-access adapter
+3. project / drive / habit candidate producers
+4. action interruption classes + broader execution lifecycle
+5. presentation adapters + representative scene rendering fixtures
+6. deterministic larger regression scenarios
 ```
 
 The implementation may favor direct GDScript, but it should preserve the language-neutral ownership and dependency boundaries rather than mirror Godot scene structure.
