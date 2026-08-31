@@ -1,1335 +1,855 @@
-# Architecture — Systems, Composition and Game Loop
+# Architecture — Authority, Modules and Orchestration
 
-## Status and scope
+## Status and purpose
 
-This document is the first architecture pass derived from the validated functional requirements in:
+This document is the canonical architecture source for Wilson Shipwrecked.
 
-1. `BEHAVIORAL_MODEL.md`
-2. `STATE_REQUIREMENTS.md`
-3. `SCENE_VALIDATION.md`
-4. `AI.md`
-5. `PRODUCT.md`
-6. `SIMULATION.md`
+It owns:
 
-Unlike those documents, this one **does discuss architecture**: responsibilities, system boundaries, composition, points of contact, update flow and authority.
+- state-owning responsibility boundaries;
+- derived/stateless service boundaries;
+- language-neutral module/package responsibilities;
+- dependency direction and forbidden dependencies;
+- application/orchestration responsibilities;
+- integration boundaries with Godot, persistence, LLMs and authored content;
+- high-level active/offline lifecycle flow.
 
-It intentionally does **not** lock the project into a specific Godot node tree, ECS framework, GOAP implementation, database/storage engine or serialization format. Those are subordinate implementation choices after the responsibility graph is accepted.
+It does **not** mandate GDScript vs C#, one-class-per-module, ECS, Godot node layout, database technology, serialization format or dependency-injection framework.
 
-The main architectural goal is:
+The governing principle is:
 
-> Keep authoritative state mutation centralized and explicit, while deriving perception, expectation, scoring and interpretation through composable services that do not own world truth.
+```text
+few explicit state owners
++ typed semantic contracts
++ derived/composable services
++ deterministic orchestration
++ outer presentation/infrastructure adapters
+```
 
-Wilson Shipwrecked remains a **simulation rendered as a game**, not game scenes pretending to be a simulation. Authoritative domain logic must remain runnable and testable without loading the 3D presentation.
+The authoritative simulation must remain runnable and testable without rendering.
 
 ---
 
-# 1. Core architectural principles
+# 1. Architectural invariants
 
-## 1.1 Few systems should own authoritative mutation
+## 1.1 One normal owner per durable state family
 
-Do not create one state-owning runtime system for every psychological concept.
-
-Concepts such as `attention`, `expectation`, `prediction_error`, `emotion`, `causal attribution` and `action tendency` are mostly derived/transient. They should usually be calculated by services/subsystems and only write durable consequences through explicit mutation boundaries.
-
-Prefer:
+A service may read state and produce a proposal/projection/result, but it does not gain mutation authority over the stores it influences.
 
 ```text
-read authoritative + Wilson-relative context
-→ derive candidates/interpretation
-→ resolve authoritative outcome
-→ emit structured result
-→ apply durable consequences through explicit owners
+World                owns physical truth
+WilsonCognition      owns Wilson-relative durable cognition
+Projects             own project lifecycle state
+ActionExecution      owns active/committed action lifecycle
+Director             owns directed-event lifecycle
+PlayerRunState       owns current-run player-side state
+PlayerProfile        owns admitted cross-run state
 ```
 
-Avoid an architecture where every subsystem can freely modify arbitrary Wilson/world state.
+Rendering, graph indexes, salience, expectation, affordance derivation, hazard projection, causal attribution, learning proposals and LLM interpretation are not additional state owners.
 
-## 1.2 Separate authority from interpretation
-
-- The **world** is authoritative about what physically happened.
-- **Wilson cognition** is authoritative about Wilson-relative learned/personal state.
-- The **player layer** is authoritative about player-side state such as God Power.
-- **Presentation** is authoritative only about presentation.
-- The **LLM is never authoritative**.
-
-## 1.3 Composition over inheritance
-
-Behavior should arise from orthogonal state and evaluators rather than inheritance trees.
-
-Avoid:
+## 1.2 Authority != interpretation
 
 ```text
-Wilson
-  -> CuriousWilson
-    -> RiskyCuriousWilson
-      -> AngryRiskyCuriousWilson
+world truth
+!= Wilson observation
+!= Wilson belief
+!= player knowledge
+!= presentation
 ```
 
-Prefer composed state/services:
+Player-private intent never becomes Wilson evidence.
 
-```text
-TraitProfile
-DriveState
-BeliefStore
-AssociationStore
-HabitStore
-MemoryStore
-IntentionalState
-PresenceRelationship
-```
+## 1.3 Composition over inheritance/type branching
 
-plus evaluators that consume those abstractions.
+Prefer reusable properties, capabilities, relations, predicates, effects and bounded policies over object-type switch trees or behavior inheritance hierarchies.
 
-## 1.4 Semantic contracts between systems
+## 1.4 Deterministic authority
 
-Systems should communicate through typed/domain-semantic queries, commands and results rather than directly manipulating one another's internals.
+Gameplay randomness uses named seeded RNG streams. Rendering randomness is separate. Optional LLM output cannot determine authoritative physical truth.
 
-Examples:
+## 1.5 Graph representation != owner
 
-```text
-PerceptionResult
-ObservedEvent
-SelectedIntention
-ActionOutcome
-BeliefEvidence
-AssociationImpact
-HabitCueOccurrence
-ProjectProgressResult
-InterventionObservation
-```
-
-The exact type representation is an implementation decision. The semantic boundaries are architectural requirements.
-
-## 1.5 Deterministic core
-
-Gameplay randomness must flow through a seeded RNG abstraction. Optional LLM output and visual-only randomness must not become authoritative physical state.
-
-This supports:
-
-- headless simulation;
-- reproducible bugs;
-- regression scenes;
-- statistical calibration;
-- comparison of balance changes under identical seeds.
+Typed graph/index structures may accelerate traversal, dependency invalidation and knowledge queries, but they never replace the owning state stores.
 
 ---
 
-# 2. Responsibility map
-
-A useful top-level decomposition is:
+# 2. State-owning responsibility map
 
 ```text
-┌──────────────────────────────────────────────────────────┐
-│                    GAME ORCHESTRATOR                     │
-│ simulation time / phases / scheduling / ordering         │
-└──────────────────────────────────────────────────────────┘
-          │
-          ├── World Simulation System
-          ├── Wilson Cognition System
-          ├── Action Resolution System
-          ├── Project System
-          ├── Event / Scene Director
-          ├── Player Intervention System
-          ├── Memory & Learning Pipeline
-          ├── Offline Catch-up Policy/Orchestrator
-          └── Presentation / Narrative Projection
+Run
+├── World
+│   ├── entities / places / relations
+│   ├── environment / active dynamic processes
+│   ├── WilsonBody
+│   └── shallow non-Wilson actor runtime state
+├── WilsonCognition
+├── Projects
+├── Director
+├── PlayerRunState
+└── ActionExecution
+
+PlayerProfile
+├── LegacyKnowledge
+├── DiaryArchive
+├── LifetimeStatistics
+└── GlobalUnlocks
 ```
 
-These are responsibility boundaries, not necessarily one-class-per-box or one-Godot-node-per-box.
+## 2.1 World
 
-The critical distinction is between:
-
-```text
-STATE-OWNING SYSTEMS
-vs
-DERIVED / STATELESS SERVICES
-```
-
----
-
-# 3. State-owning systems
-
-## 3.1 World Simulation System
-
-### Owns
-
-Authoritative non-Wilson world truth:
+Owns authoritative physical facts:
 
 - entity identity/lifecycle;
-- authoritative locations/transforms;
-- physical and semantic properties/capabilities;
-- object transformed forms/state;
-- inventory/container truth;
-- weather/environment state;
-- physical structures and project-built world state;
-- authoritative causes/effects.
+- places/transforms;
+- mutable physical properties;
+- world relations and assembly bindings;
+- contents/possession truth;
+- environment/weather;
+- Wilson body state;
+- active time-extended physical processes when persistence is justified;
+- grounded physical effects and transformations.
 
-### Does not own
+World never depends on Wilson beliefs, preferences, intentions or player-private intent.
 
-- Wilson beliefs;
-- Wilson preferences/associations;
-- Wilson expectations;
-- action desirability;
-- trust in the unseen presence;
-- narrative prose.
+## 2.2 Wilson Cognition
 
-### Typical interfaces
-
-Queries:
-
-```text
-IWorldQuery
-IAffordanceProvider
-get_entity_state(...)
-get_visible_environment(...)
-get_property_truth(...)
-```
-
-Commands/results:
-
-```text
-apply_validated_action(...)
-apply_environment_advance(...)
-apply_transformation(...)
-```
-
-Outputs:
-
-```text
-EntityChanged
-EntityCreated
-EntityDestroyed
-EnvironmentChanged
-ActionPhysicalOutcome
-```
-
-Domain logic should refer to semantic capabilities such as `container`, `throwable`, `impact_tool`, `flammable`, not concrete assets such as `palm_tree_03.glb`.
-
----
-
-## 3.2 Wilson Cognition System
-
-This owns durable Wilson-relative state, but should be **internally composed** rather than implemented as one giant `WilsonBrain`.
-
-### Owns
-
-- traits;
-- drives;
-- associations;
-- beliefs/knowledge;
-- habits;
-- selected episodic history;
-- current/suspended intentional state;
-- presence relationship.
-
-### Recommended internal composition
+Owns:
 
 ```text
 TraitProfile
 DriveState
-AssociationStore
 BeliefStore
+AssociationStore
 HabitStore
-MemoryStore
+EpisodeStore
 IntentionalState
 PresenceRelationship
 ```
 
-No module should directly mutate another module's private state.
+Derived attention, expectations, reactions, causal hypotheses and candidate scores do not become durable stores by default.
 
-Cross-effects should arrive as semantic evidence/update requests through a coordinator/learning pipeline.
+Cross-effects arrive as semantic evidence/proposals. Each cognition store applies only owner-local mutations.
 
-Bad:
+## 2.3 Projects
 
-```text
-BeliefStore directly calls HabitStore
-HabitStore directly edits AssociationStore
-AssociationStore changes trust
-```
+Owns project lifecycle, bindings and bounded project metadata.
 
-Preferred:
+Physical structures remain World truth. Project state must not duplicate roof integrity, component moisture, assembly bindings or other physical facts.
 
-```text
-ObservedOutcome
-→ LearningPipeline
-    → BeliefEvidence
-    → AssociationImpact
-    → HabitEvidence
-    → EpisodeCandidate
-    → PresenceEvidence when applicable
-```
+## 2.4 Action Execution
 
-Each owner applies only its own mutation.
+Owns active action execution and commitment state.
 
----
+It determines action lifecycle/commit semantics and produces `ActionOutcome` plus validated World mutation plans. It does not learn, update projects or choose Wilson's next intention.
 
-## 3.3 Project System
+## 2.5 Director
 
-Projects cross Wilson desire and physical world progress, so this boundary must remain explicit.
+Owns directed-event opportunity lifecycle, cooldown/rarity state and bounded scene framing.
 
-### Project System owns
+It may introduce opportunities and bounded candidate bias. It never commits Wilson's final intention or edits cognition directly.
 
-- project instance/lifecycle;
-- desired authored/systemic project outcome;
-- available semantic contributions/stages;
-- project-level progress not already wholly represented by physical entities;
-- resource/capability requirements;
-- active/paused/completed/abandoned semantics.
+## 2.6 Player Run State / Intervention
 
-### World Simulation owns
+Owns God Power, non-intervention progress, game-mode permissions and suggestion-window state.
 
-The physical result:
+Intervention mutates World only through explicit validated transactions. Suggestions enter Wilson decision competition as signals, not commands.
 
-- placed supports;
-- roof sections;
-- damaged table;
-- statue structure;
-- resulting object properties.
+## 2.7 Player Profile
 
-### Wilson Cognition owns
-
-Whether Wilson currently wants to contribute to the project.
-
-Desired interaction:
-
-```text
-Project System:
-"roof has a valid next contribution using suitable covering"
-
-Cognition:
-"Wilson currently considers/chooses that contribution"
-
-Action Resolution:
-"the chosen material/action is valid and produces result X"
-
-World:
-"the physical roof changed"
-
-Project System:
-"project progress/lifecycle updated from the grounded result"
-```
-
-This prevents a project manager from becoming a hidden planner controlling Wilson.
+Owns cross-run admitted state such as Legacy Knowledge, Diary archive, lifetime statistics and global unlocks. It does not leak autobiography into Wilson's new-run cognition.
 
 ---
 
-## 3.4 Player Intervention System
+# 3. Derived/composable service families
 
-### Owns
-
-- God Power;
-- passive non-intervention streak state;
-- game-mode intervention permissions;
-- suggestion insistence windows/counts;
-- validation of player-side intervention requests.
-
-### Responsibilities
-
-- validate supported intervention and cost;
-- consume/update God Power;
-- convert UI intent into constrained world command or Wilson suggestion;
-- never force Wilson's body/action;
-- expose intervention consequences to perception only when Wilson could notice them.
-
-Important:
+These services answer questions without owning durable truth.
 
 ```text
-PLAYER PRIVATE INTENT:
-"I was trying to help Wilson"
+Perception / PerceptualEvidence
+Expectation / prediction error
+Salience
+EffectivePhysicalProfile
+AssemblyValidity
+ProtectionProjection / ExposureResult
+Affordance / ActionAttemptability
+InteractionRegion projection
+HazardProjection / PerceivedThreat
+Tactical candidate generation/evaluation
+Intentional candidate generation/evaluation
+Causal investigation / attribution
+Reaction
+Learning proposal derivation
+Luck
 ```
 
-must not be passed to cognition.
-
-Wilson receives observable facts such as:
-
-```text
-resource appeared unexpectedly
-support disappeared
-object moved
-suggestion signal occurred
-```
-
-Trust therefore follows **perceived consequences + attribution**, not player intent.
+A service may maintain reconstructible caches/indexes for performance, but save/load truth remains the owner's durable causes.
 
 ---
 
-## 3.5 Event / Scene Director
+# 4. Language-neutral module layout
 
-### Owns
-
-- event eligibility/cooldowns;
-- rare-event scheduling state;
-- active authored scene state;
-- scene-specific opportunities/constraints;
-- authored premise progression where needed.
-
-### Does not own
-
-- Wilson's final chosen action;
-- physical action outcome;
-- Wilson beliefs/associations.
-
-Its influence enters cognition through bounded context:
+The implementation should preserve the following conceptual module families even if exact directories/classes differ.
 
 ```text
-DirectorContext
-  → salience contribution
-  → temporary candidate source
-  → bounded desirability bias
-  → opportunity urgency
+domain/
+  core
+  content
+  world
+  graphs
+  physical
+  actions
+  cognition
+  projects
+  director
+  player
+  actors
+
+application/
+  simulation
+  lifecycle
+  queries
+
+infrastructure/
+  persistence
+  random
+  spatial
+  content_loading
+  diagnostics
+
+presentation/
+  godot
+  ui
+  asset_adapters
 ```
 
-A directed scene may strongly bias Wilson without becoming a cutscene.
+## 4.1 `domain/core`
+
+Lowest-dependency semantic primitives:
+
+```text
+stable IDs / refs
+bounded value types
+PropertyValue
+DomainSubjectRef / RuntimeWorldRef
+RequirementPredicate algebra
+SemanticPattern algebra
+Effect/result envelopes
+outcome classifications
+trace/causal IDs
+registered policy IDs
+```
+
+No runtime owner state lives here.
+
+## 4.2 `domain/content`
+
+Immutable authored definitions and validated registries:
+
+```text
+EntityDefinition
+MaterialDefinition
+RelationDefinition
+ActionDefinition
+InteractionRuleDefinition
+TransformationDefinition
+PropertyDerivationDefinition
+AssemblyDefinition
+InteractionRegionDefinition
+EnvironmentalResponseRule
+EvidenceRuleDefinition
+ProjectDefinition
+EventDefinition
+KnowledgeDefinition / learned interaction definitions
+ActorProfileDefinition
+Intervention definitions
+```
+
+Bootstrap responsibilities include:
+
+```text
+reference validation
+predicate/pattern validation
+capability/category/action-role indexes
+PropertyDependencyGraph compilation
+cycle checks
+relation invariant checks
+transformation ambiguity checks
+assembly slot predicate validation
+registered policy validation
+```
+
+The asset catalog is an authoring/backlog source for content requirements, not runtime state or necessarily the serialization format.
+
+## 4.3 `domain/world`
+
+Contains the World state owner and narrow authoritative query/command surface.
+
+Graph indexes over world relations are maintained from committed World mutations but do not become separate authority.
+
+## 4.4 `domain/graphs`
+
+Reusable typed graph/index/query primitives:
+
+```text
+WorldRelationGraph indexed view
+PropertyDependencyGraph
+CompositionDependencyProjection
+EpistemicGraphProjection support
+SemanticPattern matcher
+bounded traversal/result sets
+stable semantic ordering
+provenance paths
+```
+
+This module owns no World or cognition state.
+
+Owner-specific adapters/projections remain attached to the owner supplying facts.
+
+## 4.5 `domain/physical`
+
+Pure/derived physical-semantic services:
+
+```text
+effective physical profile
+assembly compatibility/validity
+protection/exposure
+environmental responses
+hazards
+interaction regions
+authoritative affordance/attemptability discovery
+```
+
+Typical operations:
+
+```text
+ResolveEffectivePhysicalProfile
+GetEffectiveProperty
+HasEffectiveCapability
+QueryAssemblyValidity
+QueryCompatibleComponents
+ValidateAssemblyBinding
+DeriveProtectionProjections
+ResolveExposure
+QueryApplicableEnvironmentalResponses
+DeriveHazardProjection
+ResolveInteractionRegion
+QueryActionAttemptability
+QueryAttemptableActions
+```
+
+Never reads Wilson beliefs to decide physical truth.
+
+## 4.6 `domain/actions`
+
+Action execution state owner + committed resolution boundary.
+
+Consumes immutable action/rule definitions and physical queries. Produces grounded `ActionOutcome`, causal identity and World mutation plans.
+
+## 4.7 `domain/cognition`
+
+Wilson cognition owner plus bounded cognition services:
+
+```text
+perception
+evidence
+expectation
+salience
+decision
+investigation
+learning
+reaction
+```
+
+`EpistemicGraphProjection` is only an indexed/projection view over cognition-owned beliefs/propositions. It must not import hidden World facts.
+
+## 4.8 `domain/projects`, `domain/director`, `domain/player`, `domain/actors`
+
+Each contains its established owner and its narrow domain services. None may become a shortcut to mutate another owner's state.
 
 ---
 
-# 4. Derived / stateless services
+# 5. Typed semantic graph placement
 
-These are the strongest candidates for SOLID composition because they answer a question without owning durable truth.
+Graph-shaped structures are explicit because the normalized content breadth makes traversal/indexing important, but their authority is unchanged.
 
-## 4.1 Perception Service
-
-Input:
-
-- authoritative nearby world state;
-- Wilson location/orientation/senses;
-- current action context.
-
-Output:
+## 5.1 World relation graph
 
 ```text
-PerceptionResult
-PerceivedEntity
-ObservedChange
+WorldRelationStore (authoritative)
+        ↓ indexed view
+WorldRelationGraph
 ```
 
-It decides what Wilson can observe, not what he believes it means.
+Supports bounded typed traversal such as nested contents, component membership, attachment and possession queries.
 
-## 4.2 Salience / Attention Service
+## 5.2 Property dependency graph
 
-Input may include:
+`PropertyDerivationDefinition` compiles into a validated DAG.
 
-- perceived subjects;
-- current intention;
-- drive relevance;
-- novelty;
-- attachment;
-- threat;
-- expectation mismatch;
-- opportunity urgency;
-- habitual cues;
-- selected relevant memories;
-- director framing.
-
-Output:
+Uses:
 
 ```text
-small bounded salient set
+topological derivation order
+cycle validation
+localized invalidation
+provenance / ExplainEffectiveProperty
 ```
 
-It should not require permanent salience values for every entity.
+Derived values may be cached only if reconstructible and deterministically invalidated.
 
-## 4.3 Expectation Service
+## 5.3 Composition dependency projection
 
-Input:
+Derived from `part_of`, `attached_to`, contents and assembly bindings.
 
-- beliefs;
-- selected history;
-- current context;
-- recurring patterns/habit knowledge where predictive;
-- active project/event context.
+Used to identify which composite hosts/projections depend on a changed component.
 
-Output:
+## 5.4 Epistemic graph projection
+
+Indexed view over Wilson propositions/beliefs for bounded subject/type/category and proposition-pattern queries.
 
 ```text
-ExpectedState / ExpectedOutcome
-confidence
+WorldRelationGraph != EpistemicGraphProjection
 ```
 
-Expectation is derived and normally not persistent.
+No automatic truth leakage or category inheritance is allowed.
 
-## 4.4 Candidate Intention Generator
+## 5.5 Semantic pattern matching
 
-Compose multiple sources:
+A bounded typed matcher may accelerate:
 
 ```text
-NeedIntentionSource
-AffordanceIntentionSource
-ProjectIntentionSource
-HabitIntentionSource
-SuspendedInterestSource
-EventIntentionSource
-SuggestionIntentionSource
-StimulationIntentionSource
+interaction-rule candidate discovery
+assembly component discovery
+learned interaction applicability
+belief/proposition lookup
+project/event eligibility candidate discovery
 ```
 
-Then normalize/deduplicate semantically equivalent candidates.
-
-Input includes the salient set, known interactions, affordances and current durable Wilson state.
-
-Output:
-
-```text
-small set of meaningful candidate intentions
-```
-
-Key invariant:
-
-```text
-physically possible != psychologically considered
-```
-
-## 4.5 Intention Evaluation / Competition Service
-
-This should be one of the most composition-heavy parts of the codebase.
-
-Candidate evaluators may include:
-
-```text
-NeedEvaluator
-ProjectValueEvaluator
-PreferenceEvaluator
-AttachmentEvaluator
-CuriosityEvaluator
-HabitEvaluator
-RiskEvaluator
-EffortEvaluator
-OpportunityUrgencyEvaluator
-SuggestionEvaluator
-ContinuityEvaluator
-EmotionModifier
-DirectorBiasEvaluator
-```
-
-Each evaluator:
-
-- reads a candidate + bounded evaluation context;
-- returns a bounded contribution/annotation;
-- does not mutate durable state.
-
-Conceptually:
-
-```text
-Candidate
-+ EvaluationContext
-→ EvaluationContribution[]
-→ normalized tendency/distribution
-→ stochastic selection among plausible candidates
-```
-
-This is preferable to a giant `decide_action()` function.
-
-### Trait composition
-
-Traits modify relevant evaluators rather than entering through one generic personality score:
-
-```text
-CuriosityEvaluator reads curiosity
-RiskEvaluator reads risk_tolerance
-Suggestion/Dependency logic reads independence
-```
-
-## 4.6 Causal Attribution Service
-
-Input:
-
-- observed anomaly;
-- Wilson-visible context;
-- beliefs/history;
-- long-term presence belief;
-- known actors/opportunities.
-
-Output:
-
-```text
-candidate causes
-bounded weights/confidence
-selected interpretation
-```
-
-Semantic candidate classes currently required:
-
-- natural;
-- self;
-- known actor;
-- unknown ordinary;
-- unseen presence.
-
-The probability distribution is transient. Durable consequences are recorded through episode/belief/presence updates.
-
-Optional LLM-assisted reweighting can happen here only for eligible ambiguous cases and inside a plausibility envelope.
-
-## 4.7 Reaction / Emotion Service
-
-Input:
-
-- grounded outcome;
-- expectation mismatch;
-- causal attribution;
-- danger belief;
-- association;
-- current goal relevance.
-
-Output:
-
-```text
-short-lived emotion/reaction
-behavioral modifiers
-presentation/speech intent
-```
-
-It should not persist week-long fear/anger bars. Durable consequences are emitted through the learning pipeline.
+A pattern match only creates candidates. Final validation remains with the owning domain operation.
 
 ---
 
-# 5. Action Resolution System
+# 6. Dependency direction
 
-This is a critical authority boundary.
-
-Given a selected semantic intention, it:
-
-1. resolves the next applicable physical/semantic action step;
-2. validates authoritative preconditions;
-3. reserves participants/resources only where actual action semantics require it;
-4. executes/advances the action;
-5. applies authoritative physical effects;
-6. emits a structured grounded outcome.
-
-### Owns authority over
-
-- whether the physical action is valid;
-- authoritative action effects;
-- transformations;
-- injury/death consequences;
-- physical success/partial result/failure.
-
-### Does not decide
-
-- whether Wilson wanted the action;
-- what Wilson learns;
-- how much Wilson likes the result;
-- whether Wilson attributes the result to the player.
-
-Canonical output contract:
+Canonical direction:
 
 ```text
-ActionOutcome
-  actor
-  semantic action
-  participants
-  authoritative effects
-  observable effects
-  diagnostic feedback
-  consequence severity
-  timing/result classification
+presentation / external adapters
+            ↓
+application / orchestration
+            ↓
+domain owners + derived domain services
+            ↓
+domain core semantic primitives
+
+content registries supply immutable definitions inward
+infrastructure implements outward-facing ports
 ```
 
-`ActionOutcome` is one of the main contact points of the architecture.
+## 6.1 Allowed semantic dependencies
+
+| From | May depend on |
+|---|---|
+| `core` | nothing higher |
+| `content` | core + graph compiler primitives |
+| `world` | core + content + relation-index primitives |
+| `physical` | core + content + authoritative World query ports + graph projections |
+| `actions` | core + content + physical queries + World query/mutation-plan ports |
+| `cognition` | core + content + perceived contracts + cognition-owned graph indexes + bounded project/director/player signals |
+| `projects` | core + content + World queries + grounded outcomes + bounded Wilson-history projections |
+| `director` | core + content + approved World/Cognition projections |
+| `player` | core + content + intervention World port + cognition suggestion/evidence boundary |
+| application | explicit owner/query/service ports |
+| presentation/infrastructure | inward contracts only |
+
+Implementation-level interfaces/ports may reverse imports while preserving this semantic direction.
+
+## 6.2 Forbidden dependencies
+
+```text
+WorldState → BeliefStore
+EntityInstance → favorite/known flags
+PhysicalProfileResolver → AssociationStore
+Cognition decision → raw hidden WorldState
+EpistemicGraph → WorldRelationGraph truth import
+ProjectInstance → duplicate structure integrity
+Director → CommitSelectedIntention
+Godot UI → direct World property mutation
+Asset socket → domain AssemblyRole identity
+Graph index → mutation authority
+Persistence DTO → define domain meaning
+```
 
 ---
 
-# 6. Memory & Learning Pipeline
+# 7. Application/orchestration layer
 
-Do not let each physical system independently modify every psychological store.
+Application coordinates domain owners but owns no gameplay truth.
 
-Preferred post-outcome flow:
-
-```text
-ActionOutcome / ObservedEvent
-        ↓
-Outcome Interpretation
-        ↓
-Learning Evidence
-        ↓
-┌─────────────────────────────────────────┐
-│ Belief learner                          │
-│ Association learner                     │
-│ Habit learner                           │
-│ Episode recorder/consolidator           │
-│ Presence relationship learner           │
-│ Project outcome processor               │
-└─────────────────────────────────────────┘
-```
-
-Each processor returns mutations only for the state it owns.
-
-This prevents architecture such as:
+## 7.1 Active semantic loop
 
 ```text
-FireSystem edits BeliefStore
-FireSystem edits AssociationStore
-FireSystem creates memory
-FireSystem edits HabitStore
-FireSystem edits trust
+advance due World/body/environment/dynamic processes
+→ advance current ActionExecution
+→ commit owner-local authoritative mutations in deterministic causal order
+→ collect ActionOutcome / WorldEvent
+→ Perceive / derive PerceptualEvidence
+→ immediate-threat check
+→ immediate relevant learning when required
+→ route TACTICAL vs INTENTIONAL reconsideration
+→ select/validate/start next action when required
+→ process grounded project/director consequences
+→ maintenance
+→ presentation/debug projection
 ```
 
-The fire/action code emits grounded facts once; learning translates those facts into Wilson-relative consequences.
+The render frame is never the authoritative simulation clock.
+
+## 7.2 Reconsideration
+
+Normal scopes:
+
+```text
+TACTICAL
+INTENTIONAL
+IMMEDIATE_THREAT
+```
+
+Tactical asks how to continue the current intention. Intentional asks whether to continue/suspend/change objectives. Immediate threat uses a narrow defensive regime rather than extreme utility constants.
+
+## 7.3 Semantic change sets for derived index maintenance
+
+A committed owner mutation may produce a bounded internal `SemanticChangeSet` used only to invalidate/rebuild reconstructible derived indexes.
+
+Example:
+
+```text
+binding_integrity(binding_7) changed
+→ PropertyDependencyGraph identifies downstream property families
+→ CompositionDependencyProjection identifies affected host(s)
+→ invalidate cached EffectivePhysicalProfile(tool_3)
+```
+
+This is **not** a generic event bus for gameplay side effects. Gameplay reactions still flow through explicit outcomes/events/perception/learning.
+
+## 7.4 Multi-owner lifecycle transactions
+
+Application lifecycle orchestration owns ordering, not durable state, for:
+
+```text
+player intervention transaction
+death/resurrection
+End Run / Legacy extraction
+offline catch-up
+save/load reconstruction
+```
 
 ---
 
-# 7. Contact map / dependency edges
+# 8. Contact contracts
 
-The system graph should have deliberately few high-value contact points.
-
-## World → Cognition
-
-Through:
+Keep cross-boundary contacts deliberately small and semantic.
 
 ```text
-PerceptionResult
-ObservedEvent
-AffordanceQuery
+World → cognition:
+  PerceptionResult / ObservedEvent / PerceptualEvidence
+
+Cognition → action execution:
+  SelectedIntention / SelectedTactic + role binding
+
+Action execution → World/application:
+  ActionOutcome + WorldMutationPlan
+
+Action outcome → cognition/projects/director:
+  grounded semantic consequence only
+
+Player → cognition:
+  SuggestionSignal or perceivable intervention consequence
+
+Director → cognition:
+  temporary opportunity / bounded bias
 ```
 
-Wilson must not read arbitrary authoritative internals.
-
-## Cognition → World
-
-Through:
-
-```text
-SelectedIntention
-→ Action Resolution
-```
-
-Cognition does not mutate entities directly.
-
-## Action Resolution → Learning
-
-Through:
-
-```text
-ActionOutcome
-```
-
-## Player → World
-
-Through:
-
-```text
-ValidatedInterventionCommand
-```
-
-## Player → Cognition
-
-Only through:
-
-```text
-SuggestionSignal
-ObservableInterventionEvent
-```
-
-## Director → Cognition
-
-Through:
-
-```text
-DirectorContext
-TemporaryOpportunity
-SceneBias
-```
-
-not direct Wilson commands.
-
-## Cognition → Presentation
-
-Through semantic events/intents:
-
-```text
-SelectedIntention
-ReactionIntent
-SpeechAct
-```
-
-not hidden-score UI leakage.
+No owner receives another owner's private store for unrestricted mutation.
 
 ---
 
-# 8. SOLID/composition strategy
-
-## 8.1 Depend on stable questions
-
-Useful conceptual ports/interfaces include:
+# 9. Project flow
 
 ```text
-IWorldQuery
-IAffordanceProvider
-IPerceptionQuery
-IExpectationProvider
-IIntentionSource
-IIntentionEvaluator
-IActionResolver
-ILearningProcessor
-IProjectQuery
-IPlayerInfluenceQuery
-IRandomSource
+Project definition/state
+→ exposes eligible semantic contribution opportunity
+→ normal Wilson candidate generation/competition
+→ selected intention/tactic
+→ physical action validation/resolution
+→ World mutation
+→ grounded ActionOutcome/world facts
+→ Project owner updates lifecycle/progress
 ```
 
-Names are illustrative. The architectural principle is to depend on abstractions representing a domain question rather than a concrete subsystem implementation.
-
-## 8.2 Evaluator composition
-
-Avoid:
-
-```text
-if hungry ...
-if curious ...
-if project ...
-if player suggested ...
-if Gerald ...
-if storm ...
-```
-
-Prefer:
-
-```text
-for candidate in candidates:
-    contributions = evaluator_set.evaluate(candidate, context)
-    candidate.tendency = combiner.combine(contributions)
-```
-
-This allows each concern to be independently tested, bounded and calibrated.
-
-## 8.3 Intention-source composition
-
-Candidate generation should be extensible by adding a source rather than editing one universal planner.
-
-A new authored event can provide an `EventIntentionSource`/temporary opportunities without knowing the internals of hunger, habit or project selection.
-
-## 8.4 Learning composition
-
-Learning similarly composes bounded consequence processors:
-
-```text
-BeliefLearner
-AssociationLearner
-HabitLearner
-EpisodeRecorder
-PresenceRelationshipLearner
-ProjectOutcomeProcessor
-```
-
-All consume grounded semantic outcome/context.
-
-## 8.5 Randomness injection
-
-All gameplay stochasticity should use an injected seeded random source rather than global random calls.
-
-This is required for deterministic tests and later statistical calibration.
+Resources are not globally reserved merely because a project could use them.
 
 ---
 
-# 9. Active-play game loop
-
-The game loop should separate **continuous simulation**, **reconsideration**, **action resolution** and **post-outcome learning**.
-
-Wilson should not rescore the entire world every render frame.
-
-Conceptually:
-
-```text
-SIMULATION ADVANCE
-│
-├─ 1. Advance authoritative world time
-│     environment/weather/ongoing physical state
-│
-├─ 2. Advance slow Wilson state
-│     hunger/energy/comfort/stimulation
-│
-├─ 3. Advance current action/intention
-│     simulation progress independent of rendering FPS
-│
-├─ 4. Collect meaningful events/interrupts
-│     action completed
-│     target invalidated
-│     strong new salient event
-│     immediate threat
-│     player intervention/suggestion
-│     director opportunity
-│
-├─ 5. Test whether reconsideration is required
-│     if no:
-│       continue current intention
-│     if yes:
-│       perceive
-│       derive salient set
-│       derive expectations/anomalies
-│       generate candidates
-│       evaluate candidates
-│       optionally bounded contextual reweight
-│       select intention
-│
-├─ 6. Resolve next action step when due
-│     validate against authoritative world
-│     apply grounded outcome
-│
-├─ 7. Post-outcome processing
-│     reaction/emotion
-│     causal attribution when relevant
-│     learning/memory/association/habit
-│     project progress
-│     presence relationship update
-│
-├─ 8. Emit presentation events
-│     animation/reaction/speech/diary candidate
-│
-└─ 9. Continue
-```
-
-The orchestrator controls ordering, not domain policy.
-
----
-
-# 10. Reconsideration instead of constant replanning
-
-Wilson should recalculate a decision on meaningful boundaries such as:
-
-- current intention completes;
-- action becomes impossible;
-- immediate threat appears;
-- a drive crosses a meaningful urgency band;
-- strong novelty/anomaly becomes salient;
-- director opportunity appears;
-- player suggestion/intervention occurs;
-- natural action/project checkpoint is reached;
-- significant project stage completes;
-- sufficient time/context change accumulates.
-
-## 10.1 Hysteresis / intention inertia
-
-Current intention receives continuity bias. A competing intention must exceed it enough to justify interruption, except for immediate threat.
-
-This prevents behavioral thrashing without making actions globally uninterruptible.
-
----
-
-# 11. Update cadences
-
-Different domains should update at different cadences/event boundaries.
-
-## High-frequency / event-driven
-
-- current physical action progress;
-- immediate threat;
-- player intervention;
-- collision/consequence resolution;
-- action validity.
-
-## Decision cadence / event-driven
-
-- perception/salience;
-- expectation;
-- candidate generation;
-- intention evaluation;
-- causal attribution.
-
-## Slow cadence
-
-- hunger/energy/comfort/stimulation drift;
-- passive God Power generation;
-- supported ecology/growth/rot.
-
-## Post-event only
-
-- belief updates;
-- association updates;
-- habit reinforcement/suppression;
-- episode creation;
-- presence relationship update.
-
-## Maintenance cadence
-
-- episode consolidation/forgetting;
-- habit weakening/disuse;
-- weak association drift;
-- project salience aging;
-- event cooldown/eligibility maintenance.
-
-Concrete frequencies are calibration/implementation choices; the architectural requirement is that these are not all tied to render FPS or one universal tick.
-
----
-
-# 12. Immediate-threat fast path
-
-Emergencies such as a falling palm should not compete normally with checking the fire or finishing a table.
-
-Conceptually:
-
-```text
-ImmediateThreatDetected
-→ narrow defensive candidate set
-→ evaluate feasibility + learned threat response
-→ select/execute rapidly
-→ resume normal cognition after danger
-```
-
-Relevant traits/knowledge may still affect response, but ordinary low-priority motives are excluded from this path.
-
-This is not a separate `safety` need.
-
----
-
-# 13. Project flow
-
-Project System should expose contribution opportunities rather than directly scheduling Wilson.
-
-```text
-Project System
-  exposes valid contribution opportunities
-        ↓
-Candidate Intention Generator
-  creates project-related candidates when salient
-        ↓
-normal competition
-        ↓
-selected project intention
-        ↓
-Action Resolution
-        ↓
-physical world outcome
-        ↓
-Project System consumes grounded result
-```
-
-This preserves interruptions by hunger, novelty, Gerald, weather, player intervention, etc.
-
----
-
-# 14. Player intervention flow
+# 10. Player intervention flow
 
 Physical/environmental intervention:
 
 ```text
-Player input
-  ↓
-permission + cost validation
-  ↓
-God Power mutation
-  ↓
-ValidatedInterventionCommand
-  ↓
-World authoritative mutation
-  ↓
-Perception determines whether Wilson notices
-  ↓
-if noticed:
-  anomaly / attribution
-  reaction
-  learning / presence relationship
+player request
+→ permission + capability + cost validation
+→ atomic PlayerRunState/World transaction
+→ WorldEvent
+→ perception
+→ attribution/reaction/learning only if Wilson can observe/infer it
 ```
 
 Suggestion:
 
 ```text
-Player suggestion
-  ↓
 SuggestionSignal
-  ↓
-SuggestionIntentionSource / SuggestionEvaluator
-  ↓
-normal Wilson competition
-  ↓
-normal action validation
+→ candidate source/evaluator contribution
+→ normal competition
+→ normal physical validation
 ```
-
-Suggestions never bypass Wilson choice or world legality.
 
 ---
 
-# 15. LLM contact points
+# 11. Offline simulation
 
-The LLM adapter stays outside authoritative systems.
+Offline catch-up reuses normal domain semantics under a conservative policy.
 
-Allowed contacts:
+It may coarse-step ordinary environment, drives, projects and learning while suppressing forbidden outcome classes such as death, rare spectacle and major discovery consumption.
+
+Offline is a policy around the same domain, not a second simulation architecture.
+
+---
+
+# 12. Presentation / Godot boundary
+
+Godot consumes semantic state/projections and realizes:
 
 ```text
-CausalAttributionService
-  optional bounded reweight of valid hypotheses
-
-IntentionCompetition
-  optional bounded reweight for explicitly eligible ambiguous cases
-
-NarrativeProjection
-  speech/thought/reaction wording
-
-DiaryProjection
-  structured episode → Wilson prose
-
-RareSceneEmbellishment
-  choose among grounded authored variants
+navigation geometry
+animation
+sound/particles
+camera/UI
+visual interpolation
+state-band presentation
+interaction anchors/regions
+assembly/body/perch presentation adapters
 ```
 
-Every path has deterministic fallback. The authoritative simulation must not materially block waiting for an LLM request.
+Godot nodes, scene paths, meshes and sockets are not domain identity.
+
+UI queries authoritative attemptability/affordances; it does not duplicate legality rules.
 
 ---
 
-# 16. Offline catch-up
+# 13. Persistence boundary
 
-Offline simulation should reuse normal domain semantics under a conservative policy rather than become a contradictory second game.
+Persist durable causes; reconstruct derived projections/indexes.
 
-Conceptually:
+Persist conceptually:
 
 ```text
-elapsed offline time
-  ↓
-Offline Policy
-  chooses allowed domains/outcome classes
-  ↓
-coarse time/event stepping
-  ↓
-world + drives + ordinary projects + ordinary learning
-  ↓
-forbid death / rare spectacle / major discovery
-  ↓
-structured catch-up history
+World authoritative state and active required dynamic processes
+Wilson cognition durable stores
+meaningful current/suspended intention state
+Projects
+Director state required for continuity
+PlayerRunState / PlayerProfile
+required deterministic RNG state
 ```
-
-The Offline Policy is a guard around the normal domain systems.
-
-It should suppress forbidden outcome categories rather than require every subsystem to contain completely separate offline logic.
-
----
-
-# 17. Presentation boundary and Godot
-
-Godot presentation consumes semantic simulation output and maps domain IDs to scene objects.
-
-Presentation responsibilities include:
-
-- navigation realization;
-- animation;
-- sound;
-- particles;
-- camera;
-- UI;
-- visual interpolation;
-- speech/text presentation.
-
-Presentation must not create hidden simulation facts.
-
-Conceptual scene responsibility remains approximately:
-
-```text
-Main
-├── WorldPresentation
-│   ├── Terrain
-│   ├── EntityViews
-│   ├── Navigation
-│   ├── Effects
-│   └── LightingWeather
-├── CharacterPresentation
-├── CameraRig
-├── InteractionUI
-└── Application / Simulation Host
-```
-
-Exact Godot node layout may evolve.
-
-Domain entity IDs must map explicitly to presentation nodes rather than relying on scene-tree paths as game identity.
-
-Animation duration may influence action timing only through an explicit timing contract; animation code must not decide physical outcome.
-
----
-
-# 18. Persistence/save boundary
-
-Persist authoritative and Wilson-relative durable state, not every derived service cache.
-
-Must preserve conceptually:
-
-- world authoritative state;
-- traits;
-- drives;
-- associations;
-- beliefs;
-- selected episodes;
-- habits;
-- meaningful current/suspended intention;
-- projects;
-- presence relationship;
-- player/God Power state;
-- director/event state required to avoid duplication/incoherence;
-- deterministic RNG/seed state as required.
 
 Normally reconstruct:
 
-- salience;
-- expectations;
-- candidate sets;
-- evaluator contributions;
-- causal probability distributions;
-- prediction-error scores;
-- most transient emotion/reaction state.
+```text
+WorldRelationGraph indexes
+PropertyDependencyGraph compiled runtime caches
+CompositionDependencyProjection
+EffectivePhysicalProfile
+AssemblyValidity
+ProtectionProjection / ExposureResult
+HazardProjection
+EpistemicGraph indexes
+salience / expectations / candidate evaluations
+most transient reactions
+```
 
-For a save in the middle of a visible scene, preserve only enough action/intentional state to resume coherently rather than serializing arbitrary service internals.
+Save/load of active semantic processes keeps only state required for coherent deterministic reconstruction.
 
 ---
 
-# 19. Dependency direction
+# 14. External AI boundary
 
-A useful dependency rule is:
+Optional LLM use is outer-layer bounded interpretation/expression only.
 
-```text
-Domain state + semantic contracts
-        ↑
-Pure evaluation/domain services
-        ↑
-Application/game orchestration
-        ↑
-Godot / persistence / LLM / external adapters
-```
-
-Invariants:
+Allowed examples:
 
 ```text
-World truth does not depend on Wilson belief.
-Action resolution depends on world queries, not cognition internals.
-Cognition sees observations/semantic world queries, not rendering nodes.
-Presentation depends on domain output, not vice versa.
-LLM adapters are outer-layer dependencies.
-Persistence format does not define domain semantics.
+bounded reweight among already plausible causal hypotheses
+bounded reweight among eligible ambiguous intention candidates
+speech/thought/diary wording from structured grounded state
+rare authored-variant embellishment
 ```
+
+Every path has a deterministic fallback. LLM output never directly mutates World or invents authoritative memories/knowledge.
 
 ---
 
-# 20. Testing architecture
+# 15. Testing architecture
 
-The design should support four levels.
-
-## 20.1 Pure service tests
+## Pure service tests
 
 Examples:
 
-- expectation inference;
-- intention evaluator contributions;
-- causal attribution weighting;
-- habit reinforcement/extinction;
-- belief-confidence update;
-- association update.
+```text
+property derivation / graph invalidation
+assembly validity
+expectation inference
+candidate evaluator contributions
+belief/association/habit updates
+causal hypothesis weighting
+semantic pattern matching
+```
 
-## 20.2 System contract tests
+## Contract tests
 
 Examples:
 
-- Action Resolution never mutates beliefs directly;
-- suggestion never bypasses Wilson selection;
-- Project System never executes Wilson actions;
-- LLM failure never changes authoritative physical result;
-- player private intent never reaches trust evaluation.
+```text
+Action Resolution never mutates beliefs
+World never reads Wilson cognition
+suggestion never bypasses selection
+Project never executes Wilson action
+EpistemicGraph never imports hidden World truth
+player private intent never updates trust
+LLM failure never changes authoritative physical result
+```
 
-## 20.3 Representative scene regression
+## Fixture/regression tests
 
-Use catalog scenes as scenario fixtures where practical:
+Use the canonical scenario fixtures for integration coverage:
 
-- Good Chair;
-- Scientific Method;
-- Missing Spoon;
-- Benefactor;
-- Roof or Table?;
-- Mushroom;
-- Sabotaged Storage;
-- Falling Palm;
-- Brilliant Shortcut.
+```text
+Scientific Method
+Falling Palm
+Sabotaged Storage
+Improvised Hammer
+Cloth Shelter Weather
+representative scene suite
+```
 
-Assertions should target valid distributions/state consequences rather than exact scripted action sequences.
+## Headless statistical simulation
 
-## 20.4 Headless statistical simulation
-
-Run many seeds/days and observe:
-
-- action distribution;
-- idle/stagnation frequency;
-- repeated-action lock-in;
-- belief-confidence saturation;
-- association/attachment saturation;
-- habit strength distribution;
-- dependency growth/recovery;
-- project completion/abandonment;
-- risk/death rate;
-- rare scene frequency/break rate;
-- God Power generation/spending;
-- behavioral diversity between Wilson seeds.
-
-This level becomes the feedback source for the next guard/self-calibration design pass.
+Measure behavior distributions, stagnation, lock-in, belief/association saturation, project dynamics, death/risk rates, event frequency and God Power economy across deterministic seeds rather than forcing each run toward the same outcome.
 
 ---
 
-# 21. Architectural anti-patterns
+# 16. Fixture dependency review
 
-## Giant WilsonBrain
+## Scientific Method — PASS
 
-One object that reads every store, produces every candidate and contains every special case will be impossible to calibrate safely.
+```text
+content rules/regions
+→ physical attemptability
+→ action resolution
+→ World mutation/outcome
+→ perception/evidence/learning
+→ tactical decision
+```
 
-## Every concept as a mutable System
+No physical service needs cognition internals.
 
-Derived concepts do not become state-owning systems merely because they have names.
+## Falling Palm — PASS
 
-## Cross-store mutation
+```text
+World DynamicProcessState
+→ HazardProjection
+→ perception
+→ PerceivedThreat
+→ immediate-threat decision
+→ ordinary action/world resolution
+```
 
-Belief code must not directly rewrite habit/project/trust state.
+Wilson never reads hidden authoritative hazard projection directly.
 
-## Pair-specific interaction explosion
+## Sabotaged Storage — PASS
 
-Do not regress from property/effect semantics to bespoke object-pair recipes where generic semantics suffice.
+```text
+World relation truth
+→ observation coverage/evidence
+→ expectation mismatch/investigation
+→ EpistemicGraphProjection for Wilson-relative lookup
+```
 
-## Universal planning hierarchy
+Actual cause remains distinct from Wilson attribution.
 
-The validated model does not require a universal GOAP task tree. Planning can be introduced only where an intention genuinely needs multi-step action resolution; it should not become the definition of Wilson cognition.
+## Improvised Hammer — PASS
 
-## Presentation authority
+```text
+World bindings
+→ CompositionDependencyProjection
+→ AssemblyValidity / EffectivePhysicalProfile
+→ action attemptability/resolution
+```
 
-Animation, UI and LLM must not determine world truth.
+No Crafting owner is needed.
 
-## Global utility god-object
+## Cloth Shelter Weather — PASS
 
-Avoid one hardcoded score function containing every concern. Use evaluator composition and explicit bounded contributions.
+```text
+World/environment
+→ ResolveExposure / EnvironmentalResponse
+→ World property/relation mutation
+→ graph-aware localized invalidation
+→ effective profile / protection recomputation
+```
 
-## Unbounded global event bus
-
-Events are useful, but a global publish/subscribe channel where arbitrary subscribers mutate arbitrary state becomes hidden coupling. Prefer typed/scoped events and explicit owners/processors.
+Projects continue to query rather than duplicate physical truth.
 
 ---
 
-# 22. Recommended first implementation seams
+# 17. Architectural anti-patterns
 
-Prototype these seams before committing to detailed class/data architecture because they carry the most integration risk:
+Reject by default:
 
-1. `WorldQuery + AffordanceProvider`
-2. `Perception → Salience`
-3. `IIntentionSource[] → CandidateSet`
-4. `IIntentionEvaluator[] → bounded contributions → stochastic selection`
-5. `SelectedIntention → ActionResolution → ActionOutcome`
-6. `ActionOutcome → LearningPipeline → durable updates`
-7. `Project opportunity → normal intention competition`
-8. `Player intervention → observed anomaly → attribution → presence relationship`
-9. save/load reconstruction of derived state
-10. seeded headless game loop
-
-If these boundaries stay clean, most future growth should be achievable through composition rather than rewrites.
+```text
+Giant WilsonBrain
+one mutable System per noun
+cross-store mutation
+EverythingGraph / universal triple store
+pair-specific interaction recipes
+universal GOAP hierarchy
+presentation authority
+one global utility god-function
+unbounded global event bus
+persisted derived caches becoming truth
+object-type branching where property/capability composition suffices
+```
 
 ---
 
-# 23. Next design pass: guards and self-calibration
+# 18. Implementation sequence
 
-The next architecture/design pass should define **bounded update contracts and systemic guards** so composition cannot create runaway state or monopolistic behavior.
+The architecture/domain are now ready for concrete implementation planning.
 
-It should cover at least:
+Recommended sequence:
 
-- saturation/diminishing returns;
-- bounded evaluator contributions;
-- probability normalization and plausibility floors/ceilings;
-- belief-confidence ceilings and contradiction handling;
-- association/attachment saturation;
-- habit lock-in prevention;
-- dependency runaway prevention;
-- stimulation versus habit anti-stagnation;
-- project monopolization prevention;
-- event/director cooldowns and quotas;
-- episodic-memory growth/consolidation budgets;
-- offline delta caps;
-- God Power caps/economy stability;
-- stochastic exploration bounds;
-- death/risk-frequency guards;
-- headless metrics and target distributions;
-- which parameters may self-adjust safely and which must remain authored/calibrated.
+```text
+1. concrete core IDs/refs/value types
+2. immutable content definitions + bootstrap validation/index compilation
+3. World state + relation graph/index query surface
+4. physical profile / assembly / attemptability services
+5. action execution + ActionOutcome
+6. perception/evidence + minimal cognition stores
+7. tactical/intentional decision loop
+8. project/player/director integration
+9. persistence/reconstruction
+10. Godot presentation adapters
+11. deterministic fixture/headless regression harness
+```
 
-The guard layer should **bound and stabilize existing systems**, not become a second opaque AI that silently rewrites Wilson's personality or physical world rules.
+The first vertical slice should exercise the existing fixtures rather than invent a parallel simplified architecture.
