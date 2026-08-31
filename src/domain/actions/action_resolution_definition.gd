@@ -1,9 +1,12 @@
 class_name ActionResolutionDefinition
 extends RefCounted
 
-## Deterministic resolution envelope for one action verb.
-## `commit_fraction` marks the irreversible physical checkpoint.
+## Deterministic authored resolution envelope for one action form.
+## `definition_id` is stable content identity used by reconstruction; it is not
+## runtime execution identity. `commit_fraction` marks the irreversible physical
+## checkpoint.
 
+var definition_id: StringName
 var action_id
 var duration: float
 var commit_fraction: float
@@ -16,7 +19,8 @@ func _init(
 	p_duration: float,
 	p_commit_fraction: float,
 	p_effects: Array,
-	p_event_type: StringName
+	p_event_type: StringName,
+	p_definition_id: StringName = &""
 ) -> void:
 	assert(p_action_id != null, "ActionResolutionDefinition requires ActionId")
 	assert(p_duration > 0.0, "ActionResolutionDefinition duration must be > 0")
@@ -27,3 +31,6 @@ func _init(
 	commit_fraction = p_commit_fraction
 	effects = p_effects.duplicate()
 	event_type = p_event_type
+	definition_id = p_definition_id
+	if definition_id == &"":
+		definition_id = StringName("%s_default" % String(action_id.value))
