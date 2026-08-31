@@ -14,7 +14,7 @@ const EpistemicGraphProjection = preload("res://src/domain/cognition/epistemic_g
 const DomainValueCodec = preload("res://src/infrastructure/persistence/domain_value_codec.gd")
 const RestoredSimulationState = preload("res://src/infrastructure/persistence/restored_simulation_state.gd")
 
-const SCHEMA_VERSION := 3
+const SCHEMA_VERSION := 4
 
 var _codec
 
