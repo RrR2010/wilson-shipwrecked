@@ -9,10 +9,7 @@ const BeliefEvidence = preload("res://src/domain/cognition/belief_evidence.gd")
 
 func derive(perceptual_evidence) -> Array:
 	assert(perceptual_evidence != null, "derive requires PerceptualEvidence")
-	var proposition = BeliefProposition.new(
-		perceptual_evidence.predicate,
-		[perceptual_evidence.subject, perceptual_evidence.value]
-	)
+	var proposition = BeliefProposition.new(perceptual_evidence.claim)
 	return [BeliefEvidence.new(
 		proposition,
 		true,
