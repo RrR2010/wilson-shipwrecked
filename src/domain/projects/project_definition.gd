@@ -34,6 +34,7 @@ func _init(
 	p_intention_id.assert_kind(DomainId.Kind.SEMANTIC_INTENTION)
 	assert(p_required_contributions > 0, "ProjectDefinition required contributions must be positive")
 	assert(is_finite(p_candidate_base_score), "Project candidate score must be finite")
+	assert(p_candidate_base_score >= 0.0 and p_candidate_base_score <= 1.0, "Project candidate score must be within [0,1]")
 	id = p_id
 	contribution_action_id = p_contribution_action_id
 	contribution_event_type = p_contribution_event_type
