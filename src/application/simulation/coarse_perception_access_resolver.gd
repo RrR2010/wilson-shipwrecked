@@ -35,9 +35,12 @@ func resolve(world_events: Array, _step_context) -> Dictionary:
 			if subject.equals(_observer) or _world_query.are_co_located(_observer, subject):
 				accessible_roles.append(role_name)
 		var observable := not accessible_roles.is_empty()
+		var modalities: Array[StringName] = []
+		if observable:
+			modalities.append_array(definition.modalities)
 		result[world_event.execution_id] = PerceptionAccess.new(
 			observable,
-			definition.modalities if observable else [],
+			modalities,
 			accessible_roles,
 			definition.base_confidence
 		)
