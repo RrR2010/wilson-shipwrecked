@@ -66,7 +66,8 @@ func _run_slice() -> void:
 	var wilson_world = WilsonWorldState.new(beach)
 
 	var relations = WorldRelationStore.new()
-	_expect_true(relations.add_relation(WorldRelation.new(inside, pouch, crate, {"slot": "inner"})).ok, "relation added")
+	var inner_slot: StringName = &"inner"
+	_expect_true(relations.add_relation(WorldRelation.new(inside, pouch, crate, inner_slot)).ok, "relation added")
 
 	var beliefs = BeliefStore.new()
 	var event_type = DomainId.event_definition(&"impact_committed")
@@ -86,6 +87,7 @@ func _run_slice() -> void:
 	var query_before = DefaultWorldQuery.new(entities, relations, content, wilson_world)
 	var resistance_before = EffectivePhysicalProfileResolver.new(query_before, graph_before, policies).resolve(crate).get_property(effective_resistance)
 	var relations_before = query_before.find_relations(inside, pouch, crate).size()
+	var relation_key_before = query_before.find_relations(inside, pouch, crate)[0].key()
 	var belief_before = beliefs.get_entry(proposition).confidence
 
 	var persistence = SimulationSnapshotService.new()
@@ -110,6 +112,8 @@ func _run_slice() -> void:
 	var query_after = DefaultWorldQuery.new(restored.entities, restored.relations, content, restored.wilson_world_state)
 	_expect_equal(query_after.get_instance_property(restored_crate, structural_integrity), 2, "runtime property override survives save/load")
 	_expect_equal(query_after.find_relations(inside, restored_pouch, restored_crate).size(), relations_before, "relation query survives save/load")
+	_expect_equal(query_after.find_relations(inside, restored_pouch, restored_crate)[0].key(), relation_key_before, "qualified relation identity survives save/load")
+	_expect_equal(query_after.find_relations(inside, restored_pouch, restored_crate)[0].qualifier, inner_slot, "relation qualifier survives save/load")
 	_expect_true(restored.relations.validate_indexes().ok, "relation indexes rebuild valid")
 	_expect_equal(restored.wilson_world_state.place_id.key(), beach.key(), "Wilson coarse place survives save/load")
 	_expect_true(query_after.are_co_located(RuntimeWorldRef.wilson(), restored_crate) == false, "restored spatial query uses Wilson location")
