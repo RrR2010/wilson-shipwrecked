@@ -58,7 +58,7 @@ Properties are authoritative world truth. They are **not automatically Wilson kn
 Mutable authoritative values such as health, wetness, quantity, open/closed, burning, location and ownership. Prefer explicit object transformation when a state represents a meaningful new object form and doing so simplifies interaction rules.
 
 ### Affordance
-A currently possible attempt derived from the initiating entity/action plus context. An affordance means that something can be attempted, not that Wilson wants to do it or knows the result.
+A currently possible attempt derived from initiating entity/action, participant properties/capabilities and context. An affordance means that something can be attempted, not that Wilson wants to do it or knows the result.
 
 ### Action
 A reusable interaction with semantic roles. Actions may have different arities.
@@ -83,11 +83,19 @@ coconut -> opened_coconut -> empty_coconut
 
 Transformation definitions decide which Wilson-related historical metadata transfers to the result.
 
-## Generic interactions and thresholds
+## Property-driven interactions and thresholds
 
-Prefer generic rules such as sufficient impact/hardness against a breakable target over bespoke pair rules.
+The interaction system must prefer **requirements over reusable properties, capabilities, semantic roles and context** instead of a catalog of object-pair recipes.
 
-Conceptually:
+Do not make the primary rule:
+
+```text
+stone + coconut -> opened_coconut
+hammer + coconut -> opened_coconut
+bowling_ball + coconut -> opened_coconut
+```
+
+Model a reusable interaction conceptually as:
 
 ```text
 HIT(target, tool)
@@ -95,15 +103,28 @@ HIT(target, tool)
 requires:
   tool supports impact
   target can receive impact
+  required spatial/action context is valid
 
-effects:
-  compare relevant graded properties
+resolution:
+  compare tool impact/hardness capabilities
+  against target resistance/breakability
   apply generic reaction
   transform target/tool if thresholds are crossed
-  produce visual feedback
+  produce grounded feedback
 ```
 
-The same physical action may therefore work with a stone, hammer or absurdly heavy bowling ball without defining three separate coconut-opening recipes.
+The same physical action may therefore work with a stone, hammer or absurdly heavy bowling ball without defining a separate recipe for each pair.
+
+Content may author transformation forms such as `opened_coconut`, `mashed_banana` or `split_wood`, but the authoring model should describe **what property/capability conditions can produce the transformation**, not enumerate every concrete source object capable of satisfying them.
+
+This is the core crafting/interaction procedurality target:
+
+```text
+participant properties/capabilities
++ semantic action roles
++ contextual requirements
+→ grounded effect/transformation
+```
 
 A valid physical action does not guarantee an interesting result. Throwing a coconut at a wall may simply produce generic impact feedback and no transformation.
 
@@ -115,11 +136,27 @@ Separate physical exploration from semantic learned interactions.
 
 Wilson begins with a basic vocabulary such as observing, carrying, throwing and hitting. The initiating object determines which exploration actions are exposed. A throwable coconut can expose `Throw at...` with nearby targets, including useless targets.
 
-This intentionally allows bounded brute-force experimentation.
+This intentionally allows bounded brute-force experimentation without exposing hidden property thresholds or semantic outcomes.
+
+### Eligibility before discovery
+
+An exploration opportunity may have authored semantic requirements over:
+
+- participant properties/capabilities;
+- Wilson's prerequisite knowledge;
+- locally available entities;
+- proximity/spatial relation;
+- world/environmental conditions;
+- required equipment or access capability;
+- transformed state or other contextual predicates.
+
+When those requirements are satisfied and Wilson encounters the corresponding situation, the physical/generic exploration affordance becomes available. There is no additional random roll that withholds an already-observed meaningful result merely to protect a secret.
+
+Secrets can remain rare because their conjunction of prerequisites is rare. For example, discovering an underwater buried object may require suitable diving equipment, Wilson actually diving, the relevant sand state and proximity to the hidden location before `inspect/explore` becomes meaningful.
 
 ### Learned interaction
 
-After observing a useful relationship, Wilson may know a semantic intention such as:
+After Wilson observes a useful relationship, he may know a semantic intention such as:
 
 ```text
 open coconut with impact tool
@@ -127,7 +164,28 @@ extinguish fire with suitable material
 cook food at fire
 ```
 
-The presentation can then expose the semantic interaction instead of requiring the player/Wilson to reconstruct it as a raw physical experiment every time.
+The presentation can then expose the semantic interaction instead of requiring Wilson or the player to reconstruct it as a raw physical experiment every time.
+
+A learned semantic interaction is **knowledge about a reusable relationship**, not a stored `object_A + object_B = result` recipe.
+
+The normal discovery chain is:
+
+```text
+requirements/context make physical exploration available
+→ physical action occurs
+→ authoritative effect/transformation resolves from properties/capabilities
+→ Wilson observes grounded result
+→ knowledge/belief update
+→ useful relationship consolidates as learned semantic interaction
+```
+
+### Player knowledge
+
+The player-facing semantic knowledge normally advances when Wilson's does. Do not expose a hidden recipe list, unmet requirements or unknown semantic interaction merely because the simulation data contains it.
+
+The player may suggest generic physical exploration before the outcome is known when the relevant generic affordance is currently available.
+
+Hints are world content, not privileged recipe UI. An authored bottle message, environmental clue or similar event may encourage a particular exploration without directly revealing internal requirements or guaranteeing Wilson chooses it.
 
 ### Direction matters
 
@@ -143,7 +201,7 @@ stone -> hit -> coconut
 
 ## Knowledge graph
 
-Progression should be modeled conceptually as a graph of discovered relationships rather than a visible linear technology tree.
+Progression should be modeled conceptually as a graph of discovered relationships rather than a visible linear technology tree or recipe catalog.
 
 ```text
 object/type/category
@@ -169,22 +227,38 @@ Maintain separation between:
 - **world truth:** authoritative properties and state;
 - **Wilson expectations:** inferred but unconfirmed assumptions;
 - **Wilson knowledge:** learned/confirmed facts and interactions;
-- **player knowledge:** possibilities revealed through play;
+- **player knowledge:** possibilities revealed through Wilson's play/discovery plus explicitly player-side unlocks;
 - **LLM context:** bounded projection for one request.
 
 ### Discovery scope
 
-Different properties may use different discovery semantics:
+Different properties/interactions may use different discovery semantics:
 
 - universal/basic knowledge;
 - discovered once and generalized;
-- discovered per object type.
+- discovered per object/category/type as required by the relationship.
 
 Categories may generate expectations. A new stone-like object can inherit an expectation of high hardness while retaining an authoritative property that contradicts it, allowing surprise when experimentation disproves the assumption.
 
 ### Confidence
 
 Knowledge may have confidence/reinforcement. Repeated successful use increases confidence. Failure may lower confidence or create a negative expectation. Basic established knowledge should normally remain stable; transient contextual conclusions may decay.
+
+### Legacy Knowledge
+
+A small subset of learned operational interaction knowledge may be eligible for cross-run Legacy Knowledge as defined in `PRODUCT.md`.
+
+Legacy Knowledge seeds the next Wilson's initial semantic knowledge. It does not preserve previous-run episodes, subjects, causal history or autobiographical memory.
+
+The simulation must therefore be able to distinguish:
+
+```text
+content definition / authoritative interaction rule
+current-run Wilson knowledge
+cross-run legacy seed selected by player progression
+```
+
+Legacy seeding does not create or require a technology tree. It merely marks selected reusable interaction relationships as already known at new-run initialization.
 
 ## Object identity and historical metadata
 
@@ -229,21 +303,22 @@ Anchor points are an interaction vocabulary concept here; their rendering/scene 
 Keep these questions distinct:
 
 1. **Is the action physically possible?**
-2. **Does Wilson know/expect what it does?**
-3. **Does Wilson currently want to do it?**
+2. **Is the exploration/semantic possibility currently eligible and conceivable?**
+3. **Does Wilson know/expect what it does?**
+4. **Does Wilson currently want to do it?**
 
-A physically possible action can be unknown and undesirable. Curiosity, boredom, player suggestion, emotional state and a caution/recklessness tendency may occasionally make low-value or absurd experiments attractive.
+A physically possible action can be unknown and undesirable. Curiosity, stimulation pressure, player suggestion, emotional state and risk tolerance may occasionally make low-value or absurd experiments attractive.
 
 Urgent survival needs should dominate trivial curiosity. Wilson should not ignore extreme hunger merely to investigate a crab unless an exceptional state/event justifies it.
 
 ## Autonomous choice — behavioral requirements
 
-The exact decision algorithm remains architectural work. Product behavior requires autonomous choices to respond to at least:
+The exact decision algorithm is defined by later behavioral/architecture documentation. Product behavior requires autonomous choices to respond to at least:
 
 - need urgency;
 - current opportunities;
 - curiosity/novelty;
-- risk and caution/recklessness;
+- risk and risk tolerance;
 - preferences;
 - memories and instance relationships;
 - habits;
@@ -253,7 +328,7 @@ The exact decision algorithm remains architectural work. Product behavior requir
 
 Wilson remains autonomous in every mode. Suggestions increase propensity but do not become commands.
 
-A suggestion may normally be attempted once plus one or two insistences within a time window. Repetition should increase acceptance probability while still permitting refusal and visible/thought-bubble reaction.
+A suggestion may normally be attempted once plus one or two insistences within a time window. Repetition should increase acceptance pressure within bounded rules while still permitting refusal and visible/thought-bubble reaction.
 
 ## Projects
 
@@ -261,11 +336,11 @@ Projects are persistent intentions composed of short stages rather than continuo
 
 Wilson may maintain roughly three projects, preferably one principal and up to two secondary/paused projects.
 
-A project becomes available only when Wilson has enough initial knowledge/resources for the intention to make sense. Example: he should not decide to replace a floor with planks before learning how to produce planks.
+A project becomes available only when Wilson has enough knowledge, capabilities, resources and world context for the intention to make sense. Example: he should not decide to replace a floor with planks before learning/possessing the capabilities needed to produce and use suitable material.
 
 After completing a stage, immediate continuation becomes less likely and its probability rises again over time. Projects therefore interleave with ordinary life.
 
-Functional projects compete according to current state/priority. Decorative projects become more attractive when basic needs are reasonably satisfied or Wilson is bored.
+Functional projects compete according to current state/priority. Decorative projects become more attractive when basic needs are reasonably satisfied or Wilson is under-stimulated.
 
 Abandoned projects may be dismantled to recover supported resources. Most ordinary projects should nevertheless tend toward eventual completion.
 
@@ -276,7 +351,7 @@ simple multi-stage project: ~2–5 in-game days
 complex project: ~10–20 in-game days
 ```
 
-Most constructions are predefined project families. The shelter may be partially modular through floor/wall/roof anchors and staged improvements.
+Project families/outcomes may be authored and bounded. This does not imply recipe-based crafting: material compatibility, tool use and contribution interactions should reuse the same property/capability rules wherever practical. The shelter may be partially modular through floor/wall/roof anchors and staged improvements.
 
 ## Habits
 
@@ -300,7 +375,7 @@ Preference change should primarily follow **direct interaction outcome + resulti
 
 Urgent needs can overwhelm preferences. Aesthetic preferences for colors/materials may influence decorative choices.
 
-The final trait/emotion model is intentionally open pending research. Current behavioral requirements include transient emotions, curiosity, independence, faith toward player intervention, and a caution/recklessness dimension affecting risky exploration.
+The canonical behavioral model is defined in `BEHAVIORAL_MODEL.md`; do not reintroduce superseded product-era concepts such as a separate global `faith` stat or caution trait here.
 
 ## Player intervention and God Power
 
@@ -310,12 +385,19 @@ God Power is a single intervention budget in the primary mode. Product rules cur
 
 - most interventions consume it;
 - suggestions are inexpensive;
-- intervention cost rises broadly with magnitude/complexity;
+- intervention cost rises broadly with physical/causal magnitude and improbability;
 - passive gain accelerates while the player refrains from intervention, up to a cap;
 - any intervention breaks that streak;
-- achievements/milestones grant immediate bonuses;
+- achievements/milestones and selected interesting events may grant bounded immediate bonuses;
 - offline accumulation has a cap;
-- resurrection never requires God Power.
+- resurrection never requires God Power;
+- accumulating currency does not unlock new powers.
+
+Player intervention capability comes from explicit supported player-side affordances/capabilities, not from currency amount alone. A draggable stone may expose a player drag operation while a shelter, fire or assembled structure may intentionally expose none.
+
+A supported intervention may produce injury or death if that is the grounded physical result. Do not add a generic lethal-action rejection rule for the player's benefit.
+
+Wilson's psychological response depends only on what he perceives and attributes. The player's private helpful/harmful intention never enters Wilson cognition directly.
 
 Exact values require scene-driven calibration rather than being fixed here.
 
@@ -333,6 +415,14 @@ An event template may define:
 - authoritative effects/actions;
 - presentation hints;
 - follow-up hooks.
+
+### Pacing pressure
+
+The default experience is a nearly contemplative living diorama rather than a constant incident generator. Ordinary routine is valid, but active days should normally produce some visible evolution, discovery, amusing situation, project development or other meaningful change.
+
+The event/director layer may apply bounded opportunity pressure based on recent activity: unusually quiet periods may gradually increase the chance of rare/unusual opportunities, while already-busy periods may reduce additional rare-event pressure.
+
+This pressure is not a separate Wilson drive, not a visible meter, not a guarantee that specific content appears and not permission to rewrite eligibility/history. Do not introduce an authoritative `chaoticity` state merely to implement this pacing rule unless later evidence demonstrates a concrete need.
 
 ### Directed scenes
 
@@ -368,12 +458,17 @@ Wilson can die. Death finishes enough of the current visible sequence to feel co
 
 Resurrection:
 
-- is always available;
+- is always available and unlimited within the active run;
 - costs no God Power;
 - does not create conscious knowledge of death;
-- may produce strong short-term fear;
-- may alter medium-term caution/curiosity/faith;
-- leaves a long-lived negative association with the cause.
+- may produce strong short-term fear/reaction;
+- may normalize immediate bodily/drives state as required by presentation;
+- preserves learned danger/negative associations tied to the cause when appropriate;
+- does not require an artificial escalating resurrection penalty.
+
+The long-term behavioral consequence should be ordinary learned caution from beliefs/associations rather than a special `death memory` or trauma counter.
+
+If the player chooses to end the run instead, that world is closed permanently; selected history/statistics/screenshots/achievements and eligible Legacy Knowledge are processed by the player-level persistence layer defined in `PRODUCT.md`.
 
 No rewind mechanic is required.
 
@@ -401,7 +496,7 @@ When enabled, it should advance the world more conservatively than active play. 
 
 A rare/directed opportunity may be queued for active play rather than resolved offline.
 
-Produce a structured catch-up history suitable for Wilson's diary. Wilson's diary contains only events Wilson could know.
+Produce a structured catch-up history suitable for the Diary. Wilson-grounded diary narrative may contain only events Wilson could know; player-level archival/statistical records remain a separate semantic information class even when presented in the same Diary UI.
 
 ## Procedural world generation
 
@@ -421,9 +516,11 @@ The main world remains a small tropical island. Do not require a deep ecosystem.
 
 Initial optional rare areas are a small neighboring island and an abandoned stranded/wrecked ship. They remain time-limited excursions; the home island is the persistent center.
 
+There is no macro escape objective. Long-run progression comes from increasingly rich world state, accumulated knowledge, infrastructure, relationships, habits, history and the eligibility of broader authored/systemic possibilities.
+
 ## Scene-driven calibration
 
-Before fixing detailed structures, weights or balance, validate the simulation against a catalog of desirable scenes.
+Use the existing representative-scene catalog and regression traces before fixing detailed structures, weights or balance.
 
 For each scene, record:
 
@@ -439,13 +536,11 @@ For each scene, record:
 10. possible player interventions and God Power cost class;
 11. what persists afterward.
 
-Then create a cross-scene matrix showing which systems materially change which scenes. A proposed field/system that changes no desirable scene should be challenged or deferred.
-
-This matrix is the preferred bridge from product design into later data-model and architecture work.
+A proposed field/system that changes no desirable scene should be challenged or deferred.
 
 ## Balance through simulation
 
-Once architecture work begins, provide a headless runner capable of many simulated days/worlds. Useful metrics will include:
+Provide a headless runner capable of many simulated days/worlds. Useful metrics include:
 
 - action/interaction frequencies;
 - exploration success/failure;
@@ -455,19 +550,21 @@ Once architecture work begins, provide a headless runner capable of many simulat
 - project completion times;
 - idle time;
 - repeated loops;
+- ordinary/micro/rare event rhythm;
 - directed-event coverage/break rate;
 - God Power generation/spend patterns;
+- death/near-death distributions;
 - diversity between seeds.
 
 A system with huge theoretical combinatorics but repetitive visible behavior is not diverse enough.
 
-## Open design work before architecture
+## Remaining implementation-facing design work
 
-Do not treat the concepts above as a final data schema. Before architecture is designed:
+Do not treat the concepts above as a final data schema. The behavioral/architecture discovery gate has passed; the remaining work belongs primarily to concrete modeling and calibration:
 
-- research a minimal useful psychological model for Wilson;
-- build the representative scene catalog;
-- build the scene × system influence matrix;
-- derive a first vocabulary of verbs/properties/interactions from those scenes;
-- calibrate survival depth and God Power qualitatively;
-- define the vertical-slice subset.
+- define the first concrete vocabulary of properties, capabilities, semantic roles, transformations and generic exploration verbs;
+- prove property-driven interaction composition with the first content set;
+- calibrate survival depth and God Power quantitatively;
+- define the vertical-slice subset;
+- define the minimal Legacy Knowledge representation and initialization boundary;
+- validate the resulting domain against the representative scene regressions.
