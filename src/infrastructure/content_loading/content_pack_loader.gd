@@ -11,6 +11,10 @@ const RequirementPredicate = preload("res://src/domain/actions/requirement_predi
 const ActionDefinition = preload("res://src/domain/actions/action_definition.gd")
 const ActionEffect = preload("res://src/domain/actions/action_effect.gd")
 const ActionResolutionDefinition = preload("res://src/domain/actions/action_resolution_definition.gd")
+const AssemblyDefinition = preload("res://src/domain/physical/assembly_definition.gd")
+const AssemblySlotDefinition = preload("res://src/domain/physical/assembly_slot_definition.gd")
+const PropertyDerivationDefinition = preload("res://src/domain/physical/property_derivation_definition.gd")
+const PropertyInputSelector = preload("res://src/domain/physical/property_input_selector.gd")
 
 const SCHEMA_VERSION := 1
 
@@ -27,15 +31,26 @@ func load_dictionary(pack: Dictionary) -> MutationResult:
 		return MutationResult.failure(&"unsupported_content_schema", ["Expected content schema version %d" % SCHEMA_VERSION])
 	var registry = ContentRegistry.new()
 	var result = _load_properties(pack.get("properties", []), registry)
-	if not result.ok: return result
+	if not result.ok:
+		return result
 	result = _load_events(pack.get("events", []), registry)
-	if not result.ok: return result
+	if not result.ok:
+		return result
 	result = _load_entities(pack.get("entities", []), registry)
-	if not result.ok: return result
+	if not result.ok:
+		return result
+	result = _load_assemblies(pack.get("assemblies", []), registry)
+	if not result.ok:
+		return result
+	result = _load_property_derivations(pack.get("property_derivations", []), registry)
+	if not result.ok:
+		return result
 	result = _load_actions(pack.get("actions", []), registry)
-	if not result.ok: return result
+	if not result.ok:
+		return result
 	result = _load_resolutions(pack.get("resolutions", []), registry)
-	if not result.ok: return result
+	if not result.ok:
+		return result
 	var seal_result = registry.seal()
 	if not seal_result.ok:
 		return MutationResult.failure(&"content_pack_validation_failed", seal_result.diagnostics)
@@ -52,13 +67,11 @@ func _load_properties(records, registry) -> MutationResult:
 		if family < 0:
 			return MutationResult.failure(&"unknown_property_family", [String(record["family"])])
 		var definition = PropertyDefinition.new(
-			DomainId.property(StringName(record["id"])),
-			family,
-			record.get("min"),
-			record.get("max")
+			DomainId.property(StringName(record["id"])), family, record.get("min"), record.get("max")
 		)
 		var result = registry.register_property_definition(definition)
-		if not result.ok: return result
+		if not result.ok:
+			return result
 	return MutationResult.success(&"content_properties_loaded")
 
 
@@ -69,9 +82,11 @@ func _load_events(records, registry) -> MutationResult:
 		if not (record is Dictionary) or not record.has("id"):
 			return _shape_failure("event record requires id")
 		var roles_result = _string_name_array(record.get("perceptible_roles", []), "event perceptible_roles")
-		if not roles_result.ok: return roles_result
+		if not roles_result.ok:
+			return roles_result
 		var modalities_result = _string_name_array(record.get("modalities", []), "event modalities")
-		if not modalities_result.ok: return modalities_result
+		if not modalities_result.ok:
+			return modalities_result
 		var definition = EventDefinition.new(
 			DomainId.event_definition(StringName(record["id"])),
 			roles_result.value,
@@ -79,7 +94,8 @@ func _load_events(records, registry) -> MutationResult:
 			float(record.get("base_confidence", 1.0))
 		)
 		var result = registry.register_event_definition(definition)
-		if not result.ok: return result
+		if not result.ok:
+			return result
 	return MutationResult.success(&"content_events_loaded")
 
 
@@ -102,14 +118,91 @@ func _load_entities(records, registry) -> MutationResult:
 		for property_name in authored_properties.keys():
 			base_properties[DomainId.property(StringName(property_name)).key()] = authored_properties[property_name]
 		var definition = EntityDefinition.new(
-			DomainId.entity_type(StringName(record["id"])),
-			categories,
-			base_properties,
-			capabilities
+			DomainId.entity_type(StringName(record["id"])), categories, base_properties, capabilities
 		)
 		var result = registry.register_entity_definition(definition)
-		if not result.ok: return result
+		if not result.ok:
+			return result
 	return MutationResult.success(&"content_entities_loaded")
+
+
+func _load_assemblies(records, registry) -> MutationResult:
+	if not (records is Array):
+		return _shape_failure("assemblies must be an Array")
+	for record in records:
+		if not (record is Dictionary) or not record.has("id"):
+			return _shape_failure("assembly record requires id")
+		var raw_slots = record.get("slots", [])
+		if not (raw_slots is Array):
+			return _shape_failure("assembly slots must be an Array")
+		var slots: Array = []
+		for slot_record in raw_slots:
+			if not (slot_record is Dictionary) or not slot_record.has("id") or not slot_record.has("role") or not slot_record.has("accepted_component"):
+				return _shape_failure("assembly slot requires id, role and accepted_component")
+			var predicate_result = _parse_predicate(slot_record["accepted_component"])
+			if not predicate_result.ok:
+				return predicate_result
+			var optional := bool(slot_record.get("optional", false))
+			var min_count := int(slot_record.get("min_count", 0 if optional else 1))
+			var max_count := int(slot_record.get("max_count", 1))
+			slots.append(AssemblySlotDefinition.new(
+				DomainId.assembly_slot(StringName(slot_record["id"])),
+				DomainId.assembly_role(StringName(slot_record["role"])),
+				predicate_result.value,
+				min_count,
+				max_count,
+				optional
+			))
+		var definition = AssemblyDefinition.new(
+			DomainId.assembly_definition(StringName(record["id"])), slots
+		)
+		var result = registry.register_assembly_definition(definition)
+		if not result.ok:
+			return result
+	return MutationResult.success(&"content_assemblies_loaded")
+
+
+func _load_property_derivations(records, registry) -> MutationResult:
+	if not (records is Array):
+		return _shape_failure("property_derivations must be an Array")
+	for record in records:
+		if not (record is Dictionary) or not record.has("id") or not record.has("inputs") or not record.has("output") or not record.has("policy"):
+			return _shape_failure("property derivation requires id, inputs, output and policy")
+		if not (record["inputs"] is Array):
+			return _shape_failure("property derivation inputs must be an Array")
+		var inputs: Array = []
+		for input_record in record["inputs"]:
+			var input_result = _parse_property_input(input_record)
+			if not input_result.ok:
+				return input_result
+			inputs.append(input_result.value)
+		var definition = PropertyDerivationDefinition.new(
+			StringName(record["id"]),
+			inputs,
+			DomainId.property(StringName(record["output"])),
+			StringName(record["policy"])
+		)
+		var result = registry.register_property_derivation_definition(definition)
+		if not result.ok:
+			return result
+	return MutationResult.success(&"content_property_derivations_loaded")
+
+
+func _parse_property_input(record) -> MutationResult:
+	if not (record is Dictionary) or not record.has("kind") or not record.has("property"):
+		return _shape_failure("property derivation input requires kind and property")
+	var property_id = DomainId.property(StringName(record["property"]))
+	match String(record["kind"]):
+		"self":
+			return MutationResult.success(&"property_input_parsed", PropertyInputSelector.subject_property(property_id))
+		"assembly_slot":
+			if not record.has("slot"):
+				return _shape_failure("assembly_slot property input requires slot")
+			return MutationResult.success(
+				&"property_input_parsed",
+				PropertyInputSelector.assembly_slot_property(DomainId.assembly_slot(StringName(record["slot"])), property_id)
+			)
+	return MutationResult.failure(&"unknown_property_input_kind", [String(record["kind"])])
 
 
 func _load_actions(records, registry) -> MutationResult:
@@ -119,20 +212,20 @@ func _load_actions(records, registry) -> MutationResult:
 		if not (record is Dictionary) or not record.has("id") or not record.has("requirements"):
 			return _shape_failure("action record requires id and requirements")
 		var roles_result = _string_name_array(record.get("roles", []), "action roles")
-		if not roles_result.ok: return roles_result
+		if not roles_result.ok:
+			return roles_result
 		var predicate_result = _parse_predicate(record["requirements"])
-		if not predicate_result.ok: return predicate_result
+		if not predicate_result.ok:
+			return predicate_result
 		var interruption_class = _interruption_class(String(record.get("interruption", "pre_commit_only")))
 		if interruption_class < 0:
 			return MutationResult.failure(&"unknown_interruption_class", [String(record.get("interruption"))])
 		var definition = ActionDefinition.new(
-			DomainId.action(StringName(record["id"])),
-			roles_result.value,
-			predicate_result.value,
-			interruption_class
+			DomainId.action(StringName(record["id"])), roles_result.value, predicate_result.value, interruption_class
 		)
 		var result = registry.register_action_definition(definition)
-		if not result.ok: return result
+		if not result.ok:
+			return result
 	return MutationResult.success(&"content_actions_loaded")
 
 
@@ -148,7 +241,8 @@ func _load_resolutions(records, registry) -> MutationResult:
 		var effects: Array = []
 		for effect_record in record.get("effects", []):
 			var effect_result = _parse_effect(effect_record)
-			if not effect_result.ok: return effect_result
+			if not effect_result.ok:
+				return effect_result
 			effects.append(effect_result.value)
 		var definition = ActionResolutionDefinition.new(
 			action_id,
@@ -159,7 +253,8 @@ func _load_resolutions(records, registry) -> MutationResult:
 			StringName(record["id"])
 		)
 		var result = registry.register_action_resolution_definition(definition)
-		if not result.ok: return result
+		if not result.ok:
+			return result
 	return MutationResult.success(&"content_resolutions_loaded")
 
 
@@ -171,27 +266,33 @@ func _parse_predicate(record) -> MutationResult:
 		"all_of", "any_of":
 			var children: Array = []
 			var raw_children = record.get("children", [])
-			if not (raw_children is Array): return _shape_failure("predicate children must be Array")
+			if not (raw_children is Array):
+				return _shape_failure("predicate children must be Array")
 			for child_record in raw_children:
 				var child_result = _parse_predicate(child_record)
-				if not child_result.ok: return child_result
+				if not child_result.ok:
+					return child_result
 				children.append(child_result.value)
 			return MutationResult.success(&"predicate_parsed", RequirementPredicate.all_of(children) if kind == "all_of" else RequirementPredicate.any_of(children))
 		"not":
 			var child_result = _parse_predicate(record.get("child"))
-			if not child_result.ok: return child_result
+			if not child_result.ok:
+				return child_result
 			return MutationResult.success(&"predicate_parsed", RequirementPredicate.negate(child_result.value))
 		"has_capability":
-			if not record.has("role") or not record.has("capability"): return _shape_failure("has_capability requires role/capability")
+			if not record.has("role") or not record.has("capability"):
+				return _shape_failure("has_capability requires role/capability")
 			return MutationResult.success(&"predicate_parsed", RequirementPredicate.has_capability(StringName(record["role"]), DomainId.capability(StringName(record["capability"]))))
 		"has_category":
-			if not record.has("role") or not record.has("category"): return _shape_failure("has_category requires role/category")
+			if not record.has("role") or not record.has("category"):
+				return _shape_failure("has_category requires role/category")
 			return MutationResult.success(&"predicate_parsed", RequirementPredicate.has_category(StringName(record["role"]), DomainId.category(StringName(record["category"]))))
 		"property_compare":
 			if not record.has("role") or not record.has("property") or not record.has("op") or not record.has("value"):
 				return _shape_failure("property_compare requires role/property/op/value")
 			var op = _compare_op(String(record["op"]))
-			if op < 0: return MutationResult.failure(&"unknown_compare_op", [String(record["op"])])
+			if op < 0:
+				return MutationResult.failure(&"unknown_compare_op", [String(record["op"])])
 			return MutationResult.success(&"predicate_parsed", RequirementPredicate.property_compare(StringName(record["role"]), DomainId.property(StringName(record["property"])), op, record["value"]))
 		"has_relation":
 			if not record.has("subject_role") or not record.has("relation") or not record.has("object_role"):
@@ -206,10 +307,12 @@ func _parse_effect(record) -> MutationResult:
 	var kind = String(record["kind"])
 	match kind:
 		"set_property":
-			if not record.has("property") or not record.has("value"): return _shape_failure("set_property requires property/value")
+			if not record.has("property") or not record.has("value"):
+				return _shape_failure("set_property requires property/value")
 			return MutationResult.success(&"effect_parsed", ActionEffect.new(ActionEffect.Kind.SET_PROPERTY, StringName(record["subject_role"]), DomainId.property(StringName(record["property"])), record["value"]))
 		"create_relation", "remove_relation":
-			if not record.has("relation") or not record.has("object_role"): return _shape_failure("relation effect requires relation/object_role")
+			if not record.has("relation") or not record.has("object_role"):
+				return _shape_failure("relation effect requires relation/object_role")
 			var effect_kind = ActionEffect.Kind.CREATE_RELATION if kind == "create_relation" else ActionEffect.Kind.REMOVE_RELATION
 			return MutationResult.success(&"effect_parsed", ActionEffect.new(effect_kind, StringName(record["subject_role"]), DomainId.relation_type(StringName(record["relation"])), record.get("qualifier"), StringName(record["object_role"])))
 	return MutationResult.failure(&"unknown_effect_kind", [kind])
