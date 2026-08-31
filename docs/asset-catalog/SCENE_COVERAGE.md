@@ -32,7 +32,7 @@ RESHAPE
 | 4 | Scientific Method | PASS | `sealed_metal_container`, interaction regions, branch/stone/tool candidates, diagnostic feedback/evidence | Strong reference regression already supported. |
 | 5 | The Perfectly Good Bowling Ball | PASS | `bowling_ball_rare`, generic impact semantics, effective mass/hardness, dynamic rolling | No coconut-specific interaction required. |
 | 6 | Absolutely Not | PASS | any unfamiliar local entity + suggestion source + intention competition | “Mysterious object” need not be a dedicated family. |
-| 7 | Fine! | PASS / CONTENT EXTENSION | suggestion/autonomy + ordinary possession relation + qualified body carry mode/slot | Add a P1 hat-like/wearable salvage content family if this scene is produced. `carried_by(item, Wilson)` may use a bounded qualifier for worn/body-slot mode; presentation adapter resolves the body transform. No equipment system required. |
+| 7 | Fine! | PASS / CONTENT EXTENSION | suggestion/autonomy + ordinary possession relation + qualified body carry mode/slot | Add a P1 hat-like/wearable salvage content family if produced. `carried_by(item, Wilson)` may use a bounded qualifier for worn/body-slot mode; presentation adapter resolves the body transform. No equipment system required. |
 | 8 | The Missing Spoon | PASS | `spoon_utensil`, stable placement relations, expectation mismatch, player relocation | Exact expected location remains belief/habit semantics. |
 | 9 | The Benefactor | PASS | project material roles, player interventions, presence trust/dependency/expectation | No special “gifted resource” state. |
 | 10 | The Traitorous Fire | PASS | `project.fire_site`, persistent physical site identity, fire process, association/history | Fire lifecycle stays world/environment truth. |
@@ -42,7 +42,7 @@ RESHAPE
 | 14 | Roof or Table? | PASS | shelter + `project.work_surface_basic`, shared component roles, competing projects | No resource reservation or optimal-choice rule required. |
 | 15 | Interior Design | PASS / CONTENT EXTENSION | ordinary placement, association/aesthetic intention, persistent arrangements | Add reusable decorative shell/curio content plus a generic decorative-arrangement project/content pattern. |
 | 16 | The Laundry Problem | PASS | `garment_cloth_basic`, `project.clothesline`, moisture + drying, rain/wind response | No laundry state machine required. |
-| 17 | Storm Priorities | PASS | loose props, wind displacement, shelter/storage/protection, attachment value and intentions | Decorative-object breadth benefits from the Scene 15 extension. |
+| 17 | Storm Priorities | PASS | loose props, wind displacement, shelter/storage/protection, attachment value and intentions | Decorative-object breadth benefits from Scene 15 extension. |
 | 18 | The Umbrella | PASS | `umbrella_found`, deployable configuration, covering/protection, wind load | Failure is grounded component/configuration change. |
 | 19 | Midnight Noise | PASS | ordinary attached loose object + auditory evidence + night perception + investigation | No dedicated “noisy object” family required; sound/contact evidence is a rule/presentation concern. |
 | 20 | The Mushroom | PASS | `mushroom_generic`, hidden edibility/toxicity truth, evidence uncertainty, hunger/risk competition | No omniscient UI/property reveal. |
@@ -349,7 +349,7 @@ Current normalized catalog:
   + 1 deferred additional-location extension
 ```
 
-No representative scene now demonstrates a missing **broad** domain primitive.
+No representative scene demonstrates a missing broad domain primitive.
 
 The review does **not** justify another state owner, crafting system, equipment system, scene-scripting layer or interaction recipe catalog.
 
