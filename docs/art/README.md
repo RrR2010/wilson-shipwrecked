@@ -6,7 +6,8 @@ It supplements, but does not replace:
 
 - `../VISUAL_GUIDE.md` — visual source of truth;
 - `../ASSET_SPEC.md` — runtime asset contract;
-- `../ASSET_PIPELINE.md` — technical asset workflow.
+- `../ASSET_PIPELINE.md` — technical asset workflow;
+- `../asset-catalog/` — cross-cutting source of truth for what modeled assets exist and what they must support.
 
 ## Locked baseline
 
@@ -18,14 +19,12 @@ Common assets default to shared flat-color materials with no unique texture maps
 
 ### 1. Core visual direction
 
-Read for project-wide visual decisions:
-
 - [`ART_DIRECTION.md`](ART_DIRECTION.md) — target, mood, complexity hierarchy and persistent-state philosophy.
 - [`SHAPE_LANGUAGE.md`](SHAPE_LANGUAGE.md) — geometry, silhouette and faceting grammar.
 - [`PALETTE_AND_MATERIALS.md`](PALETTE_AND_MATERIALS.md) — flat-material, palette and texture policy.
 - [`SCALE_CAMERA_AND_READABILITY.md`](SCALE_CAMERA_AND_READABILITY.md) — scale, camera and gameplay-readability rules.
 
-These are technical appendices to `../VISUAL_GUIDE.md`, not competing sources of truth.
+These are visual appendices to `../VISUAL_GUIDE.md`, not competing asset catalogs or domain sources.
 
 ### 2. Family reference pack
 
@@ -48,29 +47,29 @@ Current sequence:
 
 Use only the references relevant to the current task. Visual sheets communicate shape intent; textual specs remain authoritative when an AI-generated sheet contains accidental artifacts or ambiguous details.
 
-### 3. Production backlog
+### 3. Asset selection and requirements
 
-Use [`production/`](production/) to decide what to model next and to track status.
+Use [`../asset-catalog/`](../asset-catalog/) to decide what model/family is required and to read its cross-cutting functional + artistic requirements.
 
-The production catalogs replace the older `ASSET_FAMILIES.md` taxonomy and are the only mutable art-production backlog.
+`docs/art/` must not maintain a second object list.
 
-### 4. Agent execution contract
+### 4. Agent artistic execution
 
-- [`AGENT_ART_PRODUCTION.md`](AGENT_ART_PRODUCTION.md) — modeling loop, canonical previews, self-review, independent review and acceptance.
-- [`ASSET_BRIEF_TEMPLATE.md`](ASSET_BRIEF_TEMPLATE.md) — compact grammar/family/asset-specific task contract.
+- [`AGENT_ART_PRODUCTION.md`](AGENT_ART_PRODUCTION.md) — artistic modeling loop, canonical previews, self-review, independent review and acceptance.
+- [`ASSET_BRIEF_TEMPLATE.md`](ASSET_BRIEF_TEMPLATE.md) — optional compact family/asset-specific art brief when the catalog row + references are not sufficient.
 
-Do not split preview/review rules into separate agent prompts; `AGENT_ART_PRODUCTION.md` is the single operational source.
+`AGENT_ART_PRODUCTION.md` is the single operational source for artistic preview/review behavior.
 
-## Agent minimum reading path
+## Agent minimum art reading path
 
-For normal production work:
+For normal modeling work:
 
 ```text
-VISUAL_GUIDE.md
+asset-catalog row
+→ VISUAL_GUIDE.md
 → relevant core art docs
 → relevant REFERENCE_*.md + approved visual sheet
-→ matching production catalog row
-→ family/asset brief when required
+→ optional family/asset brief
 → AGENT_ART_PRODUCTION.md
 ```
 
@@ -78,11 +77,11 @@ Do not use Rounds 1–10 as the default modeling prompt. They remain upstream hi
 
 ## Brief strategy
 
-- **grammar-only task** for trivial variants fully covered by a reference grammar;
-- **family brief** for reusable families with shared construction/variation rules;
-- **asset-specific brief** only for modular, stateful, rare or high-risk assets.
+- **grammar-only task** when catalog + approved reference fully define a trivial variant;
+- **family brief** when a family needs additional visual variation/construction constraints;
+- **asset-specific brief** only for visually high-risk or unusually authored assets.
 
-Avoid one bespoke document per simple prop.
+Functional requirements belong in the cross-cutting asset catalog or canonical domain docs, not in an art-only brief.
 
 ## Production principle
 
@@ -97,6 +96,6 @@ The direction layer is substantially closed. Remaining work is calibration and p
 1. keep the approved reference PNG set complete;
 2. calibrate exact palette/material values in a real preview scene;
 3. calibrate final gameplay camera values;
-4. create briefs just-in-time for production batches;
+4. create art briefs only when catalog + references are insufficient;
 5. validate the agent loop on a representative pilot batch;
 6. build the golden scene from approved production assets.
