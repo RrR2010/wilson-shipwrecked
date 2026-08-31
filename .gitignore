@@ -1,0 +1,6 @@
+# Godot generated/import state
+.godot/
+
+# Common local/editor noise
+.DS_Store
+Thumbs.db
