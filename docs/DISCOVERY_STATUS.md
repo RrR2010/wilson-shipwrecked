@@ -38,7 +38,7 @@ Representative-scene regression           PASS
 Operation regression                      PASS
 Functional asset breadth                  PASS
 Asset catalog functional normalization    PASS
-Asset catalog scene-coverage regression   PASS WITH LOCAL CONTENT FOLLOW-UPS
+Asset catalog scene-coverage regression   PASS
 Gradual exploration / evidence             PASS
 Composite-object semantics                PASS
 Environmental protection / exposure       PASS
@@ -53,14 +53,17 @@ Cloth/shelter/weather fixture             PASS
 
 **Asset-catalog functional normalization gate: PASS for the current P0/P1 catalog breadth.**
 
-**Representative-scene content regression: PASS for the accepted phenomenon suite, with localized content follow-ups documented in `asset-catalog/SCENE_COVERAGE.md`.**
+**Representative-scene content regression: PASS for the accepted phenomenon suite. All reusable content requirements exposed by the 40-scene pass now have explicit catalog owners.**
 
 The validated model did not require separate state-owning systems for crafting, tool quality, shelter, exploration, tactical planning, hazard projection, suspicion/investigation, wet-material state, fallen-opportunity objects or storm-debris clusters. Those concerns remain compositions, projections, processes, ordinary world outcomes or production adapters inside existing authority boundaries.
 
-The 40-scene catalog regression additionally found:
+The 40-scene catalog regression added or confirmed:
 
-- four useful content extensions: wearable/hat-like salvage, decorative shell/curio content, a generic decorative/sculptural arrangement pattern, and a distant human-contact Director presentation family;
-- one deferred additional-location content extension for the neighboring-islet scene;
+- `hatlike_salvage` for the bounded worn/body-slot possession case;
+- `shell_decorative` for persistent small curios and decorative history;
+- `project.decorative_arrangement` for multi-session aesthetic/symbolic layouts without duplicate physical state;
+- `directed.distant_human_contact` for the P0 Signal Fire/rare-contact opportunity presentation;
+- deferred P2 `place.neighbor_islet` content for the additional-location scene;
 - two historical scenes whose literal versions remain intentionally reshaped by later canonical decisions (`The Unwanted Rescue`, `Not Now, Humanity`).
 
 The worn-object case reuses the existing possession relation plus a bounded qualifier/body-slot presentation adapter; it does not justify `worn_by`, an equipment system or another state owner.
@@ -127,8 +130,9 @@ The initial catalog normalization pass is complete. The catalog now provides:
 - explicit transformation-descendant handling for coconut/fish and detachable components;
 - foundational construction, tinder, water, mushroom, clothing and utility families that were missing from the art-seeded catalog;
 - explicit reclassification of wet-material states, fallen-object opportunities, roof damage, storm debris, light-prop displacement and perch sockets as presentation/process/adapter requirements rather than fake entities;
+- scene-regression additions for wearable salvage, decorative curio content, decorative arrangement projects, distant human-contact opportunities and the deferred neighboring-islet place;
 - preserved art references and model-production status as independent concerns;
-- `asset-catalog/SCENE_COVERAGE.md` as the regression view from the 40 historical representative scenes back into domain/content requirements.
+- `asset-catalog/SCENE_COVERAGE.md` as regression evidence from the 40 historical representative scenes back into domain/content requirements, not as a parallel production backlog.
 
 No new broad domain primitive was required by this pass.
 
@@ -194,6 +198,6 @@ Two streams can proceed without changing each other's authority boundaries:
 4. validate real generated assets against interaction-region/adapter and gameplay-camera requirements;
 5. update production `Status` without changing functional `Spec` unless new evidence changes the brief;
 6. add new families through the normalized catalog admission rules rather than copying brainstorming candidates mechanically;
-7. close the localized scene-coverage content follow-ups in `asset-catalog/SCENE_COVERAGE.md` before claiming exhaustive 40-scene content coverage.
+7. keep `asset-catalog/SCENE_COVERAGE.md` as regression evidence and track actual production work only in the owning catalog tables.
 
 Historical execution handoff: [`handoffs/asset-catalog-functional-domain-normalization.md`](handoffs/asset-catalog-functional-domain-normalization.md).
