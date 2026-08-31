@@ -11,6 +11,7 @@ Current validated implementation chain:
 ```text
 typed IDs / runtime refs
 → immutable content bootstrap
+→ bounded PropertyDefinition schemas
 → authoritative entities + relations
 → reconstructible relation indexes
 → property dependency DAG + EffectivePhysicalProfile
@@ -18,6 +19,7 @@ typed IDs / runtime refs
 → component-aware physical derivation (improvised hammer)
 → SemanticPattern + ActionAttemptability
 → ActionExecution + committed World mutation
+→ PropertyValue validation at World mutation boundary
 → SemanticChangeSet + derived-state invalidation
 → WorldEvent → Perception → PerceptualEvidence
 → BeliefStore + EpistemicGraphProjection
@@ -77,7 +79,9 @@ Derived invalidation slice                  PASS — Godot 4.7.1 headless
 Semantic snapshot immutability slice        PASS — Godot 4.7.1 headless
 Assembly validity slice                     PASS — Godot 4.7.1 headless
 Improvised hammer composition slice         PASS — Godot 4.7.1 headless
-Strict headless suite                       PASS — 14 tests
+Property schema/bootstrap slice             PASS — Godot 4.7.1 headless
+Property runtime schema/comparison slice    PASS — Godot 4.7.1 headless
+Strict headless suite                       PASS — 16 tests
 ```
 
 **Functional-domain stabilization gate: PASS.**
@@ -118,6 +122,10 @@ assembly bindings are projected from authoritative World relations
 AssemblyValidity is derived and separate from effective performance
 component condition can degrade effective performance while assembly remains VALID
 component-aware property derivation does not require recipe-specific runtime types
+PropertyDefinition validates authored values during sealed content bootstrap
+SET_PROPERTY validates typed values/bounds before authoritative mutation
+ordered property comparisons are limited to compatible ordered families
+invalid property mutations emit no WorldEvent or SemanticChange
 ```
 
 Property derivation policies are validated during dependency-graph compilation; unknown authored policies fail bootstrap instead of asserting only during runtime resolution.
@@ -271,18 +279,18 @@ These are predominantly concrete runtime/content concerns rather than discovery 
 2. body mutation proposer API beneath World authority;
 3. concrete shallow animal behavior representation;
 4. environmental/dynamic-process persistence thresholds;
-5. bounded `PropertyValue` catalogue/schema and type-safe comparisons;
-6. exact `SemanticConceptId` boundaries;
-7. concrete authored-content serialization/loading format;
-8. presentation adapters for InteractionRegion, anchors, body-slot qualifiers and assembly sockets;
-9. deterministic simultaneous-boundary tie-break beyond current stable-key routing;
-10. coarse representation for protection coverage/gaps;
-11. broader composition dependency projection beyond current assembly-slot selectors;
-12. candidate source services for drives, projects, habits, Presence and Director;
-13. action interruption classes and broader runtime action lifecycle;
-14. richer physical provenance distinguishing authored base value from runtime override;
-15. spatial/perception access implementation replacing the current explicit access-policy fixture;
-16. typed epistemic propositions/claims replacing generic durable proposition argument identity.
+5. exact `SemanticConceptId` boundaries;
+6. concrete authored-content serialization/loading format;
+7. presentation adapters for InteractionRegion, anchors, body-slot qualifiers and assembly sockets;
+8. deterministic simultaneous-boundary tie-break beyond current stable-key routing;
+9. coarse representation for protection coverage/gaps;
+10. broader composition dependency projection beyond current assembly-slot selectors;
+11. candidate source services for drives, projects, habits, Presence and Director;
+12. action interruption classes and broader runtime action lifecycle;
+13. richer physical provenance distinguishing authored base value from runtime override;
+14. spatial/perception access implementation replacing the current explicit access-policy fixture;
+15. typed epistemic propositions/claims replacing generic durable proposition argument identity;
+16. typed EventDefinition identity through World → perception → cognition.
 
 These are implementation choices, not evidence for new state owners.
 
@@ -295,7 +303,7 @@ Continue from the validated vertical rather than adding parallel scaffolds.
 Recommended sequence:
 
 ```text
-1. bounded PropertyValue schema / comparison policies
+1. typed EventDefinition / epistemic event claim identity
 2. typed epistemic proposition identity before persistence grows further
 3. concrete spatial query + perception-access adapter
 4. project / drive / habit candidate producers
