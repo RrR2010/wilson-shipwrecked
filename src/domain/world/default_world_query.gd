@@ -3,6 +3,7 @@ extends RefCounted
 
 const DomainId = preload("res://src/domain/core/domain_id.gd")
 const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
+const EntityInstance = preload("res://src/domain/world/entity_instance.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
 
 ## Default read-only composition over authoritative World stores + sealed content.
@@ -64,6 +65,16 @@ func has_category(subject, category_id) -> bool:
 		return false
 	var definition = _content.get_entity_definition(entity.type_id)
 	return definition != null and definition.has_category(category_id)
+
+
+func is_live_subject(subject) -> bool:
+	assert(subject != null, "is_live_subject requires subject")
+	if subject.kind == RuntimeWorldRef.Kind.WILSON:
+		return true
+	if subject.kind != RuntimeWorldRef.Kind.ENTITY:
+		return true
+	var entity = _entities.get_entity(subject.id)
+	return entity != null and entity.lifecycle == EntityInstance.Lifecycle.ACTIVE
 
 
 func find_relations(relation_type = null, subject = null, object = null) -> Array:
