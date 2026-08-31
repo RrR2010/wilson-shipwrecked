@@ -80,8 +80,8 @@ func advance(step):
 	if execution_id != &"":
 		action_progress = _action_execution.advance(execution_id, step.elapsed)
 		trace.record_result(&"action_progress", action_progress)
-		if action_progress != null and action_progress.outcome != null:
-			commit_result = _world_commands.apply_outcome(action_progress.outcome)
+		if action_progress != null and action_progress.new_outcome != null:
+			commit_result = _world_commands.apply_outcome(action_progress.new_outcome)
 			trace.record_result(&"world_commit", commit_result)
 
 	var committed_events: Array = world_advance_result.events.duplicate()
