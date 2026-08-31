@@ -34,7 +34,7 @@ func register_action_definition(definition) -> MutationResult:
 		return MutationResult.failure(&"content_registry_sealed", ["Cannot register content after seal()"])
 	assert(definition != null, "register_action_definition requires ActionDefinition")
 	definition.id.assert_kind(DomainId.Kind.ACTION)
-	var definition_key := definition.id.key()
+	var definition_key = definition.id.key()
 	if _action_definitions.has(definition_key):
 		return MutationResult.failure(
 			&"duplicate_action_definition",
