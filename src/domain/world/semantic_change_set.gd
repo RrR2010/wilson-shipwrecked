@@ -14,4 +14,4 @@ func is_empty() -> bool:
 	return changes.is_empty()
 
 func duplicate_set():
-	return SemanticChangeSet.new(changes)
+	return get_script().new(changes)
