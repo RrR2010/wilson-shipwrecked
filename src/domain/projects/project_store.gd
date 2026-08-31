@@ -8,7 +8,7 @@ var _instances: Dictionary = {}
 
 func add(instance) -> bool:
 	assert(instance != null, "ProjectStore.add requires instance")
-	var key := instance.id.key()
+	var key: StringName = instance.id.key()
 	if _instances.has(key):
 		return false
 	_instances[key] = instance
