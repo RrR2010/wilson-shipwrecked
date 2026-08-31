@@ -111,7 +111,8 @@ func _run_slice() -> void:
 	_expect_equal(commit.mutation_results.size(), 1, "one world mutation committed")
 	_expect_equal(commit.events.size(), 1, "event published after successful commit")
 	if commit.events.size() == 1:
-		_expect_equal(String(commit.events[0].event_type), "impact_landed", "committed event type")
+		_expect_equal(commit.events[0].event_type.kind, DomainId.Kind.EVENT_DEFINITION, "committed event uses EventDefinitionId")
+		_expect_equal(String(commit.events[0].event_type.value), "impact_landed", "committed event type")
 	_expect_equal(world_query.get_instance_property(crate, integrity), 3, "World mutation visible after commit")
 
 	var completed = execution.advance(&"hit_committed", 0.49)
