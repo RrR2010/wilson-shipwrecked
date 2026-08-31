@@ -8,6 +8,8 @@ const EntityInstance = preload("res://src/domain/world/entity_instance.gd")
 const EntityStore = preload("res://src/domain/world/entity_store.gd")
 const WorldRelation = preload("res://src/domain/world/world_relation.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
+const SemanticChange = preload("res://src/domain/world/semantic_change.gd")
+const SemanticChangeSet = preload("res://src/domain/world/semantic_change_set.gd")
 const DefaultWorldQuery = preload("res://src/domain/world/default_world_query.gd")
 const RequirementPredicate = preload("res://src/domain/actions/requirement_predicate.gd")
 const RequirementPredicateEvaluator = preload("res://src/domain/actions/requirement_predicate_evaluator.gd")
@@ -18,8 +20,10 @@ const EffectivePhysicalProfileResolver = preload("res://src/domain/physical/effe
 const AssemblySlotDefinition = preload("res://src/domain/physical/assembly_slot_definition.gd")
 const AssemblyDefinition = preload("res://src/domain/physical/assembly_definition.gd")
 const AssemblyBindingProjection = preload("res://src/domain/physical/assembly_binding_projection.gd")
+const CompositionDependencyProjection = preload("res://src/domain/physical/composition_dependency_projection.gd")
 const AssemblyValidityResult = preload("res://src/domain/physical/assembly_validity_result.gd")
 const AssemblyValidityService = preload("res://src/domain/physical/assembly_validity_service.gd")
+const DerivedStateInvalidator = preload("res://src/application/simulation/derived_state_invalidator.gd")
 
 var _failures: Array[String] = []
 var _completed := false
@@ -69,7 +73,7 @@ func _run_slice() -> void:
 	_expect_true(entities.add_entity(EntityInstance.new(host_id, host_type, camp)).ok, "host added")
 	_expect_true(entities.add_entity(EntityInstance.new(handle_id, handle_type, camp)).ok, "handle added")
 	_expect_true(entities.add_entity(EntityInstance.new(head_id, head_type, camp)).ok, "head added")
-	_expect_true(entities.add_entity(EntityInstance.new(fiber_id, fiber_type, camp)).ok, "fiber added")
+	_expect_true(entities.add_entity(EntityInstance.new(fiber_id, fiber_type, camp)).ok, "binding added")
 
 	var host = RuntimeWorldRef.entity(host_id)
 	var handle = RuntimeWorldRef.entity(handle_id)
@@ -89,6 +93,7 @@ func _run_slice() -> void:
 
 	var query = DefaultWorldQuery.new(entities, relations, content)
 	var binding_projection = AssemblyBindingProjection.new(query, attached_to)
+	var composition_dependencies = CompositionDependencyProjection.new(query, [attached_to])
 	var definition = AssemblyDefinition.new(DomainId.assembly_definition(&"improvised_impact_tool"), [
 		AssemblySlotDefinition.new(handle_slot, DomainId.assembly_role(&"handle"), RequirementPredicate.has_capability(&"component", structural_member)),
 		AssemblySlotDefinition.new(head_slot, DomainId.assembly_role(&"head"), RequirementPredicate.all_of([
@@ -113,25 +118,30 @@ func _run_slice() -> void:
 	var profiles = EffectivePhysicalProfileResolver.new(query, graph, null, binding_projection)
 	var evaluator = RequirementPredicateEvaluator.new(query, profiles)
 	var validity = AssemblyValidityService.new(query, evaluator)
+	var invalidator = DerivedStateInvalidator.new(profiles, composition_dependencies)
 
 	var initial_validity = validity.evaluate(definition, host, binding_projection.bindings_for_host(host))
 	_expect_equal(initial_validity.status, AssemblyValidityResult.Status.VALID, "initial hammer assembly valid")
 	var initial_profile = profiles.resolve(host)
 	_expect_equal(initial_profile.get_property(impact_capacity), 3, "impact capacity derives from weakest bounded component input")
 	_expect_equal(initial_profile.get_property(stability), 4, "initial stability derives from handle and binding")
-	var impact_explanation = initial_profile.explain(impact_capacity)
-	_expect_equal(impact_explanation.get("inputs", []).size(), 4, "impact provenance includes four component inputs")
+	_expect_equal(initial_profile.explain(impact_capacity).get("inputs", []).size(), 4, "impact provenance includes four component inputs")
 
+	# Component property mutation invalidates its host transitively through composition.
 	_expect_true(entities.set_property_override(fiber_id, binding_integrity, 2).ok, "binding degrades")
-	profiles.invalidate(host)
+	var property_changes = SemanticChangeSet.new([SemanticChange.property_change(fiber, binding_integrity)])
+	var property_invalidation = invalidator.apply(property_changes)
+	_expect_equal(property_invalidation.size(), 1, "component property change invalidated")
+	_expect_true(property_invalidation[0].get("composition_dependents", []).has(host.sort_key()), "host identified as composition dependent")
 	var degraded_validity = validity.evaluate(definition, host, binding_projection.bindings_for_host(host))
 	_expect_equal(degraded_validity.status, AssemblyValidityResult.Status.VALID, "degraded binding remains structurally valid")
 	var degraded_profile = profiles.resolve(host)
-	_expect_equal(degraded_profile.get_property(impact_capacity), 2, "degraded binding reduces impact capacity")
+	_expect_equal(degraded_profile.get_property(impact_capacity), 2, "degraded binding reduces impact capacity without manual host invalidation")
 	_expect_equal(degraded_profile.get_property(stability), 2, "degraded binding reduces stability")
 
+	# Relation mutation invalidates both direct host and transitive dependents.
 	_expect_true(relations.remove_relation(fiber_relation).ok, "binding relation removed")
-	profiles.invalidate(host)
+	invalidator.apply(SemanticChangeSet.new([SemanticChange.relation_change(fiber, attached_to, host)]))
 	var broken_validity = validity.evaluate(definition, host, binding_projection.bindings_for_host(host))
 	_expect_equal(broken_validity.status, AssemblyValidityResult.Status.INCOMPLETE, "missing binding makes assembly incomplete")
 	var broken_profile = profiles.resolve(host)
