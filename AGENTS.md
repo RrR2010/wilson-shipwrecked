@@ -29,21 +29,23 @@ Use this order when work affects simulation behavior, cognition, architecture, p
 15. `docs/DOMAIN_CATALOGS.md` — canonical relation/predicate/effect/proposition catalogues;
 16. `docs/DOMAIN_OPERATIONS.md` — language-neutral command/query/derivation surface;
 17. `docs/DOMAIN_PROCEDURAL_COMPOSITION.md` — materials, effective physical composition, gradual exploration, environmental responses and assembly semantics;
-18. `docs/DOMAIN_MICRO_LOOP.md` — canonical frame-group micro-loop and Scientific Method fixture;
-19. `docs/DOMAIN_OPERATION_REFINEMENTS.md` — refined attemptability, tactical opportunity, evidence and procedural operations;
-20. `docs/DOMAIN_REGRESSION.md` — structural representative-scene regression;
-21. `docs/DOMAIN_OPERATION_TRACES.md` — integration operation traces;
-22. `docs/DOMAIN_VOCABULARY_REGRESSION.md` — normalized-vocabulary regression;
-23. `docs/DOMAIN_SCHEMA.dbml` — relational-style visualization only, not persistence mandate;
-24. `docs/AI.md` — runtime LLM authority/fallback contract;
-25. `docs/PRODUCT.md` — overall experience, modes, player role, God Power, UI and rhythm;
-26. `docs/SIMULATION.md` — broader systemic/property/action vocabulary.
+18. `docs/DOMAIN_HAZARD_DYNAMICS.md` — committed dynamic processes, hazard projections, perceived threats, causal windows and emergency concurrency;
+19. `docs/DOMAIN_MICRO_LOOP.md` — canonical frame-group micro-loop and Scientific Method fixture;
+20. `docs/DOMAIN_MICRO_LOOP_FALLING_PALM.md` — immediate-threat/hazard micro-loop fixture;
+21. `docs/DOMAIN_OPERATION_REFINEMENTS.md` — refined attemptability, tactical opportunity, evidence and procedural operations;
+22. `docs/DOMAIN_REGRESSION.md` — structural representative-scene regression;
+23. `docs/DOMAIN_OPERATION_TRACES.md` — integration operation traces;
+24. `docs/DOMAIN_VOCABULARY_REGRESSION.md` — normalized-vocabulary regression;
+25. `docs/DOMAIN_SCHEMA.dbml` — relational-style visualization only, not persistence mandate;
+26. `docs/AI.md` — runtime LLM authority/fallback contract;
+27. `docs/PRODUCT.md` — overall experience, modes, player role, God Power, UI and rhythm;
+28. `docs/SIMULATION.md` — broader systemic/property/action vocabulary.
 
 Where an older provisional behavioral statement in `PRODUCT.md` or `SIMULATION.md` conflicts with `BEHAVIORAL_MODEL.md`, `STATE_REQUIREMENTS.md` or `SCENE_VALIDATION.md`, the newer behavioral documents win unless a later documented architectural/implementation decision explicitly supersedes them.
 
 Where implementation-oriented wording conflicts with accepted architectural contracts, use `ARCHITECTURE.md`, `SIMULATION_CONTRACTS.md`, `SIMULATION_ORCHESTRATION.md`, `MUTATION_AUTHORITY.md`, the functional-domain documents, and validated regression traces as the current architecture source of truth unless implementation evidence deliberately supersedes them.
 
-For functional-domain work, later normalization/refinement documents supersede older ambiguous shorthand without reopening accepted product rules. In particular, use `DOMAIN_PROCEDURAL_COMPOSITION.md`, `DOMAIN_MICRO_LOOP.md`, and `DOMAIN_OPERATION_REFINEMENTS.md` when they refine older `DOMAIN_MODEL.md` / `DOMAIN_OPERATIONS.md` wording.
+For functional-domain work, later normalization/refinement documents supersede older ambiguous shorthand without reopening accepted product rules. In particular, use `DOMAIN_PROCEDURAL_COMPOSITION.md`, `DOMAIN_HAZARD_DYNAMICS.md`, `DOMAIN_MICRO_LOOP*.md`, and `DOMAIN_OPERATION_REFINEMENTS.md` when they refine older `DOMAIN_MODEL.md` / `DOMAIN_OPERATIONS.md` wording.
 
 ### Visual / asset chain
 
@@ -132,8 +134,14 @@ DOMAIN_OPERATIONS.md
 DOMAIN_PROCEDURAL_COMPOSITION.md
   material / effective profile / assembly / exploration / environmental procedurality
 
+DOMAIN_HAZARD_DYNAMICS.md
+  committed dynamic processes / hazard projections / perceived threat / causal windows / emergency concurrency
+
 DOMAIN_MICRO_LOOP.md
   semantic frame groups / tactical-vs-intentional cadence / Scientific Method fixture
+
+DOMAIN_MICRO_LOOP_FALLING_PALM.md
+  immediate-threat frame groups / route/intervention/collision fixture
 
 DOMAIN_OPERATION_REFINEMENTS.md
   refined attemptability / tactical opportunity / evidence / assembly operation contracts
@@ -183,6 +191,8 @@ When a decision changes, update the document that owns that concern and any stat
 14. Keep physical possibility, Wilson knowledge, and Wilson desirability as distinct projections.
 15. Prefer effective properties/capabilities derived from material + condition + composition + contents over authored combinatorial entity variants.
 16. Do not model object exploration as one universal percentage; persist propositions/evidence-backed beliefs instead.
+17. Keep committed dynamic-process evolution distinct from its still-unresolved future collision/consequence.
+18. Wilson emergency decisions consume perceived threat, never hidden authoritative hazard projections directly.
 
 ## Architecture work
 
@@ -247,7 +257,7 @@ When adding behavior, ask in this order:
 2. Is one new reusable property/capability/relation/action/evidence rule enough?
 3. Can runtime composition derive the needed effective semantics?
 4. Can existing belief/history/habit/project/decision composition explain it?
-5. Can an event/environment rule express it parametrically?
+5. Can an event/environment/dynamic-process rule express it parametrically?
 6. Does it genuinely require a bespoke event or new primitive?
 
 A large `if entity_type == ...` chain is usually a design smell.
