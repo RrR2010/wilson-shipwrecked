@@ -41,6 +41,16 @@ func get_instance_property(subject, property_id) -> Variant:
 	return null if definition == null else definition.get_base_property(property_id)
 
 
+func get_property_definition(property_id):
+	assert(property_id != null, "get_property_definition requires PropertyId")
+	property_id.assert_kind(DomainId.Kind.PROPERTY)
+	return _content.get_property_definition(property_id)
+
+
+func validate_property_value(property_id, value: Variant) -> bool:
+	return _content.validate_property_value(property_id, value)
+
+
 func has_authored_capability(subject, capability_id) -> bool:
 	assert(subject != null, "has_authored_capability requires subject")
 	assert(capability_id != null, "has_authored_capability requires CapabilityId")
