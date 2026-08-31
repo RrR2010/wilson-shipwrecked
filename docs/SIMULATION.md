@@ -401,6 +401,39 @@ Wilson's psychological response depends only on what he perceives and attributes
 
 Exact values require scene-driven calibration rather than being fixed here.
 
+## Luck / chance favorability
+
+Luck is a Wilson-scoped chance modifier, not Wilson psychology.
+
+The preferred runtime interpretation is:
+
+```text
+neutral baseline
++ bounded active modifiers from world/content context
+→ effective_luck
+```
+
+Potential modifier sources include carried/worn special objects, temporary event effects or other explicitly authored contextual conditions.
+
+`effective_luck` may influence only systems that declare a **luck-sensitive random alternative**. Examples include:
+
+- choosing between otherwise plausible favorable/unfavorable variants of an incidental event;
+- biasing which one of several valid chance outcomes occurs;
+- shifting the favorability of an uncertain coincidence.
+
+Luck must not:
+
+- create or remove a physical affordance;
+- make a physically impossible action succeed;
+- change Wilson's intention score directly;
+- erase a committed action consequence;
+- replace event rarity/frequency policy;
+- silently rewrite deterministic world state.
+
+The source state of a Luck modifier remains owned by its normal domain owner. The effective Luck value can therefore be derived on demand rather than introduced as a freely drifting persistent Wilson stat.
+
+Wilson cannot directly read `effective_luck`. If he notices repeated coincidences, ordinary observation + causal attribution + belief learning may make him believe an amulet, location or ritual is lucky/unlucky. The belief can be true, false or overgeneralized.
+
 ## Event Director and directed scenes
 
 External events introduce novelty but remain constrained by the world model.
@@ -414,7 +447,8 @@ An event template may define:
 - parameter slots;
 - authoritative effects/actions;
 - presentation hints;
-- follow-up hooks.
+- follow-up hooks;
+- whether any chance variants are luck-sensitive.
 
 ### Pacing pressure
 
@@ -552,6 +586,7 @@ Provide a headless runner capable of many simulated days/worlds. Useful metrics 
 - repeated loops;
 - ordinary/micro/rare event rhythm;
 - directed-event coverage/break rate;
+- luck-sensitive outcome distribution under controlled modifiers;
 - God Power generation/spend patterns;
 - death/near-death distributions;
 - diversity between seeds.
@@ -564,6 +599,7 @@ Do not treat the concepts above as a final data schema. The behavioral/architect
 
 - define the first concrete vocabulary of properties, capabilities, semantic roles, transformations and generic exploration verbs;
 - prove property-driven interaction composition with the first content set;
+- define Luck modifier/value semantics and luck-sensitive random contracts;
 - calibrate survival depth and God Power quantitatively;
 - define the vertical-slice subset;
 - define the minimal Legacy Knowledge representation and initialization boundary;
