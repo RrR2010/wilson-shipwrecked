@@ -20,6 +20,8 @@ const BeliefEvidence = preload("res://src/domain/cognition/belief_evidence.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
+const ProjectInstance = preload("res://src/domain/projects/project_instance.gd")
+const ProjectStore = preload("res://src/domain/projects/project_store.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const SimulationSnapshotService = preload("res://src/infrastructure/persistence/simulation_snapshot_service.gd")
 
@@ -86,6 +88,13 @@ func _run_slice() -> void:
 		DriveState.STIMULATION: 0.63,
 	})
 
+	var project_definition_id = DomainId.new(DomainId.Kind.PROJECT_DEFINITION, &"repair_crate")
+	var project_instance_id = DomainId.new(DomainId.Kind.PROJECT_INSTANCE, &"repair_crate_1")
+	var project_binding = RoleBinding.new()
+	project_binding.bind(&"project_subject", crate)
+	var projects = ProjectStore.new()
+	_expect_true(projects.add(ProjectInstance.new(project_instance_id, project_definition_id, project_binding, ProjectInstance.Lifecycle.ACTIVE, 1)), "project instance added")
+
 	var policies = PhysicalDerivationPolicyRegistry.new()
 	var resistance_rule = PropertyDerivationDefinition.new(&"effective_resistance_v1", [hardness, structural_integrity], effective_resistance, &"min_numeric")
 	var graph_before = PropertyDependencyGraph.new()
@@ -97,9 +106,10 @@ func _run_slice() -> void:
 	var belief_before = beliefs.get_entry(proposition).confidence
 
 	var persistence = SimulationSnapshotService.new()
-	var snapshot = persistence.capture(entities, relations, wilson_world, beliefs, intention_store, drives)
-	_expect_equal(snapshot.get("schema_version"), 5, "snapshot schema version")
+	var snapshot = persistence.capture(entities, relations, wilson_world, beliefs, intention_store, drives, projects)
+	_expect_equal(snapshot.get("schema_version"), 6, "snapshot schema version")
 	_expect_true(snapshot.has("drives"), "durable Wilson drives are persisted")
+	_expect_true(snapshot.has("projects"), "durable project owner state is persisted")
 	_expect_false(snapshot.has("relation_indexes"), "reconstructible relation indexes are not persisted")
 	_expect_false(snapshot.has("epistemic_projection"), "epistemic projection is not persisted")
 	_expect_false(snapshot.has("effective_physical_profiles"), "physical profile cache is not persisted")
@@ -143,6 +153,14 @@ func _run_slice() -> void:
 
 	_expect_equal(restored.drives.snapshot_values(), drives.snapshot_values(), "drive owner state survives save/load")
 	_expect_equal(restored.drives.band(DriveState.HUNGER), DriveState.UrgencyBand.URGENT, "drive urgency band reconstructs from durable value")
+
+	var restored_project = restored.projects.get_instance(project_instance_id)
+	_expect_true(restored_project != null, "project instance survives save/load")
+	if restored_project != null:
+		_expect_equal(restored_project.definition_id.key(), project_definition_id.key(), "project definition binding survives")
+		_expect_equal(restored_project.lifecycle, ProjectInstance.Lifecycle.ACTIVE, "project lifecycle survives")
+		_expect_equal(restored_project.contribution_count, 1, "project contribution metadata survives")
+		_expect_equal(restored_project.subject_bindings.get_subject(&"project_subject").key(), restored_crate.key(), "project physical subject binding survives")
 
 	var graph_after = PropertyDependencyGraph.new()
 	_expect_true(graph_after.compile([resistance_rule], policies).ok, "property graph recompiles after load")
