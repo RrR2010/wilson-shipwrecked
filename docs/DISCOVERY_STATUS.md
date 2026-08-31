@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Product/behavior discovery, architecture contracts and the language-neutral functional-domain stabilization are complete enough to proceed.
+Product/behavior discovery, architecture contracts, the language-neutral functional-domain stabilization, and the first functional-domain normalization of the cross-cutting asset catalog are complete enough to proceed.
 
 The current engineering/design phase is:
 
@@ -15,7 +15,7 @@ package/module dependency layout
 → presentation adapters
 ```
 
-In parallel, the cross-cutting [`asset-catalog/`](asset-catalog/) can be enriched from an art-seeded model-production catalog into a fuller **functional + visual content catalog**, provided catalog rows continue to reference rather than redefine canonical domain semantics.
+In parallel, model/content production can now consume the normalized [`asset-catalog/`](asset-catalog/) directly. New content should extend that schema rather than returning to the historical brainstorming rounds as a production backlog.
 
 For documentation navigation and authority, use [`README.md`](README.md). This file intentionally contains status only.
 
@@ -26,30 +26,33 @@ For documentation navigation and authority, use [`README.md`](README.md). This f
 Current status:
 
 ```text
-Product / behavioral discovery           PASS
-Architecture responsibility boundaries   PASS
-Simulation contracts / orchestration     PASS
-Mutation authority                       PASS
-Guards / bounded calibration             PASS
+Product / behavioral discovery            PASS
+Architecture responsibility boundaries    PASS
+Simulation contracts / orchestration      PASS
+Mutation authority                        PASS
+Guards / bounded calibration              PASS
 
-Structural functional domain             PASS
-Vocabulary normalization                 PASS
-Representative-scene regression          PASS
-Operation regression                     PASS
-Functional asset breadth                 PASS
-Gradual exploration / evidence            PASS
-Composite-object semantics               PASS
-Environmental protection / exposure      PASS
-Scientific Method micro-loop             PASS
-Falling Palm hazard micro-loop           PASS
-Sabotaged Storage epistemic micro-loop   PASS
-Improvised hammer fixture                PASS
-Cloth/shelter/weather fixture            PASS
+Structural functional domain              PASS
+Vocabulary normalization                  PASS
+Representative-scene regression           PASS
+Operation regression                      PASS
+Functional asset breadth                  PASS
+Asset catalog functional normalization    PASS
+Gradual exploration / evidence             PASS
+Composite-object semantics                PASS
+Environmental protection / exposure       PASS
+Scientific Method micro-loop              PASS
+Falling Palm hazard micro-loop            PASS
+Sabotaged Storage epistemic micro-loop    PASS
+Improvised hammer fixture                 PASS
+Cloth/shelter/weather fixture             PASS
 ```
 
 **Functional-domain stabilization gate: PASS.**
 
-The validated model did not require separate state-owning systems for crafting, tool quality, shelter, exploration, tactical planning, hazard projection or suspicion/investigation. Those concerns remain compositions, projections or bounded working contexts inside existing authority boundaries.
+**Asset-catalog functional normalization gate: PASS for the current P0/P1 catalog breadth.**
+
+The validated model did not require separate state-owning systems for crafting, tool quality, shelter, exploration, tactical planning, hazard projection, suspicion/investigation, wet-material state, fallen-opportunity objects or storm-debris clusters. Those concerns remain compositions, projections, processes, ordinary world outcomes or production adapters inside existing authority boundaries.
 
 ---
 
@@ -88,11 +91,12 @@ Rendering remains non-authoritative. Wilson knowledge remains distinct from worl
 
 # Current content/catalog state
 
-The repository now has a deliberate ownership split:
+The repository uses this ownership split:
 
 ```text
 docs/asset-catalog/
-  cross-cutting modeled-content requirements + production backlog
+  cross-cutting functional + visual modeled-content requirements
+  + production backlog/status
 
 docs/art/
   visual language, references and artistic production process
@@ -101,22 +105,26 @@ docs/brainstorming/functional-asset-catalog/
   historical breadth exploration / upstream evidence
 ```
 
-The asset catalog is correctly outside `art/`. Its current tables are functional/artistic seeds, not yet assumed to be a complete implementation/content schema.
+The initial catalog normalization pass is complete. The catalog now provides:
 
-A dedicated catalog/domain validation pass should next:
+- a separate functional `Spec` lifecycle (`UNREVIEWED`, `PARTIAL`, `ALIGNED`, `BLOCKED`) independent from production `Status`;
+- a compact semantic token grammar for materials, properties, capabilities, affordances, relations, assembly roles/slots, interaction regions, transformations, environmental behavior, evidence, actions, scenes and projects;
+- normalized P0/P1 entity/project/living-world rows against the stabilized domain;
+- semantic project/component roles instead of object-type recipes;
+- explicit transformation-descendant handling for coconut/fish and detachable components;
+- foundational construction, tinder, water, mushroom, clothing and utility families that were missing from the art-seeded catalog;
+- explicit reclassification of wet-material states, fallen-object opportunities, roof damage, storm debris, light-prop displacement and perch sockets as presentation/process/adapter requirements rather than fake entities;
+- preserved art references and model-production status as independent concerns.
 
-- compare every catalog family against the stabilized domain;
-- add missing functional dimensions/rows where required;
-- preserve properties vs capabilities vs affordances vs relations vs state-band distinctions;
-- identify interactions, transformations, assembly roles, environmental responses and project dependencies;
-- avoid introducing recipes, object-pair APIs or duplicate runtime state into the catalog;
-- preserve visual/art requirements and production status as independent dimensions.
+No new broad domain primitive was required by this pass.
+
+Catalog additions remain open-ended content work. A newly proposed family should use the admission rules in `asset-catalog/README.md`; if it exposes a genuine reusable domain gap, update the canonical owning domain document explicitly rather than introducing the primitive only in a row.
 
 ---
 
 # Remaining non-blocking questions
 
-These may be resolved during module/type design, catalog normalization or implementation without reopening product discovery by default:
+These may be resolved during module/type design, content authoring or implementation without reopening product discovery by default:
 
 1. exact spatial topology/navigation representation;
 2. body mutation proposer API beneath World authority;
@@ -136,13 +144,14 @@ These are implementation/content-definition questions, not evidence that the cur
 
 # Documentation consolidation status
 
-The repository now uses [`docs/README.md`](README.md) as the documentation map.
+The repository uses [`docs/README.md`](README.md) as the documentation map.
 
 Key policy:
 
 - canonical documents own current rules;
 - specialized appendices refine narrow concerns;
 - fixtures/regressions are supporting evidence, not default required reading;
+- `asset-catalog/` owns normalized cross-cutting content requirements and production tracking;
 - brainstorming and handoffs are historical/operational evidence;
 - new edge cases should normally update an existing owner rather than create another permanent top-level specification.
 
@@ -152,7 +161,7 @@ One known consolidation target remains: the canonical refinements in `DOMAIN_OPE
 
 # Recommended next work
 
-Two streams can now proceed without changing each other's authority boundaries:
+Two streams can proceed without changing each other's authority boundaries:
 
 ## Runtime/module stream
 
@@ -163,12 +172,13 @@ Two streams can now proceed without changing each other's authority boundaries:
 5. define presentation/Godot adapters outside authoritative domain modules;
 6. then introduce concrete GDScript/runtime representations.
 
-## Asset-catalog normalization stream
+## Content/model-production stream
 
-Execution handoff: [`handoffs/asset-catalog-functional-domain-normalization.md`](handoffs/asset-catalog-functional-domain-normalization.md).
+1. begin with `Spec=ALIGNED`, `P0` catalog rows and their dependencies;
+2. build the foundational interchangeable component/material grammar before bespoke hero assets;
+3. preserve mandatory regression contrasts such as empty/full container, transparent/opaque container, tight/loose tool binding, loose/tensioned cloth and mismatched compatible shelter repair;
+4. validate real generated assets against interaction-region/adapter and gameplay-camera requirements;
+5. update production `Status` without changing functional `Spec` unless new evidence changes the brief;
+6. add new families through the normalized catalog admission rules rather than copying brainstorming candidates mechanically.
 
-1. validate the catalog against product + stabilized domain;
-2. extend the catalog to include missing functional requirements and content families;
-3. resolve ambiguous rows or misplaced semantics;
-4. retain art/production requirements as a parallel dimension rather than the catalog's sole purpose;
-5. leave domain primitive changes to explicit canonical-domain review.
+Historical execution handoff: [`handoffs/asset-catalog-functional-domain-normalization.md`](handoffs/asset-catalog-functional-domain-normalization.md).
