@@ -37,20 +37,24 @@ These are architectural defaults, not permission to couple simulation logic to G
 
 ## Documentation
 
-| Document | Purpose |
+Start with [`docs/README.md`](docs/README.md). It separates canonical contracts, specialized appendices, validation evidence and historical material, and provides task-specific reading paths.
+
+Key entry points:
+
+| Area | Entry point |
 | --- | --- |
-| [`docs/PRODUCT.md`](docs/PRODUCT.md) | Product vision, player experience and scope |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Runtime architecture, boundaries and data flow |
-| [`docs/SIMULATION.md`](docs/SIMULATION.md) | World model, affordances, Utility AI, GOAP and procedural narrative |
-| [`docs/VISUAL_GUIDE.md`](docs/VISUAL_GUIDE.md) | Visual language and art direction |
-| [`docs/ASSET_PIPELINE.md`](docs/ASSET_PIPELINE.md) | Blender → validation → GLB → Godot pipeline |
-| [`docs/ASSET_SPEC.md`](docs/ASSET_SPEC.md) | Machine-readable conventions for 3D assets, anchors and sockets |
-| [`docs/AI.md`](docs/AI.md) | LLM responsibilities, contracts and safety boundaries |
-| [`AGENTS.md`](AGENTS.md) | Repository-level instructions for coding and 3D agents |
+| Current phase | [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md) |
+| Product / player experience | [`docs/PRODUCT.md`](docs/PRODUCT.md) |
+| Architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| Functional domain | [`docs/DOMAIN_MODEL.md`](docs/DOMAIN_MODEL.md) |
+| Cross-cutting modeled content | [`docs/asset-catalog/README.md`](docs/asset-catalog/README.md) |
+| Visual production | [`docs/art/README.md`](docs/art/README.md) |
+| Asset runtime/pipeline | [`docs/ASSET_SPEC.md`](docs/ASSET_SPEC.md), [`docs/ASSET_PIPELINE.md`](docs/ASSET_PIPELINE.md) |
+| Agent repository rules | [`AGENTS.md`](AGENTS.md) |
 
 ## First milestone: the living diorama
 
-Before building a broad game, prove the production pipeline with one vertical slice:
+Before building broad content, prove the production and simulation pipeline with one vertical slice:
 
 - one small tropical island;
 - Wilson as a placeholder or first-pass character;
@@ -72,4 +76,4 @@ Do not optimize for photorealism, a large map, multiplayer, a large handcrafted 
 
 ## Status
 
-Pre-production / architecture and visual-pipeline exploration.
+Product/behavior discovery, architecture contracts and the language-neutral functional-domain stabilization have passed their current gates. Work can proceed to package/module dependency layout and concrete domain types while the cross-cutting asset catalog is independently enriched with missing functional/content requirements.
