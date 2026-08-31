@@ -11,6 +11,10 @@ It formalizes four refinements exposed by the functional asset catalog and the S
 3. generic environmental response rules;
 4. bounded semantic assembly slots for tools and structures.
 
+`DOMAIN_MICRO_LOOP.md` now owns the detailed frame-group execution semantics and adds canonical refinements for `ActionAttemptability`, `PerceivedTacticalOpportunity`, `PropertyDerivationDefinition`, `InteractionRegionDefinition`, and `DecisionContinuationContext`.
+
+`DOMAIN_OPERATION_REFINEMENTS.md` owns the corresponding refined operation surface where older `DOMAIN_OPERATIONS.md` wording is ambiguous.
+
 The goal is greater procedurality without introducing free-form physics, recipes, universal script callbacks, or hundreds of object-specific state flags.
 
 ---
@@ -25,11 +29,9 @@ authored definition
 + instance condition
 + runtime components/relations
 + contents
-+ environmental context
 --------------------------------
 → EffectivePhysicalProfile
-→ valid physical affordances
-→ interaction resolution
+→ authoritative attemptability/resolution
 ```
 
 Wilson's cognition must separately answer what he currently believes about those semantics:
@@ -40,6 +42,7 @@ world truth
 → PerceptualEvidence
 → belief evidence
 → BeliefEntry confidence
+→ PerceivedTacticalOpportunity
 → tactical/intention candidates
 ```
 
@@ -48,6 +51,8 @@ Therefore:
 ```text
 physical possibility != Wilson knowledge != Wilson desirability
 ```
+
+Environment normally affects effective semantics through explicit authoritative state/process changes (`EnvironmentalResponseRule`) rather than invisible profile-time global modifiers.
 
 ---
 
@@ -137,12 +142,27 @@ part_of / attached_to / inside relations
 component properties/capabilities
 assembly slot bindings
 condition properties
-environmental state when the queried property is context-sensitive
 ```
 
 It must not read Wilson beliefs, habits, associations or intentions.
 
-## 3.2 Property derivation examples
+The detailed deterministic precedence, derivation graph and cycle invariants are canonical in `DOMAIN_MICRO_LOOP.md`.
+
+## 3.2 PropertyDerivationDefinition
+
+Derived properties must use validated bounded definitions rather than arbitrary callbacks.
+
+```text
+PropertyDerivationDefinition
+  property_id: PropertyId
+  input_dependencies: bounded property/relation/slot selectors
+  combination_policy: registered bounded semantic policy
+  output_domain: declared PropertyValue family
+```
+
+Content bootstrap must reject cyclic derivation graphs, invalid output types and unsupported selectors.
+
+## 3.3 Property derivation examples
 
 ### Loaded barrel mass
 
@@ -184,7 +204,7 @@ cloth material properties
 → covering / rain-protection capability
 ```
 
-## 3.3 Effective capability derivation
+## 3.4 Effective capability derivation
 
 Capabilities may be:
 
@@ -277,6 +297,8 @@ use_as_impact_tool
 use_as_cutting_tool
 ```
 
+These are not guarantees of goal success. `DOMAIN_MICRO_LOOP.md` distinguishes authoritative `ActionAttemptability` from Wilson-relative `PerceivedTacticalOpportunity`.
+
 Example:
 
 ```text
@@ -315,6 +337,8 @@ AssemblyBinding
 ```
 
 Implementations may realize this through `part_of` / `attached_to` relations plus validated slot metadata rather than requiring a separate storage subsystem.
+
+Structural composition used by effective-property aggregation must be acyclic; a component cannot transitively contain/assemble itself.
 
 ## 5.1 Example — improvised hammer
 
@@ -369,7 +393,19 @@ Object exploration is emergent from independent beliefs and evidence.
 
 A poorly explored object has few supported propositions; a well explored object has more and/or higher-confidence propositions.
 
-## 6.1 PerceptualEvidence
+## 6.1 PerceptionResult refinement
+
+```text
+PerceptionResult
+  perceived_subjects: PerceivedSubject[]
+  observed_events: ObservedEvent[]
+  perceptual_evidence: PerceptualEvidence[]
+  accessible_environmental_context
+```
+
+Static property discovery belongs in `perceptual_evidence`; it does not require synthetic `WorldEvent`s.
+
+## 6.2 PerceptualEvidence
 
 ```text
 PerceptualEvidence
@@ -399,7 +435,7 @@ PROPRIOCEPTIVE
 ACTION_FEEDBACK
 ```
 
-## 6.2 EvidenceRuleDefinition
+## 6.3 EvidenceRuleDefinition
 
 ```text
 EvidenceRuleDefinition
@@ -416,13 +452,13 @@ An evidence rule answers:
 
 It must not simply reveal all properties of the target.
 
-## 6.3 Examples
+## 6.4 Examples
 
 ### Visual inspection
 
 ```text
 inspect_visual(target)
-→ color / coarse shape / visible surface state
+→ color / coarse shape / visible surface state / visible interaction regions
 ```
 
 It should not directly reveal hidden hardness or sealed contents.
@@ -489,17 +525,30 @@ This boundary preserves uncertainty and supports later contradiction.
 
 ---
 
-# 8. Exploration feeds affordances
+# 8. Exploration feeds tactical opportunities
 
-Physical affordances are queried from authoritative physical truth, but Wilson candidate generation uses a perceived/believed projection.
+Authoritative attemptability and Wilson candidate generation are separate.
+
+Physical world/action services answer:
+
+```text
+Can this action be attempted?
+What happens if committed?
+```
+
+Wilson-relative cognition answers:
+
+```text
+Does Wilson currently believe this tactic is plausible/informative enough to consider?
+```
 
 Therefore all four cases are valid:
 
 ```text
-physically possible + Wilson knows it
-physically possible + Wilson does not know it
-physically impossible + Wilson thinks it may work
-physically impossible + Wilson knows it is implausible
+physically effective + Wilson knows it
+physically effective + Wilson does not know it
+physically ineffective + Wilson thinks it may work
+physically ineffective + Wilson knows it is implausible but may test for information
 ```
 
 The second case enables discovery.
@@ -533,7 +582,7 @@ Examples:
 ```text
 use another tool
 inspect first
-change target point
+change semantic target region
 change technique
 retry with stronger force
 pause at a safe checkpoint
@@ -570,9 +619,45 @@ strong competing trigger arrives
 
 This prevents global life-planning after every hammer strike while preserving interruption by meaningful events.
 
+`DecisionContinuationContext` in `DOMAIN_MICRO_LOOP.md` carries only bounded same-intention recent tactic/outcome history; it is not a durable failure counter or second memory system.
+
 ---
 
-# 10. EnvironmentalResponseRule
+# 10. InteractionRegionDefinition
+
+Procedural tactics often need semantic sub-targets without mesh-level autonomous reasoning.
+
+```text
+InteractionRegionDefinition
+  id: InteractionRegionId
+  host applicability
+  semantic categories
+  accepted action-role semantics
+  optional local physical modifiers
+```
+
+Runtime reference:
+
+```text
+InteractionRegionRef(host_entity_id, region_id)
+```
+
+Examples:
+
+```text
+lid_edge
+handle
+weak_joint
+rope_knot
+repair_point
+fruit_cluster
+```
+
+Presentation maps regions to transforms/colliders/anchors. Hidden regions are not automatically exposed to Wilson cognition.
+
+---
+
+# 11. EnvironmentalResponseRule
 
 Weather/environmental procedurality should not require object-specific update code.
 
@@ -627,7 +712,7 @@ The rule should operate over properties/capabilities rather than entity-type lis
 
 ---
 
-# 11. State-band rule
+# 12. State-band rule
 
 Brainstorming/art states such as:
 
@@ -657,7 +742,7 @@ Use explicit lifecycle enums only when semantic transition identity itself matte
 
 ---
 
-# 12. Epistemic state must not leak into world assets
+# 13. Epistemic state must not leak into world assets
 
 Terms such as:
 
@@ -690,7 +775,7 @@ Presentation may derive an `unexplored` UI/content label from Wilson knowledge, 
 
 ---
 
-# 13. Content metadata versus domain semantics
+# 14. Content metadata versus domain semantics
 
 Brainstorming labels such as:
 
@@ -718,11 +803,11 @@ A cup becomes Wilson's favorite through association/history, not because it has 
 
 ---
 
-# 14. Procedural regression fixtures
+# 15. Procedural regression fixtures
 
 The following existing catalog objects should be used as low-cost domain regressions.
 
-## 14.1 Coconut
+## 15.1 Coconut
 
 Tests:
 
@@ -733,7 +818,7 @@ multi-output contents
 repurposing shell as container/tool material
 ```
 
-## 14.2 Improvised hammer
+## 15.2 Improvised hammer
 
 Tests:
 
@@ -751,7 +836,7 @@ Required contrast:
 tight binding vs loose binding
 ```
 
-## 14.3 Barrel
+## 15.3 Barrel
 
 Tests:
 
@@ -768,7 +853,7 @@ Required contrast:
 empty vs water-filled
 ```
 
-## 14.4 Sealed container
+## 15.4 Sealed container
 
 Tests:
 
@@ -777,6 +862,7 @@ gradual exploration
 opaque/transparent evidence access
 damage feedback
 Scientific Method tactical loop
+interaction regions such as lid edge
 ```
 
 Required contrast:
@@ -787,7 +873,7 @@ transparent vs opaque container
 
 without requiring distinct cognitive code paths.
 
-## 14.5 Cloth sheet
+## 15.5 Cloth sheet
 
 Tests:
 
@@ -806,7 +892,7 @@ loose on ground
 vs attached/tensioned across supports
 ```
 
-## 14.6 Shelter section
+## 15.6 Shelter section
 
 Tests:
 
@@ -816,9 +902,10 @@ project/world truth split
 weather damage
 detached reusable components
 repair history
+interaction-region repair points
 ```
 
-## 14.7 Bowling ball
+## 15.7 Bowling ball
 
 Tests:
 
@@ -830,38 +917,21 @@ no special coconut-breaking rule
 
 ---
 
-# 15. Explicit anti-models
+# 16. Procedural domain gate
 
-Do not implement:
+This refinement passes when:
 
-```text
-exploration_level per object
-unexplored as world state
-one capability flag for every possible affordance
-one entity type for every condition combination
-recipes for composite tools
-free-form arbitrary component attachment
-Blender/Godot sockets as domain identity
-realistic continuous material simulation
-weather switch statements by entity type
-persisted EffectivePhysicalProfile caches as independent truth
-```
+- new objects can gain useful behavior from existing properties/capabilities rather than type switches;
+- composite objects can change effective physical semantics when parts/contents/condition change;
+- property derivation is acyclic, typed, deterministic and explainable;
+- assembly compatibility is semantic and bounded rather than free-form universal construction;
+- carrying/throwing/rolling can be derived where practical instead of authored as unrelated flags;
+- exploration reveals individual facts through evidence modalities instead of one exploration percentage;
+- Wilson can attempt physically enactable but ineffective experiments and learn from them;
+- hidden world truth does not leak into tactical candidate generation;
+- environment affects broad families through reusable response rules;
+- art state variants can be projected from smaller authoritative properties;
+- interaction sub-targets can be semantic without becoming mesh-level domain logic;
+- brainstorming metadata does not inflate the authoritative gameplay schema.
 
----
-
-# 16. Procedural-domain gate
-
-Before language-specific implementation begins, the functional model should demonstrate that:
-
-- one interaction rule can accept multiple physically compatible objects;
-- effective properties can change from contents, condition and assembly without changing entity type;
-- composite tools gain/lose effectiveness through component state;
-- visual exploration reveals only modality-accessible evidence;
-- Wilson can hold partial/incorrect property beliefs;
-- environmental rules affect heterogeneous compatible objects without type lists;
-- structures can use bounded semantic slots with interchangeable compatible components;
-- presentation state bands derive from smaller authoritative properties;
-- personalization metadata does not become unnecessary physical capability flags;
-- tactical reconsideration can refine an intention without broad global reconsideration after every action.
-
-These requirements extend the domain model without changing its authority boundaries or replacing the existing property/capability/relation foundation.
+`DOMAIN_MICRO_LOOP.md` validates this gate against a complete Scientific Method frame-group fixture.
