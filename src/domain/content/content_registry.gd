@@ -10,9 +10,22 @@ const MutationResult = preload("res://src/domain/core/mutation_result.gd")
 ## runtime authoring mutation fail fast.
 
 var _entity_definitions: Dictionary = {}
+var _property_definitions: Dictionary = {}
 var _action_definitions: Dictionary = {}
 var _action_resolution_definitions: Dictionary = {}
 var _sealed := false
+
+
+func register_property_definition(definition) -> MutationResult:
+	if _sealed:
+		return MutationResult.failure(&"content_registry_sealed", ["Cannot register content after seal()"])
+	assert(definition != null, "register_property_definition requires PropertyDefinition")
+	definition.id.assert_kind(DomainId.Kind.PROPERTY)
+	var definition_key = definition.id.key()
+	if _property_definitions.has(definition_key):
+		return MutationResult.failure(&"duplicate_property_definition", ["Duplicate property definition: %s" % definition.id.sort_key()])
+	_property_definitions[definition_key] = definition
+	return MutationResult.success(&"property_definition_registered", definition)
 
 
 func register_entity_definition(definition: EntityDefinition) -> MutationResult:
@@ -60,12 +73,32 @@ func register_action_resolution_definition(definition) -> MutationResult:
 
 
 func seal() -> MutationResult:
+	if not _property_definitions.is_empty():
+		for entity_definition in _entity_definitions.values():
+			for property_key in entity_definition.base_property_keys():
+				if not _property_definitions.has(property_key):
+					return MutationResult.failure(&"missing_property_definition", ["Missing property definition for %s" % String(property_key)])
+				var property_definition = _property_definitions[property_key]
+				var value = entity_definition.get_base_property(property_definition.id)
+				if not property_definition.validate_value(value):
+					return MutationResult.failure(&"invalid_authored_property_value", ["Invalid value for %s on %s" % [property_definition.id.sort_key(), entity_definition.id.sort_key()]])
 	_sealed = true
 	return MutationResult.success(&"content_registry_sealed")
 
 
 func is_sealed() -> bool:
 	return _sealed
+
+
+func get_property_definition(property_id):
+	assert(property_id != null, "get_property_definition requires PropertyId")
+	property_id.assert_kind(DomainId.Kind.PROPERTY)
+	return _property_definitions.get(property_id.key())
+
+
+func validate_property_value(property_id, value: Variant) -> bool:
+	var definition = get_property_definition(property_id)
+	return definition == null or definition.validate_value(value)
 
 
 func get_entity_definition(type_id: DomainId) -> EntityDefinition:
@@ -92,6 +125,14 @@ func get_action_resolution_definition(definition_id: StringName):
 func entity_definition_ids() -> Array[String]:
 	var result: Array[String] = []
 	for definition in _entity_definitions.values():
+		result.append(definition.id.sort_key())
+	result.sort()
+	return result
+
+
+func property_definition_ids() -> Array[String]:
+	var result: Array[String] = []
+	for definition in _property_definitions.values():
 		result.append(definition.id.sort_key())
 	result.sort()
 	return result
