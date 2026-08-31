@@ -24,13 +24,28 @@ Use this order when work affects simulation behavior, cognition, architecture, p
 10. `docs/DECISION_TRACES.md` — representative end-to-end architecture regressions;
 11. `docs/IMPLEMENTATION_GATE.md` — implementation-readiness decision and recommended implementation sequence;
 12. `docs/GUARDS_AND_CALIBRATION.md` — invariants, local/cross-system guards, health metrics and bounded self-stabilization;
-13. `docs/AI.md` — runtime LLM authority/fallback contract;
-14. `docs/PRODUCT.md` — overall experience, modes, player role, God Power, UI and rhythm;
-15. `docs/SIMULATION.md` — broader systemic/property/action vocabulary.
+13. `docs/DOMAIN_MODEL.md` — canonical language-neutral functional aggregates, state and concepts;
+14. `docs/DOMAIN_VOCABULARY.md` — normalized internal semantic vocabulary;
+15. `docs/DOMAIN_CATALOGS.md` — canonical relation/predicate/effect/proposition catalogues;
+16. `docs/DOMAIN_OPERATIONS.md` — language-neutral command/query/derivation surface;
+17. `docs/DOMAIN_PROCEDURAL_COMPOSITION.md` — materials, effective physical composition, gradual exploration, environmental responses and assembly semantics;
+18. `docs/DOMAIN_HAZARD_DYNAMICS.md` — committed dynamic processes, hazard projections, perceived threats, causal windows and emergency concurrency;
+19. `docs/DOMAIN_MICRO_LOOP.md` — canonical frame-group micro-loop and Scientific Method fixture;
+20. `docs/DOMAIN_MICRO_LOOP_FALLING_PALM.md` — immediate-threat/hazard micro-loop fixture;
+21. `docs/DOMAIN_OPERATION_REFINEMENTS.md` — refined attemptability, tactical opportunity, evidence and procedural operations;
+22. `docs/DOMAIN_REGRESSION.md` — structural representative-scene regression;
+23. `docs/DOMAIN_OPERATION_TRACES.md` — integration operation traces;
+24. `docs/DOMAIN_VOCABULARY_REGRESSION.md` — normalized-vocabulary regression;
+25. `docs/DOMAIN_SCHEMA.dbml` — relational-style visualization only, not persistence mandate;
+26. `docs/AI.md` — runtime LLM authority/fallback contract;
+27. `docs/PRODUCT.md` — overall experience, modes, player role, God Power, UI and rhythm;
+28. `docs/SIMULATION.md` — broader systemic/property/action vocabulary.
 
 Where an older provisional behavioral statement in `PRODUCT.md` or `SIMULATION.md` conflicts with `BEHAVIORAL_MODEL.md`, `STATE_REQUIREMENTS.md` or `SCENE_VALIDATION.md`, the newer behavioral documents win unless a later documented architectural/implementation decision explicitly supersedes them.
 
-Where implementation-oriented wording conflicts with accepted architectural contracts, use `ARCHITECTURE.md`, `SIMULATION_CONTRACTS.md`, `SIMULATION_ORCHESTRATION.md`, `MUTATION_AUTHORITY.md` and the validated regression traces as the current architecture source of truth unless implementation evidence deliberately supersedes them.
+Where implementation-oriented wording conflicts with accepted architectural contracts, use `ARCHITECTURE.md`, `SIMULATION_CONTRACTS.md`, `SIMULATION_ORCHESTRATION.md`, `MUTATION_AUTHORITY.md`, the functional-domain documents, and validated regression traces as the current architecture source of truth unless implementation evidence deliberately supersedes them.
+
+For functional-domain work, later normalization/refinement documents supersede older ambiguous shorthand without reopening accepted product rules. In particular, use `DOMAIN_PROCEDURAL_COMPOSITION.md`, `DOMAIN_HAZARD_DYNAMICS.md`, `DOMAIN_MICRO_LOOP*.md`, and `DOMAIN_OPERATION_REFINEMENTS.md` when they refine older `DOMAIN_MODEL.md` / `DOMAIN_OPERATIONS.md` wording.
 
 ### Visual / asset chain
 
@@ -38,7 +53,9 @@ Mandatory for visual/3D work:
 
 - `docs/VISUAL_GUIDE.md` — visual direction;
 - `docs/ASSET_SPEC.md` — runtime asset contracts;
-- `docs/ASSET_PIPELINE.md` — Blender/tooling/export workflow.
+- `docs/ASSET_PIPELINE.md` — Blender/tooling/export workflow;
+- `docs/art/README.md` and its referenced art-direction support documents when present;
+- `docs/brainstorming/functional-asset-catalog/README.md` before treating functional asset brainstorming as gameplay/domain schema.
 
 ### Handoffs
 
@@ -49,12 +66,6 @@ docs/handoffs/
 ```
 
 Handoffs are named for the transition/problem they transfer, not for an agent identity or generic `NEXT_AGENT` label.
-
-Example:
-
-```text
-docs/handoffs/behavioral-architecture-contracts.md
-```
 
 When resuming work from a handoff:
 
@@ -108,14 +119,50 @@ IMPLEMENTATION_GATE.md
 GUARDS_AND_CALIBRATION.md
   bounds / feedback-loop control / health metrics / adaptive policy
 
+DOMAIN_MODEL.md
+  functional aggregates / entities / state shape / domain concepts
+
+DOMAIN_VOCABULARY.md
+  normalized internal semantic terminology
+
+DOMAIN_CATALOGS.md
+  admitted relation / predicate / effect / proposition vocabulary
+
+DOMAIN_OPERATIONS.md
+  functional command / query / derivation / lifecycle surface
+
+DOMAIN_PROCEDURAL_COMPOSITION.md
+  material / effective profile / assembly / exploration / environmental procedurality
+
+DOMAIN_HAZARD_DYNAMICS.md
+  committed dynamic processes / hazard projections / perceived threat / causal windows / emergency concurrency
+
+DOMAIN_MICRO_LOOP.md
+  semantic frame groups / tactical-vs-intentional cadence / Scientific Method fixture
+
+DOMAIN_MICRO_LOOP_FALLING_PALM.md
+  immediate-threat frame groups / route/intervention/collision fixture
+
+DOMAIN_OPERATION_REFINEMENTS.md
+  refined attemptability / tactical opportunity / evidence / assembly operation contracts
+
+DOMAIN_REGRESSION.md / DOMAIN_OPERATION_TRACES.md / DOMAIN_VOCABULARY_REGRESSION.md
+  functional-domain regression evidence
+
+DOMAIN_SCHEMA.dbml
+  visualization projection only; not a database/persistence mandate
+
 SIMULATION.md
-  world/property/action/event vocabulary
+  broader world/property/action/event vocabulary
 
 AI.md
   runtime LLM boundary and fallback
 
-VISUAL_GUIDE.md / ASSET_SPEC.md / ASSET_PIPELINE.md
+VISUAL_GUIDE.md / ASSET_SPEC.md / ASSET_PIPELINE.md / art/*
   visual and asset production contracts
+
+brainstorming/functional-asset-catalog/*
+  non-canonical breadth exploration; Round 10/README normalize its interpretation
 
 DISCOVERY_STATUS.md
   phase/status/index and precedence
@@ -136,11 +183,16 @@ When a decision changes, update the document that owns that concern and any stat
 6. Prefer a reusable primitive over multiple bespoke cases when the abstraction is genuine.
 7. Avoid premature frameworks/generalization: implement the smallest reusable concept proven by current use cases.
 8. Add tests for domain rules and regressions.
-9. Preserve debuggability: autonomous decisions must be explainable through candidates, contributions, preconditions, expectations, observed events and authoritative outcomes.
+9. Preserve debuggability: autonomous decisions must be explainable through candidates, contributions, preconditions, expectations, evidence, observed events and authoritative outcomes.
 10. Keep code/comments/docs in English.
 11. Do not persist derived state merely because it is convenient to inspect; persist only state justified by `STATE_REQUIREMENTS.md` or a later documented contract.
 12. Keep critical mutation order explicit. Do not hide authoritative cross-system mutation behind a broad event bus.
 13. Evaluator/adaptive contributions must remain bounded and explainable; do not use arbitrary infinity/huge-score hacks for emergencies or priorities.
+14. Keep physical possibility, Wilson knowledge, and Wilson desirability as distinct projections.
+15. Prefer effective properties/capabilities derived from material + condition + composition + contents over authored combinatorial entity variants.
+16. Do not model object exploration as one universal percentage; persist propositions/evidence-backed beliefs instead.
+17. Keep committed dynamic-process evolution distinct from its still-unresolved future collision/consequence.
+18. Wilson emergency decisions consume perceived threat, never hidden authoritative hazard projections directly.
 
 ## Architecture work
 
@@ -153,19 +205,20 @@ explicit orchestration pipelines
 adapters/presentation
 ```
 
-Do not create one state-owning `System` for every psychology noun.
+Do not create one state-owning `System` for every psychology noun or procedural mechanic.
 
 Current architecture favors semantic contact contracts such as:
 
 ```text
 ObservedEvent
+PerceptualEvidence
 SelectedIntention
 ActionOutcome
 ```
 
-and an explicit learning/mutation flow.
+and explicit perception/learning/mutation flow.
 
-The contract/orchestration phase has passed its implementation gate. Concrete schemas/classes/package layouts may now be designed, but they must preserve the boundaries in `SIMULATION_CONTRACTS.md`, `SIMULATION_ORCHESTRATION.md` and `MUTATION_AUTHORITY.md` unless implementation evidence justifies a documented change.
+The contract/orchestration and functional-domain phases have passed representative structural/operation/micro-loop regression gates. Concrete schemas/classes/package layouts may now be designed, but they must preserve the boundaries in the canonical architecture/domain docs unless implementation evidence justifies a documented change.
 
 Global GOAP, one universal rational utility function, ECS choice, Godot node layout and persistence technology are **not** currently mandated architectural assumptions.
 
@@ -190,9 +243,9 @@ Key rules:
 
 - Treat Godot nodes as presentation/application adapters, not authoritative domain entities.
 - Map stable domain entity IDs to scene instances explicitly.
-- Query affordances from the simulation; do not duplicate legality rules in UI scripts.
+- Query attemptability/affordances from the simulation; do not duplicate legality rules in UI scripts.
 - Prefer semantic animation/action names over asset-specific ones.
-- Do not hardcode per-object interaction offsets when an anchor can express them.
+- Do not hardcode per-object interaction offsets when an anchor/interaction region can express them.
 - Keep web-export constraints in mind; measure before introducing expensive rendering features.
 - Do not make rendered frame rate the authoritative simulation clock.
 
@@ -200,15 +253,16 @@ Key rules:
 
 When adding behavior, ask in this order:
 
-1. Is this an existing action applied to a new compatible property?
-2. Is one new reusable property/action enough?
-3. Can existing belief/history/habit/project/decision composition explain it?
-4. Can an event template express it parametrically?
-5. Does it genuinely require a bespoke event or new primitive?
+1. Is this an existing action applied to a new compatible property/material/profile?
+2. Is one new reusable property/capability/relation/action/evidence rule enough?
+3. Can runtime composition derive the needed effective semantics?
+4. Can existing belief/history/habit/project/decision composition explain it?
+5. Can an event/environment/dynamic-process rule express it parametrically?
+6. Does it genuinely require a bespoke event or new primitive?
 
 A large `if entity_type == ...` chain is usually a design smell.
 
-Before adding a new psychological state/property, identify the validated scene or implementation requirement that becomes impossible without it.
+Before adding a new psychological state/property or procedural primitive, identify the validated scene/fixture or implementation invariant that becomes impossible without it.
 
 ## Runtime AI work
 
@@ -223,7 +277,7 @@ Before adding a new psychological state/property, identify the validated scene o
 
 ## 3D / Blender agent rules
 
-Before creating or changing an asset, read `docs/VISUAL_GUIDE.md`, `docs/ASSET_SPEC.md` and `docs/ASSET_PIPELINE.md`.
+Before creating or changing an asset, read the visual/asset chain above.
 
 ### Preferred method
 
@@ -289,7 +343,7 @@ Do not commit temporary previews, backups or experimentation debris. Commit sour
 - responsibility/authority owner is explicit;
 - persistent versus derived state is explicit;
 - producer/consumer boundaries are documented;
-- representative scenes still fit without bespoke architecture hacks;
+- representative scenes and micro-loop fixtures still fit without bespoke architecture hacks;
 - guards/calibration implications are considered;
 - canonical owning document is updated;
 - `DISCOVERY_STATUS.md` or a handoff is updated when the project phase/next work changes materially.
