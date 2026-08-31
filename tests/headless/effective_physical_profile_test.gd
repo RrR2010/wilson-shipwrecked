@@ -10,6 +10,7 @@ const WorldRelationStore = preload("res://src/domain/world/world_relation_store.
 const DefaultWorldQuery = preload("res://src/domain/world/default_world_query.gd")
 const PropertyDerivationDefinition = preload("res://src/domain/physical/property_derivation_definition.gd")
 const PropertyDependencyGraph = preload("res://src/domain/physical/property_dependency_graph.gd")
+const PhysicalDerivationPolicyRegistry = preload("res://src/domain/physical/physical_derivation_policy_registry.gd")
 const EffectivePhysicalProfileResolver = preload("res://src/domain/physical/effective_physical_profile_resolver.gd")
 
 var _failures: Array[String] = []
@@ -58,6 +59,7 @@ func _run_slice() -> void:
 	var subject = RuntimeWorldRef.entity(tool_id)
 	var query = DefaultWorldQuery.new(entities, WorldRelationStore.new(), content)
 
+	var policies = PhysicalDerivationPolicyRegistry.new()
 	var resistance_rule = PropertyDerivationDefinition.new(
 		&"effective_resistance_v1",
 		[hardness, structural_integrity],
@@ -71,10 +73,10 @@ func _run_slice() -> void:
 		&"min_numeric"
 	)
 	var graph = PropertyDependencyGraph.new()
-	_expect_true(graph.compile([resistance_rule, impact_rule]).ok, "dependency graph compiles")
+	_expect_true(graph.compile([resistance_rule, impact_rule], policies).ok, "dependency graph compiles")
 	_expect_equal(_property_keys(graph.topological_outputs()), [effective_resistance.sort_key(), impact_capacity.sort_key()], "topological order follows dependencies")
 
-	var resolver = EffectivePhysicalProfileResolver.new(query, graph)
+	var resolver = EffectivePhysicalProfileResolver.new(query, graph, policies)
 	var profile = resolver.resolve(subject)
 	_expect_equal(profile.get_property(effective_resistance), 3, "first derived property resolves")
 	_expect_equal(profile.get_property(impact_capacity), 2, "chained derived property resolves")
@@ -96,9 +98,24 @@ func _run_slice() -> void:
 	var cycle_graph = PropertyDependencyGraph.new()
 	var cycle_a = PropertyDerivationDefinition.new(&"cycle_a", [impact_capacity], effective_resistance, &"min_numeric")
 	var cycle_b = PropertyDerivationDefinition.new(&"cycle_b", [effective_resistance], impact_capacity, &"min_numeric")
-	var cycle_result = cycle_graph.compile([cycle_a, cycle_b])
+	var cycle_result = cycle_graph.compile([cycle_a, cycle_b], policies)
 	_expect_false(cycle_result.ok, "cyclic derivations rejected")
 	_expect_equal(String(cycle_result.code), "property_derivation_cycle", "cycle diagnostic code")
+
+	var invalid_policy_graph = PropertyDependencyGraph.new()
+	var invalid_policy_rule = PropertyDerivationDefinition.new(
+		&"invalid_policy_rule",
+		[hardness],
+		effective_resistance,
+		&"unregistered_policy"
+	)
+	var invalid_policy_result = invalid_policy_graph.compile([invalid_policy_rule], policies)
+	_expect_false(invalid_policy_result.ok, "unknown derivation policy rejected at compile")
+	_expect_equal(
+		String(invalid_policy_result.code),
+		"unsupported_property_derivation_policy",
+		"unknown policy diagnostic code"
+	)
 
 	_completed = true
 
