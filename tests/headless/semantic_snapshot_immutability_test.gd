@@ -26,13 +26,14 @@ func _init() -> void:
 
 func _run_slice() -> void:
 	var action_id = DomainId.action(&"inspect")
+	var event_id = DomainId.event_definition(&"inspection_committed")
 	var original_target = RuntimeWorldRef.entity(DomainId.entity(&"crate_1"))
 	var replacement_target = RuntimeWorldRef.entity(DomainId.entity(&"crate_2"))
 	var bindings = RoleBinding.new()
 	bindings.bind(&"target", original_target)
 
-	var outcome = ActionOutcome.new(&"exec_1", action_id, bindings, [], &"inspection_committed")
-	var event = WorldEvent.new(&"inspection_committed", action_id, bindings, &"exec_1")
+	var outcome = ActionOutcome.new(&"exec_1", action_id, bindings, [], event_id)
+	var event = WorldEvent.new(event_id, action_id, bindings, &"exec_1")
 
 	bindings.bind(&"target", replacement_target)
 
