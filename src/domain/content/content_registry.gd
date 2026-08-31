@@ -2,16 +2,19 @@ class_name ContentRegistry
 extends RefCounted
 
 const DomainId = preload("res://src/domain/core/domain_id.gd")
+const PropertyInputSelector = preload("res://src/domain/physical/property_input_selector.gd")
 const EntityDefinition = preload("res://src/domain/content/entity_definition.gd")
 const MutationResult = preload("res://src/domain/core/mutation_result.gd")
 
 ## Validated authored-definition registry.
 ## Definitions may be registered only during bootstrap; seal() makes accidental
-## runtime authoring mutation fail fast.
+## runtime authoring mutation fail fast. Runtime stores never live here.
 
 var _entity_definitions: Dictionary = {}
 var _property_definitions: Dictionary = {}
 var _event_definitions: Dictionary = {}
+var _assembly_definitions: Dictionary = {}
+var _property_derivation_definitions: Dictionary = {}
 var _action_definitions: Dictionary = {}
 var _action_resolution_definitions: Dictionary = {}
 var _sealed := false
@@ -19,7 +22,7 @@ var _sealed := false
 
 func register_property_definition(definition) -> MutationResult:
 	if _sealed:
-		return MutationResult.failure(&"content_registry_sealed", ["Cannot register content after seal()"])
+		return _sealed_failure()
 	assert(definition != null, "register_property_definition requires PropertyDefinition")
 	definition.id.assert_kind(DomainId.Kind.PROPERTY)
 	var definition_key = definition.id.key()
@@ -31,7 +34,7 @@ func register_property_definition(definition) -> MutationResult:
 
 func register_event_definition(definition) -> MutationResult:
 	if _sealed:
-		return MutationResult.failure(&"content_registry_sealed", ["Cannot register content after seal()"])
+		return _sealed_failure()
 	assert(definition != null, "register_event_definition requires EventDefinition")
 	definition.id.assert_kind(DomainId.Kind.EVENT_DEFINITION)
 	var definition_key = definition.id.key()
@@ -43,7 +46,7 @@ func register_event_definition(definition) -> MutationResult:
 
 func register_entity_definition(definition: EntityDefinition) -> MutationResult:
 	if _sealed:
-		return MutationResult.failure(&"content_registry_sealed", ["Cannot register content after seal()"])
+		return _sealed_failure()
 	assert(definition != null, "register_entity_definition requires EntityDefinition")
 	var definition_key := definition.id.key()
 	if _entity_definitions.has(definition_key):
@@ -52,9 +55,32 @@ func register_entity_definition(definition: EntityDefinition) -> MutationResult:
 	return MutationResult.success(&"entity_definition_registered", definition)
 
 
+func register_assembly_definition(definition) -> MutationResult:
+	if _sealed:
+		return _sealed_failure()
+	assert(definition != null, "register_assembly_definition requires AssemblyDefinition")
+	definition.id.assert_kind(DomainId.Kind.ASSEMBLY_DEFINITION)
+	var definition_key = definition.id.key()
+	if _assembly_definitions.has(definition_key):
+		return MutationResult.failure(&"duplicate_assembly_definition", ["Duplicate assembly definition: %s" % definition.id.sort_key()])
+	_assembly_definitions[definition_key] = definition
+	return MutationResult.success(&"assembly_definition_registered", definition)
+
+
+func register_property_derivation_definition(definition) -> MutationResult:
+	if _sealed:
+		return _sealed_failure()
+	assert(definition != null, "register_property_derivation_definition requires PropertyDerivationDefinition")
+	assert(definition.id != &"", "PropertyDerivationDefinition requires stable id")
+	if _property_derivation_definitions.has(definition.id):
+		return MutationResult.failure(&"duplicate_property_derivation_definition", ["Duplicate property derivation definition: %s" % String(definition.id)])
+	_property_derivation_definitions[definition.id] = definition
+	return MutationResult.success(&"property_derivation_definition_registered", definition)
+
+
 func register_action_definition(definition) -> MutationResult:
 	if _sealed:
-		return MutationResult.failure(&"content_registry_sealed", ["Cannot register content after seal()"])
+		return _sealed_failure()
 	assert(definition != null, "register_action_definition requires ActionDefinition")
 	definition.id.assert_kind(DomainId.Kind.ACTION)
 	var definition_key = definition.id.key()
@@ -66,7 +92,7 @@ func register_action_definition(definition) -> MutationResult:
 
 func register_action_resolution_definition(definition) -> MutationResult:
 	if _sealed:
-		return MutationResult.failure(&"content_registry_sealed", ["Cannot register content after seal()"])
+		return _sealed_failure()
 	assert(definition != null, "register_action_resolution_definition requires ActionResolutionDefinition")
 	definition.action_id.assert_kind(DomainId.Kind.ACTION)
 	assert(definition.definition_id != &"", "ActionResolutionDefinition requires stable definition_id")
@@ -78,14 +104,9 @@ func register_action_resolution_definition(definition) -> MutationResult:
 
 func seal() -> MutationResult:
 	if not _property_definitions.is_empty():
-		for entity_definition in _entity_definitions.values():
-			for property_key in entity_definition.base_property_keys():
-				if not _property_definitions.has(property_key):
-					return MutationResult.failure(&"missing_property_definition", ["Missing property definition for %s" % String(property_key)])
-				var property_definition = _property_definitions[property_key]
-				var value = entity_definition.get_base_property(property_definition.id)
-				if not property_definition.validate_value(value):
-					return MutationResult.failure(&"invalid_authored_property_value", ["Invalid value for %s on %s" % [property_definition.id.sort_key(), entity_definition.id.sort_key()]])
+		var property_validation = _validate_property_references()
+		if not property_validation.ok:
+			return property_validation
 	for resolution in _action_resolution_definitions.values():
 		if not _action_definitions.has(resolution.action_id.key()):
 			return MutationResult.failure(&"missing_action_definition", ["Missing action definition for %s" % resolution.action_id.sort_key()])
@@ -93,6 +114,24 @@ func seal() -> MutationResult:
 			return MutationResult.failure(&"missing_event_definition", ["Missing event definition for %s" % resolution.event_type.sort_key()])
 	_sealed = true
 	return MutationResult.success(&"content_registry_sealed")
+
+
+func _validate_property_references() -> MutationResult:
+	for entity_definition in _entity_definitions.values():
+		for property_key in entity_definition.base_property_keys():
+			if not _property_definitions.has(property_key):
+				return MutationResult.failure(&"missing_property_definition", ["Missing property definition for %s" % String(property_key)])
+			var property_definition = _property_definitions[property_key]
+			var value = entity_definition.get_base_property(property_definition.id)
+			if not property_definition.validate_value(value):
+				return MutationResult.failure(&"invalid_authored_property_value", ["Invalid value for %s on %s" % [property_definition.id.sort_key(), entity_definition.id.sort_key()]])
+	for derivation in _property_derivation_definitions.values():
+		if not _property_definitions.has(derivation.output_property.key()):
+			return MutationResult.failure(&"missing_property_definition", ["Missing output property definition for derivation %s" % String(derivation.id)])
+		for selector in derivation.input_selectors:
+			if not _property_definitions.has(selector.property_id.key()):
+				return MutationResult.failure(&"missing_property_definition", ["Missing input property definition for derivation %s" % String(derivation.id)])
+	return MutationResult.success(&"property_references_valid")
 
 
 func is_sealed() -> bool:
@@ -126,6 +165,23 @@ func has_entity_definition(type_id: DomainId) -> bool:
 	return _entity_definitions.has(type_id.key())
 
 
+func get_assembly_definition(definition_id):
+	assert(definition_id != null, "get_assembly_definition requires AssemblyDefinitionId")
+	definition_id.assert_kind(DomainId.Kind.ASSEMBLY_DEFINITION)
+	return _assembly_definitions.get(definition_id.key())
+
+
+func get_property_derivation_definition(definition_id: StringName):
+	assert(definition_id != &"", "get_property_derivation_definition requires definition id")
+	return _property_derivation_definitions.get(definition_id)
+
+
+func property_derivation_definitions() -> Array:
+	var result: Array = _property_derivation_definitions.values()
+	result.sort_custom(func(a, b): return a.sort_key() < b.sort_key())
+	return result
+
+
 func get_action_definition(action_id):
 	assert(action_id != null, "get_action_definition requires ActionId")
 	action_id.assert_kind(DomainId.Kind.ACTION)
@@ -138,35 +194,31 @@ func get_action_resolution_definition(definition_id: StringName):
 
 
 func entity_definition_ids() -> Array[String]:
-	var result: Array[String] = []
-	for definition in _entity_definitions.values():
-		result.append(definition.id.sort_key())
-	result.sort()
-	return result
+	return _nominal_definition_ids(_entity_definitions)
 
 
 func property_definition_ids() -> Array[String]:
-	var result: Array[String] = []
-	for definition in _property_definitions.values():
-		result.append(definition.id.sort_key())
-	result.sort()
-	return result
+	return _nominal_definition_ids(_property_definitions)
 
 
 func event_definition_ids() -> Array[String]:
+	return _nominal_definition_ids(_event_definitions)
+
+
+func assembly_definition_ids() -> Array[String]:
+	return _nominal_definition_ids(_assembly_definitions)
+
+
+func property_derivation_definition_ids() -> Array[String]:
 	var result: Array[String] = []
-	for definition in _event_definitions.values():
-		result.append(definition.id.sort_key())
+	for definition_id in _property_derivation_definitions.keys():
+		result.append(String(definition_id))
 	result.sort()
 	return result
 
 
 func action_definition_ids() -> Array[String]:
-	var result: Array[String] = []
-	for definition in _action_definitions.values():
-		result.append(definition.id.sort_key())
-	result.sort()
-	return result
+	return _nominal_definition_ids(_action_definitions)
 
 
 func action_resolution_definition_ids() -> Array[String]:
@@ -175,3 +227,15 @@ func action_resolution_definition_ids() -> Array[String]:
 		result.append(String(definition_id))
 	result.sort()
 	return result
+
+
+func _nominal_definition_ids(source: Dictionary) -> Array[String]:
+	var result: Array[String] = []
+	for definition in source.values():
+		result.append(definition.id.sort_key())
+	result.sort()
+	return result
+
+
+func _sealed_failure() -> MutationResult:
+	return MutationResult.failure(&"content_registry_sealed", ["Cannot register content after seal()"])
