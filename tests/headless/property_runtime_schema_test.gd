@@ -42,6 +42,7 @@ func _run_slice() -> void:
 	var material_state = DomainId.property(&"material_state")
 	var crate_type = DomainId.entity_type(&"crate")
 	var camp = DomainId.place(&"camp")
+	var damage_committed = DomainId.event_definition(&"damage_committed")
 
 	var content = ContentRegistry.new()
 	_expect_true(content.register_property_definition(PropertyDefinition.new(integrity, PropertyDefinition.ValueFamily.NUMBER, 0, 5)).ok, "numeric property schema registers")
@@ -74,7 +75,7 @@ func _run_slice() -> void:
 		DomainId.action(&"damage"),
 		bindings,
 		[ActionEffect.new(ActionEffect.Kind.SET_PROPERTY, &"target", integrity, 9)],
-		&"damage_committed"
+		damage_committed
 	)
 	var invalid_commit = commands.apply_outcome(invalid_outcome)
 	_expect_false(invalid_commit.ok, "out-of-bounds runtime property is rejected")
@@ -87,7 +88,7 @@ func _run_slice() -> void:
 		DomainId.action(&"damage"),
 		bindings,
 		[ActionEffect.new(ActionEffect.Kind.SET_PROPERTY, &"target", integrity, 2)],
-		&"damage_committed"
+		damage_committed
 	)
 	var valid_commit = commands.apply_outcome(valid_outcome)
 	_expect_true(valid_commit.ok, "valid runtime property is accepted")
