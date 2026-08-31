@@ -38,7 +38,7 @@ Representative-scene regression           PASS
 Operation regression                      PASS
 Functional asset breadth                  PASS
 Asset catalog functional normalization    PASS
-Asset catalog scene-coverage regression   PASS WITH LOCAL FOLLOW-UPS
+Asset catalog scene-coverage regression   PASS WITH LOCAL CONTENT FOLLOW-UPS
 Gradual exploration / evidence             PASS
 Composite-object semantics                PASS
 Environmental protection / exposure       PASS
@@ -53,18 +53,19 @@ Cloth/shelter/weather fixture             PASS
 
 **Asset-catalog functional normalization gate: PASS for the current P0/P1 catalog breadth.**
 
-**Representative-scene content regression: PASS for the accepted phenomenon suite, with localized follow-ups documented in `asset-catalog/SCENE_COVERAGE.md`.**
+**Representative-scene content regression: PASS for the accepted phenomenon suite, with localized content follow-ups documented in `asset-catalog/SCENE_COVERAGE.md`.**
 
 The validated model did not require separate state-owning systems for crafting, tool quality, shelter, exploration, tactical planning, hazard projection, suspicion/investigation, wet-material state, fallen-opportunity objects or storm-debris clusters. Those concerns remain compositions, projections, processes, ordinary world outcomes or production adapters inside existing authority boundaries.
 
 The 40-scene catalog regression additionally found:
 
-- three useful content extensions: decorative shell/curio content, a generic decorative/sculptural arrangement pattern, and a distant human-contact Director presentation family;
+- four useful content extensions: wearable/hat-like salvage, decorative shell/curio content, a generic decorative/sculptural arrangement pattern, and a distant human-contact Director presentation family;
 - one deferred additional-location content extension for the neighboring-islet scene;
-- two historical scenes whose literal versions remain intentionally reshaped by later canonical decisions (`The Unwanted Rescue`, `Not Now, Humanity`);
-- one narrow semantic review for hands-free worn objects (`Fine!`), to be resolved through existing possession/relation/action vocabulary if possible rather than by introducing an equipment system.
+- two historical scenes whose literal versions remain intentionally reshaped by later canonical decisions (`The Unwanted Rescue`, `Not Now, Humanity`).
 
-None of these findings reopen the broad domain/system ownership gate.
+The worn-object case reuses the existing possession relation plus a bounded qualifier/body-slot presentation adapter; it does not justify `worn_by`, an equipment system or another state owner.
+
+None of these findings reopen the domain/system ownership gate.
 
 ---
 
@@ -129,7 +130,7 @@ The initial catalog normalization pass is complete. The catalog now provides:
 - preserved art references and model-production status as independent concerns;
 - `asset-catalog/SCENE_COVERAGE.md` as the regression view from the 40 historical representative scenes back into domain/content requirements.
 
-No new **broad** domain primitive was required by this pass.
+No new broad domain primitive was required by this pass.
 
 Catalog additions remain open-ended content work. A newly proposed family should use the admission rules in `asset-catalog/README.md`; if it exposes a genuine reusable domain gap, update the canonical owning domain document explicitly rather than introducing the primitive only in a row.
 
@@ -146,11 +147,10 @@ These may be resolved during module/type design, content authoring or implementa
 5. final bounded property catalogue and registered derivation policies;
 6. exact `SemanticConceptId` boundaries;
 7. concrete content serialization format;
-8. presentation adapters for `InteractionRegion`, anchors and assembly sockets;
+8. presentation adapters for `InteractionRegion`, anchors, body-slot possession qualifiers and assembly sockets;
 9. deterministic tie-break encoding for simultaneous semantic boundaries;
 10. minimal reconstruction policy for save occurring mid-investigation;
-11. concrete coarse representation used for protection coverage/gaps;
-12. canonical representation for an object worn hands-free on Wilson (reuse/generalize possession relation versus admit a narrow `worn_by` relation), without introducing an equipment subsystem.
+11. concrete coarse representation used for protection coverage/gaps.
 
 These are implementation/content-definition questions, not evidence that the current domain needs another broad state owner.
 
@@ -194,6 +194,6 @@ Two streams can proceed without changing each other's authority boundaries:
 4. validate real generated assets against interaction-region/adapter and gameplay-camera requirements;
 5. update production `Status` without changing functional `Spec` unless new evidence changes the brief;
 6. add new families through the normalized catalog admission rules rather than copying brainstorming candidates mechanically;
-7. close the localized scene-coverage follow-ups in `asset-catalog/SCENE_COVERAGE.md` before claiming exhaustive 40-scene content coverage.
+7. close the localized scene-coverage content follow-ups in `asset-catalog/SCENE_COVERAGE.md` before claiming exhaustive 40-scene content coverage.
 
 Historical execution handoff: [`handoffs/asset-catalog-functional-domain-normalization.md`](handoffs/asset-catalog-functional-domain-normalization.md).
