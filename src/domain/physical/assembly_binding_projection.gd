@@ -29,12 +29,8 @@ func bindings_for_host(host) -> Array:
 
 
 func _slot_id_from_qualifier(qualifier):
-	if not (qualifier is Dictionary):
+	if not (qualifier is Object) or not qualifier.has_method("assert_kind"):
 		return null
-	var slot_id = qualifier.get("assembly_slot")
-	if slot_id == null:
+	if not ("kind" in qualifier) or qualifier.kind != DomainId.Kind.ASSEMBLY_SLOT:
 		return null
-	if not (slot_id is Object) or not slot_id.has_method("assert_kind"):
-		return null
-	slot_id.assert_kind(DomainId.Kind.ASSEMBLY_SLOT)
-	return slot_id
+	return qualifier
