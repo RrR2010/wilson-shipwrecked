@@ -78,7 +78,8 @@ func _run_slice() -> void:
 	bindings.bind(&"target", crate)
 
 	var effect = ActionEffect.new(ActionEffect.Kind.SET_PROPERTY, &"target", integrity, 3)
-	var resolution = ActionResolutionDefinition.new(hit.id, 1.0, 0.5, [effect], &"impact_landed")
+	var impact_landed = DomainId.event_definition(&"impact_landed")
+	var resolution = ActionResolutionDefinition.new(hit.id, 1.0, 0.5, [effect], impact_landed)
 	var attemptability = ActionAttemptabilityService.new(evaluator)
 	var execution = ActionExecutionService.new(attemptability)
 	var world_commands = DefaultWorldCommandPort.new(entities, relations)
@@ -112,7 +113,7 @@ func _run_slice() -> void:
 	_expect_equal(commit.events.size(), 1, "event published after successful commit")
 	if commit.events.size() == 1:
 		_expect_equal(commit.events[0].event_type.kind, DomainId.Kind.EVENT_DEFINITION, "committed event uses EventDefinitionId")
-		_expect_equal(String(commit.events[0].event_type.value), "impact_landed", "committed event type")
+		_expect_equal(commit.events[0].event_type.key(), impact_landed.key(), "committed event type")
 	_expect_equal(world_query.get_instance_property(crate, integrity), 3, "World mutation visible after commit")
 
 	var completed = execution.advance(&"hit_committed", 0.49)
