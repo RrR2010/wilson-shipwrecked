@@ -1,7 +1,7 @@
 class_name ActionExecutionState
 extends RefCounted
 
-## Durable-in-owner execution state for one running action.
+## Durable-in-owner execution state for one action lifecycle.
 
 var execution_id: StringName
 var action_definition
@@ -10,6 +10,7 @@ var bindings
 var elapsed: float = 0.0
 var committed: bool = false
 var completed: bool = false
+var interrupted: bool = false
 var outcome_emitted: bool = false
 
 
@@ -23,3 +24,11 @@ func _init(p_execution_id: StringName, p_action_definition, p_resolution_definit
 	action_definition = p_action_definition
 	resolution_definition = p_resolution_definition
 	bindings = p_bindings
+
+
+func is_terminal() -> bool:
+	return completed or interrupted
+
+
+func is_active() -> bool:
+	return not is_terminal()
