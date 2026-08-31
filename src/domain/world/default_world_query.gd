@@ -8,22 +8,25 @@ const WorldRelationStore = preload("res://src/domain/world/world_relation_store.
 
 ## Default read-only composition over authoritative World stores + sealed content.
 ##
-## This concrete implementation intentionally does not inherit from WorldQuery.
-## GDScript ports are structural/duck-typed at runtime so a clean headless checkout
-## does not depend on external script inheritance or the editor class cache.
+## Spatial reads are deliberately coarse and engine-agnostic: PlaceId is the
+## authoritative location available in the current domain. A future navigation /
+## physics adapter may add distance and occlusion without changing these ownership
+## boundaries.
 
 var _entities
 var _relations
 var _content
+var _wilson_world_state
 
 
-func _init(entities, relations, content) -> void:
+func _init(entities, relations, content, wilson_world_state = null) -> void:
 	assert(entities != null, "DefaultWorldQuery requires EntityStore")
 	assert(relations != null, "DefaultWorldQuery requires WorldRelationStore")
 	assert(content != null, "DefaultWorldQuery requires ContentRegistry")
 	_entities = entities
 	_relations = relations
 	_content = content
+	_wilson_world_state = wilson_world_state
 
 
 func get_instance_property(subject, property_id) -> Variant:
@@ -87,6 +90,26 @@ func is_live_subject(subject) -> bool:
 	return entity != null and entity.lifecycle == EntityInstance.Lifecycle.ACTIVE
 
 
+func get_runtime_place(subject):
+	assert(subject != null, "get_runtime_place requires RuntimeWorldRef")
+	match subject.kind:
+		RuntimeWorldRef.Kind.WILSON:
+			return null if _wilson_world_state == null else _wilson_world_state.place_id
+		RuntimeWorldRef.Kind.ENTITY:
+			var entity = _entities.get_entity(subject.id)
+			return null if entity == null else entity.place_id
+		RuntimeWorldRef.Kind.PLACE:
+			return subject.id
+		_:
+			return null
+
+
+func are_co_located(a, b) -> bool:
+	var place_a = get_runtime_place(a)
+	var place_b = get_runtime_place(b)
+	return place_a != null and place_b != null and place_a.equals(place_b)
+
+
 func find_relations(relation_type = null, subject = null, object = null) -> Array:
 	return _relations.find_relations(relation_type, subject, object)
 
@@ -115,6 +138,37 @@ func traverse_relations(
 	)
 
 
-func query_nearby(_subject_or_place, _constraints: Dictionary) -> Array:
-	assert(false, "DefaultWorldQuery.query_nearby requires the future spatial query port")
-	return []
+func query_nearby(subject_or_place, constraints: Dictionary = {}) -> Array:
+	assert(subject_or_place != null, "query_nearby requires RuntimeWorldRef")
+	var place_id = get_runtime_place(subject_or_place)
+	if place_id == null:
+		return []
+	var result: Array = []
+	var limit := int(constraints.get("limit", 64))
+	assert(limit > 0, "query_nearby limit must be > 0")
+	var include_subject := bool(constraints.get("include_subject", false))
+	var include_inactive := bool(constraints.get("include_inactive", false))
+	var category_id = constraints.get("category_id")
+	var capability_id = constraints.get("capability_id")
+	if category_id != null:
+		category_id.assert_kind(DomainId.Kind.CATEGORY)
+	if capability_id != null:
+		capability_id.assert_kind(DomainId.Kind.CAPABILITY)
+
+	for entity in _entities.entities():
+		if not include_inactive and entity.lifecycle != EntityInstance.Lifecycle.ACTIVE:
+			continue
+		if not entity.place_id.equals(place_id):
+			continue
+		var candidate = RuntimeWorldRef.entity(entity.id)
+		if not include_subject and candidate.equals(subject_or_place):
+			continue
+		if category_id != null and not has_category(candidate, category_id):
+			continue
+		if capability_id != null and not has_authored_capability(candidate, capability_id):
+			continue
+		result.append(candidate)
+		if result.size() >= limit:
+			break
+	result.sort_custom(func(a, b): return a.sort_key() < b.sort_key())
+	return result
