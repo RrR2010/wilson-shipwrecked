@@ -4,7 +4,7 @@ extends RefCounted
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const DomainValueCodec = preload("res://src/infrastructure/persistence/domain_value_codec.gd")
 
-const SCHEMA_VERSION := 1
+const SCHEMA_VERSION := 2
 
 var _codec
 
@@ -25,6 +25,7 @@ func capture(action_execution) -> Dictionary:
 			"elapsed": state.elapsed,
 			"committed": state.committed,
 			"completed": state.completed,
+			"interrupted": state.interrupted,
 			"outcome_emitted": state.outcome_emitted,
 		})
 	return {
@@ -54,7 +55,8 @@ func restore(snapshot: Dictionary, action_execution, content_registry) -> Array:
 			float(record["elapsed"]),
 			bool(record["committed"]),
 			bool(record["completed"]),
-			bool(record["outcome_emitted"])
+			bool(record["outcome_emitted"]),
+			bool(record.get("interrupted", false))
 		))
 	return results
 
