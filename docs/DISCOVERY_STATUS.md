@@ -4,10 +4,13 @@
 
 Product/behavior discovery, architecture contracts, the language-neutral functional-domain stabilization, and the first functional-domain normalization of the cross-cutting asset catalog are complete enough to proceed.
 
+A **typed semantic graph/index refactor has now started** to make existing relation, dependency and Wilson-knowledge semantics scale without introducing a generic graph owner or changing persistence authority.
+
 The current engineering/design phase is:
 
 ```text
-package/module dependency layout
+typed semantic graph/index contracts
+→ package/module dependency layout
 → concrete domain types
 → declarative content fixtures
 → first vertical slice
@@ -15,7 +18,7 @@ package/module dependency layout
 → presentation adapters
 ```
 
-In parallel, model/content production can now consume the normalized [`asset-catalog/`](asset-catalog/) directly. New content should extend that schema rather than returning to the historical brainstorming rounds as a production backlog.
+In parallel, model/content production can consume the normalized [`asset-catalog/`](asset-catalog/) directly. New content should extend that schema rather than returning to the historical brainstorming rounds as a production backlog.
 
 For documentation navigation and authority, use [`README.md`](README.md). This file intentionally contains status only.
 
@@ -56,6 +59,8 @@ Cloth/shelter/weather fixture             PASS
 **Representative-scene content regression: PASS for the accepted phenomenon suite. All reusable content requirements exposed by the 40-scene pass now have explicit catalog owners.**
 
 The validated model did not require separate state-owning systems for crafting, tool quality, shelter, exploration, tactical planning, hazard projection, suspicion/investigation, wet-material state, fallen-opportunity objects or storm-debris clusters. Those concerns remain compositions, projections, processes, ordinary world outcomes or production adapters inside existing authority boundaries.
+
+The semantic graph refactor preserves that conclusion. `WorldRelationGraph`, `PropertyDependencyGraph`, `CompositionDependencyProjection`, `EpistemicGraphProjection` and bounded `SemanticPattern` matching are representation/query infrastructure, **not new authority owners**.
 
 The 40-scene catalog regression added or confirmed:
 
@@ -99,9 +104,25 @@ HazardProjection / PerceivedThreat
 Bounded investigation / causal attribution
 Learning proposals / reaction
 Luck
+
+WorldRelationGraph indexes
+PropertyDependencyGraph
+CompositionDependencyProjection
+EpistemicGraphProjection
+bounded SemanticPattern matcher
 ```
 
 Rendering remains non-authoritative. Wilson knowledge remains distinct from world truth, and player-private intent remains distinct from Wilson causal attribution.
+
+Canonical graph/index contract: [`DOMAIN_SEMANTIC_GRAPHS.md`](DOMAIN_SEMANTIC_GRAPHS.md).
+
+Core graph rule:
+
+```text
+graph representation / index / projection
+!=
+authority owner
+```
 
 ---
 
@@ -136,7 +157,50 @@ The initial catalog normalization pass is complete. The catalog now provides:
 
 No new broad domain primitive was required by this pass.
 
+The normalized catalog is also the first practical consumer of semantic graph/index infrastructure: the density of capabilities, relations, component roles, interaction regions and evidence requirements justifies indexed local matching instead of future global Cartesian affordance scans.
+
 Catalog additions remain open-ended content work. A newly proposed family should use the admission rules in `asset-catalog/README.md`; if it exposes a genuine reusable domain gap, update the canonical owning domain document explicitly rather than introducing the primitive only in a row.
+
+---
+
+# Semantic graph refactor status
+
+Phase 1 is now defined in `DOMAIN_SEMANTIC_GRAPHS.md`.
+
+Accepted language-neutral contracts:
+
+```text
+WorldRelationStore
+→ typed WorldRelationGraph/index view
+
+PropertyDerivationDefinition[]
+→ validated PropertyDependencyGraph DAG
+
+world composition/bindings
+→ CompositionDependencyProjection
+
+BeliefStore
+→ EpistemicGraphProjection/index view
+
+RequirementPredicate / admitted semantic constraints
+→ bounded SemanticPattern matching where useful
+```
+
+Important invariants:
+
+```text
+WorldRelationGraph != EpistemicGraphProjection
+scalar properties are not forced into graph triples
+belief graph is not world truth
+composition graph is reconstructible derived infrastructure
+property dependency graph is acyclic
+pattern traversal is bounded
+graph iteration order is never an implicit gameplay tie-break
+```
+
+No persisted-state migration is required for this phase. Concrete implementation may add reconstructible indexes/caches later.
+
+The next graph-specific work should occur together with package/module design rather than as another abstract discovery pass.
 
 ---
 
@@ -154,7 +218,10 @@ These may be resolved during module/type design, content authoring or implementa
 8. presentation adapters for `InteractionRegion`, anchors, body-slot possession qualifiers and assembly sockets;
 9. deterministic tie-break encoding for simultaneous semantic boundaries;
 10. minimal reconstruction policy for save occurring mid-investigation;
-11. concrete coarse representation used for protection coverage/gaps.
+11. concrete coarse representation used for protection coverage/gaps;
+12. exact internal index representation for typed world relations and semantic patterns;
+13. cache invalidation strategy for derived property/composition projections;
+14. whether category/property indexes remain simple registries/maps or share one internal matcher implementation.
 
 These are implementation/content-definition questions, not evidence that the current domain needs another broad state owner.
 
@@ -173,7 +240,7 @@ Key policy:
 - brainstorming and handoffs are historical/operational evidence;
 - new edge cases should normally update an existing owner rather than create another permanent top-level specification.
 
-One known consolidation target remains: the canonical refinements in `DOMAIN_OPERATION_REFINEMENTS.md` should eventually be absorbed into `DOMAIN_OPERATIONS.md` when that operation surface is next structurally edited. Until then, the refinement document owns the newer signatures it explicitly supersedes.
+One known consolidation target remains: the canonical refinements in `DOMAIN_OPERATION_REFINEMENTS.md` should eventually be absorbed into `DOMAIN_OPERATIONS.md` when that operation surface is next structurally edited. That consolidation should now also absorb the graph/index query operations from `DOMAIN_SEMANTIC_GRAPHS.md` where they belong in the public operation surface.
 
 ---
 
@@ -183,12 +250,16 @@ Two streams can proceed without changing each other's authority boundaries:
 
 ## Runtime/module stream
 
-1. define language-neutral package/module responsibilities and dependency direction;
-2. map state owners versus derived services;
-3. separate content registries/definitions from runtime instances;
-4. define orchestration/application dependencies without making the application layer a state owner;
-5. define presentation/Godot adapters outside authoritative domain modules;
-6. then introduce concrete GDScript/runtime representations.
+1. map `WorldRelationStore` plus typed relation indexes into the World module boundary;
+2. place compiled `PropertyDependencyGraph` with content/property derivation infrastructure rather than World mutable state;
+3. place `CompositionDependencyProjection` with derived physical-profile/composition services;
+4. keep Wilson durable `BeliefStore` in Cognition while placing epistemic indexes/query projection behind cognition-owned access;
+5. define one bounded internal semantic matcher only if it preserves authority-specific public APIs;
+6. then define the broader language-neutral package/module dependency direction;
+7. consolidate `DOMAIN_OPERATION_REFINEMENTS.md` into `DOMAIN_OPERATIONS.md` including graph-aware query surfaces;
+8. define concrete domain types and reconstructible indexes/caches;
+9. implement deterministic regression fixtures for graph rebuild/order/invalidation;
+10. then introduce concrete GDScript/runtime representations.
 
 ## Content/model-production stream
 
