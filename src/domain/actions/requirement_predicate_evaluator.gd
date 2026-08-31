@@ -78,7 +78,7 @@ func _evaluate_node(predicate, bindings):
 			if property_subject == null:
 				return PredicateEvaluationResult.failure(["missing role %s" % String(predicate.role_name)])
 			var profile = _physical_profiles.resolve(property_subject)
-			var actual = profile.get_property(predicate.semantic_id)
+			var actual = profile.get_property(predicate.semantic_id) if profile.has_property(predicate.semantic_id) else _world_query.get_instance_property(property_subject, predicate.semantic_id)
 			if actual == null:
 				return PredicateEvaluationResult.failure([
 					"%s property %s absent" % [String(predicate.role_name), String(predicate.semantic_id.value)]
