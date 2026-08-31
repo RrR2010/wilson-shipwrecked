@@ -3,8 +3,11 @@ extends RefCounted
 
 const DomainId = preload("res://src/domain/core/domain_id.gd")
 const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
+const SemanticValueKey = preload("res://src/domain/core/semantic_value_key.gd")
 
 ## Authoritative typed edge between runtime world subjects.
+## Qualifier is an optional bounded semantic value and participates in exact
+## relation identity. Broad relation queries may still intentionally ignore it.
 
 var relation_type: DomainId
 var subject: RuntimeWorldRef
@@ -21,6 +24,7 @@ func _init(
 	assert(p_relation_type != null, "WorldRelation requires RelationTypeId")
 	p_relation_type.assert_kind(DomainId.Kind.RELATION_TYPE)
 	assert(p_subject != null and p_object != null, "WorldRelation endpoints cannot be null")
+	assert(SemanticValueKey.supports(p_qualifier), "WorldRelation qualifier must be a bounded semantic value")
 	relation_type = p_relation_type
 	subject = p_subject
 	object = p_object
@@ -28,10 +32,11 @@ func _init(
 
 
 func key() -> StringName:
-	return StringName("%s|%s|%s" % [
+	return StringName("%s|%s|%s|qualifier:%s" % [
 		String(relation_type.key()),
 		String(subject.key()),
 		String(object.key()),
+		SemanticValueKey.canonical(qualifier),
 	])
 
 
@@ -54,4 +59,4 @@ func matches(
 
 
 func _to_string() -> String:
-	return "%s(%s -> %s)" % [String(relation_type.value), subject, object]
+	return "%s(%s -> %s, qualifier=%s)" % [String(relation_type.value), subject, object, qualifier]
