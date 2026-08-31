@@ -1,98 +1,126 @@
 # Functional Domain Operations
 
-## Purpose
+## Status and purpose
 
-This document defines the language-neutral **behavioral surface of the functional domain model** in `DOMAIN_MODEL.md`.
+This document is the canonical language-neutral **operation surface** for the Wilson Shipwrecked functional domain.
 
-`DOMAIN_MODEL.md` owns state shape and conceptual entities/value objects. This document owns:
+It owns:
 
-- commands that may cause authoritative mutation;
 - pure queries;
-- domain services that derive semantic results;
-- aggregate invariants;
-- state-transition rules;
-- orchestration-facing boundaries.
+- deterministic derivation/decision services;
+- owner-local commands;
+- named lifecycle transactions;
+- action execution semantics;
+- graph/index-aware bounded query contracts;
+- orchestration-facing operation ordering.
 
-It does not define method syntax, classes per file, Godot signals, event-bus technology, dependency injection or persistence APIs.
+`DOMAIN_MODEL.md` owns state/concepts. `ARCHITECTURE.md` owns responsibility/module boundaries. `DOMAIN_PROCEDURAL_COMPOSITION.md` owns material/assembly/effective-physical semantics. Specialized appendices own narrow semantic details where applicable.
+
+This document supersedes the former `DOMAIN_OPERATION_REFINEMENTS.md`; all accepted refinements are consolidated here.
+
+It does not mandate method syntax, class layout, Godot signals, persistence APIs or a database/query language.
 
 ---
 
 # 1. Operation categories
 
-Every domain operation belongs to one of four categories.
+Every operation belongs to one of four categories.
 
 ## 1.1 Query
 
-Reads domain state and returns a deterministic derived answer.
-
 ```text
 state + query parameters
-→ result
+→ deterministic result
 ```
 
-Queries do not mutate state, consume RNG or emit authoritative events.
+No mutation, gameplay RNG or authoritative event emission.
 
-## 1.2 Decision/derivation service
-
-Reads state and may consume deterministic gameplay RNG to derive a proposal/selection.
+## 1.2 Derivation / decision service
 
 ```text
-state + context + RandomSource
+state/projections + context + optional named RandomSource
 → derived proposal/result
 ```
 
-It does not directly mutate durable owners.
+May consume deterministic gameplay RNG where the semantic operation explicitly permits stochastic choice. Does not directly mutate durable owners.
 
 ## 1.3 Command
 
-Requests a mutation from the owning aggregate/system.
-
 ```text
 command
-→ owner validates invariants
+→ owning aggregate validates invariants
 → owner-local mutation
-→ semantic result/events
+→ result / semantic events
 ```
 
 A command may fail without mutation.
 
 ## 1.4 Lifecycle transaction
 
-Coordinates multiple owners at an explicit domain boundary such as intervention, death/resurrection or End Run.
-
-These transactions have named ordering/atomicity semantics and must not be hidden behind generic callbacks.
+Coordinates multiple owners at a named boundary such as intervention, resurrection or End Run. Ordering/atomicity must be explicit and must not be hidden behind a broad event bus.
 
 ---
 
-# 2. World queries
+# 2. Shared query rules
 
-## 2.1 Effective property query
+## 2.1 Explicit authority context
 
-```text
-GetEffectiveProperty(entity_id, property_id)
-→ PropertyValue? 
-```
-
-Resolution order:
+Every predicate/query that could cross epistemic boundaries declares its context.
 
 ```text
-instance override
-→ type definition
-→ absent
+PhysicalRuleContext
+CognitionContext
+ContentEligibilityContext
+InterventionContext
+PerceptionContext
 ```
 
-No Wilson knowledge is consulted.
+Physical truth must never consult Wilson belief merely to decide legality/effectiveness. Cognition must not consume hidden authoritative facts as though Wilson perceived them.
 
-## 2.2 Capability/category queries
+## 2.2 Bounded graph/pattern traversal
+
+Graph-aware queries must always be bounded by one or more of:
 
 ```text
-HasCapability(subject, capability_id) → bool
-HasCategory(subject, category_id) → bool
+local scope / place / region
+relation type set
+max depth
+result limit
+specific typed SemanticPattern
+explicit candidate set
 ```
 
-These answer authoritative semantic facts.
+No operation may perform an unbounded arbitrary world/knowledge graph walk as ordinary gameplay logic.
 
-## 2.3 Relation queries
+## 2.3 Stable ordering
+
+When a query returns an unordered semantic set that later feeds gameplay selection, normalize to stable semantic ordering before applying seeded randomness or deterministic tie-breaks.
+
+Hash-map/index iteration order is never gameplay authority.
+
+---
+
+# 3. World queries
+
+## 3.1 Direct authored/instance facts
+
+```text
+GetInstanceProperty(subject, property_id)
+→ PropertyValue?
+
+HasAuthoredCapability(subject, capability_id)
+→ bool
+
+HasCategory(subject, category_id)
+→ bool
+
+GetPlace(subject)
+→ PlaceId?
+```
+
+These answer direct authoritative facts only. For derived physical semantics use effective-profile operations below.
+
+## 3.2 World relations / typed graph view
 
 ```text
 FindRelations(type?, subject?, object?)
@@ -100,30 +128,45 @@ FindRelations(type?, subject?, object?)
 
 HasRelation(type, subject, object)
 → bool
+
+GetOutgoingRelations(subject, relation_filter?)
+→ WorldRelation[]
+
+GetIncomingRelations(object, relation_filter?)
+→ WorldRelation[]
+
+GetRelated(subject, relation_type, direction, constraints?)
+→ RuntimeWorldRef[]
+
+TraverseRelations(start, allowed_relation_types, max_depth, constraints)
+→ bounded RelationTraversalResult
 ```
 
-Used by storage, held state, object arrangement, route obstruction and attachment/part relations.
+These operations query the authoritative `WorldRelationStore` through its indexed `WorldRelationGraph` view. The graph does not create a second source of truth.
 
-## 2.4 Spatial/place queries
+Typical uses:
 
 ```text
-GetPlace(subject) → PlaceId?
-QueryNearby(subject/place, constraints) → SubjectRef[]
-QueryRoute(origin, destination, constraints) → RouteOption[]
+direct/nested contents
+assembly/component membership
+attachments
+possession/held state
+bounded structural dependency traversal
 ```
 
-`RouteOption` is derived and may expose semantic annotations such as:
+## 3.3 Spatial/place queries
 
 ```text
-length/effort class
-known hazard subjects/places
-current obstruction
-surface/context properties
+QueryNearby(subject_or_place, constraints)
+→ RuntimeWorldRef[]
+
+QueryRoute(origin, destination, constraints)
+→ RouteOption[]
 ```
 
-The implementation may later use navigation meshes/graphs; the domain query remains semantic.
+`RouteOption` is derived. Concrete navmesh/graph representation belongs to infrastructure.
 
-## 2.5 Container/carry queries
+## 3.4 Container/carry queries
 
 ```text
 GetContainerContents(container)
@@ -132,13 +175,349 @@ GetHeldItems(actor)
 CanAccept(container, item)
 ```
 
-These are projections over world relations + capabilities/properties.
+These are projections over relations + physical capabilities/properties, not a separate universal inventory owner.
 
 ---
 
-# 3. World commands
+# 4. Effective physical semantics
 
-## 3.1 Entity lifecycle
+## 4.1 Effective profile
+
+```text
+ResolveEffectivePhysicalProfile(subject, PhysicalRuleContext)
+→ EffectivePhysicalProfile
+
+GetEffectiveProperty(subject, property_id, PhysicalRuleContext)
+→ EffectivePropertyResult
+
+HasEffectiveCapability(subject, capability_id, PhysicalRuleContext)
+→ bool + optional provenance
+```
+
+Resolution uses deterministic composition of:
+
+```text
+material defaults
+entity definition
+instance condition/overrides
+runtime components/relations
+assembly bindings
+contents
+registered PropertyDerivationDefinition DAG
+```
+
+No Wilson cognition is consulted.
+
+Missing property is absent/insufficient, not silently coerced to zero.
+
+## 4.2 Property dependency validation
+
+At content bootstrap:
+
+```text
+CompilePropertyDependencyGraph(PropertyDerivationDefinition[])
+→ PropertyDependencyGraph
+```
+
+Validation requires:
+
+```text
+known property/selectors
+compatible output type
+acyclic dependency graph
+bounded registered combination policies
+no arbitrary executable callback
+no structural self-containment cycle admitted into recursive aggregation
+```
+
+## 4.3 Derived invalidation/provenance
+
+After committed World changes, application-local maintenance may use:
+
+```text
+DeriveAffectedPhysicalSubjects(SemanticChangeSet, CompositionDependencyProjection)
+→ bounded RuntimeWorldRef[]
+
+InvalidateDerivedPhysicalCaches(affected_subjects, changed_semantics)
+```
+
+Caches remain reconstructible and non-authoritative.
+
+Diagnostic query:
+
+```text
+ExplainEffectiveProperty(subject, property_id)
+→ PropertyDerivationTrace
+```
+
+---
+
+# 5. Predicate and semantic-pattern evaluation
+
+## 5.1 Requirement predicates
+
+```text
+EvaluatePredicate(predicate, EvaluationContext)
+→ bool + optional PredicateDiagnostics
+```
+
+The normalized predicate algebra remains the authority for hard applicability/eligibility semantics.
+
+## 5.2 Semantic pattern matching
+
+```text
+MatchSemanticPattern(pattern, FactProjection, MatchScope)
+→ bounded PatternBinding[]
+```
+
+Supported pattern families are typed and bounded, such as:
+
+```text
+SubjectPattern
+RelationPattern
+PropertyConstraintPattern
+CapabilityPattern
+CategoryPattern
+PropositionPattern
+AllOf / AnyOf / Not
+```
+
+Pattern matching is candidate discovery, not final authority.
+
+Therefore:
+
+```text
+pattern match
+!= action valid
+!= belief true
+!= assembly commit
+!= project contribution accepted
+```
+
+The owner-specific operation performs final validation.
+
+---
+
+# 6. Authoritative action opportunity / attemptability
+
+## 6.1 Candidate discovery
+
+```text
+QueryAttemptableActions(
+  initiator,
+  authoritative_local_context,
+  action_filter?
+)
+→ AttemptableActionBinding[]
+```
+
+Candidate discovery should use bounded local indexes/pattern matching rather than global action × entity Cartesian products.
+
+Conceptually:
+
+```text
+local semantic scope
++ action-role/capability/category indexes
++ relation adjacency
++ SemanticPattern prefilter
+→ candidate role bindings
+→ QueryActionAttemptability
+```
+
+## 6.2 Attemptability
+
+```text
+QueryActionAttemptability(
+  action_id,
+  complete_or_candidate_role_binding,
+  PhysicalRuleContext
+)
+→ AttemptabilityResult
+```
+
+Typical result classes:
+
+```text
+ATTEMPTABLE
+UNREACHABLE
+ROLE_INCOMPATIBLE
+BODY_BLOCKED
+HARD_PRECONDITION_FAILED
+```
+
+Attemptability answers whether a grounded attempt can begin/progress enough to produce consequences/evidence. It does **not** guarantee goal success.
+
+Hidden resistance/effectiveness usually should not erase an otherwise enactable experiment.
+
+---
+
+# 7. Wilson-relative tactical opportunities
+
+Physical attemptability and Wilson-perceived plausibility are separate.
+
+```text
+DerivePerceivedTacticalOpportunities(
+  current_intention,
+  PerceptionResult,
+  WilsonCognition,
+  DecisionContinuationContext
+)
+→ TacticalOpportunity[]
+```
+
+A tactical opportunity may be speculative. It sees only Wilson-accessible/believed semantics.
+
+Selected tactics still pass through authoritative attemptability/validation before execution.
+
+## 7.1 Learned interactions
+
+```text
+QueryLearnedInteractions(WilsonKnowledgeProjection, perceived_local_context)
+→ SemanticAffordance[]
+```
+
+Learned patterns expose purposeful known interactions but never bypass physical validation.
+
+---
+
+# 8. Interaction regions
+
+```text
+QueryPerceivableInteractionRegions(subject, PerceptionContext)
+→ PerceivedInteractionRegion[]
+
+ResolveInteractionRegion(InteractionRegionRef, PhysicalRuleContext)
+→ InteractionRegionProjection
+```
+
+Projection may include bounded semantics such as:
+
+```text
+accepted action roles
+local resistance modifier
+attachment/closure role
+presentation adapter identifier
+```
+
+Hidden regions are not automatically exposed to cognition. Presentation maps semantic regions to transforms/colliders/anchors.
+
+---
+
+# 9. Assembly operations
+
+## 9.1 Queries
+
+```text
+QueryAssemblyValidity(host)
+→ AssemblyValidity
+
+QueryCompatibleComponents(host, slot_id, local_candidates?)
+→ EntityId[]
+
+ValidateAssemblyBinding(host, slot_id, component)
+→ AssemblyValidationResult
+```
+
+`QueryCompatibleComponents` may use SemanticPattern/index matching for candidate discovery, followed by full predicate validation.
+
+`AssemblyValidity` is distinct from effective performance.
+
+## 9.2 Commands
+
+```text
+AttachAssemblyComponent(host, slot_id, component)
+DetachAssemblyComponent(host, slot_id, component)
+```
+
+Commands mutate ordinary World relation/binding truth through World authority.
+
+After mutation, derived validity/effective profiles/protection are recomputed or invalidated from causes.
+
+## 9.3 Diagnostics
+
+```text
+ExplainAssemblyValidity(host)
+→ AssemblyValidityTrace
+```
+
+---
+
+# 10. Environmental response / protection
+
+## 10.1 Protection/exposure
+
+```text
+DeriveProtectionProjections(source_or_region, environment_context?)
+→ ProtectionProjection[]
+
+ResolveExposure(target_or_region, exposure_kind, environment_context)
+→ ExposureResult
+```
+
+`covering capability != ProtectionProjection != resolved target exposure`.
+
+## 10.2 Environmental response
+
+```text
+QueryApplicableEnvironmentalResponses(
+  environment_state,
+  authoritative_local_world_projection
+)
+→ EnvironmentalResponseCandidate[]
+
+ResolveEnvironmentalResponse(candidate, elapsed, RandomSource?)
+→ WorldMutationPlan | EnvironmentalProcessPlan
+```
+
+Rules operate on properties/capabilities/exposure/configuration, not object-type weather switches where reusable semantics suffice.
+
+Example:
+
+```text
+rain active
++ absorbency > LOW
++ ResolveExposure(target, rain) >= LOW
+→ moisture mutation/process
+```
+
+## 10.3 Diagnostics
+
+```text
+ExplainProtectionProjection(projection_ref)
+ExplainExposureResult(target_ref, exposure_kind)
+```
+
+---
+
+# 11. Hazard / dynamic-process operations
+
+```text
+AdvanceDynamicProcess(process, elapsed, authoritative_context)
+→ DynamicProcessAdvanceResult
+
+DeriveHazardProjection(process_or_source, authoritative_context)
+→ HazardProjection
+
+DerivePerceivedThreat(HazardAccessibleEvidence, WilsonContext)
+→ PerceivedThreat?
+
+QueryInterventionWindow(process, current_state)
+→ InterventionWindow
+```
+
+Invariant:
+
+```text
+committed process != committed collision victim/result
+```
+
+Wilson emergency decisions consume `PerceivedThreat`, never hidden `HazardProjection` directly.
+
+---
+
+# 12. World commands
+
+## 12.1 Entity lifecycle
 
 ```text
 CreateEntity(type_id, place/transform, initial_state)
@@ -147,176 +526,55 @@ DestroyEntity(entity_id, reason)
 TransformEntity(entity_id, transformation_id)
 ```
 
-World validates definition references, relation integrity and transformation transfer policy.
-
-## 3.2 Property mutation
+## 12.2 Property mutation
 
 ```text
 SetInstanceProperty(entity_id, property_id, value)
 ModifyInstanceProperty(entity_id, property_id, semantic_delta)
 ```
 
-Only mutable instance properties may be changed. Definition/base properties are content, not runtime mutation targets.
+Only mutable instance properties may change.
 
-## 3.3 Relation mutation
+## 12.3 Relation mutation
 
 ```text
 CreateRelation(type, subject, object, qualifier?)
 RemoveRelation(type, subject, object)
 ```
 
-Relation invariants prevent impossible duplicates/exclusivity conflicts, e.g. one entity cannot normally be simultaneously held in two hands/containers unless the relation type explicitly permits it.
+World validates `RelationDefinition` invariants/cardinality/exclusivity.
 
-## 3.4 Body effects
+Committed relation/property changes update/rebuild derived indexes transactionally or deterministically through application-local maintenance.
+
+## 12.4 Body effects
 
 ```text
 ApplyBodyEffect(effect)
 AdvanceBodyState(elapsed, environment_context)
 ```
 
-Examples:
-
-```text
-injury
-poisoning
-wetness
-exertion
-recovery
-lethal consequence
-```
-
-The owner produces authoritative body-change events; cognition learns only from accessible observations.
-
-## 3.5 Environmental advance
+## 12.5 Environment
 
 ```text
 AdvanceEnvironment(elapsed)
 ```
 
-May progress:
-
-```text
-weather
-spoilage
-drying/wetting
-fire fuel consumption
-vegetation/fruit processes
-storm weakening/damage preparation
-```
-
-The operation emits semantic world events only for meaningful changes; it need not emit one event per numeric tick.
+World/environment mutation emits meaningful semantic facts at semantic boundaries, not one event per numeric tick.
 
 ---
 
-# 4. Predicate evaluation
+# 13. Action execution and resolution
 
-`RequirementPredicate` is evaluated against an explicit context.
-
-```text
-EvaluatePredicate(predicate, EvaluationContext)
-→ bool + optional diagnostics
-```
-
-Contexts are scoped to prevent accidental omniscience.
-
-## 4.1 PhysicalRuleContext
-
-May read:
-
-```text
-world properties/capabilities
-world relations
-spatial context
-body state where physically relevant
-```
-
-Must not read Wilson beliefs/associations merely to decide physical truth.
-
-## 4.2 CognitionContext
-
-May read:
-
-```text
-Wilson beliefs
-associations
-habits
-traits/drives
-current/suspended intention
-perceived world projection
-```
-
-Must not read unperceived authoritative facts as if Wilson knew them.
-
-## 4.3 ContentEligibilityContext
-
-Used by Project/Director authored eligibility.
-
-May read explicitly approved semantic projections from both world and Wilson state. The definition declares which context family it requires.
-
-## 4.4 InterventionContext
-
-May read:
-
-```text
-mode
-God Power
-world target capabilities
-allowed Wilson-relative discovery state where product rules require it
-```
-
-Private player intent is input metadata for UI only, never cognition evidence.
-
----
-
-# 5. Affordance operations
-
-## 5.1 Physical/exploratory affordances
-
-```text
-QueryPhysicalAffordances(initiator, perceived/local context)
-→ Affordance[]
-```
-
-Algorithmic contract:
-
-1. start from initiating subject capabilities/actions;
-2. select locally relevant candidate participants;
-3. test reusable physical rule predicates;
-4. return partial/complete role bindings;
-5. do not evaluate Wilson desire.
-
-The query must remain bounded; no global Cartesian product.
-
-## 5.2 Learned semantic affordances
-
-```text
-QueryLearnedInteractions(WilsonKnowledgeProjection, local context)
-→ SemanticAffordance[]
-```
-
-A learned semantic affordance exposes purposeful intent but still points to the same authoritative physical action/rules.
-
----
-
-# 6. Action resolution service
-
-## 6.1 Validate action
+## 13.1 Final validation
 
 ```text
 ValidateAction(action_id, complete_role_binding, PhysicalRuleContext)
 → ActionValidationResult
 ```
 
-Possible results:
+This is the final authoritative gate immediately before start and preserves attemptability-vs-success distinction.
 
-```text
-VALID
-INVALID_PARTICIPANTS
-PRECONDITION_FAILED
-TEMPORARILY_BLOCKED
-```
-
-## 6.2 Start action
+## 13.2 Start
 
 ```text
 StartAction(validated_action, selected_intention_id)
@@ -325,14 +583,14 @@ StartAction(validated_action, selected_intention_id)
 
 Starting does not imply success.
 
-## 6.3 Advance action
+## 13.3 Advance
 
 ```text
-AdvanceAction(execution, elapsed/current_context)
+AdvanceAction(execution, elapsed, current_context)
 → ActionProgressResult
 ```
 
-May return:
+Possible semantic statuses:
 
 ```text
 CONTINUE
@@ -342,20 +600,18 @@ COMPLETE
 INTERRUPTIBLE_FAILURE
 ```
 
-## 6.4 Resolve committed action
+## 13.4 Resolve committed action
 
 ```text
 ResolveCommittedAction(execution, current_world, RandomSource?)
 → ActionOutcome + WorldMutationPlan
 ```
 
-The plan is validated/applied through world authority.
+Luck-sensitive choice is allowed only among already valid declared alternatives before authoritative commitment.
 
-Luck-sensitive randomness is allowed only when the resolution definition explicitly declares unresolved valid alternatives before commitment.
+## 13.5 Outcome
 
-## 6.5 Produce outcome
-
-`ActionOutcome` records:
+`ActionOutcome` includes:
 
 ```text
 classification
@@ -367,125 +623,153 @@ consequence severity
 causal identity
 ```
 
-It does not mutate beliefs/projects/habits directly.
+It does not mutate beliefs, habits, associations or projects directly.
 
 ---
 
-# 7. Transformation resolution
+# 14. Transformation resolution
 
 ```text
-FindApplicableTransformations(subject, semantic_outcome_tags, world_context)
+FindApplicableTransformations(subject, outcome_tags, world_context)
 → TransformationDefinition[]
 
 ApplyTransformation(entity, selected_definition)
 → TransformationResult
 ```
 
-Selection must be deterministic when more than one transform is eligible, or content validation must reject ambiguous overlapping definitions unless explicit priority semantics exist.
+Content validation rejects ambiguous overlapping final transformations unless explicit deterministic priority semantics are authored.
 
-This is a content invariant: generic interaction rules may overlap; final physical transformations must not be silently ambiguous.
+Generic interaction determines what semantic physical result happened; transformation definition determines how a particular content form changes.
 
 ---
 
-# 8. Perception operations
+# 15. Perception and evidence
+
+## 15.1 Perception
 
 ```text
-Perceive(world_snapshot/query, WilsonBodyState, current_context, WorldEvent[])
+Perceive(world_query_snapshot, WilsonBodyState, current_context, WorldEvent[])
 → PerceptionResult
 ```
 
-Perception derives:
-
 ```text
-PerceivedSubject[]
-ObservedEvent[]
-accessible environmental context
+PerceptionResult
+  perceived_subjects
+  observed_events
+  perceptual_evidence
+  accessible_environmental_context
+  optional observation coverage projections
 ```
 
-Observation records what Wilson could access, not authoritative cause.
+Static property discovery belongs in `perceptual_evidence`; it does not require fake WorldEvents.
 
-Perception may use deterministic sensory thresholds/occlusion. If uncertainty/noise is stochastic, it uses a dedicated deterministic stream.
+## 15.2 Evidence derivation
+
+```text
+DerivePerceptualEvidence(
+  perception_context,
+  source_action_outcome?,
+  source_world_events?,
+  current_world_projection
+)
+→ PerceptualEvidence[]
+```
+
+Evidence output is Wilson-accessible and constrained by registered `EvidenceRuleDefinition`s/modality/accessibility.
+
+Negative evidence requires sufficient `ObservationCoverage`; not-seen is not automatically absent.
 
 ---
 
-# 9. Expectation and prediction error
+# 16. Expectation / anomaly / investigation
 
 ```text
-DeriveExpectations(WilsonCognition, PerceptionResult, current intention/context)
+DeriveExpectations(WilsonCognition, PerceptionResult, current_context)
 → ExpectedState[]
 
-CompareExpectation(expected, observed/current perceived state)
-→ PredictionError
+CompareExpectation(expected, observed_or_perceived_state)
+→ PredictionError / ExpectationMismatch
 ```
 
-Expected arrangements are ordinary propositions:
+For bounded investigations:
 
 ```text
-spoon expected beside cooking area
-materials expected inside storage
-favorite rock expected at usual place
-Gerald expected to approach food under cue
+StartOrUpdateInvestigationContext(problem, mismatch, evidence, WilsonContext)
+→ InvestigationContext
+
+DeriveAnomalyPattern(context)
+→ AnomalyPattern
+
+DeriveCausalHypotheses(context, EpistemicGraphProjection)
+→ CausalHypothesis[]
+
+DerivePerceivedCausalOpportunities(hypothesis, perceived_context)
+→ PerceivedCausalOpportunity[]
+
+EvaluateInvestigationTactic(...)
+→ bounded contributions
 ```
 
-Prediction error can feed salience, learning, causal attribution and reaction; it is not persisted as independent long-term state.
+Actual cause, current world result, Wilson observation and Wilson attribution remain distinct.
 
 ---
 
-# 10. Salience
+# 17. Salience
 
 ```text
-DeriveSalientSet(perception, WilsonCognition, expectations, current intention, DirectorContext)
+DeriveSalientSet(
+  perception,
+  WilsonCognition,
+  expectations,
+  current_intention,
+  DirectorContext
+)
 → bounded SalientSubject[]
 ```
 
-Inputs may include:
+Inputs may include threat, novelty, attachment, habit cue, mismatch, drive relevance, project relevance and opportunity urgency.
 
-```text
-threat
-novelty
-attachment
-habit cue
-expectation mismatch
-need relevance
-project relevance
-opportunity urgency
-Director framing
-```
-
-Salience never becomes a permanent per-entity stat.
+Salience is derived, not a permanent per-entity stat.
 
 ---
 
-# 11. Candidate intention generation
+# 18. Tactical decision operations
+
+```text
+GenerateTacticalCandidates(TacticalDecisionContext)
+→ CandidateTactic[]
+
+EvaluateTacticalCandidate(candidate, TacticalDecisionContext)
+→ EvaluationContribution[]
+
+SelectTactic(plausible_candidates, RandomSource?)
+→ SelectedTactic
+```
+
+Typical bounded contribution families:
+
+```text
+expected goal progress
+information gain
+perceived effectiveness
+perceived risk
+effort
+continuity
+curiosity/novelty
+repetition penalty
+partial-progress leverage
+```
+
+A selected tactic binds an ordinary `ActionDefinition`; it is not a new action type.
+
+---
+
+# 19. Intentional decision operations
 
 ```text
 GenerateCandidates(DecisionContext)
 → CandidateIntention[]
-```
 
-Candidate sources are compositional:
-
-```text
-DriveIntentionSource
-KnownInteractionSource
-ExplorationSource
-HabitSource
-ProjectSource
-SuspendedInterestSource
-SuggestionSource
-DirectorOpportunitySource
-ReactionSource
-```
-
-Sources propose intentions; none chooses Wilson's action.
-
-Equivalent candidates are semantically deduplicated before evaluation.
-
----
-
-# 12. Intention evaluation and selection
-
-```text
 EvaluateCandidate(candidate, DecisionContext)
 → EvaluationContribution[]
 
@@ -496,36 +780,11 @@ SelectIntention(plausible_evaluations, RandomSource)
 → SelectedIntention
 ```
 
-Contribution families include:
+Candidate sources include drives, known interactions, exploration, habits, projects, suspended interests, suggestions, director opportunities and reaction.
 
-```text
-need relief
-project value
-association/preference
-attachment relevance
-curiosity/information value
-habit
-perceived risk
-effort
-uncertainty
-suggestion pressure
-opportunity urgency
-completion proximity
-continuity/switching cost
-transient reaction
-Director bias
-```
+All contributions are finite/bounded. Immediate threat is a separate regime rather than huge utility values.
 
-Invariants:
-
-- every contribution is finite and bounded;
-- impossible/implausible candidates are filtered before stochastic selection;
-- immediate threat uses a separate regime;
-- selection result is a proposal to `IntentionalState` owner.
-
----
-
-# 13. Intentional-state commands
+## 19.1 Intentional-state commands
 
 ```text
 CommitSelectedIntention(selected)
@@ -535,97 +794,69 @@ DiscardCurrentIntention(reason)
 ResumeSuspendedIntention(intention_id)
 ```
 
-Invariants:
-
-- one current intention maximum;
-- suspended list is bounded/selective;
-- death clears current/fragile suspended intentions according to resurrection contract;
-- physical action commitment cannot be undone by merely replacing the intention.
+One current intention maximum. Suspended set remains bounded/selective.
 
 ---
 
-# 14. Immediate threat path
+# 20. Decision continuation / reconsideration routing
 
 ```text
-DetectImmediateThreat(perception/body/world context)
-→ ImmediateThreat?
+DecisionContinuationContext
+  intention_id
+  recent_tactic_signatures
+  recent_outcome_refs
+  recent_evidence_refs
+  last_progress_ref?
+```
 
-GenerateDefensiveCandidates(threat)
+Bounded to the current/suspended intention chain; not a second episodic memory store or durable failure counter.
+
+```text
+RouteReconsideration(trigger_batch, current_context)
+→ TACTICAL | INTENTIONAL | IMMEDIATE_THREAT | NONE
+```
+
+Tactical may escalate when no plausible tactic remains, perceived value collapses, risk/cost crosses bounded tolerance or a stronger competing trigger arrives.
+
+---
+
+# 21. Immediate threat path
+
+```text
+DetectImmediateThreat(PerceptionResult, WilsonBodyState)
+→ PerceivedThreat?
+
+GenerateDefensiveCandidates(threat, perceived_route_options)
 → bounded DefensiveCandidate[]
 
-SelectFeasibleDefense(...)
-→ SelectedIntention
+SelectFeasibleDefense(candidates, WilsonContext, RandomSource?)
+→ SelectedTactic/Intention
 ```
 
-This path bypasses normal broad competition but still validates physical feasibility and does not use infinity scores.
+No infinity-score hacks. Defense still passes through normal physical validation.
 
 ---
 
-# 15. Reaction derivation
+# 22. Learning operations
+
+## 22.1 Evidence interpretation
 
 ```text
-DeriveReaction(observation/outcome, expectation, beliefs, association, attribution, current goal)
-→ ReactionState?
-```
-
-Examples:
-
-```text
-fear
-anger
-joy/excitement
-concern
-surprise
-frustration
-relief
-```
-
-Reaction is temporary. Durable consequences are emitted as learning proposals rather than persisting long-term emotion bars.
-
----
-
-# 16. Causal attribution
-
-```text
-DeriveCausalHypotheses(observed anomaly, Wilson context)
-→ CausalHypothesis[]
-
-SelectAttribution(hypotheses, deterministic/optional bounded interpretation)
-→ AttributionResult
-```
-
-Candidate cause classes include:
-
-```text
-self
-known actor
-natural process
-unknown ordinary cause
-unseen presence
-```
-
-Actual cause is not automatically available to this service.
-
----
-
-# 17. Learning operations
-
-```text
-InterpretLearningEvidence(observation/outcome, Wilson context)
+InterpretLearningEvidence(perception/outcome, WilsonContext)
 → LearningProposalBatch
 ```
 
-Batch may contain:
+May contain:
 
 ```text
-BeliefEvidence[]
-AssociationImpact[]
-HabitEvidence[]
-EpisodeCandidate[]
-PresenceEvidence[]
+BeliefEvidence
+AssociationImpact
+HabitEvidence
+EpisodeCandidate
+PresenceEvidence
 ```
 
-Owner commands:
+## 22.2 Owner-local commands
 
 ```text
 ApplyBeliefEvidence
@@ -635,29 +866,78 @@ AdmitEpisodeCandidate
 ApplyPresenceEvidence
 ```
 
-Each owner validates bounds/saturation independently.
+Each store validates its own bounds/saturation/contradiction semantics.
 
-## 17.1 Knowledge discovery
-
-When observed evidence satisfies a `DiscoverySpec`:
+## 22.3 Immediate same-chain learning
 
 ```text
-ApplyBeliefEvidence
-→ operational KnowledgeId becomes known
-→ semantic interaction becomes available
+ProcessImmediateRelevantLearning(
+  PerceptionResult,
+  ActionOutcome?,
+  current_intention,
+  WilsonCognition
+)
+→ AppliedLearningSummary
 ```
 
-No separate discovery lottery occurs.
+Semantic meaning:
+
+```text
+InterpretLearningEvidence
+→ owner-local Apply* commands
+→ return relevant revised cognition projection
+```
+
+Use only where grounded evidence can materially affect the next same-chain tactic.
+
+Ordering:
+
+```text
+outcome
+→ perception/evidence
+→ immediate relevant learning
+→ perceived tactical opportunities
+→ tactical candidate generation
+```
+
+## 22.4 Epistemic graph queries
+
+```text
+QueryBeliefsBySubject(subject, constraints?)
+QueryBeliefsByPredicate(predicate_pattern, constraints?)
+MatchBeliefPattern(PropositionPattern, scope)
+QuerySupportingOpposingEvidence(proposition_or_hypothesis, scope)
+```
+
+These use `EpistemicGraphProjection` over cognition-owned stores. They never import hidden World facts.
 
 ---
 
-# 18. Project operations
+# 23. Reaction
+
+```text
+DeriveReaction(
+  observation/outcome,
+  expectation,
+  beliefs,
+  association,
+  attribution,
+  current_goal
+)
+→ ReactionState?
+```
+
+Reaction is transient. Durable consequences become learning proposals.
+
+---
+
+# 24. Project operations
 
 Queries:
 
 ```text
 QueryEligibleProjectDefinitions(context)
-QueryProjectContributions(project, world/context)
+QueryProjectContributions(project, world_context)
 ```
 
 Commands:
@@ -671,46 +951,29 @@ CompleteProject(project_id)
 AbandonProject(project_id, reason)
 ```
 
-Invariants:
+Progress only from grounded outcomes/world facts. Projects never directly set Wilson's current intention or duplicate physical structure truth.
 
-- project progress is accepted only from grounded `ActionOutcome`/world facts;
-- Project System does not set Wilson's current intention;
-- physical structures remain world authority;
-- a resource is not globally reserved merely because a project could use it.
+SemanticPattern may accelerate eligibility/contribution candidate discovery, but final project predicates remain authoritative.
 
 ---
 
-# 19. Director operations
-
-Queries:
+# 25. Director operations
 
 ```text
-QueryEligibleEvents(world/Wilson bounded context)
+QueryEligibleEvents(approved_world_cognition_context)
 GetDirectorContext(active_event_instances)
-```
 
-Commands:
-
-```text
 ActivateEvent(definition, bindings)
-AdvanceEvent(instance, semantic events/time)
+AdvanceEvent(instance, semantic_events/time)
 ResolveEvent(instance)
 ExpireEvent(instance)
 ```
 
-Director may issue:
-
-```text
-WorldOpportunity
-TemporaryOpportunity
-BoundedSceneBias
-```
-
-but never `SetWilsonIntention` or psychology mutations.
+Director may expose opportunities/bounded bias, never `SetWilsonIntention` or direct cognition mutation.
 
 ---
 
-# 20. Non-Wilson actor operations
+# 26. Non-Wilson actor operations
 
 ```text
 DeriveActorOptions(actor_state, local_world_context)
@@ -719,33 +982,27 @@ CommitActorActivity(actor_state, selection)
 AdvanceActorActivity(actor_state, elapsed)
 ```
 
-The actor model is deliberately shallow.
-
-Recurring identity is persistence of the actor/entity, not evidence for a full belief/association/history stack per animal.
+The actor model remains deliberately shallow. Recurring identity does not imply Wilson-level cognition for animals.
 
 ---
 
-# 21. Suggestion operations
+# 27. Suggestion operations
 
 ```text
 IssueSuggestion(intention_pattern, bindings)
 → SuggestionSignal + updated SuggestionWindowState
 ```
 
-Validation checks:
+Validation covers grammar, bounded insistence/cooldown and applicable visibility/availability rules.
 
-- supported suggestion grammar;
-- context/participant visibility or availability rules;
-- bounded insistence/cooldown.
-
-The signal enters candidate generation/evaluation. It never commits an intention itself.
+The signal influences candidate generation/evaluation but never commits an intention.
 
 ---
 
-# 22. Player intervention transaction
+# 28. Player intervention transaction
 
 ```text
-RequestIntervention(capability, target/bindings)
+RequestIntervention(capability, target_or_bindings)
 → InterventionValidation
 ```
 
@@ -753,21 +1010,19 @@ If valid:
 
 ```text
 reserve/consume God Power
-→ apply validated world mutation
-→ confirm world commit
+→ apply validated World mutation
+→ confirm World commit
 → finalize cost
 → emit WorldEvent
 ```
 
-Atomicity rule:
+Accepted intervention and cost mutation cannot diverge. Failed world application has deterministic rollback/refund semantics.
 
-- accepted intervention and God Power mutation cannot diverge;
-- failed world application must have deterministic refund/rollback semantics;
-- Wilson psychology receives only perception/attribution evidence after the world event.
+Wilson psychology changes only through perception/attribution/evidence after the resulting world event.
 
 ---
 
-# 23. Luck-sensitive resolution
+# 29. Luck-sensitive resolution
 
 ```text
 EvaluateEffectiveLuck(LuckContext)
@@ -777,274 +1032,124 @@ SelectLuckSensitiveVariant(valid_variants, effective_luck, RandomSource)
 → selected variant
 ```
 
-Invariants:
-
-- variants are already physically/contextually valid;
-- favorability is explicitly declared from Wilson's perspective;
-- Luck cannot manufacture an event/action/result that was not eligible;
-- selection occurs before authoritative commitment.
+Only already valid declared variants participate. Luck cannot manufacture impossible outcomes or rewrite committed causes.
 
 ---
 
-# 24. Death and resurrection lifecycle
+# 30. Death / resurrection / End Run
 
-## 24.1 Death
+## 30.1 Death
 
 ```text
-Grounded body/world consequence
+grounded body/world consequence
 → WilsonBodyState.alive = false
-→ finish committed visual/semantic sequence
-→ Run enters AWAITING_DEATH_CHOICE
+→ finish committed semantic/visual consequence
+→ run enters AWAITING_DEATH_CHOICE
 ```
 
 Death is not a cognition command.
 
-## 24.2 Resurrect
+## 30.2 Resurrection
+
+Named application transaction coordinates body restoration and admitted cognitive continuity according to product/state contracts.
+
+Wilson does not consciously remember dying; grounded danger learning may remain according to accepted rules.
+
+## 30.3 End Run
+
+Coordinates run closure, bounded Legacy Knowledge extraction, Diary archival and profile mutations. Cross-run transfer never copies arbitrary Wilson autobiography.
+
+---
+
+# 31. Offline catch-up
 
 ```text
-ResurrectWilson(run_id)
+AdvanceOffline(elapsed, OfflinePolicy, deterministic streams)
+→ bounded owner-local advances + CatchUpSummary
 ```
 
-Transaction:
+Reuse normal domain semantics under conservative allowed-outcome policies.
 
-1. preserve same RunId/world history;
-2. restore/normalize authoritative body state;
-3. clear current action/current fragile intention as required;
-4. remove/inactivate explicit conscious death-source accessibility;
-5. preserve admitted danger belief/association consequences;
-6. continue run.
-
-Free and unlimited.
+Offline policy suppresses death, rare spectacle/major discovery consumption and other forbidden outcome classes rather than creating a second contradictory simulation.
 
 ---
 
-# 25. End Run transaction
+# 32. Diagnostics / explanation
+
+Pure diagnostics include:
 
 ```text
-EndRun(run_id, player_profile_id)
-→ RunEnded
+ExplainEffectiveProperty
+ExplainAssemblyValidity
+ExplainProtectionProjection
+ExplainExposureResult
+ExplainActionAttemptability
+ExplainTacticalCandidate
+ExplainIntentionalCandidate
+ExplainPerceptualEvidence
+ExplainBeliefMatch
+ExplainRelationTraversal
+ExplainSemanticPatternMatch
+ExplainHazardProjection
+ExplainPerceivedThreat
 ```
 
-Required ordering:
-
-1. freeze active run mutation;
-2. calculate final structured run statistics/history;
-3. construct/update `RunDiary` archive records;
-4. project eligible operational Wilson knowledge;
-5. perform deterministic weighted Legacy selection;
-6. merge selected knowledge into PlayerProfile;
-7. mark run permanently ended;
-8. release active-run state after persistence/archival boundary succeeds.
-
-Persistence stores the result but does not decide Legacy or Diary policy.
+Diagnostics derive from semantic provenance already available. They never alter results.
 
 ---
 
-# 26. Start Run transaction
+# 33. Canonical micro-loop operation surface
 
 ```text
-StartRun(player_profile_id, seed)
-→ RunBootstrap
+advance due World/body/environment/dynamic processes
+→ advance current ActionExecution
+→ commit authoritative owner-local mutations in deterministic causal order
+→ collect ActionOutcome / WorldEvent
+→ Perceive + DerivePerceptualEvidence
+→ immediate-threat check
+→ ProcessImmediateRelevantLearning when required
+→ RouteReconsideration
+
+if IMMEDIATE_THREAT:
+  defensive fast path
+
+else if TACTICAL:
+  DerivePerceivedTacticalOpportunities
+  → GenerateTacticalCandidates
+  → Evaluate/SelectTactic
+  → QueryActionAttemptability / ValidateAction
+  → StartAction
+
+else if INTENTIONAL:
+  expectations/salience
+  → Generate/Evaluate/SelectIntention
+  → CommitSelectedIntention
+  → tactical derivation for first action
+
+→ grounded project/director processing
+→ maintenance
+→ presentation/debug projections
 ```
 
-Required ordering:
-
-1. validate profile/global content references;
-2. create deterministic world from seed;
-3. create Wilson body/canonical cognition baseline;
-4. merge Legacy Knowledge into initial operational knowledge;
-5. create player run state;
-6. initialize Director/projects/action state;
-7. publish/bootstrap presentation only after valid domain state exists.
+No render callback is authoritative.
 
 ---
 
-# 27. Offline catch-up operation
+# 34. Operation invariants
+
+The operation surface is accepted only while these remain true:
 
 ```text
-CatchUpOffline(run, elapsed, policy)
-→ CatchUpResult
+authoritative attemptability != Wilson tactical plausibility
+effective physical truth never reads cognition
+Wilson decision never reads hidden World truth
+patterns discover candidates but do not bypass final validation
+graph indexes never own mutation
+assembly validity != effective performance
+projects progress only from grounded outcomes/world facts
+learning mutates only owner-local cognition stores
+player private intent never becomes evidence
+committed action/process causes are not rewound by reconsideration
+RNG usage is named/seeded/stably ordered
+render FPS is never simulation authority
 ```
-
-Uses normal owner operations with conservative substitutions.
-
-Must enforce:
-
-```text
-no Wilson death
-no rare spectacle consumption by default
-no major area reveal
-no opaque extreme presence/relationship swing
-```
-
-Allowed ordinary changes must still have causal structured history sufficient for Diary/cognition where appropriate.
-
----
-
-# 28. Aggregate invariants
-
-## World
-
-- every active `EntityInstance.type_id` resolves to a definition;
-- world relation endpoints resolve within their permitted subject scope;
-- mutually exclusive relations cannot coexist;
-- transformed/destroyed entities cannot continue participating as active action subjects;
-- physical properties remain finite/typed.
-
-## Wilson body
-
-- vitality/wetness/exertion remain bounded;
-- body conditions use finite severity;
-- `alive=false` only follows admitted grounded consequence/lifecycle operation;
-- cognition cannot directly set body truth.
-
-## Wilson cognition
-
-- trait values remain bounded and normally stable;
-- association valence/attachment remain bounded;
-- belief confidence remains bounded;
-- one current intention maximum;
-- habit strength remains bounded;
-- presence vector components remain bounded;
-- no omniscient learning from unobserved world truth.
-
-## Projects
-
-- project lifecycle transitions are valid and monotonic where appropriate;
-- world progress is not duplicated as authoritative project facts;
-- completion derives from validated world/project conditions.
-
-## Director
-
-- active instances reference valid definitions;
-- scene bias remains within declared envelopes;
-- Director cannot mutate Wilson psychology/intention directly.
-
-## Player run state
-
-- God Power remains within cap/range;
-- unsupported intervention capability cannot be purchased with extra GP;
-- suggestion windows are bounded.
-
-## Player profile
-
-- Legacy contains only globally valid `legacy_eligible` knowledge IDs;
-- archived run records are immutable except explicit migration/correction;
-- active RunState is not embedded inside Diary archive.
-
----
-
-# 29. Transition tables
-
-## 29.1 Intention
-
-| From | Event | To |
-|---|---|---|
-| none | selected intention committed | current |
-| current | ordinary continuation | current |
-| current | meaningful interruption, still relevant | suspended |
-| current | completion | completed/removed |
-| current | invalidated/abandoned | discarded |
-| suspended | wins later competition | current |
-| suspended | resolved/irrelevant/forgotten | removed |
-
-## 29.2 Action execution
-
-| From | Event | To |
-|---|---|---|
-| none | validated action starts | preparing |
-| preparing | progress | preparing/checkpoint |
-| preparing/checkpoint | interruption before commitment | interrupted |
-| preparing/checkpoint | commitment reached | committed |
-| committed | authoritative resolution | completed |
-| committed | late reconsideration | **no rewind** |
-
-## 29.3 Project
-
-| From | Event | To |
-|---|---|---|
-| absent | project starts | active |
-| active | Wilson stops working | active or paused (definition/lifecycle semantics) |
-| active/paused | contribution | active/paused with updated grounded progress |
-| active/paused | completion predicate | completed |
-| active/paused | justified abandonment | abandoned |
-| completed | ordinary runtime | completed |
-
-## 29.4 Event
-
-| From | Event | To |
-|---|---|---|
-| inactive | eligibility + selection | active |
-| active | normal progression | active |
-| active | success/failure resolution | resolved |
-| active | opportunity window closes | expired |
-
-## 29.5 Run
-
-| From | Event | To |
-|---|---|---|
-| active | grounded Wilson death | awaiting_death_choice |
-| awaiting_death_choice | resurrect | active |
-| awaiting_death_choice | end run | ending → ended |
-| ended | any active simulation command | **invalid** |
-
----
-
-# 30. Orchestration-facing minimal loop
-
-The application/game orchestrator can be expressed without implementation-specific APIs as:
-
-```text
-advance authoritative time
-→ advance environment/body/current actions
-→ collect WorldEvents
-→ perceive relevant changes
-→ detect immediate threat or normal reconsideration triggers
-→ derive expectations/salience
-→ generate/evaluate/select intention if needed
-→ commit intentional transition
-→ start/advance action
-→ produce ActionOutcome / WorldEvents
-→ derive/apply learning proposals
-→ apply project/event reactions to grounded outcomes
-→ maintenance/consolidation when scheduled
-→ publish presentation/debug projection
-```
-
-Not every phase runs every frame/tick. `SIMULATION_ORCHESTRATION.md` owns cadence/order policy; these operations define the domain surface each phase may invoke.
-
----
-
-# 31. Architectural anti-operations
-
-The following operations should not exist as public domain capabilities:
-
-```text
-Director.force_wilson_action(...)
-Project.set_current_wilson_action(...)
-UI.move_entity_authoritatively(...)
-FireSystem.increase_wilson_fear(...)
-Persistence.fix_domain_state_arbitrarily(...)
-Luck.make_action_succeed(...)
-Suggestion.force_acceptance(...)
-Presentation.on_animation_finished_commit_world_change(...)
-```
-
-If implementation appears to need one, first identify the missing semantic command/result boundary.
-
----
-
-# 32. Operation-model gate
-
-This operation model is sufficient for the next domain pass when:
-
-- every state mutation enters through an owner command/lifecycle transaction;
-- physical truth queries never silently consume Wilson belief;
-- cognition queries never silently consume omniscient world truth;
-- ActionOutcome is the physical/learning/project bridge;
-- project/director/player influence remains proposal-based;
-- lifecycle operations are explicit;
-- deterministic RNG consumption is attributable;
-- representative scene regression can be traced using these operations without scene-specific authority bypasses.
-
-The next validation step is to enrich `DOMAIN_REGRESSION.md` with representative **operation traces** for the most integration-heavy scenes: Scientific Method, Sabotaged Storage, Storm Priorities, Signal Fire, Falling Palm, Brilliant Shortcut, and The Experiment.
