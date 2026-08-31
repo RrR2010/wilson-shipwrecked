@@ -2,212 +2,138 @@
 
 ## Mission
 
-Build Wilson Shipwrecked as a coherent systemic simulation and living 3D diorama. Optimize for reusable rules and modular assets, not maximum feature/content count.
+Build Wilson Shipwrecked as a coherent systemic simulation and living 3D diorama. Optimize for reusable rules and modular content, not maximum feature count.
 
-## Required reading
+## Documentation entry point
 
-Before substantial work, read the documents relevant to the task.
+Before substantial work, read [`docs/README.md`](docs/README.md). It owns the current documentation map, authority hierarchy and task-specific reading bundles.
 
-### Current product / behavior / architecture chain
+Do **not** read every document linearly by default. Read the smallest canonical bundle required for the task, then use fixtures/regressions as evidence when needed.
 
-Use this order when work affects simulation behavior, cognition, architecture, persistence, balancing or runtime AI:
+Also check [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md) when the current project phase or next sequencing matters.
 
-1. `README.md` — project thesis and milestone;
-2. `docs/DISCOVERY_STATUS.md` — current project phase, document precedence and validated conclusions;
-3. `docs/BEHAVIORAL_MODEL.md` — current validated functional Wilson model;
-4. `docs/STATE_REQUIREMENTS.md` — persistent/derived state requirements, scopes, lifetimes, decay, offline and resurrection semantics;
-5. `docs/SCENE_VALIDATION.md` — representative-scene evidence, Must-have system matrix and regression suite;
-6. `docs/ARCHITECTURE.md` — system boundaries, composition, contact points and game-loop direction;
-7. `docs/SIMULATION_CONTRACTS.md` — semantic cross-system contracts and persistence/replay implications;
-8. `docs/SIMULATION_ORCHESTRATION.md` — clocks, update phases, reconsideration, interruption, learning timing and offline orchestration;
-9. `docs/MUTATION_AUTHORITY.md` — read/propose/mutate/observe ownership matrix;
-10. `docs/DECISION_TRACES.md` — representative end-to-end architecture regressions;
-11. `docs/IMPLEMENTATION_GATE.md` — implementation-readiness decision and recommended implementation sequence;
-12. `docs/GUARDS_AND_CALIBRATION.md` — invariants, local/cross-system guards, health metrics and bounded self-stabilization;
-13. `docs/DOMAIN_MODEL.md` — canonical language-neutral functional aggregates, state and concepts;
-14. `docs/DOMAIN_VOCABULARY.md` — normalized internal semantic vocabulary;
-15. `docs/DOMAIN_CATALOGS.md` — canonical relation/predicate/effect/proposition catalogues;
-16. `docs/DOMAIN_OPERATIONS.md` — language-neutral command/query/derivation surface;
-17. `docs/DOMAIN_PROCEDURAL_COMPOSITION.md` — materials, effective physical composition, gradual exploration, environmental responses and assembly semantics;
-18. `docs/DOMAIN_HAZARD_DYNAMICS.md` — committed dynamic processes, hazard projections, perceived threats, causal windows and emergency concurrency;
-19. `docs/DOMAIN_MICRO_LOOP.md` — canonical frame-group micro-loop and Scientific Method fixture;
-20. `docs/DOMAIN_MICRO_LOOP_FALLING_PALM.md` — immediate-threat/hazard micro-loop fixture;
-21. `docs/DOMAIN_OPERATION_REFINEMENTS.md` — refined attemptability, tactical opportunity, evidence and procedural operations;
-22. `docs/DOMAIN_REGRESSION.md` — structural representative-scene regression;
-23. `docs/DOMAIN_OPERATION_TRACES.md` — integration operation traces;
-24. `docs/DOMAIN_VOCABULARY_REGRESSION.md` — normalized-vocabulary regression;
-25. `docs/DOMAIN_SCHEMA.dbml` — relational-style visualization only, not persistence mandate;
-26. `docs/AI.md` — runtime LLM authority/fallback contract;
-27. `docs/PRODUCT.md` — overall experience, modes, player role, God Power, UI and rhythm;
-28. `docs/SIMULATION.md` — broader systemic/property/action vocabulary.
+### Common task bundles
 
-Where an older provisional behavioral statement in `PRODUCT.md` or `SIMULATION.md` conflicts with `BEHAVIORAL_MODEL.md`, `STATE_REQUIREMENTS.md` or `SCENE_VALIDATION.md`, the newer behavioral documents win unless a later documented architectural/implementation decision explicitly supersedes them.
+**Simulation/domain/architecture work**
 
-Where implementation-oriented wording conflicts with accepted architectural contracts, use `ARCHITECTURE.md`, `SIMULATION_CONTRACTS.md`, `SIMULATION_ORCHESTRATION.md`, `MUTATION_AUTHORITY.md`, the functional-domain documents, and validated regression traces as the current architecture source of truth unless implementation evidence deliberately supersedes them.
+Start from the relevant bundle in `docs/README.md`. At minimum, preserve the boundaries in:
 
-For functional-domain work, later normalization/refinement documents supersede older ambiguous shorthand without reopening accepted product rules. In particular, use `DOMAIN_PROCEDURAL_COMPOSITION.md`, `DOMAIN_HAZARD_DYNAMICS.md`, `DOMAIN_MICRO_LOOP*.md`, and `DOMAIN_OPERATION_REFINEMENTS.md` when they refine older `DOMAIN_MODEL.md` / `DOMAIN_OPERATIONS.md` wording.
+```text
+ARCHITECTURE.md
+SIMULATION_CONTRACTS.md
+SIMULATION_ORCHESTRATION.md
+MUTATION_AUTHORITY.md
+DOMAIN_MODEL.md
+DOMAIN_VOCABULARY.md
+DOMAIN_CATALOGS.md
+DOMAIN_OPERATIONS.md
+DOMAIN_PROCEDURAL_COMPOSITION.md
+```
 
-### Visual / asset chain
+Read specialized domain appendices only when the task touches them. Read regression/fixture documents to validate behavior, not as competing specifications.
 
-Mandatory for visual/3D work:
+**Asset/content catalog work**
 
-- `docs/VISUAL_GUIDE.md` — visual direction;
-- `docs/ASSET_SPEC.md` — runtime asset contracts;
-- `docs/ASSET_PIPELINE.md` — Blender/tooling/export workflow;
-- `docs/art/README.md` and its referenced art-direction support documents when present;
-- `docs/brainstorming/functional-asset-catalog/README.md` before treating functional asset brainstorming as gameplay/domain schema.
+Start from:
+
+```text
+docs/asset-catalog/README.md
+→ relevant catalog tables
+→ PRODUCT.md / domain core as needed
+→ art contracts if visual requirements are affected
+```
+
+`docs/asset-catalog/` is the cross-cutting source of truth for modeled-content requirements and production backlog. `docs/art/` must not maintain a second object list.
+
+**Visual / 3D production**
+
+Read:
+
+```text
+docs/asset-catalog/<relevant row>
+→ docs/VISUAL_GUIDE.md
+→ docs/art/README.md and relevant art references
+→ docs/ASSET_SPEC.md
+→ docs/ASSET_PIPELINE.md
+→ docs/art/AGENT_ART_PRODUCTION.md
+```
+
+The brainstorming asset rounds are historical breadth evidence, not the normal production prompt.
+
+## Documentation rules
+
+- Prefer one canonical owner per concern; `docs/README.md` defines the current ownership map.
+- Do not create a new top-level canonical document for every fixture, edge case or content family.
+- Promote validated changes into the existing owner document when the concern already has one.
+- Validation traces/fixtures prove sufficiency; they do not create scene-specific APIs.
+- `docs/brainstorming/` is exploratory/historical evidence.
+- `docs/handoffs/` is stage-transition context, not durable design authority.
+- If a refinement permanently supersedes an older contract, consolidate it into the owning contract when practical rather than growing an indefinite precedence chain.
 
 ### Handoffs
 
-Stage-transition handoffs live under:
+Stage-transition handoffs live under `docs/handoffs/` and should be named for the transition/problem they transfer.
 
-```text
-docs/handoffs/
-```
+A handoff should:
 
-Handoffs are named for the transition/problem they transfer, not for an agent identity or generic `NEXT_AGENT` label.
+1. identify the exact current phase and objective;
+2. give a minimal required-reading path;
+3. list closed decisions/invariants and explicit anti-decisions;
+4. identify deliverables and acceptance gates;
+5. point to canonical sources rather than duplicating them extensively;
+6. record open questions separately from accepted contracts.
 
-When resuming work from a handoff:
+---
 
-1. read the handoff first;
-2. follow its required-reading order;
-3. treat the canonical docs it references as source of truth;
-4. use the handoff for sequencing, closed decisions, anti-decisions and next deliverables;
-5. update canonical docs when a contract changes instead of allowing the handoff to become a competing specification.
-
-Handoffs are historical/operational transfer artifacts. Canonical design documents remain authoritative for the contracts they own.
-
-A more local `AGENTS.md` may add or override instructions for its subtree. Explicit task/spec requirements override generic workflow preferences, but architectural invariants should only be changed deliberately and documented.
-
-## Documentation ownership
-
-Prefer one canonical document per concern instead of duplicating the same contract across files.
-
-Current responsibility map:
-
-```text
-PRODUCT.md
-  player experience / product rules / modes / presentation intent
-
-BEHAVIORAL_MODEL.md
-  Wilson functional psychology and decision requirements
-
-STATE_REQUIREMENTS.md
-  persistence / scope / lifetime / decay semantics
-
-SCENE_VALIDATION.md
-  behavioral evidence and regression tests
-
-ARCHITECTURE.md
-  technical responsibility boundaries / composition / high-level orchestration
-
-SIMULATION_CONTRACTS.md
-  semantic cross-system contract catalog
-
-SIMULATION_ORCHESTRATION.md
-  clocks / ordering / reconsideration / interruption / learning timing / offline flow
-
-MUTATION_AUTHORITY.md
-  durable state ownership and cross-system read/propose/mutate boundaries
-
-DECISION_TRACES.md
-  representative architecture regression traces
-
-IMPLEMENTATION_GATE.md
-  readiness decision and implementation sequence
-
-GUARDS_AND_CALIBRATION.md
-  bounds / feedback-loop control / health metrics / adaptive policy
-
-DOMAIN_MODEL.md
-  functional aggregates / entities / state shape / domain concepts
-
-DOMAIN_VOCABULARY.md
-  normalized internal semantic terminology
-
-DOMAIN_CATALOGS.md
-  admitted relation / predicate / effect / proposition vocabulary
-
-DOMAIN_OPERATIONS.md
-  functional command / query / derivation / lifecycle surface
-
-DOMAIN_PROCEDURAL_COMPOSITION.md
-  material / effective profile / assembly / exploration / environmental procedurality
-
-DOMAIN_HAZARD_DYNAMICS.md
-  committed dynamic processes / hazard projections / perceived threat / causal windows / emergency concurrency
-
-DOMAIN_MICRO_LOOP.md
-  semantic frame groups / tactical-vs-intentional cadence / Scientific Method fixture
-
-DOMAIN_MICRO_LOOP_FALLING_PALM.md
-  immediate-threat frame groups / route/intervention/collision fixture
-
-DOMAIN_OPERATION_REFINEMENTS.md
-  refined attemptability / tactical opportunity / evidence / assembly operation contracts
-
-DOMAIN_REGRESSION.md / DOMAIN_OPERATION_TRACES.md / DOMAIN_VOCABULARY_REGRESSION.md
-  functional-domain regression evidence
-
-DOMAIN_SCHEMA.dbml
-  visualization projection only; not a database/persistence mandate
-
-SIMULATION.md
-  broader world/property/action/event vocabulary
-
-AI.md
-  runtime LLM boundary and fallback
-
-VISUAL_GUIDE.md / ASSET_SPEC.md / ASSET_PIPELINE.md / art/*
-  visual and asset production contracts
-
-brainstorming/functional-asset-catalog/*
-  non-canonical breadth exploration; Round 10/README normalize its interpretation
-
-DISCOVERY_STATUS.md
-  phase/status/index and precedence
-
-handoffs/*
-  transition context and next-step sequencing
-```
-
-When a decision changes, update the document that owns that concern and any status/index references required for discoverability.
-
-## General engineering rules
+# General engineering invariants
 
 1. Keep authoritative simulation independent from rendering.
-2. Prefer composition/data-driven capabilities over concrete-type branching.
-3. Route world mutations through validated domain actions.
-4. Keep randomness seeded and reproducible.
+2. Prefer composition/data-driven semantics over concrete-type branching.
+3. Route authoritative world mutations through validated domain operations/effects.
+4. Keep gameplay randomness seeded and reproducible; presentation randomness is separate.
 5. Do not couple game correctness to LLM availability.
-6. Prefer a reusable primitive over multiple bespoke cases when the abstraction is genuine.
-7. Avoid premature frameworks/generalization: implement the smallest reusable concept proven by current use cases.
-8. Add tests for domain rules and regressions.
-9. Preserve debuggability: autonomous decisions must be explainable through candidates, contributions, preconditions, expectations, evidence, observed events and authoritative outcomes.
-10. Keep code/comments/docs in English.
-11. Do not persist derived state merely because it is convenient to inspect; persist only state justified by `STATE_REQUIREMENTS.md` or a later documented contract.
-12. Keep critical mutation order explicit. Do not hide authoritative cross-system mutation behind a broad event bus.
-13. Evaluator/adaptive contributions must remain bounded and explainable; do not use arbitrary infinity/huge-score hacks for emergencies or priorities.
-14. Keep physical possibility, Wilson knowledge, and Wilson desirability as distinct projections.
-15. Prefer effective properties/capabilities derived from material + condition + composition + contents over authored combinatorial entity variants.
-16. Do not model object exploration as one universal percentage; persist propositions/evidence-backed beliefs instead.
-17. Keep committed dynamic-process evolution distinct from its still-unresolved future collision/consequence.
-18. Wilson emergency decisions consume perceived threat, never hidden authoritative hazard projections directly.
+6. Prefer the smallest reusable primitive proven by current cases; avoid premature universal frameworks.
+7. Add deterministic/headless tests for domain rules and regressions where practical.
+8. Preserve debuggability: autonomous decisions must be explainable through candidates, contributions, preconditions, expectations, evidence, observed events and authoritative outcomes.
+9. Keep code/comments/docs in English.
+10. Persist only state justified by the state/domain contracts; do not persist derived projections merely for convenience.
+11. Keep critical mutation order explicit. Do not hide authoritative cross-owner mutation behind a broad event bus.
+12. Keep evaluator contributions bounded and explainable; never use infinity/huge-score priority hacks.
+13. Keep physical truth, Wilson knowledge/belief and Wilson desirability distinct.
+14. Keep player-private intent distinct from Wilson observation and causal attribution.
+15. Prefer effective properties/capabilities derived from material + condition + composition + contents over combinatorial entity variants.
+16. Do not model exploration as a universal percentage; persist evidence-backed propositions/beliefs instead.
+17. Keep committed dynamic-process evolution distinct from unresolved future collision/consequence.
+18. Wilson emergency decisions consume perceived threat, never hidden authoritative hazard projections.
 
-## Architecture work
+---
 
-Before introducing concrete schemas/classes/package layouts, preserve the separation between:
+# Architecture and domain work
+
+Preserve the separation between:
 
 ```text
 state-owning authoritative systems
 derived/composable services
-explicit orchestration pipelines
-adapters/presentation
+explicit orchestration/application pipelines
+presentation/adapters
 ```
 
-Do not create one state-owning `System` for every psychology noun or procedural mechanic.
+Do not create one state-owning `System` for every psychology noun, content family or procedural mechanic.
 
-Current architecture favors semantic contact contracts such as:
+Current state-owning families are conceptually:
+
+```text
+World Simulation
+Wilson Cognition
+Projects
+Player Run State / Intervention
+Director
+Action Execution / Resolution
+Player Profile across runs
+```
+
+Important semantic contact contracts include:
 
 ```text
 ObservedEvent
@@ -216,158 +142,185 @@ SelectedIntention
 ActionOutcome
 ```
 
-and explicit perception/learning/mutation flow.
+The functional domain has passed structural, operation, procedural, hazard, epistemic and composition fixtures. New primitives must therefore be justified by a concrete invariant or representative behavior that existing composition cannot express.
 
-The contract/orchestration and functional-domain phases have passed representative structural/operation/micro-loop regression gates. Concrete schemas/classes/package layouts may now be designed, but they must preserve the boundaries in the canonical architecture/domain docs unless implementation evidence justifies a documented change.
+Global GOAP, one universal rational utility function, ECS, Godot node layout and persistence technology are not mandated architecture choices.
 
-Global GOAP, one universal rational utility function, ECS choice, Godot node layout and persistence technology are **not** currently mandated architectural assumptions.
+When introducing a new boundary, first ask whether the component owns independent authority/lifecycle or merely derives a projection that belongs in an existing pipeline.
 
-When introducing a new system boundary, first ask whether the component owns independent authority/lifecycle or merely calculates a value that belongs in an existing pipeline.
+## Simulation/domain decision order
 
-## Guards and calibration work
+When adding behavior, ask:
 
-Follow `docs/GUARDS_AND_CALIBRATION.md`.
+1. Is this an existing action applied to a new compatible property/material/profile?
+2. Is one reusable property/capability/relation/action/evidence rule sufficient?
+3. Can runtime composition derive the semantics?
+4. Can existing belief/history/habit/project/decision composition explain the behavior?
+5. Can an environmental/dynamic-process rule express it parametrically?
+6. Does it genuinely require a new primitive?
+
+A large `if entity_type == ...` interaction chain is normally a design smell.
+
+## Catalog versus domain
+
+The asset catalog may state that a content family requires specific properties, capabilities, interaction roles, composition slots, states, contrasts or production assets.
+
+It must not silently introduce:
+
+```text
+new psychological primitives
+new authoritative property families
+new action semantics
+object-pair recipes
+hidden exploration flags
+scene-specific state machines
+```
+
+If catalog analysis exposes a real domain gap, surface it explicitly and update the canonical domain contract as a separate reviewed decision.
+
+---
+
+# Guards and calibration
+
+Follow `docs/GUARDS_AND_CALIBRATION.md` when numeric accumulation or adaptive control is involved.
 
 Key rules:
 
-- use hard finite domain bounds as invariants;
-- prefer saturating/diminishing update curves before clamp;
+- hard finite bounds are invariants;
+- prefer saturating/diminishing updates before clamp;
 - use semantic counter-pressure before hidden normalization;
-- preserve strong contradictory evidence so beliefs remain revisable;
+- strong contradictory evidence must remain able to revise beliefs;
 - do not silently normalize traits, beliefs, associations, habits, trust, dependency, memories or project history toward target averages;
-- evaluate health across populations of deterministic/headless runs rather than forcing each run toward the same distribution;
-- adaptive runtime control must be bounded and explicitly whitelisted;
-- immediate threats use a distinct decision regime, not extreme utility constants.
+- evaluate simulation health across deterministic/headless run populations instead of forcing every run toward one distribution;
+- adaptive control is bounded and explicitly whitelisted;
+- immediate threats use a distinct regime, not extreme utility constants.
 
-## Godot work
+---
+
+# Godot / implementation work
 
 - Treat Godot nodes as presentation/application adapters, not authoritative domain entities.
 - Map stable domain entity IDs to scene instances explicitly.
-- Query attemptability/affordances from the simulation; do not duplicate legality rules in UI scripts.
-- Prefer semantic animation/action names over asset-specific ones.
-- Do not hardcode per-object interaction offsets when an anchor/interaction region can express them.
-- Keep web-export constraints in mind; measure before introducing expensive rendering features.
-- Do not make rendered frame rate the authoritative simulation clock.
+- Query attemptability/affordances from simulation; do not duplicate legality rules in UI scripts.
+- Prefer semantic animation/action names over asset-specific names.
+- Use semantic interaction regions/anchors rather than per-object hardcoded offsets.
+- Do not make rendered frame rate authoritative simulation time.
+- Keep the web-export target in mind and measure performance before adding expensive rendering/runtime techniques.
 
-## Simulation work
+Concrete package/module layout should preserve language-neutral dependency directions before convenience-specific GDScript coupling is introduced.
 
-When adding behavior, ask in this order:
+---
 
-1. Is this an existing action applied to a new compatible property/material/profile?
-2. Is one new reusable property/capability/relation/action/evidence rule enough?
-3. Can runtime composition derive the needed effective semantics?
-4. Can existing belief/history/habit/project/decision composition explain it?
-5. Can an event/environment/dynamic-process rule express it parametrically?
-6. Does it genuinely require a bespoke event or new primitive?
+# Runtime AI
 
-A large `if entity_type == ...` chain is usually a design smell.
-
-Before adding a new psychological state/property or procedural primitive, identify the validated scene/fixture or implementation invariant that becomes impossible without it.
-
-## Runtime AI work
-
-- LLM output is bounded proposal/interpretation/expression, never authority.
-- The core simulation must be behaviorally complete when AI is disabled, unavailable or has no API key.
+- LLM output is bounded proposal/interpretation/expression, never authoritative mutation.
+- The core simulation must be behaviorally complete with AI disabled/unavailable/no API key.
 - Use structured outputs and strict validation where applicable.
 - Resolve generated identifiers against registries.
-- Do not let the LLM invent authoritative memories, knowledge, physical properties, action validity or death outcomes.
+- Do not let an LLM invent authoritative memories, knowledge, physical properties, action validity or death outcomes.
 - Bounded interpretation may perturb weights only among already valid/plausible candidates.
 - Provide deterministic same-function fallbacks.
 - Never expose private provider keys in a public web client.
 
-## 3D / Blender agent rules
+---
 
-Before creating or changing an asset, read the visual/asset chain above.
+# 3D / Blender production
 
-### Preferred method
+Before producing an asset, start from its cross-cutting catalog row and the visual/asset production bundle above.
 
-For repeatable props/environment families:
+## Preferred repeatable workflow
 
 ```text
-inspect existing toolkit
- -> write/reuse bpy generator
- -> execute Blender
- -> validate structure
- -> render canonical gameplay preview
- -> inspect actual render
- -> iterate
- -> export GLB
- -> verify integration
+catalog requirement
+→ relevant art grammar/reference
+→ inspect existing toolkit
+→ write/reuse deterministic bpy generator when appropriate
+→ execute Blender
+→ validate structure
+→ render canonical gameplay preview
+→ inspect actual render
+→ bounded iteration
+→ export GLB
+→ verify integration
+→ update catalog status/notes
 ```
 
-Prefer code-driven reproducibility to long sequences of Blender UI/MCP micro-operations.
+Prefer reproducible generators for repeatable families over long UI/MCP micro-operation sequences.
 
-### Visual iteration
+## Visual iteration
 
-- Inspect the rendered result; code correctness is not visual correctness.
+- Inspect rendered results; code correctness is not visual correctness.
 - Evaluate at gameplay camera distance.
-- Use at most a small bounded number of autonomous aesthetic iterations unless the task says otherwise.
-- If the remaining choice is subjective art direction rather than a defect, surface alternatives instead of silently redefining the style.
+- Use only a small bounded number of autonomous aesthetic iterations unless instructed otherwise.
+- When the remaining choice is subjective direction rather than a defect, surface alternatives rather than silently redefining style.
 
-### Asset generation
+## Asset generation
 
 - Reuse shared primitives/materials.
 - Use deterministic seeds for procedural variants.
-- Preserve required anchors/sockets across variants.
-- Keep geometry simple.
-- Do not add texture detail to compensate for weak silhouettes.
+- Preserve required semantic anchors/sockets across variants.
+- Keep geometry simple and silhouettes readable.
+- Do not add texture detail to compensate for weak form.
 - Do not create unique animations when a generic action + semantic anchor solves the interaction.
 - Never modify Wilson's core identity/design as incidental work on another asset.
 
-### Blender scene hygiene
+## Blender scene hygiene
 
-- Scripts must not rely on active selection unless selection is explicitly set inside the script.
-- Own and clean only generated collections/objects belonging to the task.
+- Scripts must not rely on active selection unless they explicitly set it.
+- Own/clean only generated collections/objects belonging to the task.
 - Use stable names.
-- Keep units/transforms/export orientation consistent with the asset spec.
-- Do not leave temporary cameras/lights/helpers mixed into runtime asset roots.
+- Keep units, transforms and export orientation consistent with `ASSET_SPEC.md`.
+- Do not leave temporary cameras/lights/helpers inside runtime asset roots.
 
 ## Generated assets and source control
 
-Do not commit temporary previews, backups or experimentation debris. Commit source/generators and runtime outputs according to `ASSET_PIPELINE.md` and actual build requirements.
+Do not commit temporary previews, backups or experimentation debris. Commit generators/source/runtime outputs according to `ASSET_PIPELINE.md` and actual build needs.
 
-## Definition of done
+---
 
-### Code change
+# Definition of done
 
-- behavior matches product/behavior/architecture intent;
-- relevant tests pass;
-- no new hidden coupling between simulation and presentation;
+## Code/domain change
+
+- behavior matches product/domain/architecture intent;
+- relevant regressions pass;
+- no hidden simulation/presentation coupling is introduced;
 - deterministic behavior remains reproducible where applicable;
-- autonomous decisions remain explainable in debug traces;
-- guards/bounds remain explicit where numeric accumulation is introduced;
-- docs updated if a contract changed.
+- autonomous decisions remain explainable;
+- numeric guards remain explicit;
+- canonical docs are updated if a contract changes.
 
-### Architecture/design-contract change
+## Architecture/design-contract change
 
-- responsibility/authority owner is explicit;
-- persistent versus derived state is explicit;
+- authority owner is explicit;
+- durable versus derived state is explicit;
 - producer/consumer boundaries are documented;
-- representative scenes and micro-loop fixtures still fit without bespoke architecture hacks;
-- guards/calibration implications are considered;
-- canonical owning document is updated;
-- `DISCOVERY_STATUS.md` or a handoff is updated when the project phase/next work changes materially.
+- representative scenes/fixtures still fit without bespoke architecture hacks;
+- guard/calibration implications are considered;
+- the canonical owner document is updated;
+- status/handoff is updated only when phase/sequencing materially changes.
 
-### 3D asset change
+## Asset/catalog change
 
-- visual guide followed;
-- asset spec validated;
-- canonical preview inspected;
-- semantic anchors/sockets correct;
-- GLB/Godot integration verified when applicable;
-- no bespoke coordinate workaround introduced.
+- catalog row captures required cross-cutting semantics without redefining the domain;
+- applicable visual contracts are satisfied;
+- required states/contrasts/anchors are represented;
+- gameplay-camera preview is reviewed when a model exists;
+- runtime asset conventions are validated;
+- catalog status/notes reflect actual completion.
 
-## Architectural change protocol
+---
 
-Documentation describes current intended contracts, not immutable law. If implementation evidence shows a contract is wrong:
+# Architectural change protocol
 
-1. identify the conflict explicitly;
-2. identify which validated scene/invariant is affected;
-3. explain the tradeoff;
-4. change the canonical relevant design document in the same change;
-5. update affected tests/tools/assets;
-6. update status/handoff documentation if sequencing or closed decisions changed;
-7. avoid quietly implementing a contradictory second architecture.
+Documentation describes current intended contracts, not immutable law. If implementation/content evidence shows a contract is wrong:
+
+1. identify the conflict and affected validated behavior/invariant;
+2. explain the tradeoff;
+3. update the canonical owner document;
+4. update affected tests/content/assets;
+5. update status/handoff only when sequencing or closed decisions changed;
+6. do not quietly implement a contradictory second architecture.
 
 ## Priority
 
