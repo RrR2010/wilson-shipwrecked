@@ -1,8 +1,9 @@
 // Wilson Shipwrecked — Functional Domain Schema Projection
 //
 // Visualization aid for DOMAIN_MODEL.md + DOMAIN_VOCABULARY.md.
-// NOT a persistence/database mandate. Some value objects, predicates and maps
-// are flattened only to make ownership/cardinality inspectable.
+// NOT a persistence/database mandate. Maps/value objects are flattened only to
+// make ownership/cardinality/identity visible. Concrete runtime schema versions
+// belong to DISCOVERY_STATUS.md and implementation code.
 
 Table run_state {
   run_id varchar [pk]
@@ -21,6 +22,15 @@ Table player_run_state {
   god_power decimal
   non_intervention_progress decimal
   game_mode varchar
+}
+
+// ---- Typed authored physical/content semantics ----
+
+Table property_definition {
+  property_id varchar [pk]
+  value_family varchar // NUMBER | BOOLEAN | SYMBOL | future admitted typed family
+  min_value_repr varchar [null]
+  max_value_repr varchar [null]
 }
 
 Table entity_definition {
@@ -43,10 +53,131 @@ Table entity_definition_capability {
 Table entity_definition_property {
   entity_type_id varchar
   property_id varchar
-  value_kind varchar
   value_repr varchar
   indexes { (entity_type_id, property_id) [pk] }
 }
+
+// Ordinary WorldEvent semantic/perceptual definition, not Director lifecycle.
+Table event_definition {
+  event_definition_id varchar [pk]
+  base_confidence decimal
+}
+
+Table event_perceptible_role {
+  event_definition_id varchar
+  role_id varchar
+  indexes { (event_definition_id, role_id) [pk] }
+}
+
+Table event_modality {
+  event_definition_id varchar
+  modality_id varchar
+  indexes { (event_definition_id, modality_id) [pk] }
+}
+
+Table action_definition {
+  action_id varchar [pk]
+  interruption_class varchar // PRE_COMMIT_ONLY | NEVER | ANYTIME
+  requirement_root_id varchar
+}
+
+Table action_role_definition {
+  action_id varchar
+  role_id varchar
+  ordinal int
+  indexes { (action_id, role_id) [pk] }
+}
+
+Table action_resolution_definition {
+  resolution_definition_id varchar [pk]
+  action_id varchar
+  duration decimal
+  commit_fraction decimal
+  event_definition_id varchar
+}
+
+Table action_resolution_effect {
+  resolution_definition_id varchar
+  ordinal int
+  effect_kind varchar
+  subject_role_id varchar
+  semantic_id varchar
+  value_repr varchar [null] // property value OR relation qualifier
+  object_role_id varchar [null]
+  indexes { (resolution_definition_id, ordinal) [pk] }
+}
+
+// Requirement nodes use bounded predicate families from DOMAIN_CATALOGS.md.
+Table requirement_node {
+  requirement_node_id varchar [pk]
+  predicate_kind varchar
+  role_id varchar [null]
+  semantic_id varchar [null]
+  comparison_operator varchar [null]
+  literal_repr varchar [null]
+  object_role_id varchar [null]
+  registered_context_family varchar [null]
+}
+
+Table requirement_edge {
+  parent_requirement_id varchar
+  child_requirement_id varchar
+  ordinal int
+  indexes { (parent_requirement_id, child_requirement_id, ordinal) [pk] }
+}
+
+Table assembly_definition {
+  assembly_definition_id varchar [pk]
+}
+
+Table assembly_slot_definition {
+  assembly_definition_id varchar
+  assembly_slot_id varchar
+  assembly_role_id varchar
+  accepted_component_requirement_root_id varchar
+  min_count int
+  max_count int
+  optional boolean
+  indexes { (assembly_definition_id, assembly_slot_id) [pk] }
+}
+
+Table property_derivation_definition {
+  derivation_id varchar [pk]
+  output_property_id varchar
+  policy_id varchar
+}
+
+Table property_derivation_input {
+  derivation_id varchar
+  ordinal int
+  selector_kind varchar // self | assembly_slot | future bounded selector
+  property_id varchar
+  assembly_slot_id varchar [null]
+  indexes { (derivation_id, ordinal) [pk] }
+}
+
+Table interaction_rule_definition {
+  interaction_rule_id varchar [pk]
+  action_id varchar
+  requirement_root_id varchar
+  resolution_spec_id varchar
+  discovery_spec_id varchar [null]
+}
+
+Table transformation_definition {
+  transformation_id varchar [pk]
+  source_requirement_root_id varchar
+  result_entity_type_id varchar
+  transfer_policy_id varchar
+}
+
+Table transformation_trigger_tag {
+  transformation_id varchar
+  semantic_outcome_tag varchar
+  indexes { (transformation_id, semantic_outcome_tag) [pk] }
+}
+
+// ---- Authoritative World state ----
 
 Table entity_instance {
   entity_id varchar [pk]
@@ -60,7 +191,6 @@ Table entity_instance {
 Table entity_state_override {
   entity_id varchar
   property_id varchar
-  value_kind varchar
   value_repr varchar
   indexes { (entity_id, property_id) [pk] }
 }
@@ -68,14 +198,20 @@ Table entity_state_override {
 Table place_state {
   place_id varchar
   run_id varchar
-  region_id varchar
+  region_id varchar [null]
   indexes { (run_id, place_id) [pk] }
 }
 
-// Defines semantics/invariants of relation types; relation ids are not loose strings.
+Table wilson_world_state {
+  run_id varchar [pk]
+  place_id varchar
+}
+
+// RelationDefinition describes admissibility; exact relation identity additionally
+// includes qualifier. Relation indexes/projections are reconstructible.
 Table relation_definition {
   relation_type_id varchar [pk]
-  cardinality varchar
+  cardinality varchar [null]
   inverse_relation_type_id varchar [null]
   exclusive_group_id varchar [null]
   symmetric boolean
@@ -95,14 +231,14 @@ Table relation_object_kind {
 }
 
 Table world_relation {
-  relation_id varchar [pk]
+  relation_key varchar [pk] // canonical type+subject+object+qualifier identity
   run_id varchar
   relation_type_id varchar
   subject_kind varchar
   subject_id varchar
   object_kind varchar
   object_id varchar
-  qualifier_repr varchar [null]
+  qualifier_value_repr varchar [null] // bounded PropertyValue / typed semantic ID
 }
 
 Table wilson_body_state {
@@ -125,20 +261,6 @@ Table body_condition {
   recovery_policy_id varchar
 }
 
-Table actor_profile_definition {
-  actor_profile_id varchar [pk]
-  persistence_class varchar
-}
-
-Table actor_runtime_state {
-  entity_id varchar [pk]
-  run_id varchar
-  actor_profile_id varchar
-  current_activity_id varchar [null]
-  target_subject_kind varchar [null]
-  target_subject_id varchar [null]
-}
-
 Table environment_state {
   run_id varchar [pk]
   weather_state_id varchar
@@ -154,60 +276,72 @@ Table environmental_process {
   started_at decimal
 }
 
-Table action_definition {
-  action_id varchar [pk]
-  interruption_class varchar
+Table actor_profile_definition {
+  actor_profile_id varchar [pk]
+  persistence_class varchar
 }
 
-Table action_role_definition {
-  action_id varchar
-  role_id varchar
-  ordinal int
-  indexes { (action_id, role_id) [pk] }
+Table actor_runtime_state {
+  entity_id varchar [pk]
+  run_id varchar
+  actor_profile_id varchar
+  current_activity_id varchar [null]
+  target_subject_kind varchar [null]
+  target_subject_id varchar [null]
 }
 
-Table interaction_rule_definition {
-  interaction_rule_id varchar [pk]
-  action_id varchar
-  requirement_root_id varchar
-  resolution_spec_id varchar
-  discovery_spec_id varchar [null]
+// AssemblyBindingProjection and CompositionDependencyProjection are deliberately
+// not persisted here; they reconstruct from qualified WorldRelation state.
+
+// ---- Wilson Cognition ----
+
+Table wilson_trait_profile {
+  run_id varchar [pk]
+  curiosity decimal
+  risk_tolerance decimal
+  independence decimal
 }
 
-// Requirement nodes use normalized predicate families/kinds from DOMAIN_VOCABULARY.md.
-Table requirement_node {
-  requirement_node_id varchar [pk]
-  predicate_family varchar
-  predicate_kind varchar
-  semantic_key varchar [null]
-  left_ref varchar [null]
-  operator varchar [null]
-  right_ref varchar [null]
-  literal_repr varchar [null]
-  registered_context_family varchar [null]
+Table wilson_drive_state {
+  run_id varchar [pk]
+  hunger_urgency decimal
+  energy_need decimal
+  discomfort decimal
+  stimulation_need decimal
 }
 
-Table requirement_edge {
-  parent_requirement_id varchar
-  child_requirement_id varchar
-  ordinal int
-  indexes { (parent_requirement_id, child_requirement_id, ordinal) [pk] }
+Table presence_relationship {
+  run_id varchar [pk]
+  presence_belief decimal
+  trust decimal
+  dependency decimal
 }
 
-Table transformation_definition {
-  transformation_id varchar [pk]
-  source_requirement_root_id varchar
-  result_entity_type_id varchar
-  transfer_policy_id varchar
+// Durable epistemic identity is a CLOSED typed claim, not predicate+argument bag.
+Table epistemic_claim {
+  claim_key varchar [pk]
+  claim_kind varchar // PROPERTY | RELATION | EVENT | future explicitly admitted kind
+  subject_kind varchar
+  subject_id varchar
+  semantic_id varchar // PropertyId | RelationTypeId | EventDefinitionId by claim_kind
+  value_repr varchar [null] // PROPERTY only
+  object_kind varchar [null] // RELATION only
+  object_id varchar [null]
+  perceived_role_id varchar [null] // EVENT only
 }
 
-Table transformation_trigger_tag {
-  transformation_id varchar
-  semantic_outcome_tag varchar
-  indexes { (transformation_id, semantic_outcome_tag) [pk] }
+Table belief_entry {
+  run_id varchar
+  claim_key varchar
+  confidence decimal
+  evidence_count int
+  last_source_execution_id varchar [null]
+  last_modality_id varchar [null]
+  indexes { (run_id, claim_key) [pk] }
 }
 
-// Knowledge is authored metadata over belief propositions, not a second epistemic store.
+// EpistemicGraphProjection is reconstructible from belief_entry + epistemic_claim.
+
 Table knowledge_definition {
   knowledge_id varchar [pk]
   known_confidence_threshold decimal
@@ -215,11 +349,11 @@ Table knowledge_definition {
   legacy_weight decimal
 }
 
-Table knowledge_proposition_pattern {
+Table knowledge_claim_pattern {
   knowledge_id varchar
   ordinal int
-  proposition_predicate_id varchar
-  argument_pattern_repr varchar
+  claim_kind varchar
+  pattern_repr varchar
   indexes { (knowledge_id, ordinal) [pk] }
 }
 
@@ -227,22 +361,6 @@ Table learned_semantic_interaction {
   knowledge_id varchar [pk]
   intention_id varchar
   applicability_requirement_root_id varchar
-}
-
-Table belief_entry {
-  belief_id varchar [pk]
-  run_id varchar
-  proposition_predicate_id varchar
-  confidence decimal
-  source_accessibility varchar
-}
-
-Table belief_argument {
-  belief_id varchar
-  ordinal int
-  subject_kind varchar
-  subject_id varchar
-  indexes { (belief_id, ordinal) [pk] }
 }
 
 Table association_entry {
@@ -267,7 +385,7 @@ Table episode {
   episode_id varchar [pk]
   run_id varchar
   simulation_time decimal
-  world_event_kind_id varchar
+  event_definition_id varchar [null]
   context_place_id varchar [null]
   importance decimal
   source_accessibility varchar
@@ -282,28 +400,6 @@ Table episode_subject {
   subject_kind varchar
   subject_id varchar
   indexes { (episode_id, ordinal) [pk] }
-}
-
-Table wilson_drive_state {
-  run_id varchar [pk]
-  hunger_urgency decimal
-  energy_need decimal
-  discomfort decimal
-  stimulation_need decimal
-}
-
-Table wilson_trait_profile {
-  run_id varchar [pk]
-  curiosity decimal
-  risk_tolerance decimal
-  independence decimal
-}
-
-Table presence_relationship {
-  run_id varchar [pk]
-  presence_belief decimal
-  trust decimal
-  dependency decimal
 }
 
 Table intention_instance {
@@ -324,6 +420,8 @@ Table intention_binding {
   indexes { (intention_id, role_id) [pk] }
 }
 
+// ---- Projects / Director / Player ----
+
 Table project_definition {
   project_definition_id varchar [pk]
   eligibility_requirement_root_id varchar
@@ -338,7 +436,7 @@ Table project_instance {
   lifecycle varchar
 }
 
-// Director-owned authored opportunities are named distinctly from WorldEvent facts.
+// Director-owned opportunity lifecycle is named distinctly from event_definition.
 Table directed_event_definition {
   directed_event_definition_id varchar [pk]
   eligibility_requirement_root_id varchar
@@ -381,19 +479,24 @@ Table diary_record {
   diary_record_id varchar [pk]
   run_id varchar
   record_kind varchar
-  world_event_kind_id varchar [null]
+  event_definition_id varchar [null]
   chronology_order bigint
   data_repr varchar
   screenshot_ref varchar [null]
 }
 
+// ---- Action execution / committed occurrence ----
+
 Table action_execution {
   action_execution_id varchar [pk]
   run_id varchar
   action_id varchar
-  phase varchar
-  commitment_class varchar
-  started_at decimal
+  resolution_definition_id varchar
+  elapsed decimal
+  committed boolean
+  outcome_emitted boolean
+  completed boolean
+  interrupted boolean
 }
 
 Table action_binding {
@@ -407,19 +510,20 @@ Table action_binding {
 Table action_outcome {
   outcome_id varchar [pk]
   action_execution_id varchar
-  classification varchar
-  consequence_severity varchar
+  event_definition_id varchar
+  classification varchar [null]
+  consequence_severity varchar [null]
 }
 
-// Effects are authoritative mutation descriptions; events are emitted facts after commit.
 Table resolved_effect {
   resolved_effect_id varchar [pk]
   outcome_id varchar
-  effect_family varchar
+  ordinal int
   effect_kind varchar
-  target_kind varchar [null]
-  target_id varchar [null]
-  payload_repr varchar
+  subject_role_id varchar
+  semantic_id varchar
+  value_repr varchar [null]
+  object_role_id varchar [null]
 }
 
 Table semantic_outcome_tag {
@@ -439,46 +543,57 @@ Table world_event {
   world_event_id varchar [pk]
   run_id varchar
   outcome_id varchar [null]
-  world_event_kind_id varchar
+  event_definition_id varchar
   simulation_order bigint
 }
 
 Table observed_event {
   observation_id varchar [pk]
   run_id varchar
-  world_event_id varchar [null]
-  observed_event_kind_id varchar
-  observation_quality decimal
+  world_event_id varchar
+  event_definition_id varchar
+  accessible_role_repr varchar
+  modality_repr varchar
 }
 
-Table learning_batch {
-  learning_batch_id varchar [pk]
-  run_id varchar
-  source_observation_id varchar [null]
-  source_outcome_id varchar [null]
-}
+// PerceptionResult / PerceptualEvidence / SemanticChangeSet / effective-profile
+// caches are transient/reconstructible contracts and intentionally omitted as
+// canonical persistent tables in this projection.
 
+// ---- Principal references ----
+
+Ref: entity_definition_property.property_id > property_definition.property_id
 Ref: entity_instance.run_id > run_state.run_id
 Ref: entity_instance.entity_type_id > entity_definition.entity_type_id
-Ref: actor_runtime_state.entity_id > entity_instance.entity_id
-Ref: actor_runtime_state.actor_profile_id > actor_profile_definition.actor_profile_id
+Ref: entity_state_override.entity_id > entity_instance.entity_id
+Ref: entity_state_override.property_id > property_definition.property_id
+Ref: wilson_world_state.run_id > run_state.run_id
 Ref: world_relation.run_id > run_state.run_id
 Ref: world_relation.relation_type_id > relation_definition.relation_type_id
 Ref: relation_subject_kind.relation_type_id > relation_definition.relation_type_id
 Ref: relation_object_kind.relation_type_id > relation_definition.relation_type_id
+Ref: actor_runtime_state.entity_id > entity_instance.entity_id
+Ref: actor_runtime_state.actor_profile_id > actor_profile_definition.actor_profile_id
 Ref: body_condition.run_id > run_state.run_id
 Ref: wilson_body_state.run_id > run_state.run_id
 Ref: environment_state.run_id > run_state.run_id
 Ref: environmental_process.run_id > run_state.run_id
+Ref: action_role_definition.action_id > action_definition.action_id
+Ref: action_resolution_definition.action_id > action_definition.action_id
+Ref: action_resolution_definition.event_definition_id > event_definition.event_definition_id
+Ref: action_resolution_effect.resolution_definition_id > action_resolution_definition.resolution_definition_id
+Ref: event_perceptible_role.event_definition_id > event_definition.event_definition_id
+Ref: event_modality.event_definition_id > event_definition.event_definition_id
+Ref: assembly_slot_definition.assembly_definition_id > assembly_definition.assembly_definition_id
+Ref: property_derivation_definition.output_property_id > property_definition.property_id
+Ref: property_derivation_input.derivation_id > property_derivation_definition.derivation_id
+Ref: property_derivation_input.property_id > property_definition.property_id
 Ref: interaction_rule_definition.action_id > action_definition.action_id
 Ref: transformation_definition.result_entity_type_id > entity_definition.entity_type_id
-Ref: knowledge_proposition_pattern.knowledge_id > knowledge_definition.knowledge_id
-Ref: learned_semantic_interaction.knowledge_id > knowledge_definition.knowledge_id
-Ref: project_instance.project_definition_id > project_definition.project_definition_id
-Ref: project_instance.run_id > run_state.run_id
-Ref: directed_event_instance.directed_event_definition_id > directed_event_definition.directed_event_definition_id
-Ref: directed_event_instance.run_id > run_state.run_id
+Ref: belief_entry.claim_key > epistemic_claim.claim_key
 Ref: belief_entry.run_id > run_state.run_id
+Ref: knowledge_claim_pattern.knowledge_id > knowledge_definition.knowledge_id
+Ref: learned_semantic_interaction.knowledge_id > knowledge_definition.knowledge_id
 Ref: association_entry.run_id > run_state.run_id
 Ref: habit_entry.run_id > run_state.run_id
 Ref: episode.run_id > run_state.run_id
@@ -486,16 +601,25 @@ Ref: wilson_drive_state.run_id > run_state.run_id
 Ref: wilson_trait_profile.run_id > run_state.run_id
 Ref: presence_relationship.run_id > run_state.run_id
 Ref: intention_instance.run_id > run_state.run_id
+Ref: project_instance.project_definition_id > project_definition.project_definition_id
+Ref: project_instance.run_id > run_state.run_id
+Ref: directed_event_instance.directed_event_definition_id > directed_event_definition.directed_event_definition_id
+Ref: directed_event_instance.run_id > run_state.run_id
 Ref: suggestion_window.run_id > run_state.run_id
 Ref: legacy_knowledge.player_profile_id > player_profile.player_profile_id
 Ref: legacy_knowledge.knowledge_id > knowledge_definition.knowledge_id
 Ref: run_diary.player_profile_id > player_profile.player_profile_id
 Ref: diary_record.run_id > run_diary.run_id
 Ref: action_execution.run_id > run_state.run_id
+Ref: action_execution.action_id > action_definition.action_id
+Ref: action_execution.resolution_definition_id > action_resolution_definition.resolution_definition_id
 Ref: action_outcome.action_execution_id > action_execution.action_execution_id
+Ref: action_outcome.event_definition_id > event_definition.event_definition_id
 Ref: resolved_effect.outcome_id > action_outcome.outcome_id
 Ref: semantic_outcome_tag.outcome_id > action_outcome.outcome_id
 Ref: diagnostic_feedback.outcome_id > action_outcome.outcome_id
 Ref: world_event.run_id > run_state.run_id
+Ref: world_event.event_definition_id > event_definition.event_definition_id
 Ref: observed_event.run_id > run_state.run_id
-Ref: learning_batch.run_id > run_state.run_id
+Ref: observed_event.world_event_id > world_event.world_event_id
+Ref: observed_event.event_definition_id > event_definition.event_definition_id
