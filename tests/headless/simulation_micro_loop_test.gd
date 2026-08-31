@@ -4,8 +4,10 @@ const DomainId = preload("res://src/domain/core/domain_id.gd")
 const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
 const ContentRegistry = preload("res://src/domain/content/content_registry.gd")
 const EntityDefinition = preload("res://src/domain/content/entity_definition.gd")
+const EventDefinition = preload("res://src/domain/content/event_definition.gd")
 const EntityInstance = preload("res://src/domain/world/entity_instance.gd")
 const EntityStore = preload("res://src/domain/world/entity_store.gd")
+const WilsonWorldState = preload("res://src/domain/world/wilson_world_state.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
 const DefaultWorldQuery = preload("res://src/domain/world/default_world_query.gd")
 const DefaultWorldCommandPort = preload("res://src/domain/world/default_world_command_port.gd")
@@ -20,7 +22,6 @@ const ActionResolutionDefinition = preload("res://src/domain/actions/action_reso
 const ActionEffect = preload("res://src/domain/actions/action_effect.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
-const PerceptionAccess = preload("res://src/domain/cognition/perception_access.gd")
 const PerceptionService = preload("res://src/domain/cognition/perception_service.gd")
 const BeliefLearningService = preload("res://src/domain/cognition/belief_learning_service.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
@@ -32,11 +33,11 @@ const DecisionRouter = preload("res://src/domain/cognition/decision_router.gd")
 const BeliefLearningCoordinator = preload("res://src/application/simulation/belief_learning_coordinator.gd")
 const DecisionCommitCoordinator = preload("res://src/application/simulation/decision_commit_coordinator.gd")
 const DerivedStateInvalidator = preload("res://src/application/simulation/derived_state_invalidator.gd")
+const DefaultSimulationActivityQuery = preload("res://src/application/simulation/default_simulation_activity_query.gd")
+const CoarsePerceptionAccessResolver = preload("res://src/application/simulation/coarse_perception_access_resolver.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
 const SimulationStepContext = preload("res://src/application/simulation/simulation_step_context.gd")
 const StaticWorldAdvance = preload("res://tests/headless/fixtures/static_world_advance.gd")
-const StaticActivityQuery = preload("res://tests/headless/fixtures/static_activity_query.gd")
-const StaticPerceptionAccessResolver = preload("res://tests/headless/fixtures/static_perception_access_resolver.gd")
 const InMemoryTraceSink = preload("res://tests/headless/fixtures/in_memory_trace_sink.gd")
 
 var _failures: Array[String] = []
@@ -59,47 +60,39 @@ func _run_slice() -> void:
 	var crate_type = DomainId.entity_type(&"crate")
 	var integrity = DomainId.property(&"structural_integrity")
 	var camp = DomainId.place(&"camp")
+	var impact_committed = DomainId.event_definition(&"impact_committed")
 	var content = ContentRegistry.new()
-	var register_result = content.register_entity_definition(EntityDefinition.new(crate_type, [], {integrity.key(): 5}, []))
-	_expect_true(register_result != null and register_result.ok, "crate definition registers")
-	var seal_result = content.seal()
-	_expect_true(seal_result != null and seal_result.ok, "content seals")
+	_expect_true(content.register_entity_definition(EntityDefinition.new(crate_type, [], {integrity.key(): 5}, [])).ok, "crate definition registers")
+	_expect_true(content.register_event_definition(EventDefinition.new(impact_committed, [&"target"], [&"vision"], 0.8)).ok, "event definition registers")
+	_expect_true(content.seal().ok, "content seals")
 
 	var crate_id = DomainId.entity(&"crate_4")
 	var entities = EntityStore.new()
-	var add_result = entities.add_entity(EntityInstance.new(crate_id, crate_type, camp))
-	_expect_true(add_result != null and add_result.ok, "crate instance added")
+	_expect_true(entities.add_entity(EntityInstance.new(crate_id, crate_type, camp)).ok, "crate instance added")
 	var crate = RuntimeWorldRef.entity(crate_id)
 	var wilson = RuntimeWorldRef.wilson()
+	var wilson_world = WilsonWorldState.new(camp)
 	var relations = WorldRelationStore.new()
-	var world_query = DefaultWorldQuery.new(entities, relations, content)
+	var world_query = DefaultWorldQuery.new(entities, relations, content, wilson_world)
 
 	var graph = PropertyDependencyGraph.new()
-	var graph_result = graph.compile([])
-	_expect_true(graph_result != null and graph_result.ok, "empty property graph compiles")
+	_expect_true(graph.compile([]).ok, "empty property graph compiles")
 	var profiles = EffectivePhysicalProfileResolver.new(world_query, graph)
 	var derived_invalidator = DerivedStateInvalidator.new(profiles)
 	var evaluator = RequirementPredicateEvaluator.new(world_query, profiles)
-	var attemptability = ActionAttemptabilityService.new(evaluator)
-	var execution = ActionExecutionService.new(attemptability)
+	var execution = ActionExecutionService.new(ActionAttemptabilityService.new(evaluator))
 
 	var action_id = DomainId.action(&"hit")
-	var requirements = RequirementPredicate.all_of([])
-	var action = ActionDefinition.new(action_id, [&"actor", &"target"], requirements)
+	var action = ActionDefinition.new(action_id, [&"actor", &"target"], RequirementPredicate.all_of([]))
 	var bindings = RoleBinding.new()
 	bindings.bind(&"actor", wilson)
 	bindings.bind(&"target", crate)
-	var impact_committed = DomainId.event_definition(&"impact_committed")
 	var resolution = ActionResolutionDefinition.new(action_id, 1.0, 0.5, [ActionEffect.new(ActionEffect.Kind.SET_PROPERTY, &"target", integrity, 2)], impact_committed)
 	var execution_id: StringName = &"exec_micro_1"
-	var started = execution.start(execution_id, action, resolution, bindings)
-	_expect_true(started != null, "action execution starts")
+	_expect_true(execution.start(execution_id, action, resolution, bindings) != null, "action execution starts")
 
 	var world_commands = DefaultWorldCommandPort.new(entities, relations)
-	var access = PerceptionAccess.new(true, [&"vision"], [&"target"], 0.8)
-	var access_map: Dictionary = {}
-	access_map[execution_id] = access
-	var access_resolver = StaticPerceptionAccessResolver.new(access_map)
+	var access_resolver = CoarsePerceptionAccessResolver.new(world_query)
 	var perception = PerceptionService.new()
 	var belief_store = BeliefStore.new()
 	var learning = BeliefLearningCoordinator.new(BeliefLearningService.new(), belief_store)
@@ -118,7 +111,7 @@ func _run_slice() -> void:
 	var router = DecisionRouter.new()
 	var intention_store = CurrentIntentionStore.new()
 	var decision_commit = DecisionCommitCoordinator.new(intention_store)
-	var activity = StaticActivityQuery.new(execution_id, null)
+	var activity = DefaultSimulationActivityQuery.new(execution, intention_store)
 	var trace_sink = InMemoryTraceSink.new()
 	var orchestrator = SimulationOrchestrator.new(
 		StaticWorldAdvance.new(), execution, world_commands, derived_invalidator,
@@ -126,8 +119,7 @@ func _run_slice() -> void:
 		belief_store, opportunity_definitions, router, decision_commit, trace_sink
 	)
 
-	var step = SimulationStepContext.new(&"step_1", 0.5, 10.0, null, [])
-	var result = orchestrator.advance(step)
+	var result = orchestrator.advance(SimulationStepContext.new(&"step_1", 0.5, 10.0, null, []))
 	_expect_true(result != null, "orchestrator returns result")
 	if result == null:
 		return
@@ -138,7 +130,7 @@ func _run_slice() -> void:
 	_expect_equal(result.world_commit.events.size(), 1, "World commit emits one event")
 	_expect_equal(result.world_commit.change_set.changes.size(), 1, "World commit reports one semantic change")
 	_expect_equal(result.perception.observed_events.size(), 1, "committed event becomes observed event")
-	_expect_equal(result.perception.evidence.size(), 1, "observation produces perceptual evidence")
+	_expect_equal(result.perception.evidence.size(), 1, "coarse spatial access produces one authored-role evidence")
 	_expect_equal(result.perception.evidence[0].claim.kind, EpistemicClaim.Kind.EVENT, "perception carries typed event claim")
 	var learning_evidence: Array = result.immediate_learning.get("derived_evidence", [])
 	_expect_equal(learning_evidence.size(), 1, "perceptual evidence becomes belief evidence")
@@ -160,6 +152,11 @@ func _run_slice() -> void:
 		_expect_true(trace.stage_results.has(&"decision_candidates"), "trace records candidates")
 		_expect_true(trace.stage_results.has(&"decision"), "trace records decision")
 		_expect_true(trace.stage_results.has(&"intention_commit"), "trace records intention commit")
+
+	# Completion is reflected directly by the owner-backed activity query.
+	var completion = execution.advance(execution_id, 0.5)
+	_expect_true(completion.completed, "action can complete")
+	_expect_equal(String(activity.active_execution_id()), "", "completed action is not reported active")
 
 	_completed = true
 
