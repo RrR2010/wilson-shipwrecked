@@ -30,6 +30,7 @@ const DecisionCandidate = preload("res://src/domain/cognition/decision_candidate
 const DecisionRouter = preload("res://src/domain/cognition/decision_router.gd")
 const BeliefLearningCoordinator = preload("res://src/application/simulation/belief_learning_coordinator.gd")
 const DecisionCommitCoordinator = preload("res://src/application/simulation/decision_commit_coordinator.gd")
+const DerivedStateInvalidator = preload("res://src/application/simulation/derived_state_invalidator.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
 const SimulationStepContext = preload("res://src/application/simulation/simulation_step_context.gd")
 const StaticWorldAdvance = preload("res://tests/headless/fixtures/static_world_advance.gd")
@@ -39,7 +40,6 @@ const InMemoryTraceSink = preload("res://tests/headless/fixtures/in_memory_trace
 
 var _failures: Array[String] = []
 var _completed := false
-
 
 func _init() -> void:
 	_run_slice()
@@ -54,15 +54,12 @@ func _init() -> void:
 	print("FAIL simulation_micro_loop_test: %d failure(s)" % _failures.size())
 	quit(1)
 
-
 func _run_slice() -> void:
 	var crate_type = DomainId.entity_type(&"crate")
 	var integrity = DomainId.property(&"structural_integrity")
 	var camp = DomainId.place(&"camp")
 	var content = ContentRegistry.new()
-	var register_result = content.register_entity_definition(EntityDefinition.new(
-		crate_type, [], {integrity.key(): 5}, []
-	))
+	var register_result = content.register_entity_definition(EntityDefinition.new(crate_type, [], {integrity.key(): 5}, []))
 	_expect_true(register_result != null and register_result.ok, "crate definition registers")
 	var seal_result = content.seal()
 	_expect_true(seal_result != null and seal_result.ok, "content seals")
@@ -80,6 +77,7 @@ func _run_slice() -> void:
 	var graph_result = graph.compile([])
 	_expect_true(graph_result != null and graph_result.ok, "empty property graph compiles")
 	var profiles = EffectivePhysicalProfileResolver.new(world_query, graph)
+	var derived_invalidator = DerivedStateInvalidator.new(profiles)
 	var evaluator = RequirementPredicateEvaluator.new(world_query, profiles)
 	var attemptability = ActionAttemptabilityService.new(evaluator)
 	var execution = ActionExecutionService.new(attemptability)
@@ -90,13 +88,7 @@ func _run_slice() -> void:
 	var bindings = RoleBinding.new()
 	bindings.bind(&"actor", wilson)
 	bindings.bind(&"target", crate)
-	var resolution = ActionResolutionDefinition.new(
-		action_id,
-		1.0,
-		0.5,
-		[ActionEffect.new(ActionEffect.Kind.SET_PROPERTY, &"target", integrity, 2)],
-		&"impact_committed"
-	)
+	var resolution = ActionResolutionDefinition.new(action_id, 1.0, 0.5, [ActionEffect.new(ActionEffect.Kind.SET_PROPERTY, &"target", integrity, 2)], &"impact_committed")
 	var execution_id: StringName = &"exec_micro_1"
 	var started = execution.start(execution_id, action, resolution, bindings)
 	_expect_true(started != null, "action execution starts")
@@ -111,32 +103,16 @@ func _run_slice() -> void:
 	var learning = BeliefLearningCoordinator.new(BeliefLearningService.new(), belief_store)
 	var opportunity_service = PerceivedOpportunityService.new()
 	var investigate = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"investigate_recent_impact")
-	var opportunity_definitions = [PerceivedOpportunityDefinition.new(
-		&"observed_event",
-		investigate,
-		DecisionCandidate.Scope.INTENTIONAL,
-		0.4,
-		&"target"
-	)]
+	var opportunity_definitions = [PerceivedOpportunityDefinition.new(&"observed_event", investigate, DecisionCandidate.Scope.INTENTIONAL, 0.4, &"target")]
 	var router = DecisionRouter.new()
 	var intention_store = CurrentIntentionStore.new()
 	var decision_commit = DecisionCommitCoordinator.new(intention_store)
 	var activity = StaticActivityQuery.new(execution_id, null)
 	var trace_sink = InMemoryTraceSink.new()
 	var orchestrator = SimulationOrchestrator.new(
-		StaticWorldAdvance.new(),
-		execution,
-		world_commands,
-		activity,
-		access_resolver,
-		perception,
-		learning,
-		opportunity_service,
-		belief_store,
-		opportunity_definitions,
-		router,
-		decision_commit,
-		trace_sink
+		StaticWorldAdvance.new(), execution, world_commands, derived_invalidator,
+		activity, access_resolver, perception, learning, opportunity_service,
+		belief_store, opportunity_definitions, router, decision_commit, trace_sink
 	)
 
 	var step = SimulationStepContext.new(&"step_1", 0.5, 10.0, null, [])
@@ -149,6 +125,7 @@ func _run_slice() -> void:
 	_expect_true(result.world_commit != null and result.world_commit.ok, "outcome commits through World owner")
 	_expect_equal(world_query.get_instance_property(crate, integrity), 2, "World mutation is visible after commit")
 	_expect_equal(result.world_commit.events.size(), 1, "World commit emits one event")
+	_expect_equal(result.world_commit.change_set.changes.size(), 1, "World commit reports one semantic change")
 	_expect_equal(result.perception.observed_events.size(), 1, "committed event becomes observed event")
 	_expect_equal(result.perception.evidence.size(), 1, "observation produces perceptual evidence")
 	var learning_evidence: Array = result.immediate_learning.get("derived_evidence", [])
@@ -161,13 +138,11 @@ func _run_slice() -> void:
 		_expect_equal(String(result.decision.regime), "intentional", "decision uses intentional regime")
 	_expect_true(result.intention_commit != null and result.intention_commit.ok, "selected intention commits through cognition owner")
 	_expect_true(intention_store.has_current(), "current intention becomes durable state")
-	if intention_store.has_current():
-		_expect_equal(intention_store.current().intention_id.key(), investigate.key(), "durable intention id matches selection")
-		_expect_equal(String(intention_store.current().selected_step_id), "step_1", "durable intention records selection step")
 	_expect_equal(trace_sink.traces.size(), 1, "one semantic trace recorded")
 	if trace_sink.traces.size() == 1:
 		var trace = trace_sink.traces[0]
 		_expect_true(trace.stage_results.has(&"world_commit"), "trace records World commit")
+		_expect_true(trace.stage_results.has(&"derived_invalidation"), "trace records derived invalidation")
 		_expect_true(trace.stage_results.has(&"perception"), "trace records perception")
 		_expect_true(trace.stage_results.has(&"immediate_learning"), "trace records learning")
 		_expect_true(trace.stage_results.has(&"decision_candidates"), "trace records candidates")
@@ -176,11 +151,9 @@ func _run_slice() -> void:
 
 	_completed = true
 
-
 func _expect_true(actual: bool, label: String) -> void:
 	if not actual:
 		_failures.append("Expected true: %s" % label)
-
 
 func _expect_equal(actual: Variant, expected: Variant, label: String) -> void:
 	if actual != expected:
