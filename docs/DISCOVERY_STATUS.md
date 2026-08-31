@@ -6,7 +6,7 @@ Wilson Shipwrecked has completed the product/behavior/architecture discovery gat
 
 The current design phase is **functional-domain stabilization through concrete scenario fixtures/micro-loops**, immediately before package/module layout and implementation-language-specific code.
 
-The project is no longer waiting for a first domain model: structural, operation, vocabulary, procedural-composition and Scientific Method micro-loop regressions now exist.
+The project is no longer waiting for a first domain model: structural, operation, vocabulary, procedural-composition, Scientific Method and Falling Palm micro-loop regressions now exist.
 
 ---
 
@@ -29,11 +29,13 @@ For work that changes simulation/domain behavior, read:
 13. `DOMAIN_CATALOGS.md`
 14. `DOMAIN_OPERATIONS.md`
 15. `DOMAIN_PROCEDURAL_COMPOSITION.md`
-16. `DOMAIN_MICRO_LOOP.md`
-17. `DOMAIN_OPERATION_REFINEMENTS.md`
-18. `DOMAIN_REGRESSION.md`
-19. `DOMAIN_OPERATION_TRACES.md`
-20. `DOMAIN_VOCABULARY_REGRESSION.md`
+16. `DOMAIN_HAZARD_DYNAMICS.md`
+17. `DOMAIN_MICRO_LOOP.md`
+18. `DOMAIN_MICRO_LOOP_FALLING_PALM.md`
+19. `DOMAIN_OPERATION_REFINEMENTS.md`
+20. `DOMAIN_REGRESSION.md`
+21. `DOMAIN_OPERATION_TRACES.md`
+22. `DOMAIN_VOCABULARY_REGRESSION.md`
 
 `DOMAIN_SCHEMA.dbml` is a visualization aid only and is not a persistence/database mandate.
 
@@ -84,6 +86,8 @@ Expectation
 Salience
 Effective physical profile derivation
 Affordance/attemptability derivation
+Hazard projection
+Perceived threat derivation
 Tactical candidate generation/evaluation
 Intentional candidate generation/evaluation
 Causal attribution
@@ -197,6 +201,33 @@ physical truth
 
 Micro-loop regression: **PASS with incorporated refinements**.
 
+## Falling Palm micro-loop / hazard dynamics
+
+`DOMAIN_MICRO_LOOP_FALLING_PALM.md` validates the immediate-threat path against a time-extended environmental accident.
+
+`DOMAIN_HAZARD_DYNAMICS.md` promotes the reusable semantics exposed by that fixture:
+
+```text
+DynamicProcessState
+HazardProjection
+PerceivedThreat
+causal/intervention windows
+authoritative vs perceived routes
+secondary hazards
+semantic-step concurrency ordering
+```
+
+The key invariant is now explicit:
+
+```text
+committed physical process
+!= committed final collision consequence
+```
+
+A palm may already be irreversibly falling while Wilson/player actions can still change positions or routes before impact. Wilson's emergency cognition uses perceived threat evidence rather than hidden authoritative future collision truth.
+
+Falling Palm regression: **PASS with incorporated hazard-dynamics refinements**.
+
 ---
 
 # Functional asset catalog status
@@ -237,6 +268,7 @@ Functional asset breadth          PASS + normalized procedural contracts
 Gradual exploration               PASS after evidence refinement
 Composite object semantics        PASS after EffectivePhysicalProfile refinement
 Scientific Method micro-loop      PASS
+Falling Palm hazard micro-loop    PASS
 ```
 
 No new state-owning system was required for:
@@ -248,9 +280,11 @@ tactical planning
 procedural object composition
 material physics
 interaction sub-regions
+hazard projection
+immediate threat handling
 ```
 
-These remain composition/derivation concerns inside existing authority boundaries.
+These remain composition/derivation concerns inside existing authority boundaries. Only time-extended authoritative physical evolution may require durable `DynamicProcessState` while active.
 
 ---
 
@@ -261,11 +295,12 @@ The following may still be refined during concrete fixtures/implementation, but 
 1. exact spatial topology representation / navigation implementation;
 2. exact body mutation proposer API beneath World authority;
 3. concrete shallow animal behavior representation;
-4. exact environmental-process persistence/derivation thresholds;
+4. exact environmental/dynamic-process persistence thresholds;
 5. final bounded property catalogue and registered derivation policies;
 6. exact semantic concept vocabulary boundaries;
 7. concrete content serialization format;
-8. exact presentation adapters for `InteractionRegion` / anchors / sockets.
+8. exact presentation adapters for `InteractionRegion` / anchors / sockets;
+9. exact deterministic tie-break encoding for simultaneous semantic boundaries.
 
 ---
 
@@ -273,11 +308,11 @@ The following may still be refined during concrete fixtures/implementation, but 
 
 Before implementation-specific package layout:
 
-1. create a small set of declarative language-neutral fixtures using the final domain vocabulary;
+1. create remaining small declarative language-neutral fixtures using the final domain vocabulary;
 2. include at least:
-   - Scientific Method (now traced at frame-group level),
+   - Scientific Method (traced at frame-group level),
+   - Falling Palm (traced at hazard frame-group level),
    - Sabotaged Storage,
-   - Falling Palm,
    - one composite-object fixture (improvised hammer or barrel),
    - one environment/composition fixture (cloth/shelter in rain/wind);
 3. validate that each fixture can be represented without new bypass flags/classes;
