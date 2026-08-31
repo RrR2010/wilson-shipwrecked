@@ -56,6 +56,12 @@ func has_base_property(property_id: DomainId) -> bool:
 	return _base_properties.has(property_id.key())
 
 
+func base_property_keys() -> Array:
+	var result: Array = _base_properties.keys()
+	result.sort_custom(func(a, b): return String(a) < String(b))
+	return result
+
+
 func describe() -> Dictionary:
 	return {
 		"id": id.sort_key(),
