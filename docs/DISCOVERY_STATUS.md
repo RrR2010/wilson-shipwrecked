@@ -2,23 +2,26 @@
 
 ## Current phase
 
-Product/behavior discovery, architecture contracts, the language-neutral functional domain, and the normalized cross-cutting asset catalog are complete enough to proceed to concrete domain types and implementation scaffolding.
+Product/behavior discovery, architecture contracts, the language-neutral functional domain, and the normalized cross-cutting asset catalog are complete enough to support concrete implementation.
 
-The typed semantic graph/index refactor and language-neutral module-layout pass are now **consolidated into existing canonical owners** rather than maintained as additional override/specification files.
+The first authoritative vertical implementation is now validated end-to-end under **Godot 4.7.1** with a strict external headless runner that rejects engine/script errors even when an individual test process exits `0`.
 
-Current implementation sequence:
+Current validated implementation chain:
 
 ```text
-concrete core/domain types
-→ immutable content registries + validation/index compilation
-→ World + typed relation indexes
-→ physical/assembly/attemptability services
-→ action execution / ActionOutcome
-→ perception/evidence + minimal cognition
-→ decision loop
-→ persistence/reconstruction
-→ Godot presentation adapters
-→ deterministic fixture/headless regressions
+typed IDs / runtime refs
+→ immutable content bootstrap
+→ authoritative entities + relations
+→ reconstructible relation indexes
+→ property dependency DAG + EffectivePhysicalProfile
+→ SemanticPattern + ActionAttemptability
+→ ActionExecution + committed World mutation
+→ WorldEvent → Perception → PerceptualEvidence
+→ BeliefStore + EpistemicGraphProjection
+→ candidate generation + decision routing
+→ durable CurrentIntention
+→ application micro-loop orchestration + semantic trace
+→ JSON snapshot / restore / rebuild of authoritative runtime causes
 ```
 
 Model/content production may proceed independently from the normalized [`asset-catalog/`](asset-catalog/).
@@ -55,6 +58,17 @@ Cloth/shelter/weather fixture              PASS
 Typed semantic graph/index contracts       PASS
 Language-neutral module dependency layout  PASS
 Documentation consolidation for this pass  PASS
+
+World relation runtime slice               PASS — Godot 4.7.1 headless
+Effective physical profile slice           PASS — Godot 4.7.1 headless
+Semantic pattern / attemptability slice     PASS — Godot 4.7.1 headless
+Committed action execution slice            PASS — Godot 4.7.1 headless
+Perception projection slice                 PASS — Godot 4.7.1 headless
+Belief learning / epistemic slice           PASS — Godot 4.7.1 headless
+Decision routing slice                      PASS — Godot 4.7.1 headless
+End-to-end simulation micro-loop            PASS — Godot 4.7.1 headless
+Save/load/rebuild reconstruction slice      PASS — Godot 4.7.1 headless
+Strict headless suite                       PASS — 9 tests
 ```
 
 **Functional-domain stabilization gate: PASS.**
@@ -62,6 +76,37 @@ Documentation consolidation for this pass  PASS
 **Asset-catalog functional normalization gate: PASS for current P0/P1 breadth.**
 
 **Module/dependency-layout gate: PASS.**
+
+**First authoritative runtime vertical gate: PASS.**
+
+---
+
+# Validated runtime invariants
+
+The current implementation has explicit regression coverage for these boundaries:
+
+```text
+World truth != Wilson observation != Wilson belief
+
+ActionAttemptability is pure
+ActionExecution does not mutate World directly
+committed action checkpoints emit one ActionOutcome
+WorldEvent appears only after successful owner commit
+Perception projects only accessible event roles
+PerceptualEvidence does not mutate cognition directly
+Belief learning is bounded and revisable
+EpistemicGraphProjection is reconstructible, never authority
+Decision routing separates immediate-threat / tactical / intentional regimes
+external bias is bounded and cannot become a command
+selected intention is owner-local durable cognition state
+simulation trace is diagnostic-only
+save stores authoritative runtime causes, not reconstructible indexes/caches
+save → JSON → load → rebuild preserves tested semantic queries
+```
+
+Property derivation policies are now validated during dependency-graph compilation; unknown authored policies fail bootstrap instead of asserting only during runtime resolution.
+
+The strict PowerShell runner additionally rejects `SCRIPT ERROR`, parse/compile failures, generic engine `ERROR:` output, explicit `FAIL`, missing expected `PASS`, or nonzero process exit status. This prevents the previously observed Godot false-green class where a script error could be printed before `PASS`.
 
 ---
 
@@ -115,7 +160,7 @@ There is intentionally no separate generic GraphSystem/EverythingGraph.
 
 # Module-layout result
 
-`ARCHITECTURE.md` now defines the language-neutral module families:
+`ARCHITECTURE.md` defines the language-neutral module families:
 
 ```text
 domain/
@@ -169,7 +214,7 @@ Canonical fixture dependency review remains PASS for Scientific Method, Falling 
 
 # Canonical operation surface
 
-`DOMAIN_OPERATIONS.md` is now the **single** canonical operation surface and includes the formerly separate refinement semantics:
+`DOMAIN_OPERATIONS.md` is the **single** canonical operation surface and includes:
 
 ```text
 ResolveEffectivePhysicalProfile
@@ -207,7 +252,7 @@ DOMAIN_OPERATION_REFINEMENTS.md retired / absorbed
 DOMAIN_SEMANTIC_GRAPHS.md       retired / absorbed
 ```
 
-Ownership now is:
+Ownership remains:
 
 ```text
 ARCHITECTURE.md
@@ -222,7 +267,7 @@ existing domain documents
   own relation/property/composition/epistemic meanings
 ```
 
-`docs/README.md` now explicitly prefers updating canonical owners over creating `*_REFINEMENTS`, `*_V2` or permanent override chains.
+`docs/README.md` explicitly prefers updating canonical owners over creating `*_REFINEMENTS`, `*_V2` or permanent override chains.
 
 ---
 
@@ -241,24 +286,28 @@ The catalog's semantic density is a primary practical consumer of local typed in
 
 ---
 
-# Remaining non-blocking implementation questions
+# Remaining implementation questions
 
-These may be resolved while defining concrete types/fixtures:
+These are now predominantly concrete runtime/content concerns rather than discovery blockers:
 
 1. exact spatial topology/navigation representation;
 2. body mutation proposer API beneath World authority;
 3. concrete shallow animal behavior representation;
 4. environmental/dynamic-process persistence thresholds;
-5. final bounded property catalogue/registered derivation policies;
+5. final bounded `PropertyValue` catalogue/schema beyond the current numeric derivation fixture;
 6. exact `SemanticConceptId` boundaries;
-7. concrete content serialization format;
+7. concrete authored-content serialization/loading format;
 8. presentation adapters for InteractionRegion, anchors, body-slot qualifiers and assembly sockets;
-9. exact deterministic tie-break encoding for simultaneous semantic boundaries;
-10. minimal reconstruction policy for saves mid-investigation;
+9. exact deterministic tie-break encoding for simultaneous semantic boundaries beyond current stable-key routing;
+10. reconstruction policy for an **action execution in progress**, especially across committed checkpoints;
 11. coarse representation for protection coverage/gaps;
-12. internal relation/property/capability index structures;
-13. exact derived-cache invalidation implementation;
-14. concrete GDScript mapping of typed IDs/unions/value objects without weakening semantic validation.
+12. composition dependency projection / AssemblyValidity implementation;
+13. exact derived-cache invalidation optimization beyond conservative subject invalidation;
+14. candidate source services for drives, projects, habits, Presence and Director;
+15. action interruption classes and broader runtime action lifecycle;
+16. richer physical provenance distinguishing authored base value from runtime override;
+17. bounded type-safe property comparisons instead of unrestricted `Variant` comparison;
+18. spatial/perception access implementation replacing the current explicit access-policy fixture.
 
 These are implementation choices, not evidence for new state owners.
 
@@ -266,21 +315,19 @@ These are implementation choices, not evidence for new state owners.
 
 # Recommended next work
 
-Proceed to **concrete domain types and implementation scaffolding**.
+Continue from the validated vertical rather than adding parallel scaffolds.
 
-Recommended first vertical slice of types/infrastructure:
+Recommended sequence:
 
 ```text
-1. typed IDs / refs / bounded values
-2. Definition registries + bootstrap validation
-3. EntityInstance / WorldRelation / WorldState
-4. typed World relation indexes and bounded traversal
-5. material/property derivation + PropertyDependencyGraph
-6. assembly bindings + AssemblyValidity / EffectivePhysicalProfile
-7. ActionDefinition / InteractionRule / SemanticPattern candidate matching
-8. QueryActionAttemptability + ActionExecution / ActionOutcome
-9. minimal BeliefStore + EpistemicGraphProjection
-10. deterministic fixture harness
+1. authored ActionDefinition / ActionResolutionDefinition registry
+2. mid-action save/load reconstruction with committed-checkpoint invariants
+3. composition dependency projection + AssemblyValidity
+4. bounded PropertyValue schema / comparison policies
+5. concrete spatial query + perception-access adapter
+6. project / drive / habit candidate producers
+7. presentation adapters + representative scene rendering fixtures
+8. deterministic larger regression scenarios
 ```
 
-The implementation may favor direct GDScript, but it should preserve these language-neutral boundaries rather than mirror Godot scene structure.
+The implementation may favor direct GDScript, but it should preserve the language-neutral ownership and dependency boundaries rather than mirror Godot scene structure.
