@@ -2,38 +2,38 @@
 
 ## Purpose
 
-This is the single operational art contract for autonomous 3D modeling agents. It covers artistic source precedence, modeling iteration, canonical previews, self-review, independent review and acceptance.
+This is the single operational **artistic** contract for autonomous 3D modeling agents. It covers visual source precedence, modeling iteration, canonical previews, self-review, independent art review and artistic acceptance.
 
-It intentionally excludes Blender/MCP/export implementation details. Those remain in `../ASSET_PIPELINE.md` and `../ASSET_SPEC.md`.
+It does not define the asset's full functional contract. Start from the cross-cutting row in `../asset-catalog/`. Technical Blender/MCP/export details remain in `../ASSET_PIPELINE.md` and `../ASSET_SPEC.md`.
 
 ## 1. Source precedence
 
 For a modeling task, read only what is needed, in this order:
 
-1. `../VISUAL_GUIDE.md` — project visual source of truth.
-2. `ART_DIRECTION.md`, `SHAPE_LANGUAGE.md`, `PALETTE_AND_MATERIALS.md`, `SCALE_CAMERA_AND_READABILITY.md` — art-system constraints.
-3. The relevant `reference/REFERENCE_*.md` plus its approved `reference/visual/*.png` sheet.
-4. The matching row in `production/`.
-5. The family/asset brief, when one exists.
+1. Matching `../asset-catalog/` row — what the modeled asset/family must support across concerns.
+2. `../VISUAL_GUIDE.md` — project visual source of truth.
+3. `ART_DIRECTION.md`, `SHAPE_LANGUAGE.md`, `PALETTE_AND_MATERIALS.md`, `SCALE_CAMERA_AND_READABILITY.md` — project-wide art constraints.
+4. Relevant `reference/REFERENCE_*.md` plus approved `reference/visual/*.png` sheet.
+5. Optional family/asset **art brief** when catalog + references leave a visual ambiguity.
 
-The brief is the immediate task contract, but it cannot override higher-tier visual rules.
+An art brief may narrow shape/variation decisions but cannot override the cross-cutting asset catalog, domain contracts or higher-tier visual rules.
 
 Do not read Rounds 1–10 as the default modeling prompt. They are historical design evidence.
 
-## 2. Brief granularity
+## 2. Art-brief granularity
 
-Use the smallest sufficient brief:
+Use the smallest sufficient art brief:
 
-- **Grammar-only task** — trivial variant fully covered by an approved family grammar; needs ID, family, approximate dimensions, state/variant and required art anchors.
-- **Family brief** — reusable family with shared construction, variation bounds and states.
-- **Asset-specific brief** — modular/stateful/rare/high-risk asset such as shelter, raft, dock, mystery container or Wilson.
+- **No separate brief / grammar-only task** — trivial variant fully covered by catalog + approved reference.
+- **Family art brief** — family needs extra visual construction/variation bounds not worth repeating in every catalog row.
+- **Asset-specific art brief** — visually high-risk or unusually authored asset such as Wilson or rare hero salvage.
 
-Do not create one long bespoke document for every rock, plank, bowl or coconut.
+Functional requirements, capabilities, states, interactions and composition belong in the cross-cutting asset catalog/domain contracts rather than being hidden inside an art brief.
 
 ## 3. Modeling loop
 
 ```text
-READ TASK
+READ ASSET CONTRACT
 → STATE PRIMARY VISUAL READ
 → BLOCK OUT
 → APPLY FAMILY GRAMMAR
@@ -41,9 +41,9 @@ READ TASK
 → RENDER CANONICAL PREVIEWS
 → SELF-REVIEW
 → FOCUSED REVISION
-→ INDEPENDENT REVIEW
+→ INDEPENDENT ART REVIEW
 → FINAL CORRECTION
-→ ACCEPT OR ESCALATE
+→ ART ACCEPT OR ESCALATE
 ```
 
 ### Primary read
@@ -102,8 +102,6 @@ Optional when relevant:
 
 ### Orientation convention
 
-Use:
-
 ```text
 +Y = nominal front
 +X = nominal right
@@ -122,15 +120,13 @@ azimuth: ~45° relative to nominal front
 elevation: ~35° downward
 ```
 
-The gameplay view is authoritative. The exact values are provisional calibration targets, not immutable world-domain constants.
+The gameplay view is authoritative. Exact values are provisional calibration targets.
 
 ### Review environment
 
 Use neutral ground/background, one soft dominant directional light, ambient fill and contact shadows. No cinematic depth of field, dramatic fog or post-processing that hides geometry.
 
 ### Review priority
-
-When views disagree:
 
 ```text
 1. gameplay 3/4
@@ -144,7 +140,7 @@ A close-up cannot rescue an unreadable gameplay asset.
 
 ## 5. Stateful and modular assets
 
-For meaningful states, render side-by-side under identical camera/light, e.g.:
+Render meaningful states side-by-side under identical camera/light, for example:
 
 ```text
 intact → damaged → repaired
@@ -153,12 +149,7 @@ healthy → harvested → damaged
 site → partial project → complete
 ```
 
-For large projects, review at minimum:
-
-- early stage;
-- recognizable partial stage;
-- complete stage;
-- damage/repair state when relevant.
+For large projects, review at minimum early, recognizable partial and complete stages, plus damage/repair when required by the catalog.
 
 Intermediate stages must look intentionally incomplete, not like missing exports.
 
@@ -177,27 +168,27 @@ Score applicable criteria from `0–3`:
 
 | Criterion | Weight | Core question |
 |---|---:|---|
-| Silhouette | 3 | Is the object recognizable and functionally legible at gameplay distance? |
-| Family/style consistency | 3 | Does it belong to the approved Wilson Shipwrecked grammar? |
+| Silhouette | 3 | Is it recognizable and functionally legible at gameplay distance? |
+| Family/style consistency | 3 | Does it belong to the approved project grammar? |
 | Proportion/scale | 3 | Is it correctly scaled and sufficiently exaggerated for interaction readability? |
 | Form economy | 2 | Can geometry/detail be removed without losing value? |
 | Faceting/planar language | 2 | Do facets describe form intentionally rather than add noise? |
 | Material simplicity | 2 | Are shared flat materials sufficient? |
 | Construction readability | 2 | If assembled, can major connections be understood? |
-| State readability | 2 | If stateful, are required states distinguishable at gameplay distance? |
+| State readability | 2 | If stateful, are catalog-required states distinguishable at gameplay distance? |
 | Grounding/contact | 1 | Does it sit/use/contact the world convincingly? |
-| Reference alignment | 2 | Does it follow textual + visual family references without copying AI artifacts? |
+| Reference alignment | 2 | Does it follow textual + visual references without copying AI artifacts? |
 
-Default acceptance heuristic:
+Default art acceptance heuristic:
 
 - no `0` in silhouette, family consistency or scale;
 - no more than one `1` among weighted criteria;
 - weighted average approximately `>= 2.35 / 3`;
 - gameplay view independently acceptable.
 
-Hard-fail examples include wrong style, texture-led identity, smooth generic asset-pack appearance, noisy faceting, unreadable silhouette, obviously wrong scale, unexplained monolithic project construction, invisible important states or fragile/thin forms inconsistent with the grammar.
+Hard-fail examples include wrong style, texture-led identity, smooth generic asset-pack appearance, noisy faceting, unreadable silhouette, obviously wrong scale, unexplained monolithic project construction, invisible required states or fragile/thin forms inconsistent with the grammar.
 
-Minor invisible topology imperfections and absence of decorative micro-detail do not block acceptance.
+Minor invisible topology imperfections and absence of decorative micro-detail do not block artistic acceptance.
 
 ## 7. Creator iteration guard
 
@@ -205,17 +196,18 @@ Use up to **4 self-review cycles** by default. Each cycle targets the largest re
 
 Do not spend iterations on details invisible from gameplay distance.
 
-If a major criterion still fails after four cycles, report the unresolved design conflict instead of polishing indefinitely.
+If a major criterion still fails after four cycles, report the unresolved visual conflict instead of polishing indefinitely.
 
-## 8. Independent review
+## 8. Independent art review
 
 Use a fresh reviewer context/subagent where practical. Give it:
 
-- asset brief;
+- relevant asset-catalog row;
+- optional art brief;
 - relevant textual + visual references;
 - canonical preview renders.
 
-Do **not** initially provide the creator's self-justification. The reviewer evaluates requested intent versus rendered result.
+Do **not** initially provide the creator's self-justification.
 
 The reviewer does not remodel. It returns:
 
@@ -249,37 +241,30 @@ Return at most three corrections, ordered by gameplay value.
 
 ### Review outcome loop
 
-- `PASS` → accept.
+- `PASS` → artistic gate passes.
 - `CONDITIONAL PASS` → one focused creator correction.
 - `FAIL` → up to two focused corrections, rerender and review again.
 - Repeated failure for the same structural reason → escalate to human/design review.
+
+Passing this art gate does not imply that functional/runtime validation has passed; the cross-cutting catalog may later track those gates separately.
 
 ## 9. Family consistency
 
 When modeling later family members, inspect at least two approved siblings when available.
 
-Variation should primarily come from:
+Variation should primarily come from proportion, part selection, bounded asymmetry, state, palette variant and composition. Never use increased detail as the primary variant mechanism.
 
-- proportion;
-- part selection;
-- bounded asymmetry;
-- state;
-- palette variant;
-- composition.
+## 10. Artistic acceptance definition
 
-Never use increased detail as the primary variant mechanism.
+The artistic gate passes when:
 
-## 10. Acceptance definition
-
-An asset is artistically accepted when:
-
-- function/identity reads without explanatory text;
+- function/identity reads visually without explanatory text;
 - silhouette works in the canonical gameplay view;
 - family style and low-poly intensity are consistent;
 - scale/contact are credible for Wilson interactions;
 - materials use the simplest sufficient strategy;
-- required states and composition are readable;
+- required visible states and composition are readable;
 - no unnecessary new visual language was introduced;
-- independent review passes.
+- independent art review passes.
 
 Prefer a simpler model that survives all review views over a sophisticated model that only looks good in isolation.
