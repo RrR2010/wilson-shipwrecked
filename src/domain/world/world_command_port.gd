@@ -3,8 +3,12 @@ extends RefCounted
 
 ## Explicit mutation port owned by World.
 ##
-## Derived services must return proposals/results; only application orchestration
-## or a named owner transaction should invoke these commands.
+## Derived services return outcomes/effects; only application orchestration or a
+## named owner transaction invokes this boundary.
+
+func apply_outcome(_outcome):
+	assert(false, "WorldCommandPort.apply_outcome must be implemented")
+
 
 func create_relation(_relation_type, _subject, _object, _qualifier = null):
 	assert(false, "WorldCommandPort.create_relation must be implemented")
