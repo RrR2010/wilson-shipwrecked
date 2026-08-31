@@ -19,12 +19,12 @@ const BeliefProposition = preload("res://src/domain/cognition/belief_proposition
 const BeliefEvidence = preload("res://src/domain/cognition/belief_evidence.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
+const DriveState = preload("res://src/domain/cognition/drive_state.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const SimulationSnapshotService = preload("res://src/infrastructure/persistence/simulation_snapshot_service.gd")
 
 var _failures: Array[String] = []
 var _completed := false
-
 
 func _init() -> void:
 	_run_slice()
@@ -38,7 +38,6 @@ func _init() -> void:
 		push_error(failure)
 	print("FAIL persistence_reconstruction_test: %d failure(s)" % _failures.size())
 	quit(1)
-
 
 func _run_slice() -> void:
 	var crate_type = DomainId.entity_type(&"crate")
@@ -80,6 +79,13 @@ func _run_slice() -> void:
 	intention_binding.bind(&"target", crate)
 	_expect_true(intention_store.select(investigate, intention_binding, &"step_9").ok, "current intention selected")
 
+	var drives = DriveState.new({
+		DriveState.HUNGER: 0.82,
+		DriveState.ENERGY: 0.31,
+		DriveState.COMFORT: 0.44,
+		DriveState.STIMULATION: 0.63,
+	})
+
 	var policies = PhysicalDerivationPolicyRegistry.new()
 	var resistance_rule = PropertyDerivationDefinition.new(&"effective_resistance_v1", [hardness, structural_integrity], effective_resistance, &"min_numeric")
 	var graph_before = PropertyDependencyGraph.new()
@@ -91,8 +97,9 @@ func _run_slice() -> void:
 	var belief_before = beliefs.get_entry(proposition).confidence
 
 	var persistence = SimulationSnapshotService.new()
-	var snapshot = persistence.capture(entities, relations, wilson_world, beliefs, intention_store)
-	_expect_equal(snapshot.get("schema_version"), 4, "snapshot schema version")
+	var snapshot = persistence.capture(entities, relations, wilson_world, beliefs, intention_store, drives)
+	_expect_equal(snapshot.get("schema_version"), 5, "snapshot schema version")
+	_expect_true(snapshot.has("drives"), "durable Wilson drives are persisted")
 	_expect_false(snapshot.has("relation_indexes"), "reconstructible relation indexes are not persisted")
 	_expect_false(snapshot.has("epistemic_projection"), "epistemic projection is not persisted")
 	_expect_false(snapshot.has("effective_physical_profiles"), "physical profile cache is not persisted")
@@ -134,6 +141,9 @@ func _run_slice() -> void:
 		_expect_equal(current.bindings.get_subject(&"target").key(), restored_crate.key(), "current intention binding survives")
 		_expect_equal(String(current.selected_step_id), "step_9", "current intention provenance survives")
 
+	_expect_equal(restored.drives.snapshot_values(), drives.snapshot_values(), "drive owner state survives save/load")
+	_expect_equal(restored.drives.band(DriveState.HUNGER), DriveState.UrgencyBand.URGENT, "drive urgency band reconstructs from durable value")
+
 	var graph_after = PropertyDependencyGraph.new()
 	_expect_true(graph_after.compile([resistance_rule], policies).ok, "property graph recompiles after load")
 	var resolver_after = EffectivePhysicalProfileResolver.new(query_after, graph_after, policies)
@@ -141,7 +151,6 @@ func _run_slice() -> void:
 	_expect_equal(resolver_after.resolve(restored_crate).get_property(effective_resistance), resistance_before, "derived physical query matches after rebuild")
 
 	_completed = true
-
 
 func _expect_true(actual: bool, label: String) -> void:
 	if not actual: _failures.append("Expected true: %s" % label)

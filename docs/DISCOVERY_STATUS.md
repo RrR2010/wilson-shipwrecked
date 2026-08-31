@@ -2,9 +2,9 @@
 
 ## Current phase
 
-The product/behavior discovery, architecture contracts, language-neutral functional domain, normalized cross-cutting asset catalog, and **structural runtime foundation** are complete enough to hand off into system implementation.
+The product/behavior discovery, architecture contracts, language-neutral functional domain, normalized cross-cutting asset catalog, and **structural runtime foundation** are complete enough to support active system implementation.
 
-The authoritative runtime foundation is validated end-to-end under **Godot 4.7.1** with a strict external headless runner that rejects engine/script errors even when an individual Godot process exits `0`.
+The authoritative runtime is validated end-to-end under **Godot 4.7.1** with a strict external headless runner that rejects engine/script errors even when an individual Godot process exits `0`.
 
 Current validated implementation chain:
 
@@ -27,10 +27,12 @@ typed DomainId / RuntimeWorldRef
 → spatially-derived PerceptionAccess
 → typed EpistemicClaim(PROPERTY | RELATION | EVENT)
 → PerceptualEvidence → BeliefStore → EpistemicGraphProjection
-→ candidate generation + decision routing
+→ bounded DriveState progression + hysteretic urgency
+→ perceptual + drive candidate production
+→ decision routing
 → durable CurrentIntention
 → application micro-loop orchestration + semantic trace
-→ JSON snapshot / restore / rebuild of authoritative runtime causes
+→ JSON snapshot / restore / rebuild of authoritative runtime causes, including drives
 → mid-action reconstruction across pre/post-commit checkpoints
 → heavier causal reconstruction and structural-scale regression scenarios
 ```
@@ -98,7 +100,17 @@ Property schema/bootstrap                   PASS — Godot 4.7.1 headless
 Property runtime schema/comparison          PASS — Godot 4.7.1 headless
 Authored content-pack loading               PASS — Godot 4.7.1 headless
 Qualified relation identity / exact command PASS — Godot 4.7.1 headless
-Strict headless suite                       PASS — 23 tests
+```
+
+## System implementation gates
+
+```text
+Wilson drive state / bounds                 PASS — Godot 4.7.1 headless
+Drive urgency hysteresis                    PASS — Godot 4.7.1 headless
+Drive candidate production                  PASS — Godot 4.7.1 headless
+Drive integration with decision routing     PASS — Godot 4.7.1 headless
+Drive persistence / reconstruction          PASS — Godot 4.7.1 headless
+Strict headless suite                       PASS — 25 tests
 ```
 
 **Functional-domain stabilization gate: PASS.**
@@ -108,6 +120,8 @@ Strict headless suite                       PASS — 23 tests
 **Module/dependency-layout gate: PASS.**
 
 **Structural runtime foundation gate: PASS.**
+
+**First system-breadth vertical (drives): PASS.**
 
 ---
 
@@ -159,6 +173,14 @@ numeric epistemic identity is stable across JSON int/float round-trips
 Belief learning is bounded and revisable
 EpistemicGraphProjection is reconstructible from BeliefStore and never imports hidden World truth
 
+Drive values remain finite and bounded within [0,1]
+Drive urgency bands use hysteresis to avoid threshold chatter
+Ordinary drive changes do not trigger reconsideration every simulation tick
+Upward urgency-band crossings expose meaningful reconsideration triggers
+Drive candidates remain ordinary bounded candidates and may lose legitimate competition
+Immediate threat still wins by routing regime rather than oversized drive scores
+Drive values are durable cognition state; urgency/bands remain reconstructible from those values
+
 Decision routing separates immediate-threat / tactical / intentional regimes
 external bias is bounded and cannot become a command
 selected intention is owner-local durable cognition state
@@ -167,10 +189,11 @@ simulation trace is diagnostic-only
 save stores authoritative/runtime causes, not reconstructible indexes/caches
 save → JSON → load → rebuild preserves tested semantic queries
 Wilson coarse PlaceId truth survives reconstruction
+drive state survives reconstruction
 active/completed action execution reconstructs without re-running past attemptability
 ```
 
-The strict PowerShell runner rejects `SCRIPT ERROR`, parse/compile failures, generic engine `ERROR:` output, explicit `FAIL`, missing expected `PASS`, or nonzero process exit status. This prevents Godot false-green results.
+The strict PowerShell runner rejects `SCRIPT ERROR`, parse/compile failures, generic engine `ERROR:` output, explicit `FAIL`, missing expected `PASS`, or nonzero process exit status. It emits one compact line per test and a final PASS/FAIL/ERROR summary.
 
 ---
 
@@ -215,6 +238,21 @@ EpistemicClaim.EVENT(subject, EventDefinitionId, perceived_role)
 
 Future epistemic families must be added as explicit typed claim kinds/contracts rather than restoring a generic arbitrary-argument identity scheme.
 
+## Drive state
+
+The first implemented system-breadth cognition state uses the accepted drives:
+
+```text
+hunger
+energy
+comfort
+stimulation
+```
+
+Drive values are durable cognition-owned causes. Current urgency bands and urgency scores are derived from those values and are not persisted separately.
+
+Drive progression is owner-local and bounded. Candidate production feeds the existing decision competition rather than bypassing it.
+
 ## Authored content
 
 `ContentPackLoader` currently accepts a versioned bounded JSON pack for the implemented foundation families:
@@ -237,7 +275,7 @@ Loading produces typed definitions and ends in `ContentRegistry.seal()` validati
 Current implementation baseline:
 
 ```text
-SimulationSnapshotService schema: v4
+SimulationSnapshotService schema: v5
 ActionExecutionSnapshotService schema: v2
 ContentPackLoader schema: v1
 ```
@@ -265,6 +303,7 @@ Important derived/non-owning concerns include:
 ```text
 Perception / PerceptualEvidence
 Expectation / salience
+Drive urgency / candidate projection
 EffectivePhysicalProfile / AssemblyValidity
 Protection / exposure
 Affordance / ActionAttemptability
@@ -299,20 +338,20 @@ The remaining work is predominantly **system breadth and presentation**, not unr
 
 Major families still to implement include:
 
-1. drive/body progression and concrete candidate producers;
-2. project runtime/lifecycle and project candidate sources;
-3. habits, associations, episodes and Presence update flows beyond the minimal belief vertical;
-4. Director opportunity lifecycle and bounded candidate influence;
-5. environment/weather and persisted dynamic processes;
-6. protection/exposure runtime;
-7. hazards and immediate-threat production from real dynamic processes;
-8. shallow non-Wilson actor/animal behavior;
-9. food/fire/cooking/freshness processes;
-10. player intervention / God Power / suggestions;
-11. run death/resurrection/Legacy/Profile lifecycle;
-12. fine spatial/nav/occlusion infrastructure;
-13. Godot presentation adapters, anchors, InteractionRegions and assembly sockets;
-14. broader authored content packs covering the normalized asset catalog;
+1. project runtime/lifecycle and project candidate sources;
+2. habits, associations, episodes and Presence update flows beyond the minimal belief vertical;
+3. Director opportunity lifecycle and bounded candidate influence;
+4. environment/weather and persisted dynamic processes;
+5. protection/exposure runtime;
+6. hazards and immediate-threat production from real dynamic processes;
+7. shallow non-Wilson actor/animal behavior;
+8. food/fire/cooking/freshness processes;
+9. player intervention / God Power / suggestions;
+10. run death/resurrection/Legacy/Profile lifecycle;
+11. fine spatial/nav/occlusion infrastructure;
+12. Godot presentation adapters, anchors, InteractionRegions and assembly sockets;
+13. broader authored content packs covering the normalized asset catalog;
+14. deterministic gameplay-scenario/bootstrap tooling for fast playable smoke tests;
 15. larger multi-system deterministic scenario/population tests.
 
 These systems must preserve the established owners and contact contracts. A new state owner or generic framework requires new evidence, not convenience.
@@ -321,21 +360,21 @@ These systems must preserve the established owners and contact contracts. A new 
 
 # Next phase
 
-The recommended next phase is **system implementation on the completed structural foundation**.
+The project remains in **system implementation on the completed structural foundation**.
 
-Recommended order:
+Recommended order from the current checkpoint:
 
 ```text
-1. body/drives + their bounded candidate producers
-2. Project runtime + project candidate producer
-3. habits/associations/episodes/Presence learning producers
-4. environment + dynamic-process owner/rules
-5. hazards/protection + immediate-threat production
-6. shallow animal actors
-7. Director + player intervention/suggestions
-8. run lifecycle / resurrection / Legacy/Profile
-9. Godot presentation/spatial adapters
+1. Project runtime + project candidate producer
+2. habits/associations/episodes/Presence learning producers
+3. environment + dynamic-process owner/rules
+4. hazards/protection + immediate-threat production
+5. shallow animal actors
+6. Director + player intervention/suggestions
+7. run lifecycle / resurrection / Legacy/Profile
+8. Godot presentation/spatial adapters
+9. deterministic playable scenario/bootstrap tooling as concrete visual cases appear
 10. representative multi-system scenario suites and seed-population tests
 ```
 
-The implementation should expand breadth through existing contracts before adding new primitives.
+The implementation should continue expanding breadth through existing contracts before adding new primitives.

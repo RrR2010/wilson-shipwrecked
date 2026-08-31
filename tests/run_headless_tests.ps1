@@ -13,73 +13,90 @@ if ($tests.Count -eq 0) {
     exit 1
 }
 
-$failed = @()
+$results = @()
+$engineBanner = $null
 
 foreach ($test in $tests) {
     $testName = [System.IO.Path]::GetFileNameWithoutExtension($test.Name)
     $relativeScript = "tests/headless/$($test.Name)"
 
-    Write-Host "=== $testName ==="
-
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
     $outputLines = @(
         & $Godot --headless --path $repoRoot --script $relativeScript 2>&1 |
             ForEach-Object { $_.ToString() }
     )
     $exitCode = $LASTEXITCODE
+    $ErrorActionPreference = $previousPreference
+
+    if (-not $engineBanner) {
+        $engineBanner = $outputLines | Where-Object { $_ -match '^Godot Engine ' } | Select-Object -First 1
+        if ($engineBanner) {
+            Write-Host $engineBanner
+            Write-Host ""
+        }
+    }
+
     $output = $outputLines -join "`n"
-
-    foreach ($line in $outputLines) {
-        Write-Host $line
-    }
-
-    $reasons = @()
-
-    if ($exitCode -ne 0) {
-        $reasons += "Godot exit code was $exitCode"
-    }
-
-    if ($output -match '(?m)^\s*SCRIPT ERROR:') {
-        $reasons += "SCRIPT ERROR detected"
-    }
-
-    if ($output -match '(?m)^\s*ERROR:') {
-        $reasons += "Godot ERROR detected"
-    }
-
-    if ($output -match '(?m)^\s*(Parse|Compile) Error:') {
-        $reasons += "parse/compile error detected"
-    }
-
-    if ($output -match '(?m)^FAIL\s+') {
-        $reasons += "test emitted FAIL"
-    }
+    $hasScriptError = $output -match '(?m)^\s*SCRIPT ERROR:'
+    $hasGodotError = $output -match '(?m)^\s*ERROR:'
+    $hasParseCompileError = $output -match '(?m)^\s*(Parse|Compile) Error:'
+    $hasExplicitFail = $output -match '(?m)^FAIL\s+'
 
     $expectedPass = "PASS $testName"
     $passCount = ([regex]::Matches($output, "(?m)^$([regex]::Escape($expectedPass))$")).Count
-    if ($passCount -ne 1) {
-        $reasons += "expected exactly one '$expectedPass', found $passCount"
+
+    $reasons = @()
+    if ($exitCode -ne 0) { $reasons += "exit=$exitCode" }
+    if ($hasScriptError) { $reasons += "SCRIPT ERROR" }
+    if ($hasParseCompileError) { $reasons += "parse/compile error" }
+    if ($hasGodotError) { $reasons += "Godot ERROR" }
+    if ($hasExplicitFail) { $reasons += "explicit FAIL" }
+    if ($passCount -ne 1) { $reasons += "PASS marker count=$passCount" }
+
+    $status = "PASS"
+    if ($hasExplicitFail) {
+        $status = "FAIL"
+    } elseif ($reasons.Count -gt 0) {
+        $status = "ERROR"
     }
 
-    if ($reasons.Count -gt 0) {
-        $failed += [PSCustomObject]@{
-            Test = $testName
-            Reasons = ($reasons -join "; ")
-        }
-        Write-Host "RUNNER FAIL $testName :: $($reasons -join '; ')"
-    } else {
-        Write-Host "RUNNER PASS $testName"
+    $results += [PSCustomObject]@{
+        Test = $testName
+        Status = $status
+        Reasons = ($reasons -join "; ")
     }
 
-    Write-Host ""
+    if ($status -eq "PASS") {
+        Write-Host "RUNNER $testName`: PASS"
+        continue
+    }
+
+    $suffix = if ($reasons.Count -gt 0) { " ($($reasons -join '; '))" } else { "" }
+    Write-Host "RUNNER $testName`: $status$suffix"
+
+    $diagnostics = $outputLines | Where-Object {
+        $_ -notmatch '^Godot Engine ' -and
+        $_ -notmatch '^\s*$' -and
+        $_ -notmatch "^PASS\s+$([regex]::Escape($testName))$" -and
+        ($_ -match '^\s*(SCRIPT ERROR:|ERROR:|Parse Error:|Compile Error:|FAIL\s+)')
+    }
+    foreach ($line in $diagnostics) {
+        Write-Host $line
+    }
 }
 
-if ($failed.Count -gt 0) {
-    Write-Host "Headless suite failed: $($failed.Count)/$($tests.Count) test(s)"
-    foreach ($failure in $failed) {
-        Write-Host " - $($failure.Test): $($failure.Reasons)"
-    }
+$passed = @($results | Where-Object { $_.Status -eq "PASS" }).Count
+$failed = @($results | Where-Object { $_.Status -eq "FAIL" }).Count
+$errors = @($results | Where-Object { $_.Status -eq "ERROR" }).Count
+$total = $results.Count
+
+Write-Host ""
+Write-Host "RESULT: $passed PASS / $total TOTAL"
+if ($failed -gt 0 -or $errors -gt 0) {
+    Write-Host "        $failed FAIL / $errors ERROR"
     exit 1
 }
 
-Write-Host "PASS headless_suite ($($tests.Count) tests)"
+Write-Host "PASS headless_suite ($total tests)"
 exit 0

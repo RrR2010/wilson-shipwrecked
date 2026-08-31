@@ -10,11 +10,12 @@ const WorldRelationStore = preload("res://src/domain/world/world_relation_store.
 const BeliefProposition = preload("res://src/domain/cognition/belief_proposition.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
+const DriveState = preload("res://src/domain/cognition/drive_state.gd")
 const EpistemicGraphProjection = preload("res://src/domain/cognition/epistemic_graph_projection.gd")
 const DomainValueCodec = preload("res://src/infrastructure/persistence/domain_value_codec.gd")
 const RestoredSimulationState = preload("res://src/infrastructure/persistence/restored_simulation_state.gd")
 
-const SCHEMA_VERSION := 4
+const SCHEMA_VERSION := 5
 
 var _codec
 
@@ -23,12 +24,13 @@ func _init(codec = null) -> void:
 	_codec = codec if codec != null else DomainValueCodec.new()
 
 
-func capture(entity_store, relation_store, wilson_world_state, belief_store, intention_store) -> Dictionary:
+func capture(entity_store, relation_store, wilson_world_state, belief_store, intention_store, drive_state = null) -> Dictionary:
 	assert(entity_store != null, "capture requires EntityStore")
 	assert(relation_store != null, "capture requires WorldRelationStore")
 	assert(wilson_world_state != null, "capture requires WilsonWorldState")
 	assert(belief_store != null, "capture requires BeliefStore")
 	assert(intention_store != null, "capture requires CurrentIntentionStore")
+	var drives = drive_state if drive_state != null else DriveState.new()
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"entities": _capture_entities(entity_store),
@@ -36,6 +38,7 @@ func capture(entity_store, relation_store, wilson_world_state, belief_store, int
 		"wilson_world": {"place_id": _codec.encode(wilson_world_state.place_id)},
 		"beliefs": _capture_beliefs(belief_store),
 		"current_intention": _capture_intention(intention_store),
+		"drives": _capture_drives(drives),
 	}
 
 
@@ -94,9 +97,14 @@ func restore(snapshot: Dictionary):
 		)
 		assert(intention_result.ok, "Failed to restore current intention")
 
+	var drive_record = snapshot.get("drives")
+	assert(drive_record is Dictionary, "Snapshot missing Wilson drive state")
+	var drives = DriveState.new()
+	drives.restore_values(_decode_drives(drive_record))
+
 	var epistemic_projection = EpistemicGraphProjection.new()
 	epistemic_projection.rebuild(beliefs)
-	return RestoredSimulationState.new(entities, relations, wilson_world_state, beliefs, intention_store, epistemic_projection)
+	return RestoredSimulationState.new(entities, relations, wilson_world_state, beliefs, intention_store, drives, epistemic_projection)
 
 
 func _capture_entities(entity_store) -> Array:
@@ -147,6 +155,22 @@ func _capture_intention(intention_store):
 		"bindings": _encode_binding(current.bindings),
 		"selected_step_id": String(current.selected_step_id),
 	}
+
+
+func _capture_drives(drive_state) -> Dictionary:
+	var result: Dictionary = {}
+	for drive_id in DriveState.DRIVE_IDS:
+		result[String(drive_id)] = drive_state.value(drive_id)
+	return result
+
+
+func _decode_drives(record: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for drive_id in DriveState.DRIVE_IDS:
+		var key := String(drive_id)
+		assert(record.has(key), "Drive snapshot missing %s" % key)
+		result[drive_id] = float(record[key])
+	return result
 
 
 func _encode_binding(binding) -> Array:

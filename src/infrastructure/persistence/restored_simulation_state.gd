@@ -9,6 +9,7 @@ var relations
 var wilson_world_state
 var beliefs
 var current_intention
+var drives
 var epistemic_projection
 
 
@@ -18,6 +19,7 @@ func _init(
 	p_wilson_world_state,
 	p_beliefs,
 	p_current_intention,
+	p_drives,
 	p_epistemic_projection
 ) -> void:
 	entities = p_entities
@@ -25,4 +27,5 @@ func _init(
 	wilson_world_state = p_wilson_world_state
 	beliefs = p_beliefs
 	current_intention = p_current_intention
+	drives = p_drives
 	epistemic_projection = p_epistemic_projection

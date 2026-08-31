@@ -10,7 +10,7 @@ const SimulationStepTrace = preload("res://src/infrastructure/diagnostics/simula
 ## Authoritative ordering:
 ## world progression -> action progression -> committed outcome application
 ## -> derived invalidation -> perception -> immediate belief learning
-## -> candidate generation -> routing -> selected intention commit.
+## -> drive progression -> candidate generation -> routing -> selected intention commit.
 
 var _world_advance
 var _action_execution
@@ -26,6 +26,8 @@ var _opportunity_definitions: Array
 var _decision_router
 var _decision_commit
 var _trace_sink
+var _drive_progression
+var _drive_candidate_source
 
 
 func _init(
@@ -42,7 +44,9 @@ func _init(
 	opportunity_definitions: Array,
 	decision_router,
 	decision_commit,
-	trace_sink
+	trace_sink,
+	drive_progression = null,
+	drive_candidate_source = null
 ) -> void:
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
 	assert(action_execution != null, "SimulationOrchestrator requires action execution")
@@ -57,6 +61,7 @@ func _init(
 	assert(decision_router != null, "SimulationOrchestrator requires decision router")
 	assert(decision_commit != null, "SimulationOrchestrator requires decision commit coordinator")
 	assert(trace_sink != null, "SimulationOrchestrator requires trace sink")
+	assert((drive_progression == null) == (drive_candidate_source == null), "Drive progression and candidate source must be provided together")
 	_world_advance = world_advance
 	_action_execution = action_execution
 	_world_commands = world_commands
@@ -71,6 +76,8 @@ func _init(
 	_decision_router = decision_router
 	_decision_commit = decision_commit
 	_trace_sink = trace_sink
+	_drive_progression = drive_progression
+	_drive_candidate_source = drive_candidate_source
 
 
 func advance(step):
@@ -108,11 +115,18 @@ func advance(step):
 	var learning_result = _learning.process(perception_result)
 	trace.record_result(&"immediate_learning", learning_result)
 
+	if _drive_progression != null:
+		var drive_progress = _drive_progression.advance(step.elapsed)
+		trace.record_result(&"drive_progression", drive_progress)
+
 	var candidates: Array = _opportunity_service.generate(
 		perception_result,
 		_belief_store,
 		_opportunity_definitions
 	)
+	if _drive_candidate_source != null:
+		candidates.append_array(_drive_candidate_source.generate())
+	candidates.sort_custom(func(a, b): return a.stable_key() < b.stable_key())
 	trace.record_result(&"decision_candidates", candidates)
 	var decision_result = _decision_router.resolve(candidates, _activity_query.current_intention())
 	trace.record_result(&"decision", decision_result)
