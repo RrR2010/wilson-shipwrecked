@@ -9,7 +9,8 @@ const SimulationStepTrace = preload("res://src/infrastructure/diagnostics/simula
 ##
 ## Authoritative ordering:
 ## world progression -> action progression -> committed outcome application
-## -> perception -> immediate belief learning -> candidate generation -> routing.
+## -> perception -> immediate belief learning -> candidate generation -> routing
+## -> selected intention commit.
 
 var _world_advance
 var _action_execution
@@ -22,6 +23,7 @@ var _opportunity_service
 var _belief_store
 var _opportunity_definitions: Array
 var _decision_router
+var _decision_commit
 var _trace_sink
 
 
@@ -37,6 +39,7 @@ func _init(
 	belief_store,
 	opportunity_definitions: Array,
 	decision_router,
+	decision_commit,
 	trace_sink
 ) -> void:
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
@@ -49,6 +52,7 @@ func _init(
 	assert(opportunity_service != null, "SimulationOrchestrator requires opportunity service")
 	assert(belief_store != null, "SimulationOrchestrator requires BeliefStore")
 	assert(decision_router != null, "SimulationOrchestrator requires decision router")
+	assert(decision_commit != null, "SimulationOrchestrator requires decision commit coordinator")
 	assert(trace_sink != null, "SimulationOrchestrator requires trace sink")
 	_world_advance = world_advance
 	_action_execution = action_execution
@@ -61,6 +65,7 @@ func _init(
 	_belief_store = belief_store
 	_opportunity_definitions = opportunity_definitions.duplicate()
 	_decision_router = decision_router
+	_decision_commit = decision_commit
 	_trace_sink = trace_sink
 
 
@@ -106,6 +111,9 @@ func advance(step):
 	var decision_result = _decision_router.resolve(candidates, _activity_query.current_intention())
 	trace.record_result(&"decision", decision_result)
 
+	var intention_commit = _decision_commit.apply(decision_result, step.step_id)
+	trace.record_result(&"intention_commit", intention_commit)
+
 	var result = SimulationStepResult.new(
 		step.step_id,
 		world_advance_result,
@@ -114,6 +122,7 @@ func advance(step):
 		learning_result,
 		candidates,
 		decision_result,
+		intention_commit,
 		commit_result
 	)
 	trace.complete(result)
