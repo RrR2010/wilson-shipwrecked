@@ -7,11 +7,8 @@ const EntityInstance = preload("res://src/domain/world/entity_instance.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
 
 ## Default read-only composition over authoritative World stores + sealed content.
-##
 ## Spatial reads are deliberately coarse and engine-agnostic: PlaceId is the
-## authoritative location available in the current domain. A future navigation /
-## physics adapter may add distance and occlusion without changing these ownership
-## boundaries.
+## authoritative location available in the current domain.
 
 var _entities
 var _relations
@@ -52,6 +49,12 @@ func get_property_definition(property_id):
 
 func validate_property_value(property_id, value: Variant) -> bool:
 	return _content.validate_property_value(property_id, value)
+
+
+func get_event_definition(event_id):
+	assert(event_id != null, "get_event_definition requires EventDefinitionId")
+	event_id.assert_kind(DomainId.Kind.EVENT_DEFINITION)
+	return _content.get_event_definition(event_id)
 
 
 func has_authored_capability(subject, capability_id) -> bool:
@@ -129,13 +132,7 @@ func traverse_relations(
 	result_limit: int,
 	direction: int = WorldRelationStore.Direction.OUTGOING
 ):
-	return _relations.traverse_relations(
-		start,
-		allowed_relation_types,
-		max_depth,
-		result_limit,
-		direction
-	)
+	return _relations.traverse_relations(start, allowed_relation_types, max_depth, result_limit, direction)
 
 
 func query_nearby(subject_or_place, constraints: Dictionary = {}) -> Array:
@@ -154,7 +151,6 @@ func query_nearby(subject_or_place, constraints: Dictionary = {}) -> Array:
 		category_id.assert_kind(DomainId.Kind.CATEGORY)
 	if capability_id != null:
 		capability_id.assert_kind(DomainId.Kind.CAPABILITY)
-
 	for entity in _entities.entities():
 		if not include_inactive and entity.lifecycle != EntityInstance.Lifecycle.ACTIVE:
 			continue
