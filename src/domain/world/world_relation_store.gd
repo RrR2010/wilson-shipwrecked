@@ -47,6 +47,12 @@ func relation_count() -> int:
 	return _relations_by_key.size()
 
 
+func relations() -> Array:
+	var result: Array = _relations_by_key.values()
+	result.sort_custom(func(a, b): return a.sort_key() < b.sort_key())
+	return result
+
+
 func find_relations(relation_type: DomainId = null, subject: RuntimeWorldRef = null, object: RuntimeWorldRef = null) -> Array:
 	if relation_type != null:
 		relation_type.assert_kind(DomainId.Kind.RELATION_TYPE)
