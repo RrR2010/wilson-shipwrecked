@@ -19,6 +19,7 @@ const ActionExecutionService = preload("res://src/domain/actions/action_executio
 const ActionResolutionDefinition = preload("res://src/domain/actions/action_resolution_definition.gd")
 const ActionEffect = preload("res://src/domain/actions/action_effect.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
+const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 const PerceptionAccess = preload("res://src/domain/cognition/perception_access.gd")
 const PerceptionService = preload("res://src/domain/cognition/perception_service.gd")
 const BeliefLearningService = preload("res://src/domain/cognition/belief_learning_service.gd")
@@ -104,7 +105,16 @@ func _run_slice() -> void:
 	var learning = BeliefLearningCoordinator.new(BeliefLearningService.new(), belief_store)
 	var opportunity_service = PerceivedOpportunityService.new()
 	var investigate = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"investigate_recent_impact")
-	var opportunity_definitions = [PerceivedOpportunityDefinition.new(&"observed_event", investigate, DecisionCandidate.Scope.INTENTIONAL, 0.4, &"target")]
+	var opportunity_definitions = [
+		PerceivedOpportunityDefinition.new(
+			EpistemicClaim.Kind.EVENT,
+			impact_committed,
+			investigate,
+			DecisionCandidate.Scope.INTENTIONAL,
+			0.4,
+			&"target"
+		)
+	]
 	var router = DecisionRouter.new()
 	var intention_store = CurrentIntentionStore.new()
 	var decision_commit = DecisionCommitCoordinator.new(intention_store)
@@ -129,6 +139,7 @@ func _run_slice() -> void:
 	_expect_equal(result.world_commit.change_set.changes.size(), 1, "World commit reports one semantic change")
 	_expect_equal(result.perception.observed_events.size(), 1, "committed event becomes observed event")
 	_expect_equal(result.perception.evidence.size(), 1, "observation produces perceptual evidence")
+	_expect_equal(result.perception.evidence[0].claim.kind, EpistemicClaim.Kind.EVENT, "perception carries typed event claim")
 	var learning_evidence: Array = result.immediate_learning.get("derived_evidence", [])
 	_expect_equal(learning_evidence.size(), 1, "perceptual evidence becomes belief evidence")
 	_expect_equal(belief_store.entries().size(), 1, "belief owner stores learned proposition")
