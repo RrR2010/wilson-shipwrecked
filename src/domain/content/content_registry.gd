@@ -11,6 +11,7 @@ const MutationResult = preload("res://src/domain/core/mutation_result.gd")
 
 var _entity_definitions: Dictionary = {}
 var _property_definitions: Dictionary = {}
+var _event_definitions: Dictionary = {}
 var _action_definitions: Dictionary = {}
 var _action_resolution_definitions: Dictionary = {}
 var _sealed := false
@@ -26,6 +27,18 @@ func register_property_definition(definition) -> MutationResult:
 		return MutationResult.failure(&"duplicate_property_definition", ["Duplicate property definition: %s" % definition.id.sort_key()])
 	_property_definitions[definition_key] = definition
 	return MutationResult.success(&"property_definition_registered", definition)
+
+
+func register_event_definition(definition) -> MutationResult:
+	if _sealed:
+		return MutationResult.failure(&"content_registry_sealed", ["Cannot register content after seal()"])
+	assert(definition != null, "register_event_definition requires EventDefinition")
+	definition.id.assert_kind(DomainId.Kind.EVENT_DEFINITION)
+	var definition_key = definition.id.key()
+	if _event_definitions.has(definition_key):
+		return MutationResult.failure(&"duplicate_event_definition", ["Duplicate event definition: %s" % definition.id.sort_key()])
+	_event_definitions[definition_key] = definition
+	return MutationResult.success(&"event_definition_registered", definition)
 
 
 func register_entity_definition(definition: EntityDefinition) -> MutationResult:
@@ -82,6 +95,10 @@ func seal() -> MutationResult:
 				var value = entity_definition.get_base_property(property_definition.id)
 				if not property_definition.validate_value(value):
 					return MutationResult.failure(&"invalid_authored_property_value", ["Invalid value for %s on %s" % [property_definition.id.sort_key(), entity_definition.id.sort_key()]])
+	if not _event_definitions.is_empty():
+		for resolution in _action_resolution_definitions.values():
+			if not _event_definitions.has(resolution.event_type.key()):
+				return MutationResult.failure(&"missing_event_definition", ["Missing event definition for %s" % resolution.event_type.sort_key()])
 	_sealed = true
 	return MutationResult.success(&"content_registry_sealed")
 
@@ -99,6 +116,12 @@ func get_property_definition(property_id):
 func validate_property_value(property_id, value: Variant) -> bool:
 	var definition = get_property_definition(property_id)
 	return definition == null or definition.validate_value(value)
+
+
+func get_event_definition(event_id):
+	assert(event_id != null, "get_event_definition requires EventDefinitionId")
+	event_id.assert_kind(DomainId.Kind.EVENT_DEFINITION)
+	return _event_definitions.get(event_id.key())
 
 
 func get_entity_definition(type_id: DomainId) -> EntityDefinition:
@@ -133,6 +156,14 @@ func entity_definition_ids() -> Array[String]:
 func property_definition_ids() -> Array[String]:
 	var result: Array[String] = []
 	for definition in _property_definitions.values():
+		result.append(definition.id.sort_key())
+	result.sort()
+	return result
+
+
+func event_definition_ids() -> Array[String]:
+	var result: Array[String] = []
+	for definition in _event_definitions.values():
 		result.append(definition.id.sort_key())
 	result.sort()
 	return result
