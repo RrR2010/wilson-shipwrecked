@@ -14,7 +14,7 @@ const EpistemicGraphProjection = preload("res://src/domain/cognition/epistemic_g
 const DomainValueCodec = preload("res://src/infrastructure/persistence/domain_value_codec.gd")
 const RestoredSimulationState = preload("res://src/infrastructure/persistence/restored_simulation_state.gd")
 
-const SCHEMA_VERSION := 1
+const SCHEMA_VERSION := 2
 
 var _codec
 
@@ -62,16 +62,12 @@ func restore(snapshot: Dictionary):
 		)
 		var relation_result = relations.add_relation(relation)
 		assert(relation_result.ok, "Failed to restore relation: %s" % str(relation_result.diagnostics))
-	# Deliberately rebuild reconstructible indexes after authority is restored.
 	relations.rebuild_indexes()
 	assert(relations.validate_indexes().ok, "Restored relation indexes invalid")
 
 	var beliefs = BeliefStore.new()
 	for record in snapshot.get("beliefs", []):
-		var proposition = BeliefProposition.new(
-			StringName(record["predicate"]),
-			_codec.decode(record["arguments"])
-		)
+		var proposition = BeliefProposition.new(_codec.decode(record["claim"]))
 		var belief_result = beliefs.restore_entry(
 			proposition,
 			float(record["confidence"]),
@@ -127,8 +123,7 @@ func _capture_beliefs(belief_store) -> Array:
 	var result: Array = []
 	for entry in belief_store.entries():
 		result.append({
-			"predicate": String(entry.proposition.predicate),
-			"arguments": _codec.encode(entry.proposition.arguments),
+			"claim": _codec.encode(entry.proposition.claim),
 			"confidence": entry.confidence,
 			"evidence_count": entry.evidence_count,
 			"last_source_execution_id": String(entry.last_source_execution_id),
