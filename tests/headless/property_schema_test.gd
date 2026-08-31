@@ -29,12 +29,16 @@ func _run_slice() -> void:
 	var state = DomainId.property(&"state")
 
 	var numeric = PropertyDefinition.new(integrity, PropertyDefinition.ValueFamily.NUMBER, 0, 5)
+	var unbounded_numeric = PropertyDefinition.new(DomainId.property(&"temperature_delta"), PropertyDefinition.ValueFamily.NUMBER)
 	var boolean = PropertyDefinition.new(wet, PropertyDefinition.ValueFamily.BOOLEAN)
 	var symbol = PropertyDefinition.new(state, PropertyDefinition.ValueFamily.SYMBOL)
 
 	_expect_true(numeric.validate_value(3), "numeric value inside bounds is valid")
 	_expect_false(numeric.validate_value(6), "numeric value above bound is invalid")
 	_expect_false(numeric.validate_value(true), "bool is not accepted as number")
+	_expect_false(unbounded_numeric.validate_value(INF), "positive infinity is not a valid numeric property value")
+	_expect_false(unbounded_numeric.validate_value(-INF), "negative infinity is not a valid numeric property value")
+	_expect_false(unbounded_numeric.validate_value(NAN), "NaN is not a valid numeric property value")
 	_expect_true(boolean.validate_value(false), "boolean property accepts bool")
 	_expect_false(boolean.validate_value(0), "boolean property rejects number")
 	_expect_true(symbol.validate_value(&"damaged"), "symbol property accepts StringName")
