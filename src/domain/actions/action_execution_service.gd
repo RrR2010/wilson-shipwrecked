@@ -2,6 +2,7 @@ class_name ActionExecutionService
 extends RefCounted
 
 const MutationResult = preload("res://src/domain/core/mutation_result.gd")
+const ActionDefinition = preload("res://src/domain/actions/action_definition.gd")
 const ActionExecutionState = preload("res://src/domain/actions/action_execution_state.gd")
 const ActionProgressResult = preload("res://src/domain/actions/action_progress_result.gd")
 const ActionOutcome = preload("res://src/domain/actions/action_outcome.gd")
@@ -35,7 +36,8 @@ func restore_state(
 	elapsed: float,
 	committed: bool,
 	completed: bool,
-	outcome_emitted: bool
+	outcome_emitted: bool,
+	interrupted: bool = false
 ) -> MutationResult:
 	assert(execution_id != &"", "restore_state requires execution id")
 	assert(action_definition != null, "restore_state requires ActionDefinition")
@@ -45,6 +47,8 @@ func restore_state(
 		return MutationResult.failure(&"duplicate_action_execution", ["Execution already exists: %s" % String(execution_id)])
 	if elapsed < 0.0 or elapsed > resolution_definition.duration:
 		return MutationResult.failure(&"invalid_action_execution_elapsed", ["Elapsed is outside resolution duration"])
+	if completed and interrupted:
+		return MutationResult.failure(&"invalid_action_execution_terminal_state", ["Execution cannot be completed and interrupted"])
 	if outcome_emitted and not committed:
 		return MutationResult.failure(&"invalid_action_execution_commit_state", ["Outcome cannot be emitted before commit"])
 	if completed and not is_equal_approx(elapsed, resolution_definition.duration):
@@ -55,13 +59,12 @@ func restore_state(
 	if not committed and progress >= resolution_definition.commit_fraction:
 		return MutationResult.failure(&"invalid_action_execution_commit_state", ["Uncommitted execution is at or beyond commit checkpoint"])
 
-	# Do not rerun attemptability here. A committed action may have already changed
-	# World truth such that the original attempt is no longer currently attemptable;
-	# reconstruction must restore the legitimate causal state, not reconsider it.
+	# Reconstruction restores causal state and never reruns current attemptability.
 	var state = ActionExecutionState.new(execution_id, action_definition, resolution_definition, bindings)
 	state.elapsed = elapsed
 	state.committed = committed
 	state.completed = completed
+	state.interrupted = interrupted
 	state.outcome_emitted = outcome_emitted
 	_states[execution_id] = state
 	return MutationResult.success(&"action_execution_restored", state)
@@ -77,12 +80,21 @@ func states() -> Array:
 	return result
 
 
+func active_states() -> Array:
+	var result: Array = []
+	for state in states():
+		if state.is_active():
+			result.append(state)
+	return result
+
+
 func advance(execution_id: StringName, elapsed: float):
 	assert(elapsed >= 0.0, "advance elapsed must be >= 0")
 	var state = _states.get(execution_id)
 	assert(state != null, "Unknown action execution: %s" % String(execution_id))
-	if state.completed:
-		return ActionProgressResult.new(execution_id, 1.0, state.committed, true)
+	var current_progress: float = state.elapsed / state.resolution_definition.duration
+	if state.completed or state.interrupted:
+		return ActionProgressResult.new(execution_id, current_progress, state.committed, state.completed, null, state.interrupted)
 
 	state.elapsed = min(state.elapsed + elapsed, state.resolution_definition.duration)
 	var progress: float = state.elapsed / state.resolution_definition.duration
@@ -102,19 +114,40 @@ func advance(execution_id: StringName, elapsed: float):
 	if state.elapsed >= state.resolution_definition.duration:
 		state.completed = true
 
-	return ActionProgressResult.new(execution_id, progress, state.committed, state.completed, outcome)
+	return ActionProgressResult.new(execution_id, progress, state.committed, state.completed, outcome, false)
 
 
 func can_interrupt(execution_id: StringName) -> bool:
 	var state = _states.get(execution_id)
 	assert(state != null, "Unknown action execution")
-	return not state.committed
+	if state.is_terminal():
+		return false
+	match state.action_definition.interruption_class:
+		ActionDefinition.InterruptionClass.NEVER:
+			return false
+		ActionDefinition.InterruptionClass.PRE_COMMIT_ONLY:
+			return not state.committed
+		ActionDefinition.InterruptionClass.ANYTIME:
+			return true
+	return false
 
 
 func interrupt(execution_id: StringName) -> bool:
 	var state = _states.get(execution_id)
 	assert(state != null, "Unknown action execution")
-	if state.committed:
+	if not can_interrupt(execution_id):
 		return false
-	_states.erase(execution_id)
+	# Interruption is terminal but never rewinds committed truth. For ANYTIME actions
+	# an interruption after commit simply ends the remaining post-commit tail.
+	state.interrupted = true
 	return true
+
+
+func prune_terminal() -> MutationResult:
+	var removed: Array[StringName] = []
+	for state in states():
+		if not state.is_terminal():
+			continue
+		removed.append(state.execution_id)
+		_states.erase(state.execution_id)
+	return MutationResult.success(&"terminal_action_executions_pruned", removed)
