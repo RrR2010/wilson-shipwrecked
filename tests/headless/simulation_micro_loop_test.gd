@@ -23,11 +23,13 @@ const PerceptionAccess = preload("res://src/domain/cognition/perception_access.g
 const PerceptionService = preload("res://src/domain/cognition/perception_service.gd")
 const BeliefLearningService = preload("res://src/domain/cognition/belief_learning_service.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
+const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
 const PerceivedOpportunityDefinition = preload("res://src/domain/cognition/perceived_opportunity_definition.gd")
 const PerceivedOpportunityService = preload("res://src/domain/cognition/perceived_opportunity_service.gd")
 const DecisionCandidate = preload("res://src/domain/cognition/decision_candidate.gd")
 const DecisionRouter = preload("res://src/domain/cognition/decision_router.gd")
 const BeliefLearningCoordinator = preload("res://src/application/simulation/belief_learning_coordinator.gd")
+const DecisionCommitCoordinator = preload("res://src/application/simulation/decision_commit_coordinator.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
 const SimulationStepContext = preload("res://src/application/simulation/simulation_step_context.gd")
 const StaticWorldAdvance = preload("res://tests/headless/fixtures/static_world_advance.gd")
@@ -117,6 +119,8 @@ func _run_slice() -> void:
 		&"target"
 	)]
 	var router = DecisionRouter.new()
+	var intention_store = CurrentIntentionStore.new()
+	var decision_commit = DecisionCommitCoordinator.new(intention_store)
 	var activity = StaticActivityQuery.new(execution_id, null)
 	var trace_sink = InMemoryTraceSink.new()
 	var orchestrator = SimulationOrchestrator.new(
@@ -131,6 +135,7 @@ func _run_slice() -> void:
 		belief_store,
 		opportunity_definitions,
 		router,
+		decision_commit,
 		trace_sink
 	)
 
@@ -154,6 +159,11 @@ func _run_slice() -> void:
 	if result.decision.selected_candidate != null:
 		_expect_equal(result.decision.selected_candidate.intention_id.key(), investigate.key(), "selected intention matches perceived opportunity")
 		_expect_equal(String(result.decision.regime), "intentional", "decision uses intentional regime")
+	_expect_true(result.intention_commit != null and result.intention_commit.ok, "selected intention commits through cognition owner")
+	_expect_true(intention_store.has_current(), "current intention becomes durable state")
+	if intention_store.has_current():
+		_expect_equal(intention_store.current().intention_id.key(), investigate.key(), "durable intention id matches selection")
+		_expect_equal(String(intention_store.current().selected_step_id), "step_1", "durable intention records selection step")
 	_expect_equal(trace_sink.traces.size(), 1, "one semantic trace recorded")
 	if trace_sink.traces.size() == 1:
 		var trace = trace_sink.traces[0]
@@ -162,6 +172,7 @@ func _run_slice() -> void:
 		_expect_true(trace.stage_results.has(&"immediate_learning"), "trace records learning")
 		_expect_true(trace.stage_results.has(&"decision_candidates"), "trace records candidates")
 		_expect_true(trace.stage_results.has(&"decision"), "trace records decision")
+		_expect_true(trace.stage_results.has(&"intention_commit"), "trace records intention commit")
 
 	_completed = true
 
