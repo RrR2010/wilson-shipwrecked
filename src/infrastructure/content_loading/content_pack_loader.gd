@@ -3,6 +3,7 @@ extends RefCounted
 
 const DomainId = preload("res://src/domain/core/domain_id.gd")
 const MutationResult = preload("res://src/domain/core/mutation_result.gd")
+const SemanticValueKey = preload("res://src/domain/core/semantic_value_key.gd")
 const ContentRegistry = preload("res://src/domain/content/content_registry.gd")
 const PropertyDefinition = preload("res://src/domain/content/property_definition.gd")
 const EntityDefinition = preload("res://src/domain/content/entity_definition.gd")
@@ -313,9 +314,30 @@ func _parse_effect(record) -> MutationResult:
 		"create_relation", "remove_relation":
 			if not record.has("relation") or not record.has("object_role"):
 				return _shape_failure("relation effect requires relation/object_role")
+			var qualifier_result = _parse_relation_qualifier(record.get("qualifier"))
+			if not qualifier_result.ok:
+				return qualifier_result
 			var effect_kind = ActionEffect.Kind.CREATE_RELATION if kind == "create_relation" else ActionEffect.Kind.REMOVE_RELATION
-			return MutationResult.success(&"effect_parsed", ActionEffect.new(effect_kind, StringName(record["subject_role"]), DomainId.relation_type(StringName(record["relation"])), record.get("qualifier"), StringName(record["object_role"])))
+			return MutationResult.success(&"effect_parsed", ActionEffect.new(
+				effect_kind,
+				StringName(record["subject_role"]),
+				DomainId.relation_type(StringName(record["relation"])),
+				qualifier_result.value,
+				StringName(record["object_role"])
+			))
 	return MutationResult.failure(&"unknown_effect_kind", [kind])
+
+
+func _parse_relation_qualifier(value: Variant) -> MutationResult:
+	if value is Dictionary:
+		if String(value.get("kind", "")) == "assembly_slot" and value.has("id") and not String(value["id"]).is_empty():
+			return MutationResult.success(&"relation_qualifier_parsed", DomainId.assembly_slot(StringName(value["id"])))
+		return MutationResult.failure(&"invalid_relation_qualifier", ["Typed qualifier Dictionary must use {kind: assembly_slot, id: ...}"])
+	if value is String:
+		value = StringName(value)
+	if not SemanticValueKey.supports(value):
+		return MutationResult.failure(&"invalid_relation_qualifier", ["Relation qualifier must be a bounded semantic value"])
+	return MutationResult.success(&"relation_qualifier_parsed", value)
 
 
 func _property_family(value: String) -> int:
