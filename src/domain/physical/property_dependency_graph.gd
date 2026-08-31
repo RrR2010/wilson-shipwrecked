@@ -6,19 +6,26 @@ const MutationResult = preload("res://src/domain/core/mutation_result.gd")
 
 ## Reconstructible dependency DAG compiled from PropertyDerivationDefinition[]
 ## Graph structure is derived infrastructure, never gameplay authority.
+## When a policy registry is supplied, unsupported authored policies fail at
+## compile/bootstrap time rather than later during runtime resolution.
 
 var _rules_by_output: Dictionary = {}
 var _dependents_by_input: Dictionary = {}
 var _topological_outputs: Array = []
 
 
-func compile(rules: Array) -> MutationResult:
+func compile(rules: Array, policy_registry = null) -> MutationResult:
 	_rules_by_output.clear()
 	_dependents_by_input.clear()
 	_topological_outputs.clear()
 
 	for rule in rules:
 		assert(rule != null, "PropertyDependencyGraph rules cannot contain null")
+		if policy_registry != null and not policy_registry.supports(rule.policy_id):
+			return MutationResult.failure(
+				&"unsupported_property_derivation_policy",
+				["Unsupported derivation policy %s in rule %s" % [String(rule.policy_id), String(rule.id)]]
+			)
 		var output_key = rule.output_property.key()
 		if _rules_by_output.has(output_key):
 			return MutationResult.failure(&"duplicate_property_derivation", ["Multiple derivations produce %s" % String(output_key)])
