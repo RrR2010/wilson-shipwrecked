@@ -150,9 +150,9 @@ func _run_slice() -> void:
 	_expect_equal(learning_evidence.size(), 1, "perceptual evidence becomes belief evidence")
 	_expect_equal(belief_store.entries().size(), 1, "belief owner stores learned proposition")
 	_expect_equal(result.candidates.size(), 1, "learned/perceived opportunity becomes candidate")
-	_expect_true(result.decision.selected != null, "decision router selects candidate")
-	if result.decision.selected != null:
-		_expect_equal(result.decision.selected.intention_id.key(), investigate.key(), "selected intention matches perceived opportunity")
+	_expect_true(result.decision.selected_candidate != null, "decision router selects candidate")
+	if result.decision.selected_candidate != null:
+		_expect_equal(result.decision.selected_candidate.intention_id.key(), investigate.key(), "selected intention matches perceived opportunity")
 		_expect_equal(String(result.decision.regime), "intentional", "decision uses intentional regime")
 	_expect_equal(trace_sink.traces.size(), 1, "one semantic trace recorded")
 	if trace_sink.traces.size() == 1:
