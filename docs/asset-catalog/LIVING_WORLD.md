@@ -62,6 +62,17 @@ Non-Wilson animals use shallow `ActorRuntimeState`. Their psychological meaning 
 
 ---
 
+## Directed opportunities and additional locations
+
+These rows are authored world/presentation content required by representative scenes. They reuse existing Director, perception, place and route semantics rather than creating local fake entities or a separate directed-scene state owner.
+
+| Status | Spec | Pri | Family | Domain mapping | Authoritative / derived semantics | Lifecycle / evidence | Interactions / coverage | Art / production |
+|---|---|---:|---|---|---|---|---|---|
+| TODO | ALIGNED | P0 | `directed.distant_human_contact` | `DirectedEventDefinition` + Director/presentation binding; **not a local interactable `EntityDefinition` by default** | authored distant opportunity with boat/aircraft variants, trajectory/visibility window and optional audible cue; event existence/trajectory is world/Director truth while Wilson only receives perceivable evidence | band: approaching/visible/receding/expired presentation as grounded by event timeline; evidence must be visible/audible from admitted places; no automatic rescue result or `rescue_meter` | Wilson responds through ordinary local actions: increase signal-fire smoke/visibility, move/wave, choose competing intentions; scene: Signal Fire and reshaped Not Now, Humanity | P0 distant silhouettes/trajectory/audio adapters; support boat + aircraft variants without requiring full local vehicle simulation |
+| DEFERRED | ALIGNED | P2 | `place.neighbor_islet` | `PlaceDefinition` / additional-region content plus ordinary topology/route binding | stable neighboring place with its own ordinary entities/resources; temporary accessibility is represented by topology/environmental conditions such as sandbar/tide window, not by a special scene portal | evidence: route/access state must be perceivable enough for Wilson to assess return risk; persistent objects/history remain ordinary world truth if revisited | act: traverse/explore/collect/return when route exists; scene: The Neighbor | P2/E scope; authored/procedural islet + temporary-access presentation; does not block P0/P1 production |
+
+---
+
 # Cross-family environmental and presentation requirements
 
 The following requirements **replace former fake asset rows**. They are production/runtime contracts over real families, properties, relations and processes. They deliberately do not receive `EntityTypeId`s.
