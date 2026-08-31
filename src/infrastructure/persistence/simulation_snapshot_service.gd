@@ -11,11 +11,13 @@ const BeliefProposition = preload("res://src/domain/cognition/belief_proposition
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
+const ProjectInstance = preload("res://src/domain/projects/project_instance.gd")
+const ProjectStore = preload("res://src/domain/projects/project_store.gd")
 const EpistemicGraphProjection = preload("res://src/domain/cognition/epistemic_graph_projection.gd")
 const DomainValueCodec = preload("res://src/infrastructure/persistence/domain_value_codec.gd")
 const RestoredSimulationState = preload("res://src/infrastructure/persistence/restored_simulation_state.gd")
 
-const SCHEMA_VERSION := 5
+const SCHEMA_VERSION := 6
 
 var _codec
 
@@ -24,13 +26,22 @@ func _init(codec = null) -> void:
 	_codec = codec if codec != null else DomainValueCodec.new()
 
 
-func capture(entity_store, relation_store, wilson_world_state, belief_store, intention_store, drive_state = null) -> Dictionary:
+func capture(
+	entity_store,
+	relation_store,
+	wilson_world_state,
+	belief_store,
+	intention_store,
+	drive_state = null,
+	project_store = null
+) -> Dictionary:
 	assert(entity_store != null, "capture requires EntityStore")
 	assert(relation_store != null, "capture requires WorldRelationStore")
 	assert(wilson_world_state != null, "capture requires WilsonWorldState")
 	assert(belief_store != null, "capture requires BeliefStore")
 	assert(intention_store != null, "capture requires CurrentIntentionStore")
 	var drives = drive_state if drive_state != null else DriveState.new()
+	var projects = project_store if project_store != null else ProjectStore.new()
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"entities": _capture_entities(entity_store),
@@ -39,6 +50,7 @@ func capture(entity_store, relation_store, wilson_world_state, belief_store, int
 		"beliefs": _capture_beliefs(belief_store),
 		"current_intention": _capture_intention(intention_store),
 		"drives": _capture_drives(drives),
+		"projects": _capture_projects(projects),
 	}
 
 
@@ -102,9 +114,29 @@ func restore(snapshot: Dictionary):
 	var drives = DriveState.new()
 	drives.restore_values(_decode_drives(drive_record))
 
+	var projects = ProjectStore.new()
+	for record in snapshot.get("projects", []):
+		var project = ProjectInstance.new(
+			_codec.decode(record["id"]),
+			_codec.decode(record["definition_id"]),
+			_decode_binding(record["subject_bindings"]),
+			int(record["lifecycle"]),
+			int(record["contribution_count"])
+		)
+		assert(projects.add(project), "Failed to restore duplicate project instance")
+
 	var epistemic_projection = EpistemicGraphProjection.new()
 	epistemic_projection.rebuild(beliefs)
-	return RestoredSimulationState.new(entities, relations, wilson_world_state, beliefs, intention_store, drives, epistemic_projection)
+	return RestoredSimulationState.new(
+		entities,
+		relations,
+		wilson_world_state,
+		beliefs,
+		intention_store,
+		drives,
+		projects,
+		epistemic_projection
+	)
 
 
 func _capture_entities(entity_store) -> Array:
@@ -170,6 +202,19 @@ func _decode_drives(record: Dictionary) -> Dictionary:
 		var key := String(drive_id)
 		assert(record.has(key), "Drive snapshot missing %s" % key)
 		result[drive_id] = float(record[key])
+	return result
+
+
+func _capture_projects(project_store) -> Array:
+	var result: Array = []
+	for project in project_store.instances():
+		result.append({
+			"id": _codec.encode(project.id),
+			"definition_id": _codec.encode(project.definition_id),
+			"lifecycle": project.lifecycle,
+			"subject_bindings": _encode_binding(project.subject_bindings),
+			"contribution_count": project.contribution_count,
+		})
 	return result
 
 

@@ -5,12 +5,13 @@ const SimulationStepResult = preload("res://src/application/simulation/simulatio
 const SimulationStepTrace = preload("res://src/infrastructure/diagnostics/simulation_step_trace.gd")
 
 ## Thin application-layer coordinator. Owns deterministic ordering only.
-## Durable truth remains in World, ActionExecution and Wilson Cognition owners.
+## Durable truth remains in World, ActionExecution, Wilson Cognition and Projects owners.
 ##
 ## Authoritative ordering:
 ## world progression -> action progression -> committed outcome application
-## -> derived invalidation -> perception -> immediate belief learning
-## -> drive progression -> candidate generation -> routing -> selected intention commit.
+## -> derived invalidation -> grounded project progression -> perception
+## -> immediate belief learning -> drive progression -> candidate generation
+## -> routing -> selected intention commit.
 
 var _world_advance
 var _action_execution
@@ -28,6 +29,8 @@ var _decision_commit
 var _trace_sink
 var _drive_progression
 var _drive_candidate_source
+var _project_contribution
+var _project_candidate_source
 
 
 func _init(
@@ -46,7 +49,9 @@ func _init(
 	decision_commit,
 	trace_sink,
 	drive_progression = null,
-	drive_candidate_source = null
+	drive_candidate_source = null,
+	project_contribution = null,
+	project_candidate_source = null
 ) -> void:
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
 	assert(action_execution != null, "SimulationOrchestrator requires action execution")
@@ -62,6 +67,7 @@ func _init(
 	assert(decision_commit != null, "SimulationOrchestrator requires decision commit coordinator")
 	assert(trace_sink != null, "SimulationOrchestrator requires trace sink")
 	assert((drive_progression == null) == (drive_candidate_source == null), "Drive progression and candidate source must be provided together")
+	assert((project_contribution == null) == (project_candidate_source == null), "Project contribution and candidate source must be provided together")
 	_world_advance = world_advance
 	_action_execution = action_execution
 	_world_commands = world_commands
@@ -78,6 +84,8 @@ func _init(
 	_trace_sink = trace_sink
 	_drive_progression = drive_progression
 	_drive_candidate_source = drive_candidate_source
+	_project_contribution = project_contribution
+	_project_candidate_source = project_candidate_source
 
 
 func advance(step):
@@ -92,6 +100,7 @@ func advance(step):
 
 	var action_progress = null
 	var commit_result = null
+	var project_progress = null
 	var execution_id: StringName = _activity_query.active_execution_id()
 	if execution_id != &"":
 		action_progress = _action_execution.advance(execution_id, step.elapsed)
@@ -101,6 +110,9 @@ func advance(step):
 			trace.record_result(&"world_commit", commit_result)
 			var invalidation_result = _derived_invalidator.apply(commit_result.change_set)
 			trace.record_result(&"derived_invalidation", invalidation_result)
+			if _project_contribution != null:
+				project_progress = _project_contribution.apply_grounded(action_progress.new_outcome, commit_result)
+				trace.record_result(&"project_progression", project_progress)
 
 	var committed_events: Array = world_advance_result.events.duplicate()
 	if commit_result != null and commit_result.ok:
@@ -126,6 +138,8 @@ func advance(step):
 	)
 	if _drive_candidate_source != null:
 		candidates.append_array(_drive_candidate_source.generate())
+	if _project_candidate_source != null:
+		candidates.append_array(_project_candidate_source.generate())
 	candidates.sort_custom(func(a, b): return a.stable_key() < b.stable_key())
 	trace.record_result(&"decision_candidates", candidates)
 	var decision_result = _decision_router.resolve(candidates, _activity_query.current_intention())

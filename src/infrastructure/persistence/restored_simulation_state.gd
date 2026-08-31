@@ -10,6 +10,7 @@ var wilson_world_state
 var beliefs
 var current_intention
 var drives
+var projects
 var epistemic_projection
 
 
@@ -20,6 +21,7 @@ func _init(
 	p_beliefs,
 	p_current_intention,
 	p_drives,
+	p_projects,
 	p_epistemic_projection
 ) -> void:
 	entities = p_entities
@@ -28,4 +30,5 @@ func _init(
 	beliefs = p_beliefs
 	current_intention = p_current_intention
 	drives = p_drives
+	projects = p_projects
 	epistemic_projection = p_epistemic_projection
