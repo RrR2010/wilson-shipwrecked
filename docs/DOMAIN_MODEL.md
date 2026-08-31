@@ -1,172 +1,236 @@
-# Concrete Domain Model
+# Functional Domain Model
 
 ## Status and purpose
 
-This document is the first concrete domain-model pass for Wilson Shipwrecked.
+This document is the canonical **language-neutral functional domain model** for Wilson Shipwrecked.
 
-It translates the accepted product, behavioral, state, contract, orchestration and mutation-authority decisions into a minimal set of typed domain concepts suitable for implementation.
+It translates the accepted product, behavioral, state, contract, orchestration and mutation-authority decisions into concrete domain concepts that can later be implemented in GDScript, C#, or another runtime without changing their meaning.
 
-It intentionally remains **runtime-language neutral**. The repository has not yet committed to GDScript, C# or another implementation language for the simulation core. The types below are therefore semantic records/value objects, not mandated syntax.
+This model is concrete about:
 
-This document is concrete about:
-
-- identity;
-- content definitions versus runtime instances;
-- properties and capabilities;
-- generic interaction rules;
-- requirements/predicates;
-- effects and transformations;
-- affordance queries;
-- learned semantic interactions;
-- Wilson persistent state;
-- player-profile state;
+- aggregates and ownership boundaries;
+- entities, value objects and definition/runtime separation;
+- world state and actor/body state;
+- properties, capabilities and categories;
+- generic interactions, predicates, effects and transformations;
+- containers, inventory and spatial relationships;
+- Wilson cognition and persistent personal history;
+- non-Wilson autonomous actors;
+- projects, events and directed opportunities;
+- player intervention, profile, Legacy Knowledge and Diary;
+- Luck;
 - run lifecycle;
-- contract identifiers and deterministic randomness.
+- deterministic contracts and traceability.
 
-It does **not** define package layout, persistence encoding, Godot nodes, exact numeric formulas or content-authoring file format.
+It intentionally does **not** choose:
+
+- GDScript versus C#;
+- persistence technology;
+- Godot node/resource layout;
+- exact numeric formulas;
+- concrete collection/index types;
+- content-authoring serialization format.
+
+The companion `DOMAIN_REGRESSION.md` validates this model against the representative scene catalog. `DOMAIN_SCHEMA.dbml` is a relational-style projection for visualization only; it is not a database mandate.
 
 ---
 
-# 1. Modeling principles
+# 1. Domain boundaries
 
-## 1.1 Stable semantic IDs
+The runtime domain is divided into six authority families plus derived services.
 
-Domain identity must not depend on Godot nodes, resource paths, display strings or asset filenames.
+```text
+Run
+├── World
+│   ├── entities / locations / containers
+│   ├── environment / weather / time
+│   ├── WilsonBody
+│   └── non-Wilson actor runtime state
+├── WilsonCognition
+├── Projects
+├── Director
+├── PlayerRunState
+└── ActionExecution
 
-Use small typed IDs conceptually equivalent to:
+PlayerProfile
+├── LegacyKnowledge
+├── DiaryArchive
+├── LifetimeStatistics
+└── GlobalUnlocks
+```
+
+Derived services do not own durable truth:
+
+```text
+Perception
+Salience
+Expectation
+Affordance derivation
+Candidate intention generation
+Intention evaluation / competition
+Causal attribution
+Reaction / transient emotion
+Learning proposal derivation
+Luck evaluation
+```
+
+## 1.1 Core ownership rule
+
+Every durable state family has one normal mutation owner.
+
+A service may read state and produce a semantic proposal/result, but it does not gain ownership of the store it influences.
+
+---
+
+# 2. Identity and semantic vocabulary
+
+Domain identity must not depend on Godot nodes, scene paths, display strings or asset filenames.
+
+Use stable semantic IDs conceptually equivalent to:
 
 ```text
 EntityId
 EntityTypeId
+ActorProfileId
+PlaceId
+RegionId
 CategoryId
 PropertyId
 CapabilityId
+RelationTypeId
 ActionId
+RoleId
 InteractionRuleId
 TransformationId
 KnowledgeId
+SemanticIntentionId
 ProjectDefinitionId
 ProjectInstanceId
 EventDefinitionId
 EventInstanceId
+InterventionCapabilityId
 RunId
 EpisodeId
 DecisionId
+ActionExecutionId
 OutcomeId
+ObservationId
+LearningBatchId
 PlayerProfileId
+AchievementId
+UnlockId
 ```
-
-Concrete representation may initially be validated strings or interned symbols. Stronger wrappers are preferred where the chosen language makes them cheap.
 
 Rules:
 
-- IDs are stable across save/load;
-- content IDs are stable across releases unless migrated deliberately;
-- runtime instance IDs are unique within the owning scope;
-- presentation names are not IDs;
-- content registries validate references at startup/content-load time.
-
-## 1.2 Definition versus instance
-
-Keep authored/static content separate from mutable runtime state.
-
-```text
-EntityDefinition
-  describes what a type of thing is
-
-EntityInstance
-  describes one concrete thing currently in the world
-```
-
-Likewise:
-
-```text
-InteractionRuleDefinition
-TransformationDefinition
-ProjectDefinition
-EventDefinition
-```
-
-are content definitions, while current action/project/event execution state belongs to the active run.
-
-## 1.3 Data-driven composition, not recipe enumeration
-
-The generic interaction model must not require authoring every compatible object pair.
-
-Preferred:
-
-```text
-roles + capabilities + properties + state/context requirements
-→ valid interaction
-→ resolved effect/transformation
-```
-
-Rejected as the general model:
-
-```text
-stone + coconut -> opened_coconut
-hammer + coconut -> opened_coconut
-bowling_ball + coconut -> opened_coconut
-```
-
-The same rule should accept any concrete participant set satisfying its predicates.
+- authored IDs are stable across compatible releases;
+- runtime instance IDs are unique within their scope;
+- presentation names are not identity;
+- registries validate references before simulation begins;
+- domain references never contain Godot object/node references.
 
 ---
 
-# 2. Core value types
+# 3. Core value objects
 
-## 2.1 Finite normalized values
-
-Use dedicated bounded value concepts where semantics require ranges.
+## 3.1 Bounded numbers
 
 ```text
-UnitInterval     // [0, 1]
-SignedUnit       // [-1, +1]
-NonNegative      // >= 0
-Probability      // [0, 1]
+UnitInterval   // [0,1]
+SignedUnit     // [-1,+1]
+Probability    // [0,1]
+FiniteScalar   // finite numeric value
+NonNegative    // finite >= 0
+Duration       // finite >= 0
 ```
 
-Construction/update must enforce invariants. Do not store NaN/Infinity or use huge sentinel values.
+NaN, infinity and giant sentinel priorities are invalid domain values.
 
-## 2.2 Discrete grades
+## 3.2 Ordered grades
 
-Some physical/content properties should use ordered finite grades rather than false precision.
-
-Initial example:
+Use finite ordered grades where exact physical precision is unnecessary.
 
 ```text
-Grade5:
-  VERY_LOW
-  LOW
-  MEDIUM
-  HIGH
-  VERY_HIGH
+Grade5 = VERY_LOW | LOW | MEDIUM | HIGH | VERY_HIGH
 ```
 
-Use only where ordering/comparison is behaviorally useful. Do not force every property into `Grade5`.
+Examples:
 
-## 2.3 Property values
+```text
+hardness
+break_resistance
+flammability
+weight_class
+impact_capacity
+```
 
-A property value needs a finite supported value family.
+Do not force every property into `Grade5`; use booleans, counts or bounded scalars when semantics demand them.
 
-Conceptually:
+## 3.3 PropertyValue
 
 ```text
 PropertyValue =
-    BoolValue(bool)
-  | IntValue(int)
-  | ScalarValue(finite number)
-  | GradeValue(Grade5)
-  | IdValue(stable semantic id)
+    BoolValue
+  | IntValue
+  | ScalarValue
+  | GradeValue
+  | SemanticIdValue
 ```
 
-Do not introduce an unrestricted arbitrary object/variant payload into authoritative domain state.
+Authoritative definitions/state must not use unrestricted arbitrary executable values.
+
+## 3.4 SubjectRef
+
+Persistent Wilson-relative state needs stable subjects at several scopes.
+
+```text
+SubjectRef =
+    Entity(EntityId)
+  | EntityType(EntityTypeId)
+  | Category(CategoryId)
+  | Place(PlaceId)
+  | Region(RegionId)
+  | Project(ProjectInstanceId)
+  | Presence
+  | SemanticConcept(SemanticId)
+```
+
+This supports `Gerald`, `this fire pit`, `that tide pool`, `mushrooms`, `the unseen presence`, and an unfinished project without inventing separate relationship systems.
 
 ---
 
-# 3. World content model
+# 4. Definition versus runtime instance
 
-## 3.1 EntityDefinition
+Static authored content and mutable runtime state are separate.
+
+```text
+EntityDefinition       != EntityInstance
+ActionDefinition       != ActionExecution
+ProjectDefinition      != ProjectInstance
+EventDefinition        != EventInstance
+InteractionRule        != ResolvedInteraction
+```
+
+Definitions describe semantic possibility. Instances describe one current world/run occurrence.
+
+---
+
+# 5. World aggregate
+
+```text
+WorldState
+  simulation_time: SimulationTime
+  entities: EntityStore
+  places: PlaceStore
+  relations: WorldRelationStore
+  environment: EnvironmentState
+  actors: ActorRuntimeStore
+  wilson_body: WilsonBodyState
+```
+
+The world is authoritative about physical facts. Wilson cognition may contain a different or incomplete model of those facts.
+
+## 5.1 EntityDefinition
 
 ```text
 EntityDefinition
@@ -174,133 +238,309 @@ EntityDefinition
   categories: Set<CategoryId>
   base_properties: Map<PropertyId, PropertyValue>
   capabilities: Set<CapabilityId>
-  transformation_tags: Set<SemanticTagId>
-  player_intervention_capabilities: Set<PlayerInterventionCapabilityId>
-  semantic_anchors: Set<AnchorId>
-```
-
-Examples of properties/capabilities:
-
-```text
-property.hardness = HIGH
-property.break_resistance = LOW
-property.flammability = HIGH
-property.edible = true
-
-capability.impact_tool
-capability.throwable
-capability.container
-capability.receives_impact
-capability.can_burn
-```
-
-`EntityDefinition` contains authoritative type-level content facts. Wilson does not automatically know them.
-
-## 3.2 EntityInstance
-
-```text
-EntityInstance
-  id: EntityId
-  type_id: EntityTypeId
-  location: WorldLocation
-  state_overrides: Map<PropertyId, PropertyValue>
-  quantity: optional NonNegative
-  lifecycle_state: EntityLifecycleState
-```
-
-Only mutable/instance-specific values belong in `state_overrides`.
-
-Effective property lookup is conceptually:
-
-```text
-instance override
-  ?? definition base property
-  ?? absent
-```
-
-Do not duplicate all definition properties into every entity instance.
-
-## 3.3 Categories
-
-Categories support semantic grouping and knowledge generalization.
-
-Examples:
-
-```text
-category.stone
-category.food
-category.raw_meat
-category.coconut
-category.liquid
-category.tool
-```
-
-Categories are not inheritance classes. An entity type may belong to multiple categories.
-
----
-
-# 4. Generic interaction model
-
-## 4.1 ActionDefinition
-
-An action defines a reusable verb and its semantic participant roles.
-
-```text
-ActionDefinition
-  id: ActionId
-  roles: ordered RoleDefinition[]
-  interruption_class: ActionInterruptionClass
+  intervention_capabilities: Set<InterventionCapabilityId>
+  anchors: Set<AnchorId>
+  actor_profile_id: optional ActorProfileId
 ```
 
 Example:
 
 ```text
-action.hit
-  roles:
-    actor
-    target
-    tool
+stone:
+  hardness = HIGH
+  weight_class = MEDIUM
+  capabilities = {impact_tool, throwable}
+
+coconut:
+  break_resistance = LOW
+  capabilities = {receives_impact, carryable}
 ```
 
-The action itself does not encode coconut-specific behavior.
+## 5.2 EntityInstance
 
-## 4.2 RoleBinding
+```text
+EntityInstance
+  id: EntityId
+  type_id: EntityTypeId
+  place_id: PlaceId
+  transform: SpatialTransform
+  state_overrides: Map<PropertyId, PropertyValue>
+  quantity: optional NonNegative
+  lifecycle: ACTIVE | DESTROYED | TRANSFORMED | REMOVED
+```
 
-At runtime, a candidate interaction binds concrete entities/context to roles.
+Effective property lookup:
+
+```text
+instance override
+?? definition base value
+?? absent
+```
+
+Do not copy every authored property onto every runtime instance.
+
+## 5.3 Place and region
+
+A place is a stable semantic spatial subject; a region is a broader grouping.
+
+```text
+PlaceDefinition
+  id: PlaceId
+  region_id: RegionId
+  categories: Set<CategoryId>
+  base_properties: Map<PropertyId, PropertyValue>
+
+PlaceState
+  id: PlaceId
+  state_overrides: Map<PropertyId, PropertyValue>
+```
+
+Examples:
+
+```text
+place.camp
+place.favorite_rock_area
+place.gerald_tide_pool
+place.sandy_slope
+place.neighbor_island
+place.wreck_deck
+```
+
+Stable places allow spatial history without persisting arbitrary coordinate snapshots in Wilson cognition.
+
+## 5.4 World relations
+
+Many scenes depend on semantic relations rather than object-local properties.
+
+```text
+WorldRelation
+  type: RelationTypeId
+  subject: SubjectRef
+  object: SubjectRef
+  qualifier: optional PropertyValue
+```
+
+Examples:
+
+```text
+inside(item, container)
+on_top_of(spoon, rock)
+attached_to(garment, clothesline)
+part_of(lid, container)
+blocks(clutter, escape_route)
+near(firewood, firepit)
+owned_carried_by(coconut, wilson)
+```
+
+Relations are world truth. Wilson may or may not know them.
+
+## 5.5 Containers and carried state
+
+Container/inventory truth is represented through capabilities + relations rather than a separate universal inventory abstraction.
+
+A container typically has:
+
+```text
+capability.container
+property.capacity_class
+```
+
+Contents are world relations:
+
+```text
+inside(entity, container)
+```
+
+Wilson carried/held objects use relations such as:
+
+```text
+carried_by(entity, wilson)
+held_in_hand(entity, left/right)
+```
+
+This keeps storage, hand occupancy and unusual carriers queryable through one world model.
+
+---
+
+# 6. Wilson body and physical condition
+
+Wilson cognition is not authoritative about Wilson's physical body.
+
+```text
+WilsonBodyState
+  alive: bool
+  vitality: UnitInterval
+  exertion: UnitInterval
+  wetness: UnitInterval
+  mobility: MobilityState
+  conditions: BodyCondition[]
+```
+
+```text
+BodyCondition
+  condition_id: SemanticId
+  severity: UnitInterval
+  source_subject: optional SubjectRef
+  started_at: SimulationTime
+  recovery: RecoveryPolicy
+```
+
+Examples:
+
+```text
+burned_hand
+bruised
+injured_ankle
+poisoned
+cold/wet discomfort source
+```
+
+Rules:
+
+- Action Resolution/world effects mutate authoritative body state;
+- cognition only perceives/interprets its accessible consequences;
+- death derives from grounded body/world consequences;
+- resurrection normalizes/restores body state according to product rules while preserving admitted cognitive learning.
+
+`hunger`, `energy`, `comfort` and `stimulation` remain cognition/drive state because they are motivational state, not a replacement for physical condition.
+
+---
+
+# 7. Non-Wilson autonomous actors
+
+Animals do not need Wilson-level cognition, but recurring individuals need persistent identity and simple behavior continuity.
+
+```text
+ActorProfileDefinition
+  id: ActorProfileId
+  behavior_capabilities: Set<CapabilityId>
+  behavior_rules: Set<BehaviorRuleId>
+  persistence_class: EPISODIC | RECURRING
+```
+
+```text
+ActorRuntimeState
+  entity_id: EntityId
+  profile_id: ActorProfileId
+  current_activity: optional SemanticActivityId
+  target: optional SubjectRef
+  transient_state: bounded semantic values
+```
+
+Important:
+
+- Gerald's psychological meaning lives in **Wilson's** associations/beliefs/habits;
+- Gerald only needs enough autonomous behavior to approach food, roam, flee, steal, etc.;
+- recurring animals preserve `EntityId` across appearances when narratively required;
+- do not create a deep animal memory/personality model unless later scenes require it.
+
+---
+
+# 8. Environment and world evolution
+
+```text
+EnvironmentState
+  weather: WeatherState
+  daylight_phase: DaylightPhase
+  active_environmental_processes: EnvironmentalProcess[]
+```
+
+```text
+EnvironmentalProcess
+  kind: SemanticId
+  subject: SubjectRef
+  started_at: SimulationTime
+  parameters: bounded semantic values
+```
+
+Examples:
+
+```text
+fruit_ripening
+food_spoilage
+wet_item_drying
+fire_fuel_consumption
+storm_weakening_palm
+wave_washing_object
+wind_moving_loose_object
+```
+
+Processes are reusable world evolution rules, not authored scenes.
+
+---
+
+# 9. Generic interaction grammar
+
+## 9.1 ActionDefinition
+
+```text
+ActionDefinition
+  id: ActionId
+  roles: RoleDefinition[]
+  interruption_class: IMMEDIATE_SAFE | CHECKPOINT | COMMITTED_ATOMIC
+```
+
+Example:
+
+```text
+action.hit(actor, target, tool)
+action.put(actor, item, container)
+action.throw(actor, item, target)
+action.inspect(actor, target)
+action.eat(actor, food)
+```
+
+Actions define reusable verbs, not target-specific recipes.
+
+## 9.2 RoleBinding
 
 ```text
 RoleBinding
-  role_id -> DomainSubjectRef
+  role_id -> SubjectRef
 ```
 
-`DomainSubjectRef` may reference an entity, Wilson, a place/region or another explicitly supported domain subject.
+A binding may be partial during affordance generation and complete before action resolution.
 
-## 4.3 RequirementPredicate
+---
 
-Interaction legality is expressed through a small composable predicate vocabulary.
+# 10. Predicate algebra
 
-Minimum required predicate classes:
+Eligibility, applicability and authored prerequisites use one validated predicate vocabulary.
+
+Minimum predicate forms:
 
 ```text
 HasCapability(role, capability)
 HasCategory(role, category)
 PropertyExists(role, property)
 PropertyCompare(role.property, operator, literal)
-PropertyCompareRoles(left_role.property, operator, right_role.property)
-StatePredicate(role, state/property condition)
-SpatialPredicate(role_a, relation, role_b)
+PropertyCompareRoles(left.property, operator, right.property)
+RelationExists(type, subject, object)
+RelationAbsent(type, subject, object)
+SpatialPredicate(a, relation, b)
 KnowledgePredicate(actor, knowledge)
+BeliefPredicate(actor, proposition-pattern)
+AssociationPredicate(actor, subject, threshold/polarity)
+HabitPredicate(actor, cue/intention-pattern, threshold)
+DrivePredicate(actor, drive, comparison)
+ProjectPredicate(project-pattern)
+EnvironmentPredicate(environment semantic condition)
 ContextPredicate(registered semantic predicate id)
-AllOf(predicates)
-AnyOf(predicates)
-Not(predicate)
+AllOf(...)
+AnyOf(...)
+Not(...)
 ```
 
-The initial implementation should keep `ContextPredicate` registered/typed rather than accepting arbitrary authored scripts.
+Rules:
 
-This predicate vocabulary is intentionally small. Add a new predicate kind only when representative content cannot be expressed cleanly with the existing set.
+- predicates are data/registered semantics, not arbitrary authored executable scripts;
+- not every predicate category is valid in every context;
+- physical legality rules should avoid cognition predicates unless the action is intentionally knowledge-gated;
+- Director/project eligibility may legitimately use Wilson-relative history/knowledge through explicit bounded queries.
 
-## 4.4 InteractionRuleDefinition
+---
+
+# 11. Interaction rules and property-driven crafting
 
 ```text
 InteractionRuleDefinition
@@ -308,61 +548,54 @@ InteractionRuleDefinition
   action_id: ActionId
   requirements: RequirementPredicate
   resolution: ResolutionSpec
-  discovery: DiscoverySpec
-  semantic_interaction: optional SemanticInteractionSpec
+  discovery: optional DiscoverySpec
 ```
 
-Example conceptually:
+The generic model is:
 
 ```text
-rule.break_breakable_by_impact
-
-roles:
-  tool
-  target
-
-requirements:
-  HasCapability(tool, impact_tool)
-  HasCapability(target, receives_impact)
-  PropertyCompareRoles(
-      tool.hardness,
-      >=,
-      target.break_resistance
-  )
-
-resolution:
-  classify impact
-  if transformation target exists for resulting semantic outcome:
-    apply transformation
+semantic roles
++ participant capabilities
++ properties
++ world relations/context
+→ semantic outcome
 ```
 
-This rule may work for stone, hammer, bowling ball or future objects without adding pair recipes.
-
-## 4.5 Eligibility versus desirability
-
-`InteractionRuleDefinition` answers whether an interaction can be attempted/resolved.
-
-It must not answer whether Wilson wants to do it.
-
-Keep the pipeline:
+Not:
 
 ```text
-possible
-→ considered
-→ evaluated/desirable
-→ selected
-→ resolved
+specific object pair
+→ recipe result
 ```
+
+Example:
+
+```text
+rule.break_by_impact
+
+requires:
+  tool has impact_tool
+  target has receives_impact
+  tool.hardness >= target.break_resistance
+
+resolves:
+  emit semantic outcome sufficient_breaking_impact
+```
+
+Stone, hammer, bowling ball or future compatible tools can satisfy the same rule.
 
 ---
 
-# 5. Resolution and transformations
+# 12. Resolution and effects
 
-## 5.1 ResolutionSpec
+```text
+ResolutionSpec
+  outcome_classifier
+  effect_specs: EffectSpec[]
+  semantic_outcome_tags: SemanticOutcomeTag[]
+```
 
-Interaction rules produce semantic outcomes before presentation.
-
-Minimum outcome classes:
+Minimum resolved outcome classes:
 
 ```text
 SUCCESS
@@ -372,37 +605,52 @@ BLOCKED
 FAILURE
 ```
 
-A resolution must be able to emit:
-
-```text
-ResolvedEffect[]
-DiagnosticFeedback[]
-SemanticOutcomeTag[]
-ConsequenceSeverity
-```
-
-## 5.2 EffectSpec / ResolvedEffect
-
-Initial effect families:
+Minimum effect families:
 
 ```text
 TransformEntity
 ModifyProperty
-TransferQuantity
+CreateRelation
+RemoveRelation
 MoveEntity
+TransferQuantity
 CreateEntity
 DestroyEntity
 ApplyBodyEffect
 EmitWorldSemanticEvent
+ScheduleEnvironmentalProcess
 ```
 
-Definitions describe possible effects; authoritative resolution produces concrete `ResolvedEffect` instances with actual participants/values.
+Avoid a generic `execute_script` authoritative effect.
 
-Avoid one generic `execute_script` effect in the domain model.
+## 12.1 Partial/diagnostic results
 
-## 5.3 TransformationDefinition
+`Scientific Method` requires physical failure to still provide meaningful feedback.
 
-Transformations describe meaningful form changes.
+```text
+ActionOutcome
+  classification
+  resolved_effects
+  semantic_outcome_tags
+  diagnostic_feedback
+  consequence_severity
+```
+
+Examples of diagnostic feedback:
+
+```text
+wood_broke_before_container_changed
+container_dented
+lid_shifted
+material_too_soft
+partial_progress
+```
+
+Learning can use these semantics to refine the next experiment without inventing hidden information.
+
+---
+
+# 13. Transformations
 
 ```text
 TransformationDefinition
@@ -417,52 +665,27 @@ Example:
 
 ```text
 coconut
-+ semantic outcome: sufficient_breaking_impact
++ sufficient_breaking_impact
 → opened_coconut
 ```
 
-The transformation is specific to the source/result form, while the interaction that produces `sufficient_breaking_impact` remains generic.
+The generic interaction decides that sufficient impact happened; the transformation decides how this particular content form changes.
 
-This separation is central:
-
-```text
-GENERIC PHYSICS/INTERACTION RULE
-  determines what happened semantically
-
-CONTENT TRANSFORMATION
-  determines how this object form changes when that outcome occurs
-```
-
-## 5.4 TransferPolicy
-
-A transformation declares which runtime metadata survives.
-
-Minimum concerns:
+`TransferPolicy` explicitly controls:
 
 ```text
-quantity
-selected instance identity/history linkage
 location
-ownership/container relation
-explicit transferable state properties
+quantity
+container/carried relations
+selected instance continuity/history link
+whitelisted state properties
 ```
 
-Do not blindly copy every state field to a transformed entity.
+Do not copy arbitrary state wholesale.
 
 ---
 
-# 6. Affordances
-
-## 6.1 AffordanceQuery
-
-World/domain services must be able to answer:
-
-```text
-query_affordances(initiator, local_context)
-→ Affordance[]
-```
-
-## 6.2 Affordance
+# 14. Affordance model
 
 ```text
 Affordance
@@ -473,100 +696,16 @@ Affordance
   mode: EXPLORATORY | LEARNED_SEMANTIC | DIRECT_PHYSICAL
 ```
 
-An affordance means the action is materially available enough to consider/complete binding. It does not imply Wilson will choose it.
+An affordance means materially possible enough to consider or complete binding, not that Wilson wants it.
 
-For UI/context generation, the initiating entity should constrain the search so the system does not enumerate the Cartesian product of all world entities.
-
----
-
-# 7. Discovery and knowledge
-
-## 7.1 KnowledgeId
-
-Knowledge is identified semantically, not by UI text.
-
-Examples:
-
-```text
-knowledge.cook_food_at_fire
-knowledge.open_coconut_with_impact_tool
-knowledge.category_stone_expected_hard
-knowledge.palm_fruit_can_fall
-```
-
-## 7.2 KnowledgeEntry
-
-```text
-KnowledgeEntry
-  id: KnowledgeId
-  scope: KnowledgeScope
-  confidence: UnitInterval
-  source_accessibility: SourceAccessibility
-```
-
-Possible scopes:
-
-```text
-UNIVERSAL
-CATEGORY(CategoryId)
-TYPE(EntityTypeId)
-INSTANCE(EntityId)
-PLACE(PlaceId)
-RELATION(SemanticRelationId)
-```
-
-## 7.3 Learned semantic interaction
-
-A useful discovered relationship may expose a purposeful semantic interaction.
-
-```text
-SemanticInteractionSpec
-  knowledge_id: KnowledgeId
-  display/action_intent_id: SemanticIntentionId
-  applicability: RequirementPredicate
-  legacy_eligible: bool
-  legacy_weight: finite non-negative weight
-```
-
-Important: this is **knowledge of an interaction pattern**, not a physical recipe table.
-
-Example:
-
-```text
-knowledge.open_coconut_with_impact_tool
-
-applicability:
-  target category coconut
-  tool capability impact_tool
-  physical interaction rules still validate actual success
-```
-
-Knowing the interaction does not bypass authoritative requirements. A soft or broken tool can still fail if the physical rule says it fails.
-
-## 7.4 Discovery pipeline
-
-There is no separate random discovery roll after successful observation.
-
-```text
-requirements/context make exploration possible
-→ Wilson performs physical/generic action
-→ authoritative result occurs
-→ Wilson observes sufficient evidence
-→ learning produces KnowledgeEntry/update
-→ learned semantic interaction becomes available
-```
-
-The player-side normal discovery UI follows Wilson's learned interaction knowledge. It does not expose undiscovered semantic interactions from an omniscient catalog.
+Affordance derivation must be locally bounded. Never enumerate every entity × action × entity combination globally.
 
 ---
 
-# 8. Wilson aggregate state
-
-Wilson Cognition remains the owner family for durable Wilson-relative state, but concrete storage should remain composed.
+# 15. Wilson cognition aggregate
 
 ```text
-WilsonState
-  identity: WilsonIdentity
+WilsonCognitionState
   traits: TraitProfile
   drives: DriveState
   beliefs: BeliefStore
@@ -577,7 +716,7 @@ WilsonState
   presence: PresenceRelationship
 ```
 
-## 8.1 TraitProfile
+## 15.1 Traits
 
 ```text
 TraitProfile
@@ -586,21 +725,71 @@ TraitProfile
   independence: UnitInterval
 ```
 
-Traits do not drift from ordinary outcomes.
+Traits are stable dispositions, not ordinary learned state.
 
-## 8.2 DriveState
+## 15.2 Drives
 
 ```text
 DriveState
-  hunger: UnitInterval
-  energy: UnitInterval
-  comfort: UnitInterval
-  stimulation: UnitInterval
+  hunger_urgency: UnitInterval
+  energy_need: UnitInterval
+  discomfort: UnitInterval
+  stimulation_need: UnitInterval
 ```
 
-Exact directionality (`1 = urgent` versus `1 = satisfied`) must be chosen once and used consistently in implementation. Prefer domain names that make the direction obvious if separate value objects are introduced.
+Names encode directionality: higher means stronger motivational pressure.
 
-## 8.3 AssociationEntry
+## 15.3 Belief/knowledge model
+
+A belief store contains proposition-like entries rather than one knowledge percentage per object.
+
+```text
+BeliefEntry
+  proposition: Proposition
+  confidence: UnitInterval
+  source_accessibility: SourceAccessibility
+```
+
+```text
+Proposition
+  predicate: SemanticPredicateId
+  arguments: SubjectRef[]
+  qualifiers: bounded semantic values
+```
+
+This can express:
+
+```text
+mushroom_type_X may_be_harmful
+this_firepit often_fails_to_light
+spoon expected_at cooking_area
+Gerald likely_targets food
+stone_category expected_hard
+```
+
+`KnowledgeEntry` is a high-confidence/operational subset where useful; implementation may use one store with semantic classification rather than physically separate databases.
+
+## 15.4 Learned semantic interactions
+
+```text
+SemanticInteractionDefinition
+  knowledge_id: KnowledgeId
+  intention_id: SemanticIntentionId
+  applicability: RequirementPredicate
+  legacy_eligible: bool
+  legacy_weight: NonNegative
+```
+
+Knowledge exposes purposeful intentions such as:
+
+```text
+open coconut with impact tool
+cook food at heat source
+```
+
+but never bypasses authoritative physical validation.
+
+## 15.5 Associations
 
 ```text
 AssociationEntry
@@ -609,18 +798,9 @@ AssociationEntry
   attachment: UnitInterval
 ```
 
-## 8.4 HabitEntry
+This supports liking, hatred, rivalry and emotionally important negative relationships without separate primitives.
 
-```text
-HabitEntry
-  cue: HabitCue
-  intention_pattern: SemanticIntentionId
-  strength: UnitInterval
-```
-
-`HabitCue` should use semantic context references, not serialized executable predicates.
-
-## 8.5 Episode
+## 15.6 Episodic history
 
 ```text
 Episode
@@ -628,16 +808,49 @@ Episode
   time: SimulationTime
   subjects: SubjectRef[]
   event_kind: SemanticEventId
+  context_place: optional PlaceId
   expected_outcome: optional OutcomeSummary
   observed_outcome: OutcomeSummary
-  importance: UnitInterval
   meaningful_choice: optional ChoiceSummary
+  importance: UnitInterval
   source_accessibility: SourceAccessibility
 ```
 
-Only selected meaningful episodes are persisted.
+Only selected meaningful episodes persist.
 
-## 8.6 PresenceRelationship
+## 15.7 Habits
+
+```text
+HabitEntry
+  cue: HabitCue
+  intention_pattern: SemanticIntentionId
+  subject_pattern: optional SubjectPattern
+  strength: UnitInterval
+```
+
+```text
+HabitCue
+  semantic_context: SemanticCueId
+  optional place/subject/time/environment qualifiers
+```
+
+Habits are biases, not commands.
+
+## 15.8 Expected arrangements and locations
+
+No separate `ownership` or `routine` primitive is required.
+
+Expected arrangements are beliefs with spatial/relation propositions:
+
+```text
+expected_relation(spoon, beside, cooking_area)
+expected_relation(favorite_rock, at, usual_place)
+expected_relation(materials, inside, storage)
+```
+
+This allows Missing Spoon, Moved Rock and Sabotaged Storage to use the ordinary belief/prediction-error pipeline.
+
+## 15.9 Presence relationship
 
 ```text
 PresenceRelationship
@@ -646,14 +859,16 @@ PresenceRelationship
   dependency: UnitInterval
 ```
 
+Private player intent never updates these directly.
+
 ---
 
-# 9. Intentional state
+# 16. Intentions and decision state
 
 ```text
 IntentionalState
   current: optional IntentionInstance
-  suspended: bounded list<IntentionInstance>
+  suspended: bounded IntentionInstance[]
 ```
 
 ```text
@@ -662,15 +877,46 @@ IntentionInstance
   semantic_intention: SemanticIntentionId
   subjects: RoleBinding
   origin: IntentionOrigin
-  commitment: IntentionCommitmentState
+  commitment: NONE | PREPARING | COMMITTED
   started_at: SimulationTime
+  continuation_context: bounded semantic refs
 ```
 
-The candidate set/evaluation scores do not belong here; they remain derived/trace data.
+Derived candidate/evaluation data is not canonical state.
+
+Candidate intentions may come from:
+
+```text
+drives
+known interactions
+exploration affordances
+habits
+projects
+suspended interests
+player suggestions
+Director opportunities
+current transient reaction
+```
 
 ---
 
-# 10. Project domain
+# 17. Reaction and transient emotion
+
+Transient emotion is derived from current evidence/history and is not long-lived canonical memory.
+
+```text
+ReactionState
+  kind: FEAR | ANGER | JOY_EXCITEMENT | CONCERN | SURPRISE | FRUSTRATION | RELIEF
+  intensity: UnitInterval
+  subject: optional SubjectRef
+  expires/clears by semantic condition
+```
+
+If persistence across save during an active scene is required, store only the minimal current reaction continuation; long-term consequences belong in beliefs/associations/habits/episodes.
+
+---
+
+# 18. Projects
 
 ```text
 ProjectDefinition
@@ -678,6 +924,7 @@ ProjectDefinition
   eligibility: RequirementPredicate
   contribution_patterns: ProjectContributionSpec[]
   completion: RequirementPredicate
+  abandonment_policy: semantic policy id
 ```
 
 ```text
@@ -686,36 +933,132 @@ ProjectInstance
   definition_id: ProjectDefinitionId
   lifecycle: ACTIVE | PAUSED | COMPLETED | ABANDONED
   subject_bindings: RoleBinding
-  project_metadata: bounded definition-specific semantic values
+  metadata: bounded project semantic values
 ```
 
-Physical project state remains in world entities. Do not duplicate roof sections/material placement into project metadata if the world already represents them authoritatively.
+World physical state remains authoritative for constructed components.
+
+Examples:
+
+```text
+roof stage sections → world entities/relations
+project lifecycle → ProjectInstance
+```
+
+History can make an authored project eligible:
+
+```text
+high attachment to Gerald
++ comfortable/stimulated context
++ statue project content available
+→ Gerald statue project candidate
+```
+
+The project form is authored; its contextual subject and motivation can be systemic.
 
 ---
 
-# 11. Player-side domain
+# 19. Event / Scene Director domain
 
-Separate active-run intervention state from cross-run profile state.
-
-```text
-PlayerDomainState
-  run_intervention: PlayerInterventionState
-  profile: PlayerProfile
-```
-
-## 11.1 PlayerInterventionState
+Directed content is represented as opportunities, not scripts controlling Wilson.
 
 ```text
-PlayerInterventionState
-  god_power: bounded non-negative value
-  non_intervention_streak: bounded duration/progression
-  suggestion_windows: SuggestionWindowState[]
-  game_mode: GameMode
+EventDefinition
+  id: EventDefinitionId
+  eligibility: RequirementPredicate
+  rarity/cooldown policy
+  setup effects/opportunities
+  candidate biases: bounded BiasSpec[]
+  completion/expiry predicates
 ```
 
-God Power capacity does not unlock intervention capability. Validity comes from authored intervention capabilities and mode permissions.
+```text
+EventInstance
+  id: EventInstanceId
+  definition_id: EventDefinitionId
+  lifecycle: ELIGIBLE | ACTIVE | RESOLVED | EXPIRED
+  bindings: RoleBinding
+  started_at: SimulationTime
+  state: bounded semantic values
+```
 
-## 11.2 PlayerProfile
+The Director may:
+
+- introduce a boat, aircraft, rare washed-up object or temporary route;
+- make related opportunities salient;
+- apply bounded candidate bias.
+
+It may not:
+
+- force Wilson's final intention;
+- disable legitimate urgent needs just to preserve drama;
+- rewrite Wilson psychology to satisfy a scene.
+
+---
+
+# 20. Player suggestions
+
+```text
+SuggestionSignal
+  intention_pattern: SemanticIntentionId
+  bindings: RoleBinding
+  issued_at: SimulationTime
+  window_id: SuggestionWindowId
+```
+
+```text
+SuggestionWindowState
+  target_pattern
+  count
+  opened_at
+  cooldown_state
+```
+
+Suggestion strength is derived using independence, trust, baseline desirability, current needs/risk and bounded insistence.
+
+A suggestion never becomes an authoritative Wilson command.
+
+---
+
+# 21. Player intervention domain
+
+```text
+PlayerRunState
+  god_power: NonNegative bounded by cap
+  non_intervention_progress: bounded value
+  suggestion_windows
+  game_mode
+```
+
+Player intervention validity comes from:
+
+```text
+mode permission
++ target intervention capability
++ contextual requirements
++ sufficient God Power
+```
+
+God Power quantity does not unlock new intervention capabilities.
+
+A valid intervention may have harmful or lethal grounded consequences for Wilson.
+
+Intervention processing:
+
+```text
+PlayerInterventionRequest
+→ validate permission/capability/cost
+→ reserve/consume GP
+→ apply world command
+→ emit WorldEvent
+→ Wilson observes only if perceivable
+```
+
+---
+
+# 22. Player profile, Legacy and Diary
+
+`PlayerProfile` is outside active `RunState`.
 
 ```text
 PlayerProfile
@@ -726,351 +1069,476 @@ PlayerProfile
   global_unlocks: Set<UnlockId>
 ```
 
-## 11.3 Legacy selection
+## 22.1 Legacy Knowledge
 
-At `EndRun`:
+At End Run:
 
 ```text
-current Wilson knowledge
+current Wilson operational knowledge
 → filter legacy_eligible
-→ weighted bounded selection using legacy_weight
+→ weighted bounded deterministic selection
 → merge into PlayerProfile.legacy_knowledge
 ```
 
-The exact count/formula is balance policy, not a domain-model decision.
-
-At `StartRun`:
+At Start Run:
 
 ```text
-basic canonical Wilson knowledge
-+ PlayerProfile.legacy_knowledge
-→ initial Wilson Belief/Knowledge store
+canonical base knowledge
++ Legacy Knowledge
+→ new Wilson initial knowledge
 ```
 
-No episodes, associations, habits, presence relationship or autobiographical source memory transfer cross-run through Legacy Knowledge.
+Legacy does **not** transfer:
 
----
+- episodes;
+- specific object/place relationships;
+- presence relationship;
+- habits;
+- death facts;
+- autobiographical source memories.
 
-# 12. Diary domain
+## 22.2 Diary
 
-The product has one player-facing Diary surface backed by structured records.
+One player-facing Diary surface aggregates semantically distinct records.
 
 ```text
 DiaryArchive
-  runs: RunDiary[]
+  run_records: RunDiary[]
 ```
 
 ```text
 RunDiary
-  run_id: RunId
-  started_at: profile-relative timestamp/sequence
-  ended_at: optional timestamp/sequence
-  milestones: DiaryMilestone[]
-  rare_events: DiaryEventRecord[]
-  achievements: AchievementRecord[]
-  screenshots: ScreenshotRef[]
-  run_stats: RunStats
-  summary: RunSummaryData
+  run_id
+  milestones
+  important chronology
+  rare_event_records
+  achievements
+  screenshot_refs
+  run_stats
+  end_summary
 ```
 
-The diary projection must preserve epistemic boundaries:
-
-- Wilson-authored prose may only use facts Wilson could know;
-- player-facing statistics/history may include allowed structured run metadata outside Wilson narration;
-- screenshots are presentation artifacts referenced by domain/profile records, not authoritative simulation truth.
-
-Do not create separate competing global album and diary aggregates.
+Wilson-flavored narrative is generated only from Wilson-accessible facts. Player-level statistics/archive records may contain permitted non-Wilson metadata. Screenshot bytes/media remain presentation/storage artifacts referenced by the profile.
 
 ---
 
-# 13. Luck
+# 23. Luck
 
-Luck is not stored as a Wilson trait or drive.
+Luck is a derived chance-favorability query, not a Wilson trait/drive.
 
-Model it as a derived query:
+```text
+LuckModifier
+  source: SubjectRef
+  magnitude: SignedUnit
+  applicability: RequirementPredicate
+```
 
 ```text
 LuckContext
-  subject: WilsonId
-  resolution_kind: LuckSensitiveResolutionId
-  world/context refs
+  Wilson subject
+  chance_resolution_kind
+  relevant bindings/context
+```
 
-LuckModifier
-  source_ref
-  magnitude: bounded signed value
-  applicability
-
-LuckService.evaluate(context, active_modifiers)
-→ SignedUnit favorability
+```text
+LuckService.evaluate(context, active modifiers)
+→ SignedUnit effective_luck
 ```
 
 Rules:
 
 - neutral baseline;
-- active world/content effects may add bounded positive/negative modifiers;
-- only explicitly luck-sensitive stochastic resolution consumes Luck;
-- Luck biases selection among already valid chance outcomes;
-- Luck never rewrites established deterministic causality.
+- bounded modifier composition;
+- only declared unresolved random alternatives consume Luck;
+- Luck cannot create eligibility;
+- Luck cannot change Wilson decision scores;
+- Luck cannot reverse committed physics;
+- Wilson never reads the numeric value directly.
 
 ---
 
-# 14. Run aggregate and lifecycle
+# 24. Perception and expectation boundary
+
+World truth must reach Wilson cognition through perception.
+
+```text
+WorldState / WorldEvent
+→ Perception
+→ ObservedEvent / PerceptionResult
+→ Expectation comparison
+→ prediction error / salience
+→ decision + learning
+```
+
+Wilson may observe:
+
+- a moved spoon but not the player action that moved it;
+- a dented container and infer that the strike had partial effect;
+- Gerald approaching food;
+- a palm cracking/falling;
+- rain and loose objects moving.
+
+The world stores actual cause separately from Wilson's inferred cause.
+
+---
+
+# 25. Learning pipeline
+
+One grounded observation may generate several owner-specific proposals.
+
+```text
+ObservedEvent / ActionOutcome
+→ LearningInterpretation
+→ BeliefEvidence
+→ AssociationImpact
+→ HabitEvidence
+→ EpisodeCandidate
+→ PresenceEvidence
+```
+
+Each destination store applies only its own bounded mutation.
+
+Learning is not itself a durable state owner.
+
+## 25.1 Discovery
+
+No separate RNG discovery roll occurs after sufficient evidence.
+
+```text
+eligible exploration
+→ action
+→ grounded result
+→ observed evidence
+→ learn/reinforce proposition or semantic interaction
+```
+
+## 25.2 Contradiction and extinction
+
+Safe/contradictory evidence can revise established danger beliefs. Negative association may decay/change more slowly than factual confidence.
+
+---
+
+# 26. Action execution and commitment
+
+```text
+ActionExecutionState
+  id: ActionExecutionId
+  action_id
+  bindings
+  phase
+  commitment_class
+  started_at
+```
+
+Canonical boundary:
+
+```text
+SelectedIntention
+→ ActionExecution
+→ authoritative validation/progression
+→ commit point
+→ ActionOutcome
+```
+
+Once a committed physical consequence is established, later reconsideration, player suggestion or Luck cannot rewind it.
+
+This is required for Falling Palm, Brilliant Shortcut and the reshaped Unwanted Rescue case.
+
+---
+
+# 27. Run aggregate and lifecycle
 
 ```text
 RunState
   id: RunId
   seed: SimulationSeed
-  simulation_time: SimulationTime
   world: WorldState
-  wilson: WilsonState
+  wilson_cognition: WilsonCognitionState
   projects: ProjectState
   director: DirectorState
-  player_intervention: PlayerInterventionState
+  player: PlayerRunState
   action_execution: optional ActionExecutionState
 ```
-
-Cross-run `PlayerProfile` is deliberately outside `RunState`.
 
 Lifecycle:
 
 ```text
 StartRun(profile, seed)
-→ bootstrap world + Wilson + run state
+→ bootstrap world
+→ create Wilson body/cognition
+→ seed Legacy Knowledge
 
 WilsonDies
-→ finish coherent committed consequence
-→ pause for player choice
+→ finish committed death scene
+→ pause at death choice
 
 Resurrect
-→ same RunId continues
+→ same RunId
 → free and unlimited
-→ normalize short-lived/body state
-→ preserve admitted run continuity
+→ normalize body/transient state
+→ preserve allowed run cognition/history
 
 EndRun
-→ archive Diary data/statistics
-→ select Legacy Knowledge
-→ close RunState permanently
+→ close world permanently
+→ build run archive
+→ apply Legacy selection
+→ update profile
+→ new run may begin
 ```
 
 An ended run is historical data, not a resumable active world.
 
 ---
 
-# 15. Contract identity and deterministic traceability
+# 28. Deterministic semantic contracts
 
-Central cross-system contracts should carry stable causal identity.
-
-Minimum conceptual IDs:
+Central contracts:
 
 ```text
-SimulationStepId
-DecisionId
-ActionExecutionId
-OutcomeId
-WorldEventId
-ObservationId
-LearningBatchId
+ObservedEvent
+SelectedIntention
+ActionOutcome
 ```
 
-Relationships must support tracing:
+Additional concrete boundary records include:
 
 ```text
-trigger
+WorldEvent
+PerceptionResult
+CandidateIntention
+EvaluationContribution
+ProjectOpportunity
+ProjectProgressResult
+SuggestionSignal
+PlayerInterventionRequest
+ValidatedIntervention
+BeliefEvidence
+AssociationImpact
+HabitEvidence
+EpisodeCandidate
+PresenceEvidence
+RunEnded
+RunBootstrap
+```
+
+All causally relevant contracts carry sufficient identifiers to reconstruct:
+
+```text
+simulation step
+→ trigger
 → decision
-→ selected intention
+→ intention
 → action execution
-→ authoritative outcome
+→ outcome
 → world events
-→ observation
+→ observations
 → learning batch
-→ owner-local mutations
+→ owner-local state changes
 ```
-
-Do not use presentation frame IDs as domain ordering.
 
 ---
 
-# 16. Seeded randomness
+# 29. Seeded randomness
 
-All gameplay randomness enters through an injected deterministic source.
+All gameplay randomness uses injected deterministic sources.
 
-```text
-RandomSource
-  next(domain_stream, causal_context)
-```
-
-Prefer semantic streams/scopes so unrelated presentation changes do not shift gameplay outcomes accidentally.
-
-At minimum separate:
+Semantic streams should be separable at least into:
 
 ```text
-gameplay decision randomness
-event/director randomness
-world generation randomness
-legacy selection randomness
-presentation-only randomness
+world_generation
+decision_selection
+director_events
+actor_behavior
+luck_sensitive_resolution
+legacy_selection
+presentation_only
 ```
 
-Exact PRNG technology is deferred.
+Presentation randomness must not perturb authoritative gameplay RNG order.
 
 ---
 
-# 17. Content registries
+# 30. Content registries
 
-Concrete implementation should expose validated read-only registries such as:
+Validated read-only registries:
 
 ```text
 EntityDefinitionRegistry
+PlaceDefinitionRegistry
+ActorProfileRegistry
 ActionDefinitionRegistry
 InteractionRuleRegistry
 TransformationRegistry
-KnowledgeDefinitionRegistry
+SemanticInteractionRegistry
 ProjectDefinitionRegistry
 EventDefinitionRegistry
+InterventionCapabilityRegistry
 ```
 
-Startup/content validation must reject:
+Content validation rejects:
 
-- duplicate IDs;
-- missing referenced IDs;
-- invalid property value types;
-- impossible role references;
+- duplicate/missing IDs;
+- property type mismatches;
+- invalid role references;
 - malformed predicates;
-- transformation targets that do not exist;
-- learned interactions referencing nonexistent knowledge/action definitions;
-- negative/NaN/infinite weights where forbidden.
-
-Registries are definitions/content lookup, not mutable world state.
-
----
-
-# 18. First concrete vertical-slice vocabulary
-
-The first implementation should prove the model with the smallest useful vocabulary.
-
-Suggested initial IDs:
-
-```text
-Entity types:
-  wilson
-  coconut
-  opened_coconut
-  stone
-  raw_meat
-  cooked_meat
-  campfire
-
-Capabilities:
-  throwable
-  impact_tool
-  receives_impact
-  food
-  cooking_heat_source
-  cookable
-
-Properties:
-  hardness
-  break_resistance
-  edible
-  food_value
-  temperature
-
-Actions:
-  observe
-  carry
-  hit
-  throw
-  eat
-  cook
-
-Knowledge:
-  open_coconut_with_impact_tool
-  cook_food_at_heat_source
-```
-
-This is illustrative vertical-slice scope, not a final content catalog.
-
-A useful first property-driven regression is:
-
-```text
-stone.hardness = HIGH
-coconut.break_resistance = LOW
-stone has impact_tool
-coconut receives_impact
-
-hit(coconut, stone)
-→ generic impact rule succeeds
-→ semantic outcome sufficient_breaking_impact
-→ coconut transformation produces opened_coconut
-→ observed result creates/reinforces open_coconut_with_impact_tool knowledge
-```
-
-Then replace `stone` with another sufficiently hard impact-capable object and require the same rule to work without a new pair-specific recipe.
+- nonexistent transformation targets;
+- semantic interactions with invalid knowledge/intention references;
+- unbounded/NaN/infinite weights;
+- illegal cross-domain predicate usage.
 
 ---
 
-# 19. Explicit anti-models
+# 31. Functional class view
 
-Do not implement the first domain model as:
+```mermaid
+classDiagram
+    class RunState
+    class WorldState
+    class WilsonBodyState
+    class WilsonCognitionState
+    class ProjectState
+    class DirectorState
+    class PlayerRunState
+    class PlayerProfile
 
-```text
-Dictionary<string, Variant> everywhere
+    RunState *-- WorldState
+    RunState *-- WilsonCognitionState
+    RunState *-- ProjectState
+    RunState *-- DirectorState
+    RunState *-- PlayerRunState
+    WorldState *-- WilsonBodyState
+
+    class EntityDefinition
+    class EntityInstance
+    class PlaceState
+    class WorldRelation
+    class ActorRuntimeState
+    WorldState *-- EntityInstance
+    WorldState *-- PlaceState
+    WorldState *-- WorldRelation
+    WorldState *-- ActorRuntimeState
+    EntityInstance --> EntityDefinition
+
+    class TraitProfile
+    class DriveState
+    class BeliefEntry
+    class AssociationEntry
+    class HabitEntry
+    class Episode
+    class IntentionalState
+    class PresenceRelationship
+    WilsonCognitionState *-- TraitProfile
+    WilsonCognitionState *-- DriveState
+    WilsonCognitionState *-- BeliefEntry
+    WilsonCognitionState *-- AssociationEntry
+    WilsonCognitionState *-- HabitEntry
+    WilsonCognitionState *-- Episode
+    WilsonCognitionState *-- IntentionalState
+    WilsonCognitionState *-- PresenceRelationship
+
+    class ActionDefinition
+    class InteractionRuleDefinition
+    class TransformationDefinition
+    class ActionExecutionState
+    class ActionOutcome
+    InteractionRuleDefinition --> ActionDefinition
+    InteractionRuleDefinition --> TransformationDefinition : emits tags consumed by
+    ActionExecutionState --> ActionDefinition
+    ActionExecutionState --> ActionOutcome
+
+    class ProjectDefinition
+    class ProjectInstance
+    ProjectInstance --> ProjectDefinition
+    ProjectState *-- ProjectInstance
+
+    class EventDefinition
+    class EventInstance
+    EventInstance --> EventDefinition
+    DirectorState *-- EventInstance
+
+    class LegacyKnowledge
+    class DiaryArchive
+    PlayerProfile *-- LegacyKnowledge
+    PlayerProfile *-- DiaryArchive
 ```
 
-Do not make interaction legality depend on:
-
-```text
-if tool.type == stone && target.type == coconut
-```
-
-unless a truly unique content exception has been deliberately admitted.
-
-Do not store:
-
-- candidate utility scores as canonical state;
-- salience values for every entity;
-- full world snapshots inside Wilson memory;
-- Godot node references in domain entities;
-- presentation assets in authoritative definitions;
-- Legacy Knowledge as copied episodes;
-- Luck as a permanent Wilson psychology scalar.
+This diagram shows ownership/composition, not inheritance or a database schema.
 
 ---
 
-# 20. Decisions intentionally deferred to package-layout/implementation work
+# 32. Scene-driven domain requirements added by regression
 
-The model above is sufficient to design package boundaries, but these choices remain open:
+The representative catalog forces several concrete requirements that were implicit in earlier architecture documents:
 
-1. simulation implementation language;
-2. exact typed-ID representation;
-3. immutable record versus mutable aggregate mechanics;
-4. exact property-value encoding and registry authoring format;
-5. whether requirements compile into predicate objects, functions or another validated representation;
-6. exact WorldLocation/spatial-query representation;
+1. **Body state is separate from cognition.** Injury, wetness, poisoning and death cannot be modeled as drives or emotions.
+2. **Places and relations are first-class semantic subjects.** Wilson must form beliefs/associations about a tide pool, route, usual object location or arrangement.
+3. **Persistent animal identity does not require animal psychology.** A recurring `EntityId` plus minimal actor behavior is sufficient for Gerald-style relationships.
+4. **World processes are reusable.** Drying, spoilage, wind, fire consumption and storm damage are normal world evolution, not scene scripts.
+5. **Partial action feedback is semantic.** Failed experiments must communicate why/how they changed the target when observable.
+6. **Directed events are opportunities.** Signal Fire/aircraft scenes must compose with ordinary needs and interruptions.
+7. **Containers are world relations.** Storage expectations belong to Wilson belief/history rather than a duplicated inventory truth.
+8. **Action commitment is explicit.** Player intervention cannot retroactively invalidate a committed physical action.
+
+These are domain refinements, not additional broad psychological primitives.
+
+---
+
+# 33. Explicit anti-models
+
+Do not implement:
+
+```text
+Dictionary<string, Variant> as the universal domain model
+object-pair recipe tables as generic crafting
+if entity_type == X chains for reusable physics
+full autobiographical memory
+full psychology for every animal
+full rigid-body physics as prerequisite for systemic interaction
+Director scripts that command Wilson
+presentation callbacks that commit domain outcomes
+persistence callbacks that invent domain repair
+Luck as a permanent Wilson stat
+candidate utility/salience as canonical save state
+```
+
+---
+
+# 34. Deferred implementation choices
+
+The functional model deliberately leaves these open:
+
+1. implementation language;
+2. exact typed-ID mechanics;
+3. class/resource/dictionary representation;
+4. exact predicate execution strategy;
+5. exact spatial indexing/navigation representation;
+6. exact property storage encoding;
 7. persistence schema/versioning;
-8. collection/index choices for world queries;
-9. exact numeric curves and value scales;
-10. exact Legacy selection count/formula;
-11. exact Diary screenshot storage adapter.
+8. concrete event dispatch/orchestrator API;
+9. exact numeric formulas/calibration;
+10. Legacy selection size/formula;
+11. Diary media storage;
+12. concrete animal behavior implementation.
 
-These should be resolved while designing the package/module layout and headless slice, not by weakening the semantic model above.
+The domain regression must pass before these choices are allowed to optimize or simplify the model.
 
 ---
 
-# 21. Domain-model gate
+# 35. Functional domain gate
 
-This first concrete model is acceptable for package-layout work if all of the following remain true:
+The model is ready for implementation-oriented schema/package work only if the representative-scene regression confirms that:
 
-- object compatibility is property/capability driven rather than recipe-pair driven;
-- world truth remains separate from Wilson knowledge;
-- learned interactions never bypass physical validation;
-- definitions remain separate from runtime instances;
-- persistent owners remain aligned with `MUTATION_AUTHORITY.md`;
-- derived cognition remains non-persistent by default;
-- player profile remains outside active run state;
-- Legacy Knowledge seeds new-run knowledge without autobiographical transfer;
-- Diary is one player-facing archive surface;
-- Luck remains derived and bounded;
-- deterministic causal tracing remains possible;
-- no Godot/presentation type becomes domain authority.
+- all Must-have scenes can be expressed without bespoke domain bypasses;
+- Strong scenes either compose directly or require only content/presentation additions;
+- Expensive/Later scenes do not force premature core primitives;
+- reshaped scenes preserve their intended phenomenon without violating action commitment or drive minimalism;
+- property/capability interaction supports multiple compatible participants;
+- world truth, perception, belief and player knowledge remain separate;
+- projects remain opportunities rather than planners;
+- persistent animals remain lightweight;
+- body/world consequences remain authoritative;
+- player intervention remains indirect;
+- run/profile lifecycle remains explicit;
+- deterministic traceability remains possible.
+
+See `DOMAIN_REGRESSION.md` for the scene-by-scene result.
