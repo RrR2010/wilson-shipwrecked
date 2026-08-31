@@ -27,6 +27,9 @@ enum Kind {
 	EVENT_DEFINITION,
 	EVENT_INSTANCE,
 	SEMANTIC_CONCEPT,
+	ASSEMBLY_DEFINITION,
+	ASSEMBLY_SLOT,
+	ASSEMBLY_ROLE,
 }
 
 var kind: int
@@ -85,6 +88,9 @@ static func _kind_name(p_kind: int) -> String:
 		Kind.EVENT_DEFINITION: return "EventDefinitionId"
 		Kind.EVENT_INSTANCE: return "EventInstanceId"
 		Kind.SEMANTIC_CONCEPT: return "SemanticConceptId"
+		Kind.ASSEMBLY_DEFINITION: return "AssemblyDefinitionId"
+		Kind.ASSEMBLY_SLOT: return "AssemblySlotId"
+		Kind.ASSEMBLY_ROLE: return "AssemblyRoleId"
 		_: return "UnknownDomainId"
 
 
@@ -126,3 +132,15 @@ static func action(p_value: StringName):
 
 static func role(p_value: StringName):
 	return new(Kind.ROLE, p_value)
+
+
+static func assembly_definition(p_value: StringName):
+	return new(Kind.ASSEMBLY_DEFINITION, p_value)
+
+
+static func assembly_slot(p_value: StringName):
+	return new(Kind.ASSEMBLY_SLOT, p_value)
+
+
+static func assembly_role(p_value: StringName):
+	return new(Kind.ASSEMBLY_ROLE, p_value)
