@@ -1,0 +1,427 @@
+// Wilson Shipwrecked — Functional Domain Schema Projection
+//
+// This DBML is a visualization aid for DOMAIN_MODEL.md.
+// It is NOT a persistence/database mandate and deliberately flattens some
+// value-object / map / predicate concepts for readability.
+
+Table run_state {
+  run_id varchar [pk]
+  seed varchar
+  simulation_time decimal
+  lifecycle varchar
+  player_run_state_id varchar
+}
+
+Table player_profile {
+  player_profile_id varchar [pk]
+}
+
+Table player_run_state {
+  player_run_state_id varchar [pk]
+  god_power decimal
+  non_intervention_progress decimal
+  game_mode varchar
+}
+
+Table entity_definition {
+  entity_type_id varchar [pk]
+  actor_profile_id varchar [null]
+}
+
+Table entity_definition_category {
+  entity_type_id varchar
+  category_id varchar
+  indexes { (entity_type_id, category_id) [pk] }
+}
+
+Table entity_definition_capability {
+  entity_type_id varchar
+  capability_id varchar
+  indexes { (entity_type_id, capability_id) [pk] }
+}
+
+Table entity_definition_property {
+  entity_type_id varchar
+  property_id varchar
+  value_kind varchar
+  value_repr varchar
+  indexes { (entity_type_id, property_id) [pk] }
+}
+
+Table entity_instance {
+  entity_id varchar [pk]
+  run_id varchar
+  entity_type_id varchar
+  place_id varchar
+  lifecycle varchar
+  quantity decimal [null]
+}
+
+Table entity_state_override {
+  entity_id varchar
+  property_id varchar
+  value_kind varchar
+  value_repr varchar
+  indexes { (entity_id, property_id) [pk] }
+}
+
+Table place_state {
+  place_id varchar
+  run_id varchar
+  region_id varchar
+  indexes { (run_id, place_id) [pk] }
+}
+
+Table world_relation {
+  relation_id varchar [pk]
+  run_id varchar
+  relation_type_id varchar
+  subject_kind varchar
+  subject_id varchar
+  object_kind varchar
+  object_id varchar
+  qualifier_repr varchar [null]
+}
+
+Table wilson_body_state {
+  run_id varchar [pk]
+  alive boolean
+  vitality decimal
+  exertion decimal
+  wetness decimal
+  mobility_state varchar
+}
+
+Table body_condition {
+  condition_instance_id varchar [pk]
+  run_id varchar
+  condition_id varchar
+  severity decimal
+  source_subject_kind varchar [null]
+  source_subject_id varchar [null]
+  started_at decimal
+  recovery_policy_id varchar
+}
+
+Table actor_profile_definition {
+  actor_profile_id varchar [pk]
+  persistence_class varchar
+}
+
+Table actor_runtime_state {
+  entity_id varchar [pk]
+  run_id varchar
+  actor_profile_id varchar
+  current_activity_id varchar [null]
+  target_subject_kind varchar [null]
+  target_subject_id varchar [null]
+}
+
+Table environment_state {
+  run_id varchar [pk]
+  weather_state_id varchar
+  daylight_phase varchar
+}
+
+Table environmental_process {
+  process_id varchar [pk]
+  run_id varchar
+  process_kind_id varchar
+  subject_kind varchar
+  subject_id varchar
+  started_at decimal
+}
+
+Table action_definition {
+  action_id varchar [pk]
+  interruption_class varchar
+}
+
+Table action_role_definition {
+  action_id varchar
+  role_id varchar
+  ordinal int
+  indexes { (action_id, role_id) [pk] }
+}
+
+Table interaction_rule_definition {
+  interaction_rule_id varchar [pk]
+  action_id varchar
+  requirement_root_id varchar
+  resolution_spec_id varchar
+  discovery_spec_id varchar [null]
+}
+
+Table requirement_node {
+  requirement_node_id varchar [pk]
+  kind varchar
+  semantic_key varchar [null]
+  left_ref varchar [null]
+  operator varchar [null]
+  right_ref varchar [null]
+  literal_repr varchar [null]
+}
+
+Table requirement_edge {
+  parent_requirement_id varchar
+  child_requirement_id varchar
+  ordinal int
+  indexes { (parent_requirement_id, child_requirement_id, ordinal) [pk] }
+}
+
+Table transformation_definition {
+  transformation_id varchar [pk]
+  source_requirement_root_id varchar
+  result_entity_type_id varchar
+  transfer_policy_id varchar
+}
+
+Table transformation_trigger_tag {
+  transformation_id varchar
+  semantic_outcome_tag varchar
+  indexes { (transformation_id, semantic_outcome_tag) [pk] }
+}
+
+Table semantic_interaction_definition {
+  knowledge_id varchar [pk]
+  intention_id varchar
+  applicability_requirement_root_id varchar
+  legacy_eligible boolean
+  legacy_weight decimal
+}
+
+Table belief_entry {
+  belief_id varchar [pk]
+  run_id varchar
+  predicate_id varchar
+  confidence decimal
+  source_accessibility varchar
+}
+
+Table belief_argument {
+  belief_id varchar
+  ordinal int
+  subject_kind varchar
+  subject_id varchar
+  indexes { (belief_id, ordinal) [pk] }
+}
+
+Table association_entry {
+  run_id varchar
+  subject_kind varchar
+  subject_id varchar
+  valence decimal
+  attachment decimal
+  indexes { (run_id, subject_kind, subject_id) [pk] }
+}
+
+Table habit_entry {
+  habit_id varchar [pk]
+  run_id varchar
+  cue_id varchar
+  intention_id varchar
+  subject_pattern_repr varchar [null]
+  strength decimal
+}
+
+Table episode {
+  episode_id varchar [pk]
+  run_id varchar
+  simulation_time decimal
+  event_kind_id varchar
+  context_place_id varchar [null]
+  importance decimal
+  source_accessibility varchar
+  expected_outcome_repr varchar [null]
+  observed_outcome_repr varchar
+  meaningful_choice_repr varchar [null]
+}
+
+Table episode_subject {
+  episode_id varchar
+  ordinal int
+  subject_kind varchar
+  subject_id varchar
+  indexes { (episode_id, ordinal) [pk] }
+}
+
+Table wilson_drive_state {
+  run_id varchar [pk]
+  hunger_urgency decimal
+  energy_need decimal
+  discomfort decimal
+  stimulation_need decimal
+}
+
+Table wilson_trait_profile {
+  run_id varchar [pk]
+  curiosity decimal
+  risk_tolerance decimal
+  independence decimal
+}
+
+Table presence_relationship {
+  run_id varchar [pk]
+  presence_belief decimal
+  trust decimal
+  dependency decimal
+}
+
+Table intention_instance {
+  intention_id varchar [pk]
+  run_id varchar
+  semantic_intention_id varchar
+  lifecycle varchar
+  origin varchar
+  commitment varchar
+  started_at decimal
+}
+
+Table intention_binding {
+  intention_id varchar
+  role_id varchar
+  subject_kind varchar
+  subject_id varchar
+  indexes { (intention_id, role_id) [pk] }
+}
+
+Table project_definition {
+  project_definition_id varchar [pk]
+  eligibility_requirement_root_id varchar
+  completion_requirement_root_id varchar
+  abandonment_policy_id varchar
+}
+
+Table project_instance {
+  project_instance_id varchar [pk]
+  run_id varchar
+  project_definition_id varchar
+  lifecycle varchar
+}
+
+Table event_definition {
+  event_definition_id varchar [pk]
+  eligibility_requirement_root_id varchar
+  rarity_policy_id varchar
+  cooldown_policy_id varchar
+}
+
+Table event_instance {
+  event_instance_id varchar [pk]
+  run_id varchar
+  event_definition_id varchar
+  lifecycle varchar
+  started_at decimal
+}
+
+Table suggestion_window {
+  suggestion_window_id varchar [pk]
+  run_id varchar
+  intention_pattern_id varchar
+  count int
+  opened_at decimal
+  cooldown_state varchar
+}
+
+Table legacy_knowledge {
+  player_profile_id varchar
+  knowledge_id varchar
+  indexes { (player_profile_id, knowledge_id) [pk] }
+}
+
+Table run_diary {
+  run_id varchar [pk]
+  player_profile_id varchar
+  started_sequence bigint
+  ended_sequence bigint [null]
+  end_summary_repr varchar [null]
+}
+
+Table diary_record {
+  diary_record_id varchar [pk]
+  run_id varchar
+  record_kind varchar
+  semantic_event_id varchar [null]
+  chronology_order bigint
+  data_repr varchar
+  screenshot_ref varchar [null]
+}
+
+Table action_execution {
+  action_execution_id varchar [pk]
+  run_id varchar
+  action_id varchar
+  phase varchar
+  commitment_class varchar
+  started_at decimal
+}
+
+Table action_binding {
+  action_execution_id varchar
+  role_id varchar
+  subject_kind varchar
+  subject_id varchar
+  indexes { (action_execution_id, role_id) [pk] }
+}
+
+Table action_outcome {
+  outcome_id varchar [pk]
+  action_execution_id varchar
+  classification varchar
+  consequence_severity varchar
+}
+
+Table world_event {
+  world_event_id varchar [pk]
+  run_id varchar
+  outcome_id varchar [null]
+  semantic_event_id varchar
+  simulation_order bigint
+}
+
+Table observed_event {
+  observation_id varchar [pk]
+  run_id varchar
+  world_event_id varchar [null]
+  observed_semantic_event_id varchar
+  observation_quality decimal
+}
+
+Table learning_batch {
+  learning_batch_id varchar [pk]
+  run_id varchar
+  source_observation_id varchar [null]
+  source_outcome_id varchar [null]
+}
+
+Ref: entity_instance.run_id > run_state.run_id
+Ref: entity_instance.entity_type_id > entity_definition.entity_type_id
+Ref: actor_runtime_state.entity_id > entity_instance.entity_id
+Ref: actor_runtime_state.actor_profile_id > actor_profile_definition.actor_profile_id
+Ref: body_condition.run_id > run_state.run_id
+Ref: wilson_body_state.run_id > run_state.run_id
+Ref: environment_state.run_id > run_state.run_id
+Ref: environmental_process.run_id > run_state.run_id
+Ref: interaction_rule_definition.action_id > action_definition.action_id
+Ref: transformation_definition.result_entity_type_id > entity_definition.entity_type_id
+Ref: project_instance.project_definition_id > project_definition.project_definition_id
+Ref: project_instance.run_id > run_state.run_id
+Ref: event_instance.event_definition_id > event_definition.event_definition_id
+Ref: event_instance.run_id > run_state.run_id
+Ref: belief_entry.run_id > run_state.run_id
+Ref: association_entry.run_id > run_state.run_id
+Ref: habit_entry.run_id > run_state.run_id
+Ref: episode.run_id > run_state.run_id
+Ref: wilson_drive_state.run_id > run_state.run_id
+Ref: wilson_trait_profile.run_id > run_state.run_id
+Ref: presence_relationship.run_id > run_state.run_id
+Ref: intention_instance.run_id > run_state.run_id
+Ref: suggestion_window.run_id > run_state.run_id
+Ref: legacy_knowledge.player_profile_id > player_profile.player_profile_id
+Ref: run_diary.player_profile_id > player_profile.player_profile_id
+Ref: diary_record.run_id > run_diary.run_id
+Ref: action_execution.run_id > run_state.run_id
+Ref: action_outcome.action_execution_id > action_execution.action_execution_id
+Ref: world_event.run_id > run_state.run_id
+Ref: observed_event.run_id > run_state.run_id
+Ref: learning_batch.run_id > run_state.run_id
