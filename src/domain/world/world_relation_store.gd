@@ -39,6 +39,14 @@ func remove_relation(relation: WorldRelation) -> MutationResult:
 	return MutationResult.success(&"relation_removed", stored)
 
 
+func get_relation(relation_key: StringName):
+	return _relations_by_key.get(relation_key)
+
+
+func relation_count() -> int:
+	return _relations_by_key.size()
+
+
 func find_relations(relation_type: DomainId = null, subject: RuntimeWorldRef = null, object: RuntimeWorldRef = null) -> Array:
 	if relation_type != null:
 		relation_type.assert_kind(DomainId.Kind.RELATION_TYPE)
@@ -53,10 +61,12 @@ func find_relations(relation_type: DomainId = null, subject: RuntimeWorldRef = n
 
 
 func get_outgoing(subject: RuntimeWorldRef, relation_type: DomainId = null) -> Array:
+	assert(subject != null, "get_outgoing requires subject")
 	return find_relations(relation_type, subject, null)
 
 
 func get_incoming(object: RuntimeWorldRef, relation_type: DomainId = null) -> Array:
+	assert(object != null, "get_incoming requires object")
 	return find_relations(relation_type, null, object)
 
 
@@ -121,6 +131,15 @@ func validate_indexes() -> MutationResult:
 	if expected != actual:
 		return MutationResult.failure(&"relation_index_drift", ["Reconstructible relation indexes do not match authoritative relations"])
 	return MutationResult.success(&"relation_indexes_valid")
+
+
+func index_stats() -> Dictionary:
+	return {
+		"relations": _relations_by_key.size(),
+		"outgoing_subjects": _outgoing.size(),
+		"incoming_objects": _incoming.size(),
+		"relation_types": _by_type.size(),
+	}
 
 
 func _select_candidate_keys(relation_type: DomainId, subject: RuntimeWorldRef, object: RuntimeWorldRef) -> Array:
