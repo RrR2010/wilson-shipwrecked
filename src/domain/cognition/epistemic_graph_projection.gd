@@ -14,14 +14,14 @@ func rebuild(belief_store) -> void:
 		var proposition = entry.proposition
 		_index(_by_predicate, proposition.predicate, entry)
 		for argument in proposition.arguments:
-			if argument != null and argument.has_method("key"):
+			if argument is Object and argument.has_method("key"):
 				_index(_by_subject_key, argument.key(), entry)
 
 func query_by_predicate(predicate: StringName) -> Array:
 	return _sorted_entries(_by_predicate.get(predicate, []).duplicate())
 
 func query_by_subject(subject) -> Array:
-	assert(subject != null and subject.has_method("key"), "query_by_subject requires semantic subject")
+	assert(subject is Object and subject.has_method("key"), "query_by_subject requires semantic subject")
 	return _sorted_entries(_by_subject_key.get(subject.key(), []).duplicate())
 
 func _index(index: Dictionary, key, entry) -> void:
