@@ -4,12 +4,12 @@
 
 This file is the entry point for project documentation.
 
-Wilson Shipwrecked accumulated substantial design evidence during discovery. Not every document is required reading for every task. Use four conceptual layers:
+Wilson Shipwrecked accumulated substantial design and implementation evidence during discovery/foundation work. Not every document is required reading for every task. Use four conceptual layers:
 
 ```text
 1. canonical contracts    — current rules and ownership boundaries
 2. specialized appendices — narrow semantic detail
-3. validation evidence    — traces/fixtures/regressions proving sufficiency
+3. validation evidence    — traces/fixtures/tests proving sufficiency
 4. historical evidence    — brainstorming and handoffs
 ```
 
@@ -22,8 +22,10 @@ Read the smallest bundle sufficient for the task. Validation/history must not be
 For substantial work:
 
 1. [`../README.md`](../README.md) — project thesis;
-2. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current phase/closed gates;
+2. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current phase, concrete foundation baseline and closed gates;
 3. then use the relevant bundle below.
+
+**Current phase:** structural runtime foundation is complete and validated by the strict headless suite. New work should primarily add system/content/presentation breadth through the established contracts rather than reopen foundation ownership by default.
 
 `AGENTS.md` owns repository workflow/invariants, not the full design specification.
 
@@ -49,9 +51,9 @@ For substantial work:
 
 ## Canonical
 
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — **state owners, derived services, language-neutral module/package layout, dependency direction, graph/index placement, application/infrastructure/presentation boundaries**.
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — **state owners, derived services, language-neutral module layout, dependency direction, graph/index placement, application/infrastructure/presentation boundaries**.
 - [`SIMULATION_CONTRACTS.md`](SIMULATION_CONTRACTS.md) — semantic cross-system contracts.
-- [`SIMULATION_ORCHESTRATION.md`](SIMULATION_ORCHESTRATION.md) — clocks, update ordering, reconsideration/interruption/offline orchestration.
+- [`SIMULATION_ORCHESTRATION.md`](SIMULATION_ORCHESTRATION.md) — clocks, update ordering, commit/perception/learning/reconsideration/offline orchestration.
 - [`MUTATION_AUTHORITY.md`](MUTATION_AUTHORITY.md) — read/propose/mutate ownership matrix.
 - [`GUARDS_AND_CALIBRATION.md`](GUARDS_AND_CALIBRATION.md) — bounds, feedback-loop control and adaptive-policy constraints.
 - [`AI.md`](AI.md) — optional runtime LLM authority/fallback boundary.
@@ -59,7 +61,7 @@ For substantial work:
 ## Validation/history
 
 - [`DECISION_TRACES.md`](DECISION_TRACES.md) — representative architecture traces.
-- [`IMPLEMENTATION_GATE.md`](IMPLEMENTATION_GATE.md) — historical readiness gate; passed.
+- [`IMPLEMENTATION_GATE.md`](IMPLEMENTATION_GATE.md) — historical pre-foundation readiness gate; passed.
 
 Use this bundle for modules, dependencies, orchestration, persistence ownership, graph/index placement and external adapters.
 
@@ -67,21 +69,21 @@ Use this bundle for modules, dependencies, orchestration, persistence ownership,
 
 # 4. Functional domain
 
-The domain documents are language-neutral.
+The domain documents are language-neutral. Concrete GDScript/schema/test details belong in `DISCOVERY_STATUS.md` and source/tests.
 
 ## Core canonical set
 
 1. [`DOMAIN_MODEL.md`](DOMAIN_MODEL.md) — aggregates, runtime identity, durable state and core domain concepts.
-2. [`DOMAIN_VOCABULARY.md`](DOMAIN_VOCABULARY.md) — normalized semantic terminology.
-3. [`DOMAIN_CATALOGS.md`](DOMAIN_CATALOGS.md) — relation/predicate/effect/proposition vocabulary.
-4. [`DOMAIN_OPERATIONS.md`](DOMAIN_OPERATIONS.md) — **single canonical command/query/derivation/lifecycle surface**, including graph-aware traversal/pattern matching, effective-physical queries, attemptability, tactical/intentional operations, assembly, protection/exposure, hazards and epistemic queries.
+2. [`DOMAIN_VOCABULARY.md`](DOMAIN_VOCABULARY.md) — normalized semantic terminology, including typed epistemic/event/relation identity.
+3. [`DOMAIN_CATALOGS.md`](DOMAIN_CATALOGS.md) — admitted relation/predicate/effect/outcome/**typed epistemic claim** vocabulary.
+4. [`DOMAIN_OPERATIONS.md`](DOMAIN_OPERATIONS.md) — **single canonical command/query/derivation/lifecycle surface**.
 5. [`DOMAIN_PROCEDURAL_COMPOSITION.md`](DOMAIN_PROCEDURAL_COMPOSITION.md) — materials, effective physical composition, assembly, gradual exploration and environmental procedurality.
 
 `DOMAIN_SCHEMA.dbml` is a visualization projection only; it is not a persistence/database mandate.
 
 The former `DOMAIN_OPERATION_REFINEMENTS.md` has been absorbed into `DOMAIN_OPERATIONS.md`. Do not recreate an override layer for operation signatures.
 
-Typed semantic graph/index concerns are intentionally **not a separate canonical document**. Their responsibility/placement lives in `ARCHITECTURE.md`; their public query/matching semantics live in `DOMAIN_OPERATIONS.md`; detailed relation/property/composition/epistemic meaning remains owned by the corresponding domain documents.
+Typed semantic graph/index concerns are intentionally **not a separate canonical document**. Responsibility/placement lives in `ARCHITECTURE.md`; public query/matching semantics live in `DOMAIN_OPERATIONS.md`; relation/property/composition/epistemic meaning remains owned by the corresponding domain documents.
 
 ## Specialized canonical appendices
 
@@ -89,8 +91,8 @@ Read only for affected concerns:
 
 - [`DOMAIN_ENVIRONMENTAL_PROTECTION.md`](DOMAIN_ENVIRONMENTAL_PROTECTION.md) — configuration-relative protection/exposure.
 - [`DOMAIN_HAZARD_DYNAMICS.md`](DOMAIN_HAZARD_DYNAMICS.md) — committed dynamic processes, hazard projections, perceived threats and causal windows.
-- [`DOMAIN_EPISTEMIC_INVESTIGATION.md`](DOMAIN_EPISTEMIC_INVESTIGATION.md) — expectation mismatch, bounded investigation and causal attribution.
-- [`DOMAIN_MICRO_LOOP.md`](DOMAIN_MICRO_LOOP.md) — semantic frame-group execution, tactical vs intentional cadence and same-chain learning.
+- [`DOMAIN_EPISTEMIC_INVESTIGATION.md`](DOMAIN_EPISTEMIC_INVESTIGATION.md) — typed-claim expectation mismatch, bounded investigation and causal attribution.
+- [`DOMAIN_MICRO_LOOP.md`](DOMAIN_MICRO_LOOP.md) — semantic frame groups, tactical vs intentional cadence, same-chain learning and Scientific Method evidence.
 
 ## Validation evidence
 
@@ -104,11 +106,39 @@ Not default required reading:
 - [`DOMAIN_FIXTURE_IMPROVISED_HAMMER.md`](DOMAIN_FIXTURE_IMPROVISED_HAMMER.md)
 - [`DOMAIN_FIXTURE_CLOTH_SHELTER_WEATHER.md`](DOMAIN_FIXTURE_CLOTH_SHELTER_WEATHER.md)
 
-The Scientific Method fixture remains in `DOMAIN_MICRO_LOOP.md` because that document also owns canonical execution semantics.
+The Scientific Method fixture remains in `DOMAIN_MICRO_LOOP.md` because it is also evidence for canonical micro-orchestration semantics.
 
 ---
 
-# 5. Cross-cutting asset/content catalog
+# 5. Concrete foundation status and tests
+
+Use [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) for the authoritative implementation checkpoint, including:
+
+```text
+strict headless test count
+current snapshot/content schema versions
+implemented ContentPack families
+coarse spatial boundary
+action lifecycle/interruption baseline
+typed EpistemicClaim baseline
+qualified WorldRelation identity
+implemented/reconstructible graph projections
+remaining system breadth
+```
+
+Do not copy version/test-count details into multiple domain documents; that creates avoidable drift.
+
+The standard local regression command is:
+
+```powershell
+.\tests\run_headless_tests.ps1
+```
+
+The runner is intentionally stricter than Godot process exit status and rejects script/engine errors, explicit failures and missing expected PASS markers.
+
+---
+
+# 6. Cross-cutting asset/content catalog
 
 - [`asset-catalog/README.md`](asset-catalog/README.md) — catalog schema/authority/status rules.
 - [`asset-catalog/ENTITIES.md`](asset-catalog/ENTITIES.md) — physical entity/resource/tool/container/salvage families.
@@ -133,7 +163,7 @@ README.md / PRODUCT.md
 
 ---
 
-# 6. Art and asset production
+# 7. Art and asset production
 
 ## Visual language
 
@@ -151,7 +181,7 @@ README.md / PRODUCT.md
 
 ---
 
-# 7. Historical / exploratory material
+# 8. Historical / exploratory material
 
 - `brainstorming/functional-asset-catalog/` — historical breadth exploration.
 - `brainstorming/representative-scene-catalog.md` — original scene exploration.
@@ -161,34 +191,35 @@ Use these for intent/recall, not precedence over canonical contracts.
 
 ---
 
-# 8. Authority rules
+# 9. Authority rules
 
 When documents appear to disagree:
 
 1. **Product/behavior:** `PRODUCT.md` + `BEHAVIORAL_MODEL.md` + `STATE_REQUIREMENTS.md`.
 2. **Architecture/responsibility/module boundaries:** `ARCHITECTURE.md` + Contracts + Orchestration + Mutation Authority.
-3. **Functional semantics:** the core `DOMAIN_*` set and affected specialized appendix.
+3. **Functional semantics:** core `DOMAIN_*` set and affected specialized appendix.
 4. **Operations:** `DOMAIN_OPERATIONS.md` is the single canonical public operation surface.
-5. **Asset/content requirements:** `asset-catalog/` owns required modeled families/cross-cutting content requirements.
-6. **Art:** `VISUAL_GUIDE.md` + `art/`; technical production in `ASSET_SPEC.md`/`ASSET_PIPELINE.md`.
-7. **Fixtures/regressions:** evidence only.
-8. **Brainstorming/handoffs:** historical/operational evidence only.
+5. **Concrete implementation checkpoint:** `DISCOVERY_STATUS.md` + source/tests; it does not redefine language-neutral product/domain meaning.
+6. **Asset/content requirements:** `asset-catalog/` owns required modeled families/cross-cutting content requirements.
+7. **Art:** `VISUAL_GUIDE.md` + `art/`; technical production in `ASSET_SPEC.md`/`ASSET_PIPELINE.md`.
+8. **Fixtures/regressions:** evidence only.
+9. **Brainstorming/handoffs:** historical/operational evidence only.
 
 If implementation evidence invalidates a canonical rule, update the owning document instead of adding another permanent override.
 
 ---
 
-# 9. Documentation growth policy
+# 10. Documentation growth policy
 
 To prevent renewed fragmentation:
 
 - prefer updating an existing canonical owner over creating a new top-level document;
-- create a new canonical document only when the concern has a genuinely distinct authority/lifecycle and cannot remain readable in an existing owner;
-- do not create permanent `*_REFINEMENTS`, `*_NOTES`, `*_V2` or edge-case override chains when the accepted result can be merged into the owning contract;
+- create a new canonical document only when a concern has genuinely distinct authority/lifecycle and cannot remain readable in an existing owner;
+- do not create permanent `*_REFINEMENTS`, `*_NOTES`, `*_V2` or edge-case override chains;
 - keep scenario evidence in fixtures/regressions;
 - keep cross-cutting content requirements in `asset-catalog/`;
 - keep exploratory breadth in `brainstorming/`;
-- keep stage-transfer instructions in `handoffs/`;
-- after consolidating a superseding document, remove the old override and repair the documentation map in the same change.
+- keep stage-transition instructions in `handoffs/`;
+- after consolidating a superseding document, remove the old override and repair this map in the same change.
 
 A future mechanical move of validation artifacts into subdirectories is optional and should be atomic with link updates.
