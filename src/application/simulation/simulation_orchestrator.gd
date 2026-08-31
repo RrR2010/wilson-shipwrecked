@@ -85,7 +85,7 @@ func advance(step):
 			trace.record_result(&"world_commit", commit_result)
 
 	var committed_events: Array = world_advance_result.events.duplicate()
-	if commit_result != null and commit_result.committed:
+	if commit_result != null and commit_result.ok:
 		committed_events.append_array(commit_result.events)
 	trace.record_result(&"committed_events", committed_events)
 
