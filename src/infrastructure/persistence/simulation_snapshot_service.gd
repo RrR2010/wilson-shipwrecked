@@ -50,7 +50,7 @@ func restore(snapshot: Dictionary):
 		)
 		entity.lifecycle = int(record["lifecycle"])
 		var add_result = entities.add_entity(entity)
-		assert(add_result.ok, "Failed to restore entity: %s" % add_result.diagnostics)
+		assert(add_result.ok, "Failed to restore entity: %s" % str(add_result.diagnostics))
 
 	var relations = WorldRelationStore.new()
 	for record in snapshot.get("relations", []):
@@ -61,7 +61,7 @@ func restore(snapshot: Dictionary):
 			_codec.decode(record["qualifier"])
 		)
 		var relation_result = relations.add_relation(relation)
-		assert(relation_result.ok, "Failed to restore relation: %s" % relation_result.diagnostics)
+		assert(relation_result.ok, "Failed to restore relation: %s" % str(relation_result.diagnostics))
 	# Deliberately rebuild reconstructible indexes after authority is restored.
 	relations.rebuild_indexes()
 	assert(relations.validate_indexes().ok, "Restored relation indexes invalid")
@@ -79,7 +79,7 @@ func restore(snapshot: Dictionary):
 			StringName(record.get("last_source_execution_id", "")),
 			StringName(record.get("last_modality", ""))
 		)
-		assert(belief_result.ok, "Failed to restore belief: %s" % belief_result.diagnostics)
+		assert(belief_result.ok, "Failed to restore belief: %s" % str(belief_result.diagnostics))
 
 	var intention_store = CurrentIntentionStore.new()
 	var intention_record = snapshot.get("current_intention")
