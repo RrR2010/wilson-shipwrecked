@@ -2,28 +2,25 @@
 
 ## Status and purpose
 
-This document is a canonical, language-neutral companion to `DOMAIN_MODEL.md`, `DOMAIN_VOCABULARY.md`, `DOMAIN_CATALOGS.md`, and `DOMAIN_OPERATIONS.md`.
+This document is the canonical language-neutral companion for runtime physical composition, gradual exploration, generic environmental response and semantic assembly.
 
-It formalizes four refinements exposed by the functional asset catalog and the Scientific Method micro-loop:
+It complements:
 
-1. effective physical properties/capabilities derived from runtime composition;
-2. gradual exploration through perceptual evidence rather than object-level exploration percentages;
-3. generic environmental response rules;
-4. bounded semantic assembly slots for tools and structures.
+- `DOMAIN_MODEL.md` — owners/concepts;
+- `DOMAIN_VOCABULARY.md` — normalized terminology;
+- `DOMAIN_CATALOGS.md` — admitted semantic families;
+- `DOMAIN_OPERATIONS.md` — single canonical operation surface;
+- `DOMAIN_MICRO_LOOP.md` — semantic execution cadence and experimentation behavior.
 
-`DOMAIN_MICRO_LOOP.md` now owns the detailed frame-group execution semantics and adds canonical refinements for `ActionAttemptability`, `PerceivedTacticalOpportunity`, `PropertyDerivationDefinition`, `InteractionRegionDefinition`, and `DecisionContinuationContext`.
+`DOMAIN_FIXTURE_IMPROVISED_HAMMER.md` remains regression evidence for composite-object semantics; it is not a competing specification.
 
-`DOMAIN_OPERATION_REFINEMENTS.md` owns the corresponding refined operation surface where older `DOMAIN_OPERATIONS.md` wording is ambiguous.
-
-`DOMAIN_FIXTURE_IMPROVISED_HAMMER.md` validates composite-object semantics and makes `AssemblyValidity` versus effective performance explicit.
-
-The goal is greater procedurality without introducing free-form physics, recipes, universal script callbacks, or hundreds of object-specific state flags.
+There is no longer a separate operation-refinement document. Accepted operation signatures belong directly in `DOMAIN_OPERATIONS.md`.
 
 ---
 
 # 1. Core procedural principle
 
-The authoritative world should answer interactions from composable semantics:
+Authoritative interaction semantics should emerge from composition:
 
 ```text
 authored definition
@@ -37,15 +34,15 @@ authored definition
 → authoritative attemptability/resolution
 ```
 
-Wilson's cognition must separately answer what he currently believes about those semantics:
+Wilson cognition answers a separate question:
 
 ```text
-world truth
+World truth
 → perceptual accessibility
-→ PerceptualEvidence
-→ belief evidence
+→ ObservedEvent / PerceptualEvidence
+→ typed EpistemicClaim evidence
 → BeliefEntry confidence
-→ PerceivedTacticalOpportunity
+→ perceived tactical opportunity
 → tactical/intention candidates
 ```
 
@@ -55,13 +52,13 @@ Therefore:
 physical possibility != Wilson knowledge != Wilson desirability
 ```
 
-Environment normally affects effective semantics through explicit authoritative state/process changes (`EnvironmentalResponseRule`) rather than invisible profile-time global modifiers.
+Environment normally changes ordinary authoritative state/processes; effective profile reads those consequences instead of consulting an invisible global weather modifier.
 
 ---
 
 # 2. Material profiles
 
-Materials are now common enough across natural resources, salvage, tools and structures to justify a light authored domain concept.
+Materials justify a light authored concept when many content families share physical defaults.
 
 ```text
 MaterialDefinition
@@ -70,166 +67,104 @@ MaterialDefinition
   categories: Set<CategoryId>
 ```
 
-Typical material IDs may include:
+Typical coarse families:
 
 ```text
-material.wood
-material.stone
-material.metal
-material.glass
-material.cloth
-material.fiber
-material.shell
-material.bone
-material.plant_matter
+wood
+stone
+metal
+glass
+cloth
+fiber
+shell
+bone
+plant_matter
 ```
 
-A material profile is not a realism simulator. It provides reusable coarse defaults such as:
+Useful defaults may include hardness, rigidity, flexibility, flammability, absorbency, water resistance, heat resistance and mass-density class.
 
-```text
-hardness
-rigidity
-flexibility
-flammability
-absorbency
-water_resistance
-heat_resistance
-base_mass_density_class
-```
-
-Entity definitions may override material defaults where form matters.
-
-Example:
-
-```text
-metal_sheet:
-  material = metal
-  thickness = LOW
-  sharpness = MEDIUM
-
-metal_rod:
-  material = metal
-  thickness = MEDIUM
-  sharpness = LOW
-```
-
-Do not introduce detailed metallurgy, exact engineering constants, or material properties that are not used by representative gameplay.
+A material profile is not a realism simulator. Entity form may override material defaults when representative gameplay needs it.
 
 ---
 
 # 3. EffectivePhysicalProfile
 
-`EntityDefinition.capabilities` and base properties are not always the final physical semantics of a runtime object.
-
-Composite tools, loaded containers, damaged structures and repurposed salvage require a derived view.
+Composite tools, loaded containers, damaged structures and repurposed salvage require a derived physical view.
 
 ```text
 EffectivePhysicalProfile
   subject: RuntimeWorldRef
   properties: Map<PropertyId, PropertyValue>
   capabilities: Set<CapabilityId>
-  provenance: optional bounded derivation trace
+  provenance: bounded derivation trace
 ```
 
-It is derived state and should not normally be persisted as an independent authoritative store.
+It is reconstructible derived state and should not become an independent persistence owner.
 
-## 3.1 Resolution inputs
+## Resolution inputs
 
-The resolver may read only authoritative world semantics:
+The resolver may read only authoritative physical semantics:
 
 ```text
 entity definition
-material defaults
-instance property overrides
+material/default properties
+instance overrides/condition
 part_of / attached_to / inside relations
 component properties/capabilities
-assembly slot bindings
-condition properties
+assembly-slot bindings
+contents
 ```
 
-It must not read Wilson beliefs, habits, associations or intentions.
+It must never read Wilson beliefs, habits, associations or intentions.
 
-The detailed deterministic precedence, derivation graph and cycle invariants are canonical in `DOMAIN_MICRO_LOOP.md`.
+## PropertyDerivationDefinition
 
-## 3.2 PropertyDerivationDefinition
+Derived properties use validated definitions rather than arbitrary callbacks.
 
-Derived properties must use validated bounded definitions rather than arbitrary callbacks.
+Conceptually:
 
 ```text
 PropertyDerivationDefinition
-  property_id: PropertyId
-  input_dependencies: bounded property/relation/slot selectors
-  combination_policy: registered bounded semantic policy
-  output_domain: declared PropertyValue family
+  id
+  input selectors
+  output PropertyId
+  registered bounded combination policy
 ```
 
-Content bootstrap must reject cyclic derivation graphs, invalid output types and unsupported selectors.
-
-## 3.3 Property derivation examples
-
-### Loaded barrel mass
+Current foundation proves bounded selectors:
 
 ```text
-effective_mass(barrel)
-=
-base container mass class
-+ bounded contribution of contents quantity/material
+self.property
+assembly_slot(slot_id).property
 ```
 
-The result may remain an ordered grade rather than exact kilograms.
+Inputs from assembly slots are external component leaves for the host's local property DAG; they do not create false local output edges.
 
-### Improvised hammer impact capacity
+Content bootstrap rejects unsupported selectors/policies, unknown typed property references and cyclic local property dependencies.
+
+## Examples
 
 ```text
-head mass
-+ head hardness
-+ handle leverage
-+ binding integrity
-→ effective impact capacity
+loaded container base mass + contents
+→ effective mass class
+
+head mass/hardness + handle integrity + binding integrity
+→ impact capacity
+
+float components + bindings + cargo + waterlogging
+→ raft buoyancy/stability
+
+cloth + attachment/tension/condition
+→ covering/rain-protection semantics
 ```
-
-### Raft buoyancy/stability
-
-```text
-float components
-+ structural bindings
-+ cargo load
-+ damage/waterlogging
-→ effective buoyancy/stability grades
-```
-
-### Cloth covering behavior
-
-```text
-cloth material properties
-+ attached configuration
-+ tension/condition
-→ covering / rain-protection capability
-```
-
-## 3.4 Effective capability derivation
-
-Capabilities may be:
-
-1. **intrinsic authored** — e.g. a bowl can contain small items;
-2. **material/form derived** — e.g. a sharpened edge can cut;
-3. **assembly derived** — e.g. handle + head + binding creates a usable chopping tool;
-4. **relation/configuration derived** — e.g. cloth attached across supports becomes a covering;
-5. **contextual affordance only** — e.g. an object is throwable only because its current mass/bulk and Wilson's body state make throwing feasible.
-
-Do not model every derived affordance as a persistent capability flag.
 
 ---
 
-# 4. Properties versus capabilities versus derived affordances
+# 4. Properties, capabilities and affordances
 
-Use these distinctions consistently.
+## Properties
 
-## 4.1 Properties
-
-Use properties when a magnitude/value matters.
-
-Initial high-leverage physical properties:
+Use when magnitude/value matters:
 
 ```text
 mass_class
@@ -254,11 +189,11 @@ burn_level
 fill_ratio
 ```
 
-## 4.2 Capabilities
+Values obey `PropertyDefinition` family/bounds and finite-number guards.
 
-Use capabilities for reusable participation semantics.
+## Capabilities
 
-Examples:
+Use for reusable role participation:
 
 ```text
 graspable
@@ -282,9 +217,9 @@ harvestable
 habitat
 ```
 
-## 4.3 Derived affordances
+## Derived affordances
 
-Prefer deriving these from physical profile + context rather than authoring boolean flags everywhere:
+Prefer deriving context-sensitive opportunities rather than persisting flags such as:
 
 ```text
 carry_one_hand
@@ -300,26 +235,13 @@ use_as_impact_tool
 use_as_cutting_tool
 ```
 
-These are not guarantees of goal success. `DOMAIN_MICRO_LOOP.md` distinguishes authoritative `ActionAttemptability` from Wilson-relative `PerceivedTacticalOpportunity`.
-
-Example:
-
-```text
-small stone:
-  graspable + LOW mass + LOW bulk
-  → carry_one_hand + throw
-
-bowling ball:
-  graspable + VERY_HIGH mass + awkward bulk
-  → two_hand_carry / roll
-  → throw normally filtered out
-```
+An affordance/attemptability result does not guarantee goal success.
 
 ---
 
 # 5. Assembly semantics
 
-Runtime procedural assembly must remain semantic and bounded.
+Runtime assembly remains semantic and bounded.
 
 ```text
 AssemblyDefinition
@@ -330,135 +252,118 @@ AssemblySlotDefinition
   id: AssemblySlotId
   semantic_role: AssemblyRoleId
   accepted_component_predicate: RequirementPredicate
-  cardinality
-  optional: bool
+  min_count
+  max_count
+  optional
 ```
 
-A runtime binding is ordinary authoritative structure state:
+`optional` is authoring clarity; cardinality remains the substantive constraint.
+
+## Runtime binding projection
+
+Physical truth remains ordinary World relation state; no `AssemblyStore` is required.
+
+Canonical current representation:
+
+```text
+attached_to(component, host, qualifier = AssemblySlotId)
+```
+
+`WorldRelation.qualifier` is a bounded semantic value and participates in exact relation identity. Therefore distinct slot-qualified edges can coexist at the relation-store level; `AssemblyValidity`/future `RelationDefinition` constraints decide whether a particular configuration is admitted.
+
+`AssemblyBindingProjection` derives:
 
 ```text
 AssemblyBinding
-  host: EntityId / ProjectInstanceId physical host
-  slot_id: AssemblySlotId
-  component: EntityId
+  host
+  slot_id
+  component
 ```
 
-Implementations may realize this through `part_of` / `attached_to` relations plus validated slot metadata rather than requiring a separate storage subsystem.
+from the authoritative relation set.
 
-Structural composition used by effective-property aggregation must be acyclic; a component cannot transitively contain/assemble itself.
-
-## 5.1 AssemblyValidity
-
-Assembly compatibility and assembly performance are separate questions.
-
-`AssemblyValidity` is a derived projection over definition/slot requirements and current authoritative bindings:
+## AssemblyValidity
 
 ```text
-AssemblyValidity =
-  VALID
-  INCOMPLETE
-  INCOMPATIBLE_COMPONENT
-  BROKEN_BINDING
-  INVALID_CONFIGURATION
+VALID
+INCOMPLETE
+INCOMPATIBLE_COMPONENT
+BROKEN_BINDING
+INVALID_CONFIGURATION
 ```
 
-It answers:
+It answers whether required roles are occupied by compatible live components under the admitted slot/cardinality configuration.
 
-> Are required semantic roles occupied by compatible live components in an admitted configuration?
+It does **not** answer tool/structure quality.
 
-It does **not** answer:
+A weak but compatible configuration may remain `VALID` while effective stability, impact capacity, coverage or buoyancy degrade.
 
-> Is this a good tool/structure?
+Do not introduce universal `assembly_quality`, `tool_quality` or `structure_quality` when effective properties already express consequences.
 
-A configuration may remain `VALID` while its effective `stability`, `impact_capacity`, `coverage`, `buoyancy` or other properties degrade.
-
-Do not introduce universal `assembly_quality`, `tool_quality` or `structure_quality` scalars when effective properties already express the meaningful consequences.
-
-`AssemblyValidity` normally remains derived. Persist component identities, mutable component state and bindings; recompute validity deterministically.
-
-## 5.2 Example — improvised hammer
+## Improvised hammer example
 
 ```text
-slot.handle:
-  requires structural_member
-  length >= LOW
-
-slot.head:
-  requires impact_surface
-  hardness >= MEDIUM
-
-slot.binding:
-  requires binding_component
+slot.handle → structural_member
+slot.head → impact_surface + sufficient hardness for compatibility
+slot.binding → binding_component
 ```
 
-The assembly does not encode a target-specific `hammer recipe`. If the current valid configuration produces sufficient effective impact semantics, relevant affordances become available.
+A tiny hard pebble may be a compatible head while producing low impact capacity. Compatibility must not silently become a performance threshold.
 
-A tiny hard pebble may satisfy the head slot while deriving weak `impact_capacity`; validity must not silently become a performance threshold.
-
-## 5.3 Example — shelter roof slot
+## Degradation / failure
 
 ```text
-slot.roof_panel_1:
-  requires covering
-  minimum effective span/coverage
+binding_integrity HIGH → LOW
+AssemblyValidity remains VALID
+impact_capacity/stability decrease
 ```
 
-Thatch, cloth or compatible salvage may satisfy the same semantic slot with different weather performance.
-
-## 5.4 Degradation and failure
-
-Component condition can reduce effective performance without invalidating the assembly:
+Later grounded failure may remove the exact slot-qualified relation:
 
 ```text
-binding_integrity HIGH → MEDIUM
-AssemblyValidity = VALID
-stability decreases
-impact_capacity may decrease
-```
-
-A grounded failure can later change bindings/configuration:
-
-```text
-binding breaks
-→ head detaches
-→ required slot becomes unbound
+RemoveRelation(attached_to, binding, host, AssemblySlotId(binding))
+→ required slot absent
 → AssemblyValidity = INCOMPLETE
-→ use_as_impact_tool disappears
+→ dependent effective properties disappear/recompute
 ```
 
-The world mutation occurs through ordinary effects/relations. Presentation follows the authoritative result.
+Repair replaces/mutates ordinary components/relations; unrepaired component damage remains part of effective semantics.
 
-## 5.5 Repair and replacement
+## Structural cycles
 
-Repair should mutate/replace ordinary components and bindings:
+Structural dependency used for recursive composition/aggregation must be acyclic. A component/host graph cannot recursively depend on itself.
 
-```text
-replace binding
-replace handle
-replace head
-reattach compatible component
-```
+Where mutually exclusive role occupancy is required, express it through explicit relation/assembly constraints rather than assuming relation-key uniqueness enforces it.
 
-Recompute `AssemblyValidity` and `EffectivePhysicalProfile` afterward.
+## Presentation sockets
 
-Repair does not imply restoration to a pristine authored template. Existing damage on unreplaced components continues contributing to effective semantics.
-
-## 5.6 Presentation sockets are adapters
-
-Asset names such as:
-
-```text
-SOCKET_TOOL_HEAD
-SOCKET_ROOF_01
-```
-
-are presentation/authoring adapter identifiers.
-
-They may map to `AssemblySlotDefinition`, but domain identity must not depend on Blender/Godot socket names or transforms.
+Asset identifiers such as `SOCKET_TOOL_HEAD` are adapters. They may map to `AssemblySlotId` but are never domain identity.
 
 ---
 
-# 6. Gradual exploration and perceptual evidence
+# 6. Composition-dependent invalidation
+
+A component mutation can invalidate a cached host profile even when the host itself did not mutate.
+
+Canonical maintenance path:
+
+```text
+component World mutation
+→ SemanticChangeSet
+→ CompositionDependencyProjection
+→ dependent host(s)
+→ invalidate EffectivePhysicalProfile caches
+```
+
+Relation changes invalidate direct endpoints and relevant transitive composite dependents.
+
+`CompositionDependencyProjection` is reconstructible from World truth and never an authority owner.
+
+This maintenance contract must remain separate from gameplay `WorldEvent`/learning flows.
+
+---
+
+# 7. Gradual exploration and typed evidence
 
 Do not persist a universal:
 
@@ -466,555 +371,156 @@ Do not persist a universal:
 exploration_level(object)
 ```
 
-Object exploration is emergent from independent beliefs and evidence.
+Exploration emerges from independent supported beliefs/evidence.
 
-A poorly explored object has few supported propositions; a well explored object has more and/or higher-confidence propositions.
+## PerceptionResult
 
-## 6.1 PerceptionResult refinement
+Conceptually:
 
 ```text
 PerceptionResult
-  perceived_subjects: PerceivedSubject[]
-  observed_events: ObservedEvent[]
-  perceptual_evidence: PerceptualEvidence[]
-  accessible_environmental_context
+  perceived subjects
+  observed events
+  perceptual evidence
+  accessible environmental context
 ```
 
-Static property discovery belongs in `perceptual_evidence`; it does not require synthetic `WorldEvent`s.
+## PerceptualEvidence
 
-## 6.2 PerceptualEvidence
+The structural foundation uses a compact typed contract:
 
 ```text
 PerceptualEvidence
-  subject: DomainSubjectRef
-  evidence_kind: EvidenceKindId
-  property_id?: PropertyId
-  perceived_value/range?: PropertyValue
-  proposition_hint?: PropositionPattern
-  quality: EvidenceQuality
-  source_action_id?: ActionId
-  source_world_event_id?: WorldEventId
-  modality: PerceptionModality
-  causal_ref?: bounded trace ref
+  claim: EpistemicClaim
+  confidence: UnitInterval
+  source_execution_id
+  modality
 ```
 
-It is a derived contract, not durable world truth.
-
-Typical modalities:
+Current claim kinds:
 
 ```text
-VISUAL
-TACTILE
-AUDITORY
-OLFACTORY
-GUSTATORY
-PROPRIOCEPTIVE
-ACTION_FEEDBACK
+PROPERTY(subject, PropertyId, PropertyValue)
+RELATION(subject, RelationTypeId, object)
+EVENT(subject, EventDefinitionId, perceived_role)
 ```
 
-## 6.3 EvidenceRuleDefinition
+This replaces durable identity based on arbitrary proposition predicate/argument bags.
 
-```text
-EvidenceRuleDefinition
-  id: EvidenceRuleId
-  trigger: EvidenceTrigger
-  requirements: RequirementPredicate
-  source_projection: EvidenceProjectionSpec
-  quality_policy: EvidenceQualityPolicy
-```
+Richer future evidence metadata such as observation coverage, ranges or causal refs may be added as bounded provenance without changing the claim identity model.
 
-An evidence rule answers:
+## Evidence accessibility
 
-> Given what Wilson did/perceived and what authoritative world facts are accessible through that modality, what evidence may become available?
+`EventDefinition` declares which event roles/modalities are potentially perceptible. Runtime spatial access decides whether Wilson actually has access.
 
-It must not simply reveal all properties of the target.
+Current coarse adapter uses semantic place/co-location. Future visual/hearing/occlusion adapters can refine access behind the same boundary without exposing hidden World truth to cognition.
 
-## 6.4 Examples
-
-### Visual inspection
-
-```text
-inspect_visual(target)
-→ color / coarse shape / visible surface state / visible interaction regions
-```
-
-It should not directly reveal hidden hardness or sealed contents.
-
-### Touch
-
-```text
-touch(target)
-→ surface temperature / tactile roughness / rigidity clues
-```
-
-### Lift
-
-```text
-lift(target)
-+ action effort feedback
-→ approximate mass-class evidence
-```
-
-### Shake
-
-```text
-shake(container)
-+ internal motion/sound response
-→ evidence for likely_contains_something
-```
-
-No sound should normally reduce confidence in movable contents, not prove emptiness.
-
-### Strike
-
-```text
-wood breaks while target barely deforms
-→ strong relative resistance evidence
-```
-
-This is especially important for Scientific Method.
+Static property/relation exploration need not fabricate a WorldEvent; future `EvidenceRuleDefinition`s may derive typed property/relation claims from inspect/touch/smell/etc.
 
 ---
 
-# 7. Direct observation versus inference
+# 8. Negative evidence and observation coverage
 
-Evidence should distinguish direct projection from inferred semantic claims.
+Not observed is not automatically absent.
+
+Strong negative evidence requires sufficient bounded `ObservationCoverage` for the relevant query/scope.
+
+Examples:
+
+```text
+quick glance into cluttered storage
+→ weak/insufficient negative evidence
+
+careful exhaustive inspection for a rope-sized item
+→ strong evidence of absence for that bounded query
+```
+
+Coverage is derived and normally not persisted independently.
+
+---
+
+# 9. Environmental response rules
+
+Environmental behavior should be reusable property/capability/configuration logic.
+
+Conceptually:
+
+```text
+EnvironmentalResponseRule
+  trigger/context
+  target predicate
+  exposure/protection condition
+  bounded effect/process policy
+```
 
 Example:
 
 ```text
-world: color = blue
-visual evidence: observed color blue
-→ high-confidence likely_property(color, blue)
-```
-
-Versus:
-
-```text
-world: paper inside opaque bottle
-shake action: rattle heard
-→ evidence for likely_contains_something
-```
-
-Wilson does not automatically receive `inside(paper, bottle)` from the rattle.
-
-This boundary preserves uncertainty and supports later contradiction.
-
----
-
-# 8. Exploration feeds tactical opportunities
-
-Authoritative attemptability and Wilson candidate generation are separate.
-
-Physical world/action services answer:
-
-```text
-Can this action be attempted?
-What happens if committed?
-```
-
-Wilson-relative cognition answers:
-
-```text
-Does Wilson currently believe this tactic is plausible/informative enough to consider?
-```
-
-Therefore all four cases are valid:
-
-```text
-physically effective + Wilson knows it
-physically effective + Wilson does not know it
-physically ineffective + Wilson thinks it may work
-physically ineffective + Wilson knows it is implausible but may test for information
-```
-
-The second case enables discovery.
-The third case enables experiments and mistakes.
-
----
-
-# 9. Tactical versus intentional reconsideration
-
-The micro-loop requires two normal reconsideration scopes plus the existing immediate-threat regime.
-
-```text
-ReconsiderationScope =
-  TACTICAL
-  INTENTIONAL
-  IMMEDIATE_THREAT
-```
-
-This is a scheduling/candidate-scope distinction, not a new state-owning AI system.
-
-## 9.1 Tactical reconsideration
-
-Question:
-
-> How can Wilson continue the current intention after a checkpoint/outcome/new evidence?
-
-Candidate space is constrained by the current intention.
-
-Examples:
-
-```text
-use another tool
-inspect first
-change semantic target region
-change technique
-retry with stronger force
-pause at a safe checkpoint
-```
-
-## 9.2 Intentional reconsideration
-
-Question:
-
-> Should Wilson continue this intention, suspend it, or pursue another objective?
-
-Triggered by stronger context changes such as:
-
-```text
-urgent drive transition
-major opportunity
-persistent repeated failure
-strong anomaly outside current goal
-player suggestion
-context change
-intention completion/invalidation
-```
-
-## 9.3 Escalation
-
-A tactical result may escalate to intentional reconsideration when:
-
-```text
-no plausible tactic remains
-estimated value drops materially
-cost/risk rises beyond bounded tolerance
-strong competing trigger arrives
-```
-
-This prevents global life-planning after every hammer strike while preserving interruption by meaningful events.
-
-`DecisionContinuationContext` in `DOMAIN_MICRO_LOOP.md` carries only bounded same-intention recent tactic/outcome history; it is not a durable failure counter or second memory system.
-
----
-
-# 10. InteractionRegionDefinition
-
-Procedural tactics often need semantic sub-targets without mesh-level autonomous reasoning.
-
-```text
-InteractionRegionDefinition
-  id: InteractionRegionId
-  host applicability
-  semantic categories
-  accepted action-role semantics
-  optional local physical modifiers
-```
-
-Runtime reference:
-
-```text
-InteractionRegionRef(host_entity_id, region_id)
-```
-
-Examples:
-
-```text
-lid_edge
-handle
-weak_joint
-rope_knot
-repair_point
-fruit_cluster
-```
-
-Presentation maps regions to transforms/colliders/anchors. Hidden regions are not automatically exposed to Wilson cognition.
-
----
-
-# 11. EnvironmentalResponseRule
-
-Weather/environmental procedurality should not require object-specific update code.
-
-```text
-EnvironmentalResponseRule
-  id: EnvironmentalResponseRuleId
-  environment_trigger: EnvironmentCondition
-  target_requirements: RequirementPredicate
-  response: EffectSpec | EnvironmentalProcessSpec
-  cadence/policy: bounded semantic policy
-```
-
-Examples:
-
-### Rain wets absorbent exposed objects
-
-```text
 rain active
-+ target exposed
 + absorbency > LOW
-→ increase moisture
++ resolved rain exposure >= LOW
+→ moisture increases
 ```
 
-### Sun dries wet exposed objects
-
-```text
-sun exposure
-+ moisture > dry threshold
-→ start/advance drying process
-```
-
-### Wind displaces unstable light objects
-
-```text
-wind strength HIGH
-+ target stability LOW
-+ effective mass below threshold
-+ exposed
-→ displacement resolution candidate
-```
-
-### Rain suppresses fire
-
-```text
-rain
-+ exposed burning subject
-+ insufficient covering
-→ reduce burn level / extinguish process
-```
-
-The rule should operate over properties/capabilities rather than entity-type lists whenever practical.
+Avoid object-type weather switch trees when ordinary semantics suffice.
 
 ---
 
-# 12. State-band rule
+# 10. Protection/exposure relation
 
-Brainstorming/art states such as:
-
-```text
-dry / damp / wet / soaked
-fresh / aging / spoiled
-raw / cooked / burned
-intact / damaged / broken
-empty / partial / full
-```
-
-should normally be presentation/content bands over smaller authoritative property families, not independent state machines.
-
-Examples:
+`covering` capability alone does not mean a target is protected.
 
 ```text
-moisture → dry/damp/wet/soaked visual band
-freshness → fresh/aging/spoiled band
-cooking_progress + burn_level → raw/cooked/burned band
-structural_integrity → intact/damaged/broken band
-fill_ratio → empty/partial/full band
+covering/configuration
+→ ProtectionProjection
+→ ResolveExposure(target, exposure_kind)
+→ EnvironmentalResponse
 ```
 
-`drying` is normally a process (`moisture > 0 + active drying process`), not a mutually exclusive condition enum.
-
-Use explicit lifecycle enums only when semantic transition identity itself matters.
+The cloth/shelter/weather fixture owns regression evidence; `DOMAIN_ENVIRONMENTAL_PROTECTION.md` owns detailed semantics.
 
 ---
 
-# 13. Epistemic state must not leak into world assets
+# 11. Authoring/content loading boundary
 
-Terms such as:
+The domain remains serialization-neutral, but the current implementation proves that these semantics can be loaded from bounded versioned content and sealed into typed definitions.
 
-```text
-unexplored
-inspected
-contents_revealed
-known
-familiar
-```
+Authored content must not contain arbitrary executable callbacks, untyped relation-qualifier dictionaries or unbounded selectors.
 
-are Wilson-relative projections and must not normally be stored as authoritative `EntityInstance` states.
-
-For a mystery container:
-
-```text
-world truth:
-  sealed/open
-  damaged
-  contents relations
-
-Wilson cognition:
-  visual properties known?
-  likely contents?
-  inferred material?
-  opening behavior learned?
-```
-
-Presentation may derive an `unexplored` UI/content label from Wilson knowledge, but it is not a physical property of the container.
+Exact current content-pack schema/version belongs to `DISCOVERY_STATUS.md` + implementation/tests, not to this language-neutral semantic document.
 
 ---
 
-# 14. Content metadata versus domain semantics
+# 12. Anti-patterns
 
-Brainstorming labels such as:
-
-```text
-collectible
-preference-capable
-personal-location-capable
-persistent-instance-worthy
-repair-history-visible
-displayable
-```
-
-should not automatically become physical capabilities.
-
-Use one of:
+Do not introduce:
 
 ```text
-content authoring metadata
-presentation metadata
-persistence hint
-ordinary association/habit behavior
-```
-
-A cup becomes Wilson's favorite through association/history, not because it has `capability.favorite_candidate`.
-
----
-
-# 15. Procedural regression fixtures
-
-The following existing catalog objects should be used as low-cost domain regressions.
-
-## 15.1 Coconut
-
-Tests:
-
-```text
-property-driven breaking
-multi-stage transformations
-multi-output contents
-repurposing shell as container/tool material
-```
-
-## 15.2 Improvised hammer
-
-Tests:
-
-```text
-assembly slots
-assembly validity versus effectiveness
-material/component composition
-derived impact capability
-binding degradation
-repair without new entity type explosion
-```
-
-Required contrast:
-
-```text
-tight binding vs loose binding
-valid strong head vs valid weak head
-```
-
-Canonical fixture: `DOMAIN_FIXTURE_IMPROVISED_HAMMER.md`.
-
-## 15.3 Barrel
-
-Tests:
-
-```text
-container contents
-derived mass
-rollable affordance
-slope hazard
-```
-
-Required contrast:
-
-```text
-empty vs water-filled
-```
-
-## 15.4 Sealed container
-
-Tests:
-
-```text
-gradual exploration
-opaque/transparent evidence access
-damage feedback
-Scientific Method tactical loop
-interaction regions such as lid edge
-```
-
-Required contrast:
-
-```text
-transparent vs opaque container
-```
-
-without requiring distinct cognitive code paths.
-
-## 15.5 Cloth sheet
-
-Tests:
-
-```text
-material properties
-weather response
-configuration-derived covering capability
-wind response
-repurposing
-```
-
-Required contrast:
-
-```text
-loose on ground
-vs attached/tensioned across supports
-```
-
-## 15.6 Shelter section
-
-Tests:
-
-```text
-assembly slots
-project/world truth split
-weather damage
-detached reusable components
-repair history
-interaction-region repair points
-```
-
-## 15.7 Bowling ball
-
-Tests:
-
-```text
-absurd object obeys ordinary physics grammar
-mass/roll/impact semantics
-no special coconut-breaking rule
+object-pair crafting recipes as the generic interaction model
+AssemblyStore as duplicate physical truth
+universal quality scalars
+runtime type explosion for every material/configuration combination
+arbitrary Dictionary qualifiers
+arbitrary authored callbacks
+persisted exploration percentages
+profile derivation reading Wilson belief
+manual host-cache invalidation scattered across gameplay code
+presentation socket names as AssemblySlot identity
 ```
 
 ---
 
-# 16. Procedural domain gate
+# 13. Regression expectations
 
-This refinement passes when:
+The procedural-composition contract remains acceptable when the same primitives can express:
 
-- new objects can gain useful behavior from existing properties/capabilities rather than type switches;
-- composite objects can change effective physical semantics when parts/contents/condition change;
-- assembly validity remains distinct from effective performance/quality;
-- property derivation is acyclic, typed, deterministic and explainable;
-- assembly compatibility is semantic and bounded rather than free-form universal construction;
-- carrying/throwing/rolling can be derived where practical instead of authored as unrelated flags;
-- exploration reveals individual facts through evidence modalities instead of one exploration percentage;
-- Wilson can attempt physically enactable but ineffective experiments and learn from them;
-- hidden world truth does not leak into tactical candidate generation;
-- environment affects broad families through reusable response rules;
-- art state variants can be projected from smaller authoritative properties;
-- interaction sub-targets can be semantic without becoming mesh-level domain logic;
-- brainstorming metadata does not inflate the authoritative gameplay schema.
+```text
+improvised hammer with substitution/degradation/repair
+loaded containers
+rafts with component/cargo effects
+cloth shelter protection under weather
+repurposed salvage
+experimentation with incomplete Wilson knowledge
+```
 
-`DOMAIN_MICRO_LOOP.md` validates this gate against a complete Scientific Method frame-group fixture.
-`DOMAIN_FIXTURE_IMPROVISED_HAMMER.md` validates the assembly/effective-profile branch in isolation.
+without target-specific recipes, hidden knowledge leaks or duplicate physical authority.
