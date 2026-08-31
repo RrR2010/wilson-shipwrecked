@@ -2,11 +2,11 @@
 
 ## Current phase
 
-Wilson Shipwrecked has completed the product/behavior/architecture discovery gate and the first language-neutral functional-domain passes.
+Wilson Shipwrecked has completed the product/behavior/architecture discovery gate and the language-neutral functional-domain stabilization passes.
 
-The current design phase is **functional-domain stabilization through concrete scenario fixtures/micro-loops**, immediately before package/module layout and implementation-language-specific code.
+The current design phase is now **package/module dependency layout and concrete domain-type planning**, immediately before implementation-language-specific code.
 
-The project is no longer waiting for a first domain model: structural, operation, vocabulary, procedural-composition, Scientific Method, Falling Palm, Sabotaged Storage and improvised-hammer regressions now exist.
+The functional domain is no longer awaiting additional mandatory fixtures: structural, operation, vocabulary, procedural-composition, Scientific Method, Falling Palm, Sabotaged Storage, improvised-hammer, and cloth-shelter-weather regressions now exist.
 
 ---
 
@@ -29,16 +29,18 @@ For work that changes simulation/domain behavior, read:
 13. `DOMAIN_CATALOGS.md`
 14. `DOMAIN_OPERATIONS.md`
 15. `DOMAIN_PROCEDURAL_COMPOSITION.md`
-16. `DOMAIN_HAZARD_DYNAMICS.md`
-17. `DOMAIN_EPISTEMIC_INVESTIGATION.md`
-18. `DOMAIN_MICRO_LOOP.md`
-19. `DOMAIN_MICRO_LOOP_FALLING_PALM.md`
-20. `DOMAIN_MICRO_LOOP_SABOTAGED_STORAGE.md`
-21. `DOMAIN_FIXTURE_IMPROVISED_HAMMER.md`
-22. `DOMAIN_OPERATION_REFINEMENTS.md`
-23. `DOMAIN_REGRESSION.md`
-24. `DOMAIN_OPERATION_TRACES.md`
-25. `DOMAIN_VOCABULARY_REGRESSION.md`
+16. `DOMAIN_ENVIRONMENTAL_PROTECTION.md`
+17. `DOMAIN_HAZARD_DYNAMICS.md`
+18. `DOMAIN_EPISTEMIC_INVESTIGATION.md`
+19. `DOMAIN_MICRO_LOOP.md`
+20. `DOMAIN_MICRO_LOOP_FALLING_PALM.md`
+21. `DOMAIN_MICRO_LOOP_SABOTAGED_STORAGE.md`
+22. `DOMAIN_FIXTURE_IMPROVISED_HAMMER.md`
+23. `DOMAIN_FIXTURE_CLOTH_SHELTER_WEATHER.md`
+24. `DOMAIN_OPERATION_REFINEMENTS.md`
+25. `DOMAIN_REGRESSION.md`
+26. `DOMAIN_OPERATION_TRACES.md`
+27. `DOMAIN_VOCABULARY_REGRESSION.md`
 
 `DOMAIN_SCHEMA.dbml` is a visualization aid only and is not a persistence/database mandate.
 
@@ -92,7 +94,8 @@ Expectation
 Salience
 Assembly validity derivation
 Effective physical profile derivation
-Affordance/attemptability derivation
+Protection / exposure derivation
+Affordance / attemptability derivation
 Hazard projection
 Perceived threat derivation
 Tactical candidate generation/evaluation
@@ -156,9 +159,7 @@ Integration operation regression: **PASS**.
 
 ## Procedural composition / object breadth
 
-`DOMAIN_PROCEDURAL_COMPOSITION.md` was added after stress-testing against the extended functional asset catalog.
-
-It formalizes:
+`DOMAIN_PROCEDURAL_COMPOSITION.md` formalizes:
 
 - lightweight `MaterialDefinition`;
 - derived `EffectivePhysicalProfile`;
@@ -173,11 +174,31 @@ It formalizes:
 
 The functional asset breadth (food, tools, modular structures, salvage, weather, absurd objects, comfort/personalization) is supportable without recipes or entity-type interaction switches, provided these normalized procedural contracts are preserved.
 
+## Environmental protection / exposure
+
+`DOMAIN_ENVIRONMENTAL_PROTECTION.md` adds the reusable bridge between spatial composition and environmental response:
+
+```text
+covering capability
+!= ProtectionProjection
+!= ExposureResult
+```
+
+It formalizes:
+
+- `ProtectionProjection` as a derived configuration-relative shielding projection;
+- `ResolveExposure` / `ExposureResult` for target-specific environmental exposure;
+- partial coverage/leak behavior from geometry/configuration/integrity;
+- bounded layered protection;
+- deterministic degradation feedback through explicit semantic boundaries.
+
+No universal `indoors` flag, roof-leak scalar, or Shelter/Roof owner is required.
+
 ## Scientific Method micro-loop
 
-`DOMAIN_MICRO_LOOP.md` expands the game loop into semantic frame groups and validates one complete iterative experiment chain.
+`DOMAIN_MICRO_LOOP.md` validates iterative experimentation and same-chain learning.
 
-Critical distinctions now explicit:
+Critical distinctions:
 
 ```text
 physical truth
@@ -186,13 +207,11 @@ physical truth
 != Wilson desirability
 ```
 
-Scientific Method regression: **PASS with incorporated refinements**.
+Scientific Method regression: **PASS**.
 
 ## Falling Palm micro-loop / hazard dynamics
 
-`DOMAIN_MICRO_LOOP_FALLING_PALM.md` validates the immediate-threat path against a time-extended environmental accident.
-
-`DOMAIN_HAZARD_DYNAMICS.md` promotes reusable semantics including:
+`DOMAIN_MICRO_LOOP_FALLING_PALM.md` and `DOMAIN_HAZARD_DYNAMICS.md` validate:
 
 ```text
 DynamicProcessState
@@ -204,13 +223,11 @@ secondary hazards
 semantic-step concurrency ordering
 ```
 
-Falling Palm regression: **PASS with incorporated hazard-dynamics refinements**.
+Falling Palm regression: **PASS**.
 
 ## Sabotaged Storage micro-loop / epistemic investigation
 
-`DOMAIN_MICRO_LOOP_SABOTAGED_STORAGE.md` validates an offscreen player intervention whose causal identity is hidden from Wilson.
-
-`DOMAIN_EPISTEMIC_INVESTIGATION.md` promotes reusable semantics including:
+`DOMAIN_MICRO_LOOP_SABOTAGED_STORAGE.md` and `DOMAIN_EPISTEMIC_INVESTIGATION.md` validate:
 
 ```text
 ObservationCoverage
@@ -222,39 +239,62 @@ PerceivedCausalOpportunity
 information/discrimination value for investigation tactics
 ```
 
-Sabotaged Storage regression: **PASS with incorporated epistemic-investigation refinements**.
+Sabotaged Storage regression: **PASS**.
 
 ## Improvised hammer composite-object fixture
 
-`DOMAIN_FIXTURE_IMPROVISED_HAMMER.md` validates the physical composition branch in isolation.
-
-The fixture demonstrates:
+`DOMAIN_FIXTURE_IMPROVISED_HAMMER.md` validates:
 
 ```text
-handle + impact head + binding
-→ validated assembly bindings
+components
+→ assembly bindings
 → AssemblyValidity
 → EffectivePhysicalProfile
-→ derived impact semantics
-→ ordinary hit resolution
-→ grounded component degradation
-→ weaker-but-valid configuration
-→ component/binding failure
-→ invalid/incomplete assembly
-→ replacement/rebinding
-→ recomputed capability
+→ ordinary interaction resolution
+→ degradation
+→ failure/detachment
+→ repair/replacement
+→ recomputed semantics
 ```
 
-The key invariant is now explicit:
+Key invariant:
 
 ```text
-assembly validity
-!= effective tool performance
+assembly validity != effective performance
 ```
 
-A semantically compatible assembly may be weak, and a degrading assembly may remain valid before actual structural failure. No universal `tool_quality` scalar or target-specific hammer recipe is required.
+Improvised hammer regression: **PASS**.
 
-Improvised hammer regression: **PASS with incorporated AssemblyValidity refinement**.
+## Cloth shelter weather fixture
+
+`DOMAIN_FIXTURE_CLOTH_SHELTER_WEATHER.md` validates the final cross-domain composition chain:
+
+```text
+environment
++ world configuration
+→ ResolveExposure
+→ EnvironmentalResponseRule
+→ moisture/integrity mutations
+→ EffectivePhysicalProfile / AssemblyValidity
+→ ProtectionProjection changes
+→ attachment failure boundary
+→ optional DynamicProcessState
+→ detached reusable component
+→ Project/cognition observe resulting world
+```
+
+The fixture confirms:
+
+- wet cloth changes effective semantics without new entity type;
+- a valid roof assembly may perform progressively worse;
+- partial leaks derive from protection/exposure rather than a leak state machine;
+- wind can degrade bindings through reusable response rules;
+- detached cloth remains the same persistent world entity and may be reused;
+- detached moving components reuse hazard dynamics;
+- shelter projects query physical world truth rather than duplicate it;
+- save/load persists causes and rederives projections.
+
+Cloth shelter weather regression: **PASS with incorporated ProtectionProjection/ExposureResult refinement**.
 
 ---
 
@@ -283,22 +323,24 @@ stone vs bowling-ball impact grammar
 
 ---
 
-# Current functional-domain gate
+# Functional-domain stabilization gate
 
-Current status:
+Final status:
 
 ```text
 Structural domain                    PASS
 Vocabulary normalization            PASS
 Representative scene regression     PASS
 Operation regression                PASS
-Functional asset breadth            PASS + normalized procedural contracts
-Gradual exploration                 PASS after evidence refinement
-Composite object semantics          PASS after EffectivePhysicalProfile refinement
+Functional asset breadth            PASS
+Gradual exploration                 PASS
+Composite object semantics          PASS
+Environmental protection/exposure   PASS
 Scientific Method micro-loop        PASS
 Falling Palm hazard micro-loop      PASS
 Sabotaged Storage epistemic loop    PASS
 Improvised hammer fixture           PASS
+Cloth shelter weather fixture       PASS
 ```
 
 No new state-owning system was required for:
@@ -311,6 +353,7 @@ procedural object composition
 tool assembly/repair
 material physics
 interaction sub-regions
+shelter/roof/weather protection
 hazard projection
 immediate threat handling
 epistemic investigation
@@ -319,50 +362,59 @@ causal attribution working context
 
 These remain composition/derivation concerns inside existing authority boundaries. Only time-extended authoritative physical evolution may require durable `DynamicProcessState` while active.
 
+**Functional-domain stabilization gate: PASS.**
+
 ---
 
 # Remaining non-blocking design questions
 
-The following may still be refined during concrete fixtures/implementation, but they do not require reopening product discovery:
+The following may be resolved during module/type design or implementation without reopening the functional domain by default:
 
-1. exact spatial topology representation / navigation implementation;
+1. exact spatial topology/navigation representation;
 2. exact body mutation proposer API beneath World authority;
 3. concrete shallow animal behavior representation;
 4. exact environmental/dynamic-process persistence thresholds;
 5. final bounded property catalogue and registered derivation policies;
 6. exact semantic concept vocabulary boundaries;
 7. concrete content serialization format;
-8. exact presentation adapters for `InteractionRegion` / anchors / sockets;
-9. exact deterministic tie-break encoding for simultaneous semantic boundaries;
-10. exact minimal serialization/reconstruction policy for a save occurring mid-investigation.
+8. presentation adapters for `InteractionRegion`, anchors and assembly sockets;
+9. deterministic tie-break encoding for simultaneous semantic boundaries;
+10. minimal serialization/reconstruction policy for save occurring mid-investigation;
+11. concrete coarse representation used to derive protection coverage/gaps.
 
 ---
 
 # Recommended next sequence
 
-Before implementation-specific package layout:
+Proceed to package/module dependency layout using the stabilized domain boundaries.
 
-1. create the remaining environment/composition fixture (`cloth/shelter in rain/wind`);
-2. validate that it reuses environmental response + assembly + effective profile + dynamic hazard semantics without bypass flags/classes;
-3. normalize any final schema ambiguity;
-4. then design package/module dependency layout;
-5. only then select concrete language/runtime representation details.
+Recommended order:
 
-The user's current implementation preference may later favor direct GDScript, but no functional-domain decision currently depends on that language choice.
+1. define language-neutral package/module responsibilities and dependency direction;
+2. map canonical state owners versus derived services into those modules;
+3. define registry/content-definition boundaries separately from runtime instances;
+4. define orchestration/application layer dependencies without making it a domain owner;
+5. define presentation/Godot adapters outside authoritative domain modules;
+6. create concrete domain types/interfaces in the chosen implementation language;
+7. implement the first vertical slice using the existing fixture set as regression targets.
+
+The user's current implementation preference may later favor direct GDScript, but the dependency layout should remain conceptually language-neutral first.
 
 ---
 
 # Implementation readiness
 
-The previous architecture implementation gate remains valid.
+The previous architecture implementation gate remains valid and the functional-domain stabilization gate is now also complete.
 
-The added functional-domain passes reduce implementation risk further, but the recommended order is still:
+Recommended implementation path:
 
 ```text
-final environment/composition fixture
-→ package/module layout
+package/module dependency layout
 → concrete domain types
+→ declarative content fixtures
 → first vertical slice
+→ headless deterministic regressions
+→ presentation adapters
 ```
 
-Do not jump directly from asset/object brainstorming to concrete gameplay enums/classes. Use the normalized domain vocabulary and procedural contracts first.
+Do not translate brainstorming asset terminology directly into gameplay enums/classes. Implement the normalized domain contracts and derive higher-level behavior from them.
