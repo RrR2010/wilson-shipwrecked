@@ -2,17 +2,26 @@
 
 ## Purpose
 
-This document turns the normalized vocabulary in `DOMAIN_VOCABULARY.md` into a minimal initial catalogue of supported relation, predicate, effect and result semantics.
+This document turns `DOMAIN_VOCABULARY.md` into the minimal admitted catalogue of relation, predicate, effect, outcome and epistemic semantics required by current representative behavior.
 
-It is language-neutral and content-oriented. It does not prescribe enums, classes, resources or persistence representation.
-
-A catalogue entry is admitted only when it is required by the current representative-scene regression or by a core domain invariant.
+It is language-neutral and content-oriented. It does not prescribe enums/classes/resources/persistence representation. New entries require either a current representative-scene need or a core invariant.
 
 ---
 
 # 1. Relation catalogue
 
-Relation types are authored definitions with accepted ref kinds and cardinality/inverse/exclusivity metadata.
+Relation types are authored semantic definitions with accepted ref kinds and eventual cardinality/inverse/exclusivity metadata.
+
+A concrete `WorldRelation` has exact identity:
+
+```text
+relation_type
++ subject
++ object
++ optional qualifier
+```
+
+The qualifier is a bounded `PropertyValue` / typed semantic ID, not an arbitrary Dictionary. Broad queries may intentionally return multiple relations with the same endpoints when qualifiers differ; exact mutation includes the qualifier.
 
 ## 1.1 Containment and support
 
@@ -25,16 +34,11 @@ cardinality: subject max 1 active containment parent in containment exclusive gr
 inverse: contains
 ```
 
-Used by:
-
-- storage;
-- containers;
-- shelter/container contents;
-- project/resource lookup.
+Used by storage, containers, shelter contents and resource lookup.
 
 ### `contains`
 
-Derived/inverse of `inside`; need not be persisted separately if relation queries can invert.
+Derived/inverse of `inside`; need not be persisted separately when relation queries can invert.
 
 ### `on_top_of`
 
@@ -44,17 +48,23 @@ object: Entity | Place
 cardinality: many-to-many unless content constrains support occupancy
 ```
 
-Used by Missing Spoon, Gift Test and arrangements.
-
 ### `attached_to`
 
 ```text
 subject: Entity
 object: Entity | Place
-cardinality: subject normally max 1 attachment in attachment exclusive group unless definition permits multiple
+qualifier: optional semantic attachment/assembly slot ID
 ```
 
-Used by laundry, project pieces and loose-object environmental interactions.
+Used by laundry, project pieces, assemblies and loose-object configurations.
+
+A relation may encode an assembly binding as:
+
+```text
+attached_to(component, host, qualifier = AssemblySlotId)
+```
+
+The relation store admits exact qualified edges; `AssemblyValidity` decides whether the resulting configuration is semantically valid.
 
 ### `part_of`
 
@@ -87,7 +97,7 @@ qualifier: optional hand/slot semantic value
 exclusive group: possession_location
 ```
 
-`held_by` is more specific than `carried_by`. Implementations may derive `carried_by` from `held_by` rather than persist both.
+`held_by` is more specific than `carried_by`; implementations may derive the latter from the former.
 
 ---
 
@@ -95,13 +105,11 @@ exclusive group: possession_location
 
 ### `near`
 
-Usually **derived**, not persisted.
-
-Use a persisted `near` relation only when a semantic arrangement itself is authoritative content/state and cannot be reconstructed from spatial queries.
+Usually derived, not persisted. Persist only when a semantic arrangement itself is authoritative and cannot be reconstructed from spatial truth.
 
 ### `at_place`
 
-Normally derived from entity/place state rather than persisted as a duplicate relation.
+Normally derived from entity/place state.
 
 ### `adjacent_to`
 
@@ -111,7 +119,7 @@ Rule:
 
 > Do not persist derived spatial relations merely because predicates need them.
 
-Predicates may query spatial services directly.
+The current structural foundation uses `PlaceId` co-location/bounded nearby queries; fine metric/nav semantics remain behind spatial adapters.
 
 ---
 
@@ -119,37 +127,27 @@ Predicates may query spatial services directly.
 
 ### `blocks_route`
 
-Prefer derived route obstruction from geometry/world state.
-
-Persist only if the obstruction is itself semantic state that cannot be reconstructed cheaply/accurately.
+Prefer derived route obstruction from geometry/world state. Persist only when obstruction itself is semantic authoritative state.
 
 ### `connects`
 
-Used for authored semantic connectivity between stable places/regions when navigation topology requires it.
-
-Examples:
-
-```text
-temporary sandbar connects home_island, neighbor_island
-wreck_access connects beach, wreck_deck
-```
+Used for authored semantic connectivity between stable places/regions when coarse topology requires it.
 
 ---
 
 # 5. Relation non-catalogue
 
-Do not add relation types for Wilson-relative expectations such as:
+Do not add World relation types for Wilson-relative meaning such as:
 
 ```text
 favorite
 hated
-expected_at
-owned_by_wilson psychologically
 trusted
 feared
+psychologically_owned_by
 ```
 
-These belong to associations/belief propositions, not world truth.
+Those belong to cognition.
 
 ---
 
@@ -157,7 +155,7 @@ These belong to associations/belief propositions, not world truth.
 
 ## 6.1 World predicates
 
-Canonical initial kinds:
+Canonical initial families:
 
 ```text
 HasCapability(ref, CapabilityId)
@@ -168,11 +166,11 @@ PropertyCompareRefs(left_ref, left_property, op, right_ref, right_property)
 RelationExists(RelationTypeId, subject, object)
 RelationAbsent(RelationTypeId, subject, object)
 SpatialCondition(left_ref, SpatialRelation, right_ref, optional threshold)
-BodyConditionPredicate(ConditionId, comparison/severity)
-EnvironmentCondition(EnvironmentConditionId, parameters)
+BodyConditionPredicate(...)
+EnvironmentCondition(...)
 ```
 
-Comparison operators initially:
+Comparison operators:
 
 ```text
 EQ
@@ -183,30 +181,30 @@ GT
 GTE
 ```
 
-Do not add fuzzy operators to physical truth. Fuzzy interpretation belongs in derived cognition/evaluation.
+Ordered comparison is valid only for compatible ordered property families.
 
 ## 6.2 Cognition predicates
 
-Canonical initial kinds:
+Canonical conceptual families:
 
 ```text
-BeliefMatches(PropositionPattern, optional ConfidenceCondition)
+BeliefMatches(EpistemicClaimPattern, optional ConfidenceCondition)
 Knows(KnowledgeId)
-AssociationCondition(DomainSubjectRef, AssociationDimension, Comparison)
-HabitCondition(HabitPattern, Comparison)
-DriveCondition(DriveId, Comparison)
-IntentionCondition(SemanticIntentionPattern, IntentionLifecycleCondition)
-PresenceCondition(PresenceDimension, Comparison)
+AssociationCondition(...)
+HabitCondition(...)
+DriveCondition(...)
+IntentionCondition(...)
+PresenceCondition(...)
 ```
 
-`Knows` is sugar over `KnowledgeDefinition` satisfaction by the belief store, not a second store lookup.
+`Knows` is sugar over `KnowledgeDefinition` satisfaction by `BeliefStore`; it is not a second truth store.
 
 ## 6.3 Lifecycle predicates
 
 ```text
-ProjectCondition(ProjectRef/DefinitionId, ProjectLifecycleCondition)
-DirectedEventCondition(DirectedEventRef/DefinitionId, DirectedEventLifecycleCondition)
-RunCondition(RunLifecycleCondition)
+ProjectCondition(...)
+DirectedEventCondition(...)
+RunCondition(...)
 ```
 
 ## 6.4 Composition
@@ -217,7 +215,9 @@ AnyOf
 Not
 ```
 
-No other generic combinators admitted yet.
+## 6.5 Registered extension
+
+`RegisteredDomainPredicate` is permitted only as a bounded, authority-declared semantic extension. It cannot execute arbitrary authored code.
 
 ---
 
@@ -235,7 +235,7 @@ B bounded/explicitly approved only
 |---|:---:|:---:|:---:|:---:|
 | capability/category/property | ✓ | perceived/believed projection only | ✓ | ✓ target-side |
 | authoritative relation | ✓ | perceived projection only | ✓ | ✓ target-side |
-| spatial/world environment | ✓ | perceived projection only | ✓ | ✓ when intervention requires |
+| spatial/world environment | ✓ | perceived projection only | ✓ | ✓ when required |
 | body condition | ✓ when physical | perceived bodily projection | B | — |
 | belief/knowledge | — | ✓ | B | B only for player-visible discovery rules |
 | association/habit/drives | — | ✓ | B | — |
@@ -246,17 +246,13 @@ B bounded/explicitly approved only
 | run lifecycle | B | B | B | B |
 | RegisteredDomainPredicate | declared context only | declared context only | declared context only | declared context only |
 
-The matrix is an authority constraint, not an optimization hint.
-
 ---
 
 # 8. Effect catalogue
 
 Effects describe authoritative mutation requests/results only.
 
-## 8.1 EntityLifecycleEffect
-
-Kinds:
+## 8.1 Entity lifecycle
 
 ```text
 CREATE_ENTITY
@@ -264,11 +260,7 @@ DESTROY_ENTITY
 TRANSFORM_ENTITY
 ```
 
-`TRANSFORM_ENTITY` must use a validated `TransformationDefinition` and transfer policy.
-
-## 8.2 PropertyMutationEffect
-
-Kinds:
+## 8.2 Property mutation
 
 ```text
 SET_PROPERTY
@@ -276,33 +268,27 @@ MODIFY_PROPERTY
 CLEAR_OVERRIDE
 ```
 
-Only mutable instance properties may be targeted.
+Only admitted mutable instance properties may change; values are schema-validated and finite.
 
-## 8.3 RelationMutationEffect
-
-Kinds:
+## 8.3 Relation mutation
 
 ```text
-CREATE_RELATION
-REMOVE_RELATION
+CREATE_RELATION(type, subject, object, qualifier?)
+REMOVE_RELATION(type, subject, object, qualifier?)
 ```
 
-Owner validates relation-definition cardinality/exclusivity.
+The owner targets exact qualified identity. Relation-definition cardinality/exclusivity remains a separate semantic validation concern.
 
-## 8.4 SpatialMutationEffect
-
-Kinds:
+## 8.4 Spatial mutation
 
 ```text
 MOVE_ENTITY
 RELOCATE_ENTITY
 ```
 
-The distinction may collapse in implementation if both preserve the same domain semantics. Do not create separate public operations without a behavioral difference.
+Collapse these if implementation finds no semantic distinction.
 
-## 8.5 QuantityMutationEffect
-
-Kinds:
+## 8.5 Quantity mutation
 
 ```text
 TRANSFER_QUANTITY
@@ -310,11 +296,7 @@ CONSUME_QUANTITY
 PRODUCE_QUANTITY
 ```
 
-Used only for entities/resources modeled quantitatively.
-
-## 8.6 BodyMutationEffect
-
-Kinds:
+## 8.6 Body mutation
 
 ```text
 APPLY_CONDITION
@@ -327,19 +309,15 @@ MODIFY_MOBILITY
 SET_DEAD
 ```
 
-`SET_DEAD` is only valid as the resolved consequence of authoritative body/world rules, never a Director/cognition shortcut.
+`SET_DEAD` is only a grounded body/world consequence.
 
-## 8.7 EnvironmentalProcessEffect
-
-Kinds:
+## 8.7 Environmental process mutation
 
 ```text
 START_PROCESS
 MODIFY_PROCESS
 STOP_PROCESS
 ```
-
-Examples: spoilage, drying, fire consumption, storm weakening.
 
 ---
 
@@ -350,6 +328,7 @@ Explicitly not effect families:
 ```text
 WorldEvent
 ObservedEvent
+PerceptualEvidence
 BeliefEvidence
 AssociationImpact
 HabitEvidence
@@ -367,7 +346,7 @@ These are facts, projections, proposals or derived values.
 
 # 10. Action outcome catalogue
 
-`ActionOutcome.classification` initial values:
+Conceptual `ActionOutcome.classification` values:
 
 ```text
 SUCCESS
@@ -377,23 +356,17 @@ BLOCKED
 FAILURE
 ```
 
-Semantics:
+Classification is physical/action-level result semantics, not Wilson satisfaction and not project completion.
 
-- `SUCCESS` — intended action-level physical objective occurred;
-- `PARTIAL` — meaningful grounded progress/change occurred without full objective;
-- `NO_EFFECT` — valid attempt committed but produced no meaningful target change;
-- `BLOCKED` — action could not proceed because a runtime precondition failed before relevant physical resolution;
-- `FAILURE` — committed action resolved adversely/incorrectly relative to its physical action objective.
-
-Classification is not Wilson satisfaction and not project completion.
+The concrete structural vertical currently focuses on committed effects/event identity rather than requiring every classification field to exist in the minimal GDScript representation. `DISCOVERY_STATUS.md` records the concrete subset.
 
 ---
 
-# 11. Semantic outcome tag catalogue policy
+# 11. Semantic outcome-tag policy
 
-Outcome tags are open content vocabulary but must belong to a validated registry.
+Outcome tags are open validated content vocabulary, not prose.
 
-Initial vertical-slice examples:
+Examples:
 
 ```text
 sufficient_breaking_impact
@@ -407,20 +380,13 @@ object_moved
 body_injured
 ```
 
-Rules:
-
-- use tags for transformation/project/learning matching;
-- do not encode arbitrary prose;
-- a tag should describe what occurred, not why Wilson wanted it;
-- repeated content-specific tags should be generalized when the semantic is genuinely reusable.
+Use tags for transformation/project/learning matching; generalize repeated content-specific tags when semantics are truly reusable.
 
 ---
 
-# 12. Diagnostic feedback catalogue policy
+# 12. Diagnostic feedback policy
 
-Feedback kinds explain grounded causal detail useful to learning/debugging.
-
-Initial examples:
+Grounded feedback examples:
 
 ```text
 material_too_soft
@@ -432,64 +398,81 @@ insufficient_force
 blocked_by_obstacle
 ```
 
-Feedback may reference observable and authoritative detail, but Wilson learning only consumes the subset available through observation.
+Wilson learning consumes only the subset available through observation.
 
 ---
 
-# 13. Proposition predicate catalogue
+# 13. Epistemic claim catalogue
 
-Propositions are Wilson-relative claims, not world relations.
+Durable belief identity is based on typed `EpistemicClaim`, not arbitrary proposition predicate IDs plus Variant argument bags.
 
-Initial reusable proposition predicates:
+Current admitted foundation claim kinds:
 
-```text
-expected_relation(subject, relation_pattern, object)
-likely_property(subject_scope, property, expected_value/range)
-causes_or_enables(subject/action pattern, semantic_outcome)
-dangerous(subject)
-beneficial(subject)
-likely_targets(actor_subject, target_scope)
-likely_at(subject, place)
-presence_caused(event/anomaly pattern)
-presence_likely_responds_to(test_pattern)
-```
-
-Avoid object-specific proposition predicate IDs such as:
+### `PropertyClaim`
 
 ```text
-spoon_should_be_by_fire
-Gerald_steals_food
+PropertyClaim(subject, PropertyId, PropertyValue)
 ```
 
-Those are instances of reusable predicates + arguments.
+Examples:
+
+```text
+stone_category hardness HIGH
+this_firepit structural_integrity LOW
+```
+
+### `RelationClaim`
+
+```text
+RelationClaim(subject, RelationTypeId, object)
+```
+
+Examples:
+
+```text
+spoon beside cooking_area
+materials inside storage
+Gerald near food_area
+```
+
+The claim is Wilson-relative; its relation need not currently be true in authoritative World state.
+
+### `EventClaim`
+
+```text
+EventClaim(subject, EventDefinitionId, perceived_role)
+```
+
+Examples:
+
+```text
+crate impact_committed target
+palm crack_heard source
+```
+
+Future epistemic semantics such as causal attribution, danger abstraction or expectation patterns must be added as explicit typed claim/pattern families when required. Do not restore a generic durable `predicate + arbitrary arguments` identity as a shortcut.
 
 ---
 
-# 14. Knowledge definition catalogue for first fixture
+# 14. Knowledge-definition policy
 
-Minimum operational knowledge needed for the first headless property/discovery regression:
+`KnowledgeDefinition` identifies an operational concept whose satisfaction is derived from typed belief claims/patterns and confidence thresholds.
+
+Example concept:
 
 ```text
 knowledge.open_breakable_with_impact_tool
 ```
 
-Possible definition:
+It may expose a learned semantic interaction such as:
 
 ```text
-KnowledgeDefinition
-  id: knowledge.open_breakable_with_impact_tool
-  proposition pattern:
-    causes_or_enables(
-      action.hit with tool capability impact_tool,
-      sufficient_breaking_impact on breakable target
-    )
-  known threshold: authored bounded confidence
-  learned semantic interaction:
-    intention.open_breakable_with_impact_tool
-  legacy_eligible: true/false per content decision
+intention.open_breakable_with_impact_tool
 ```
 
-A coconut-specific semantic interaction may be added as a narrower presentation/intention specialization if needed, but physical knowledge should generalize when evidence/content semantics justify it.
+but never bypass authoritative physical validation.
+
+Legacy eligibility belongs to knowledge metadata, not to a second knowledge state store.
 
 ---
 
@@ -498,12 +481,13 @@ A coconut-specific semantic interaction may be added as a narrower presentation/
 Before introducing a new entry, ask:
 
 1. Can an existing property/capability/category express it?
-2. Can an existing relation type express it?
-3. Can an existing predicate + different arguments express it?
-4. Can an existing effect family + semantic payload express it?
-5. Is the desired distinction Wilson-relative (belief/association) rather than world truth?
-6. Is it merely presentation wording?
-7. Which representative scene or implementation invariant becomes impossible without the new entry?
+2. Can an existing relation type/qualifier express it?
+3. Can an existing typed epistemic claim express it?
+4. Can an existing predicate with different bindings express it?
+5. Can an existing effect family + semantic payload express it?
+6. Is the distinction Wilson-relative rather than World truth?
+7. Is it only presentation wording?
+8. Which representative behavior or invariant becomes impossible without it?
 
 If no concrete requirement exists, do not add it yet.
 
@@ -511,16 +495,4 @@ If no concrete requirement exists, do not add it yet.
 
 # 16. Catalogue gate
 
-The initial catalogues are sufficient to model the current representative scene suite without introducing object-pair recipes, scene-specific state primitives or unbounded extension callbacks.
-
-The next useful functional-domain step is to build **concrete scenario schemas/fixtures** for a small set of integration scenes using only these catalogues:
-
-```text
-Scientific Method
-Missing Spoon
-Sabotaged Storage
-Falling Palm
-Brilliant Shortcut
-```
-
-Those fixtures should instantiate definitions/state/predicates/effects/propositions in a serialization-neutral notation and expose any remaining schema ambiguity before language/package implementation begins.
+The initial catalogues have passed the structural-domain and runtime-foundation gates. The next work is to expand authored/system breadth through these semantics and add a new primitive only when a representative scenario cannot be expressed cleanly without it.
