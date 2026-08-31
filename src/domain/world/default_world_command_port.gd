@@ -15,13 +15,15 @@ const SemanticChangeSet = preload("res://src/domain/world/semantic_change_set.gd
 
 var _entities
 var _relations
+var _property_schema_query
 
 
-func _init(entities, relations) -> void:
+func _init(entities, relations, property_schema_query = null) -> void:
 	assert(entities != null, "DefaultWorldCommandPort requires EntityStore")
 	assert(relations != null, "DefaultWorldCommandPort requires WorldRelationStore")
 	_entities = entities
 	_relations = relations
+	_property_schema_query = property_schema_query
 
 
 func apply_outcome(outcome):
@@ -70,6 +72,10 @@ func _validate_effect(effect, bindings, errors: Array[String]) -> void:
 				return
 			if not _entities.has_entity(subject.id):
 				errors.append("SET_PROPERTY entity not found: %s" % subject.sort_key())
+				return
+			if _property_schema_query != null and _property_schema_query.has_method("validate_property_value"):
+				if not _property_schema_query.validate_property_value(effect.semantic_id, effect.value):
+					errors.append("Invalid property value for %s" % effect.semantic_id.sort_key())
 		ActionEffect.Kind.CREATE_RELATION, ActionEffect.Kind.REMOVE_RELATION:
 			if not bindings.has(effect.object_role):
 				errors.append("Missing effect object role: %s" % String(effect.object_role))
