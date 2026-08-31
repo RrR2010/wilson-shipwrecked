@@ -27,9 +27,10 @@ func _init() -> void:
 func _run_slice() -> void:
 	var crate = RuntimeWorldRef.entity(DomainId.entity(&"crate_4"))
 	var palm = RuntimeWorldRef.entity(DomainId.entity(&"palm_1"))
+	var integrity = DomainId.property(&"structural_integrity")
 	var claims = [
 		EpistemicClaim.event_claim(crate, DomainId.event_definition(&"impact_committed"), &"target"),
-		EpistemicClaim.property_claim(crate, DomainId.property(&"structural_integrity"), 3),
+		EpistemicClaim.property_claim(crate, integrity, 3),
 		EpistemicClaim.relation_claim(crate, DomainId.relation_type(&"near"), palm),
 	]
 	var codec = DomainValueCodec.new()
@@ -48,6 +49,10 @@ func _run_slice() -> void:
 		_expect_equal(restored.kind, claim.kind, "claim kind survives JSON round-trip")
 		_expect_equal(restored.sort_key(), claim.sort_key(), "claim stable identity survives JSON round-trip")
 		_expect_equal(BeliefProposition.new(restored).key(), original_key, "belief proposition identity survives claim reconstruction")
+
+	var integer_claim = EpistemicClaim.property_claim(crate, integrity, 3)
+	var float_claim = EpistemicClaim.property_claim(crate, integrity, 3.0)
+	_expect_equal(integer_claim.key(), float_claim.key(), "NUMBER claim identity ignores int/float representation")
 
 	_completed = true
 
