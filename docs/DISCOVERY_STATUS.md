@@ -6,7 +6,7 @@ Wilson Shipwrecked has completed the product/behavior/architecture discovery gat
 
 The current design phase is **functional-domain stabilization through concrete scenario fixtures/micro-loops**, immediately before package/module layout and implementation-language-specific code.
 
-The project is no longer waiting for a first domain model: structural, operation, vocabulary, procedural-composition, Scientific Method, Falling Palm and Sabotaged Storage micro-loop regressions now exist.
+The project is no longer waiting for a first domain model: structural, operation, vocabulary, procedural-composition, Scientific Method, Falling Palm, Sabotaged Storage and improvised-hammer regressions now exist.
 
 ---
 
@@ -34,10 +34,11 @@ For work that changes simulation/domain behavior, read:
 18. `DOMAIN_MICRO_LOOP.md`
 19. `DOMAIN_MICRO_LOOP_FALLING_PALM.md`
 20. `DOMAIN_MICRO_LOOP_SABOTAGED_STORAGE.md`
-21. `DOMAIN_OPERATION_REFINEMENTS.md`
-22. `DOMAIN_REGRESSION.md`
-23. `DOMAIN_OPERATION_TRACES.md`
-24. `DOMAIN_VOCABULARY_REGRESSION.md`
+21. `DOMAIN_FIXTURE_IMPROVISED_HAMMER.md`
+22. `DOMAIN_OPERATION_REFINEMENTS.md`
+23. `DOMAIN_REGRESSION.md`
+24. `DOMAIN_OPERATION_TRACES.md`
+25. `DOMAIN_VOCABULARY_REGRESSION.md`
 
 `DOMAIN_SCHEMA.dbml` is a visualization aid only and is not a persistence/database mandate.
 
@@ -89,6 +90,7 @@ Investigation / anomaly pattern derivation
 Causal hypothesis / attribution
 Expectation
 Salience
+Assembly validity derivation
 Effective physical profile derivation
 Affordance/attemptability derivation
 Hazard projection
@@ -162,6 +164,7 @@ It formalizes:
 - derived `EffectivePhysicalProfile`;
 - `PropertyDerivationDefinition` with deterministic/acyclic provenance;
 - semantic bounded assembly slots;
+- explicit `AssemblyValidity` separated from effective performance;
 - properties vs true capabilities vs derived affordances;
 - gradual exploration through `PerceptualEvidence` / `EvidenceRuleDefinition`;
 - environmental response rules;
@@ -174,26 +177,6 @@ The functional asset breadth (food, tools, modular structures, salvage, weather,
 
 `DOMAIN_MICRO_LOOP.md` expands the game loop into semantic frame groups and validates one complete iterative experiment chain.
 
-The fixture demonstrates:
-
-```text
-notice container
-→ visual evidence
-→ intentional investigation
-→ tactical inspect/pull
-→ grounded failed pull
-→ immediate belief revision
-→ tactical refinement
-→ weak-tool experiment
-→ material failure evidence
-→ stone becomes contextually salient
-→ partial dent/progress
-→ semantic-region tactic refinement
-→ opening consequence
-→ contents reveal
-→ knowledge/intention completion
-```
-
 Critical distinctions now explicit:
 
 ```text
@@ -203,13 +186,13 @@ physical truth
 != Wilson desirability
 ```
 
-Micro-loop regression: **PASS with incorporated refinements**.
+Scientific Method regression: **PASS with incorporated refinements**.
 
 ## Falling Palm micro-loop / hazard dynamics
 
 `DOMAIN_MICRO_LOOP_FALLING_PALM.md` validates the immediate-threat path against a time-extended environmental accident.
 
-`DOMAIN_HAZARD_DYNAMICS.md` promotes the reusable semantics exposed by that fixture:
+`DOMAIN_HAZARD_DYNAMICS.md` promotes reusable semantics including:
 
 ```text
 DynamicProcessState
@@ -221,22 +204,13 @@ secondary hazards
 semantic-step concurrency ordering
 ```
 
-The key invariant is now explicit:
-
-```text
-committed physical process
-!= committed final collision consequence
-```
-
-A palm may already be irreversibly falling while Wilson/player actions can still change positions or routes before impact. Wilson's emergency cognition uses perceived threat evidence rather than hidden authoritative future collision truth.
-
 Falling Palm regression: **PASS with incorporated hazard-dynamics refinements**.
 
 ## Sabotaged Storage micro-loop / epistemic investigation
 
 `DOMAIN_MICRO_LOOP_SABOTAGED_STORAGE.md` validates an offscreen player intervention whose causal identity is hidden from Wilson.
 
-`DOMAIN_EPISTEMIC_INVESTIGATION.md` promotes the reusable semantics exposed by that fixture:
+`DOMAIN_EPISTEMIC_INVESTIGATION.md` promotes reusable semantics including:
 
 ```text
 ObservationCoverage
@@ -248,20 +222,39 @@ PerceivedCausalOpportunity
 information/discrimination value for investigation tactics
 ```
 
-The key invariant is explicit:
+Sabotaged Storage regression: **PASS with incorporated epistemic-investigation refinements**.
+
+## Improvised hammer composite-object fixture
+
+`DOMAIN_FIXTURE_IMPROVISED_HAMMER.md` validates the physical composition branch in isolation.
+
+The fixture demonstrates:
 
 ```text
-actual cause
-!= current world result
-!= Wilson observation
-!= Wilson causal attribution
+handle + impact head + binding
+→ validated assembly bindings
+→ AssemblyValidity
+→ EffectivePhysicalProfile
+→ derived impact semantics
+→ ordinary hit resolution
+→ grounded component degradation
+→ weaker-but-valid configuration
+→ component/binding failure
+→ invalid/incomplete assembly
+→ replacement/rebinding
+→ recomputed capability
 ```
 
-Negative evidence now requires sufficient observation coverage: `not observed` does not automatically mean `absent`.
+The key invariant is now explicit:
 
-Multiple related anomalies may be grouped in a bounded temporary investigation context without creating a persistent suspicion system. Presence attribution receives no hidden privilege and may lose to self, known actor, natural process or unknown ordinary cause depending on Wilson-visible evidence/history.
+```text
+assembly validity
+!= effective tool performance
+```
 
-Sabotaged Storage regression: **PASS with incorporated epistemic-investigation refinements**.
+A semantically compatible assembly may be weak, and a degrading assembly may remain valid before actual structural failure. No universal `tool_quality` scalar or target-specific hammer recipe is required.
+
+Improvised hammer regression: **PASS with incorporated AssemblyValidity refinement**.
 
 ---
 
@@ -305,6 +298,7 @@ Composite object semantics          PASS after EffectivePhysicalProfile refineme
 Scientific Method micro-loop        PASS
 Falling Palm hazard micro-loop      PASS
 Sabotaged Storage epistemic loop    PASS
+Improvised hammer fixture           PASS
 ```
 
 No new state-owning system was required for:
@@ -314,6 +308,7 @@ crafting
 exploration
 tactical planning
 procedural object composition
+tool assembly/repair
 material physics
 interaction sub-regions
 hazard projection
@@ -347,17 +342,11 @@ The following may still be refined during concrete fixtures/implementation, but 
 
 Before implementation-specific package layout:
 
-1. create remaining small declarative language-neutral fixtures using the final domain vocabulary;
-2. include at least:
-   - Scientific Method (traced at frame-group level),
-   - Falling Palm (traced at hazard frame-group level),
-   - Sabotaged Storage (traced at epistemic frame-group level),
-   - one composite-object fixture (improvised hammer or barrel),
-   - one environment/composition fixture (cloth/shelter in rain/wind);
-3. validate that each fixture can be represented without new bypass flags/classes;
-4. normalize any final schema ambiguity;
-5. then design package/module dependency layout;
-6. only then select concrete language/runtime representation details.
+1. create the remaining environment/composition fixture (`cloth/shelter in rain/wind`);
+2. validate that it reuses environmental response + assembly + effective profile + dynamic hazard semantics without bypass flags/classes;
+3. normalize any final schema ambiguity;
+4. then design package/module dependency layout;
+5. only then select concrete language/runtime representation details.
 
 The user's current implementation preference may later favor direct GDScript, but no functional-domain decision currently depends on that language choice.
 
@@ -370,7 +359,7 @@ The previous architecture implementation gate remains valid.
 The added functional-domain passes reduce implementation risk further, but the recommended order is still:
 
 ```text
-functional fixtures
+final environment/composition fixture
 → package/module layout
 → concrete domain types
 → first vertical slice
