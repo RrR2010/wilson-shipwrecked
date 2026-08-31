@@ -57,6 +57,10 @@ func clear_property_override(property_id: DomainId) -> void:
 	_state_overrides.erase(property_id.key())
 
 
+func state_overrides() -> Dictionary:
+	return _state_overrides.duplicate(true)
+
+
 func describe() -> Dictionary:
 	var property_keys: Array[String] = []
 	for key in _state_overrides.keys():
