@@ -18,7 +18,7 @@ func _init(p_predicate: StringName, p_arguments: Array) -> void:
 func key() -> StringName:
 	var parts: Array[String] = [String(predicate)]
 	for argument in arguments:
-		if argument != null and argument.has_method("sort_key"):
+		if argument is Object and argument.has_method("sort_key"):
 			parts.append(argument.sort_key())
 		else:
 			parts.append(var_to_str(argument))
