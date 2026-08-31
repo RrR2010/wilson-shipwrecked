@@ -111,9 +111,9 @@ func _run_slice() -> void:
 		]
 	)
 
-	_expect_true(relations.add_relation(WorldRelation.new(attached_to, handle, host, {"assembly_slot": handle_slot})).ok, "handle relation added")
-	_expect_true(relations.add_relation(WorldRelation.new(attached_to, stone, host, {"assembly_slot": head_slot})).ok, "head relation added")
-	_expect_true(relations.add_relation(WorldRelation.new(attached_to, fiber, host, {"assembly_slot": binding_slot})).ok, "binding relation added")
+	_expect_true(relations.add_relation(WorldRelation.new(attached_to, handle, host, handle_slot)).ok, "handle relation added")
+	_expect_true(relations.add_relation(WorldRelation.new(attached_to, stone, host, head_slot)).ok, "head relation added")
+	_expect_true(relations.add_relation(WorldRelation.new(attached_to, fiber, host, binding_slot)).ok, "binding relation added")
 	var projection = AssemblyBindingProjection.new(query, attached_to)
 	var projected_bindings = projection.bindings_for_host(host)
 	_expect_equal(projected_bindings.size(), 3, "world relations project three assembly bindings")
