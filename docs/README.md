@@ -91,6 +91,7 @@ Read these first:
 Read only when the task touches the concern:
 
 - [`DOMAIN_OPERATION_REFINEMENTS.md`](DOMAIN_OPERATION_REFINEMENTS.md) — newer operation signatures/clarifications discovered after the original operation document. **Consolidation target:** when `DOMAIN_OPERATIONS.md` is next structurally revised, absorb these rules there and retire this override layer.
+- [`DOMAIN_SEMANTIC_GRAPHS.md`](DOMAIN_SEMANTIC_GRAPHS.md) — typed relation/dependency/epistemic graph projections, bounded semantic pattern matching, indexed affordance discovery and graph persistence/determinism rules. Read for module layout, query/index design, procedural matching or knowledge generalization.
 - [`DOMAIN_ENVIRONMENTAL_PROTECTION.md`](DOMAIN_ENVIRONMENTAL_PROTECTION.md) — protection/exposure derivation from world configuration.
 - [`DOMAIN_HAZARD_DYNAMICS.md`](DOMAIN_HAZARD_DYNAMICS.md) — committed dynamic processes, perceived threats and causal windows.
 - [`DOMAIN_EPISTEMIC_INVESTIGATION.md`](DOMAIN_EPISTEMIC_INVESTIGATION.md) — expectation mismatch, bounded investigation and causal attribution.
@@ -120,6 +121,7 @@ The Scientific Method fixture remains inside `DOMAIN_MICRO_LOOP.md` because that
 - [`asset-catalog/ENTITIES.md`](asset-catalog/ENTITIES.md) — physical entity/resource/tool/container/salvage families.
 - [`asset-catalog/PROJECTS.md`](asset-catalog/PROJECTS.md) — persistent composed projects/structures.
 - [`asset-catalog/LIVING_WORLD.md`](asset-catalog/LIVING_WORLD.md) — terrain/place, flora, fauna, habitats and environment/opportunity families.
+- [`asset-catalog/SCENE_COVERAGE.md`](asset-catalog/SCENE_COVERAGE.md) — representative-scene content regression evidence; not a competing production backlog.
 
 This directory is the **cross-cutting source of truth for modeled content requirements**. It belongs outside `art/` because each row may connect domain semantics, interactions, composition, states, art requirements, anchors and production status.
 
@@ -137,7 +139,9 @@ README.md / PRODUCT.md
 → the catalog tables being modified
 ```
 
-Then consult specialized domain appendices only for affected rows (hazard, investigation, environmental protection, etc.).
+When catalog work concerns matching components, local interaction discovery, relation traversal or Wilson generalization across instance/type/category, also read `DOMAIN_SEMANTIC_GRAPHS.md`.
+
+Then consult other specialized domain appendices only for affected rows (hazard, investigation, environmental protection, etc.).
 
 ---
 
@@ -177,10 +181,11 @@ When documents appear to disagree:
 1. **Product experience:** `PRODUCT.md` + validated `BEHAVIORAL_MODEL.md` / `STATE_REQUIREMENTS.md` own the current behavior semantics.
 2. **Architecture:** `ARCHITECTURE.md` + Contracts + Orchestration + Mutation Authority own runtime responsibility boundaries.
 3. **Functional semantics:** the stabilized `DOMAIN_*` canonical set owns language-neutral domain meaning.
-4. **Asset/content requirements:** `asset-catalog/` owns which modeled content families are required and their cross-cutting requirements; it references rather than supersedes the domain/art contracts.
-5. **Art:** `VISUAL_GUIDE.md` + `art/` own visual language; `ASSET_SPEC.md`/`ASSET_PIPELINE.md` own technical asset production constraints.
-6. **Validation/fixtures:** prove that canonical contracts are sufficient; they do not become scene-specific APIs.
-7. **Brainstorming/handoffs:** historical evidence only unless a decision is explicitly promoted into a canonical owner document.
+4. **Graph/index infrastructure:** `DOMAIN_SEMANTIC_GRAPHS.md` owns the typed graph/projection/matching contract, but graph infrastructure never supersedes the state owner whose facts it indexes.
+5. **Asset/content requirements:** `asset-catalog/` owns which modeled content families are required and their cross-cutting requirements; it references rather than supersedes the domain/art contracts.
+6. **Art:** `VISUAL_GUIDE.md` + `art/` own visual language; `ASSET_SPEC.md`/`ASSET_PIPELINE.md` own technical asset production constraints.
+7. **Validation/fixtures:** prove that canonical contracts are sufficient; they do not become scene-specific APIs.
+8. **Brainstorming/handoffs:** historical evidence only unless a decision is explicitly promoted into a canonical owner document.
 
 If implementation evidence invalidates a canonical rule, update the owning canonical document rather than adding another permanent override file.
 
