@@ -27,9 +27,9 @@ func _to_string() -> String:
 	return "MutationResult(ok=%s, code=%s, diagnostics=%s)" % [ok, String(code), diagnostics]
 
 
-static func success(p_code: StringName = &"ok", p_value: Variant = null) -> MutationResult:
-	return MutationResult.new(true, p_code, [], p_value)
+static func success(p_code: StringName = &"ok", p_value: Variant = null):
+	return new(true, p_code, [], p_value)
 
 
-static func failure(p_code: StringName, p_diagnostics: Array[String]) -> MutationResult:
-	return MutationResult.new(false, p_code, p_diagnostics)
+static func failure(p_code: StringName, p_diagnostics: Array[String]):
+	return new(false, p_code, p_diagnostics)
