@@ -4,6 +4,7 @@ const DomainId = preload("res://src/domain/core/domain_id.gd")
 const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const WorldEvent = preload("res://src/domain/actions/world_event.gd")
+const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 const PerceptionAccess = preload("res://src/domain/cognition/perception_access.gd")
 const PerceptionService = preload("res://src/domain/cognition/perception_service.gd")
 
@@ -29,8 +30,6 @@ func _run_slice() -> void:
 	var wilson = RuntimeWorldRef.wilson()
 	var stone = RuntimeWorldRef.entity(DomainId.entity(&"stone_42"))
 	var crate = RuntimeWorldRef.entity(DomainId.entity(&"crate_4"))
-	var impact_committed = DomainId.event_definition(&"impact_committed")
-	var distant_change = DomainId.event_definition(&"distant_change")
 
 	var bindings = RoleBinding.new()
 	bindings.bind(&"actor", wilson)
@@ -38,13 +37,13 @@ func _run_slice() -> void:
 	bindings.bind(&"target", crate)
 
 	var hit_event = WorldEvent.new(
-		impact_committed,
+		DomainId.event_definition(&"impact_committed"),
 		DomainId.action(&"hit"),
 		bindings,
 		&"exec_hit_1"
 	)
 	var hidden_event = WorldEvent.new(
-		distant_change,
+		DomainId.event_definition(&"distant_change"),
 		DomainId.action(&"inspect"),
 		bindings,
 		&"exec_hidden_1"
@@ -62,7 +61,7 @@ func _run_slice() -> void:
 
 	if result.observed_events.size() == 1:
 		var observed = result.observed_events[0]
-		_expect_equal(observed.event_type.key(), impact_committed.key(), "observed event keeps semantic event type")
+		_expect_equal(String(observed.event_type.value), "impact_committed", "observed event keeps semantic event type")
 		_expect_equal(observed.event_type.kind, DomainId.Kind.EVENT_DEFINITION, "observed event uses EventDefinitionId")
 		_expect_true(observed.perceived_bindings.has(&"target"), "target role is accessible")
 		_expect_false(observed.perceived_bindings.has(&"tool"), "hidden tool role does not leak from WorldEvent")
@@ -72,16 +71,15 @@ func _run_slice() -> void:
 
 	if result.evidence.size() == 1:
 		var evidence = result.evidence[0]
-		_expect_equal(evidence.subject.key(), crate.key(), "evidence subject is accessible target only")
-		_expect_equal(String(evidence.predicate), "observed_event", "evidence is an observation proposal, not world truth")
+		_expect_equal(evidence.claim.kind, EpistemicClaim.Kind.EVENT, "perception emits EVENT claim")
+		_expect_equal(evidence.claim.subject.key(), crate.key(), "claim subject is accessible target only")
 		_expect_equal(evidence.confidence, 0.75, "access confidence carried into evidence")
 		_expect_equal(String(evidence.modality), "hearing", "evidence records modality")
-		_expect_equal(evidence.value.event_type.key(), impact_committed.key(), "claim references typed perceived event")
-		_expect_equal(String(evidence.value.role_name), "target", "claim references perceived role")
-		_expect_true(evidence.value.sort_key().find("tool") == -1, "claim does not leak hidden tool role")
-		_expect_true(evidence.value.sort_key().find("actor") == -1, "claim does not leak hidden actor role")
+		_expect_equal(String(evidence.claim.semantic_id.value), "impact_committed", "claim references typed perceived event")
+		_expect_equal(String(evidence.claim.role_name), "target", "claim references perceived role")
+		_expect_true(evidence.claim.sort_key().find("tool") == -1, "claim does not leak hidden tool role")
+		_expect_true(evidence.claim.sort_key().find("actor") == -1, "claim does not leak hidden actor role")
 
-	# Authoritative event remains complete; projection does not mutate or redact truth.
 	_expect_true(hit_event.bindings.has(&"tool"), "WorldEvent retains hidden tool truth")
 	_expect_true(hit_event.bindings.has(&"actor"), "WorldEvent retains hidden actor truth")
 
