@@ -6,6 +6,7 @@ const ContentRegistry = preload("res://src/domain/content/content_registry.gd")
 const EntityDefinition = preload("res://src/domain/content/entity_definition.gd")
 const EntityInstance = preload("res://src/domain/world/entity_instance.gd")
 const EntityStore = preload("res://src/domain/world/entity_store.gd")
+const WorldRelation = preload("res://src/domain/world/world_relation.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
 const DefaultWorldQuery = preload("res://src/domain/world/default_world_query.gd")
 const PropertyDependencyGraph = preload("res://src/domain/physical/property_dependency_graph.gd")
@@ -15,6 +16,7 @@ const RequirementPredicateEvaluator = preload("res://src/domain/actions/requirem
 const AssemblySlotDefinition = preload("res://src/domain/physical/assembly_slot_definition.gd")
 const AssemblyDefinition = preload("res://src/domain/physical/assembly_definition.gd")
 const AssemblyBinding = preload("res://src/domain/physical/assembly_binding.gd")
+const AssemblyBindingProjection = preload("res://src/domain/physical/assembly_binding_projection.gd")
 const AssemblyValidityResult = preload("res://src/domain/physical/assembly_validity_result.gd")
 const AssemblyValidityService = preload("res://src/domain/physical/assembly_validity_service.gd")
 
@@ -43,6 +45,7 @@ func _run_slice() -> void:
 	var binding_component = DomainId.capability(&"binding_component")
 	var hardness = DomainId.property(&"hardness")
 	var mass_class = DomainId.property(&"mass_class")
+	var attached_to = DomainId.relation_type(&"attached_to")
 
 	var handle_type = DomainId.entity_type(&"branch_handle")
 	var stone_type = DomainId.entity_type(&"impact_stone")
@@ -81,7 +84,8 @@ func _run_slice() -> void:
 	var fiber = RuntimeWorldRef.entity(fiber_id)
 	var fruit = RuntimeWorldRef.entity(fruit_id)
 
-	var query = DefaultWorldQuery.new(entities, WorldRelationStore.new(), content)
+	var relations = WorldRelationStore.new()
+	var query = DefaultWorldQuery.new(entities, relations, content)
 	var graph = PropertyDependencyGraph.new()
 	_expect_true(graph.compile([]).ok, "empty property graph compiles")
 	var profiles = EffectivePhysicalProfileResolver.new(query, graph)
@@ -94,11 +98,7 @@ func _run_slice() -> void:
 	var definition = AssemblyDefinition.new(
 		DomainId.assembly_definition(&"improvised_impact_tool"),
 		[
-			AssemblySlotDefinition.new(
-				handle_slot,
-				DomainId.assembly_role(&"handle"),
-				RequirementPredicate.has_capability(&"component", structural_member)
-			),
+			AssemblySlotDefinition.new(handle_slot, DomainId.assembly_role(&"handle"), RequirementPredicate.has_capability(&"component", structural_member)),
 			AssemblySlotDefinition.new(
 				head_slot,
 				DomainId.assembly_role(&"head"),
@@ -107,13 +107,18 @@ func _run_slice() -> void:
 					RequirementPredicate.property_compare(&"component", hardness, RequirementPredicate.CompareOp.GTE, 2),
 				])
 			),
-			AssemblySlotDefinition.new(
-				binding_slot,
-				DomainId.assembly_role(&"binding"),
-				RequirementPredicate.has_capability(&"component", binding_component)
-			),
+			AssemblySlotDefinition.new(binding_slot, DomainId.assembly_role(&"binding"), RequirementPredicate.has_capability(&"component", binding_component)),
 		]
 	)
+
+	_expect_true(relations.add_relation(WorldRelation.new(attached_to, handle, host, {"assembly_slot": handle_slot})).ok, "handle relation added")
+	_expect_true(relations.add_relation(WorldRelation.new(attached_to, stone, host, {"assembly_slot": head_slot})).ok, "head relation added")
+	_expect_true(relations.add_relation(WorldRelation.new(attached_to, fiber, host, {"assembly_slot": binding_slot})).ok, "binding relation added")
+	var projection = AssemblyBindingProjection.new(query, attached_to)
+	var projected_bindings = projection.bindings_for_host(host)
+	_expect_equal(projected_bindings.size(), 3, "world relations project three assembly bindings")
+	var projected_result = service.evaluate(definition, host, projected_bindings)
+	_expect_equal(projected_result.status, AssemblyValidityResult.Status.VALID, "projected world assembly is valid")
 
 	var good_bindings = [
 		AssemblyBinding.new(host, handle_slot, handle),
@@ -123,10 +128,7 @@ func _run_slice() -> void:
 	var good_result = service.evaluate(definition, host, good_bindings)
 	_expect_equal(good_result.status, AssemblyValidityResult.Status.VALID, "good assembly is valid")
 
-	var incomplete_result = service.evaluate(definition, host, [
-		AssemblyBinding.new(host, handle_slot, handle),
-		AssemblyBinding.new(host, head_slot, stone),
-	])
+	var incomplete_result = service.evaluate(definition, host, [AssemblyBinding.new(host, handle_slot, handle), AssemblyBinding.new(host, head_slot, stone)])
 	_expect_equal(incomplete_result.status, AssemblyValidityResult.Status.INCOMPLETE, "missing required binding is incomplete")
 
 	var fruit_result = service.evaluate(definition, host, [
