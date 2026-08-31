@@ -30,7 +30,7 @@ Historical breadth lives in `brainstorming/functional-asset-catalog/`. Do not us
 - [`ENTITIES.md`](ENTITIES.md) — physical entities, resources, components, containers, tools, salvage and comfort props.
 - [`PROJECTS.md`](PROJECTS.md) — persistent project goals and composed structures/configurations.
 - [`LIVING_WORLD.md`](LIVING_WORLD.md) — places/terrain, flora, fauna, habitats and cross-family environmental presentation requirements.
-- [`SCENE_COVERAGE.md`](SCENE_COVERAGE.md) — regression of the normalized catalog/domain against the 40 representative historical scenes, including accepted reshapes and remaining content/domain-review gaps.
+- [`SCENE_COVERAGE.md`](SCENE_COVERAGE.md) — regression of the normalized catalog/domain against the 40 representative historical scenes, including accepted reshapes and remaining content follow-ups.
 
 ---
 
@@ -430,6 +430,7 @@ Examples:
 PlaceState terrain presentation
 procedural storm-debris placement generator
 perch transform adapters
+body-slot presentation adapters for qualified possession relations
 shared moisture material treatment
 ```
 
@@ -493,7 +494,7 @@ The current normalized catalog gate passes when:
 - art references and production status remain independent;
 - any future domain gap is surfaced rather than hidden in a catalog token.
 
-`SCENE_COVERAGE.md` is the behavioral regression companion for this gate. It currently confirms broad coverage of the accepted 40-scene phenomenon suite while documenting a few localized content extensions, two canonical scene reshapes, and one narrow worn-object semantic review.
+`SCENE_COVERAGE.md` is the behavioral regression companion for this gate. It confirms domain/game-loop coverage for the accepted 40-scene phenomenon suite, records two canonical reshapes, and tracks localized content/presentation follow-ups before exhaustive scene-content coverage is claimed.
 
 The target remains:
 
