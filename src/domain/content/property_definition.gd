@@ -26,8 +26,10 @@ func _init(p_id, p_value_family: int, p_min_value: Variant = null, p_max_value: 
 	if value_family == ValueFamily.NUMBER:
 		if min_value != null:
 			assert(min_value is int or min_value is float, "numeric property min must be numeric")
+			assert(is_finite(float(min_value)), "numeric property min must be finite")
 		if max_value != null:
 			assert(max_value is int or max_value is float, "numeric property max must be numeric")
+			assert(is_finite(float(max_value)), "numeric property max must be finite")
 		if min_value != null and max_value != null:
 			assert(float(min_value) <= float(max_value), "numeric property bounds are reversed")
 	else:
@@ -40,6 +42,8 @@ func validate_value(value: Variant) -> bool:
 			if not (value is int or value is float):
 				return false
 			var numeric = float(value)
+			if not is_finite(numeric):
+				return false
 			if min_value != null and numeric < float(min_value):
 				return false
 			if max_value != null and numeric > float(max_value):
