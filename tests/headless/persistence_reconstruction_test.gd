@@ -13,6 +13,7 @@ const PropertyDerivationDefinition = preload("res://src/domain/physical/property
 const PropertyDependencyGraph = preload("res://src/domain/physical/property_dependency_graph.gd")
 const PhysicalDerivationPolicyRegistry = preload("res://src/domain/physical/physical_derivation_policy_registry.gd")
 const EffectivePhysicalProfileResolver = preload("res://src/domain/physical/effective_physical_profile_resolver.gd")
+const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 const BeliefProposition = preload("res://src/domain/cognition/belief_proposition.gd")
 const BeliefEvidence = preload("res://src/domain/cognition/belief_evidence.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
@@ -69,7 +70,8 @@ func _run_slice() -> void:
 	_expect_true(relations.add_relation(WorldRelation.new(inside, pouch, crate, {"slot": "inner"})).ok, "relation added")
 
 	var beliefs = BeliefStore.new()
-	var proposition = BeliefProposition.new(&"was_impacted", [crate, true])
+	var event_type = DomainId.event_definition(&"impact_committed")
+	var proposition = BeliefProposition.new(EpistemicClaim.event_claim(crate, event_type, &"target"))
 	_expect_true(beliefs.apply_evidence(BeliefEvidence.new(proposition, true, 0.6, &"exec_1", &"vision")).ok, "belief evidence applied")
 
 	var intention_store = CurrentIntentionStore.new()
@@ -95,7 +97,7 @@ func _run_slice() -> void:
 
 	var persistence = SimulationSnapshotService.new()
 	var snapshot = persistence.capture(entities, relations, beliefs, intention_store)
-	_expect_equal(snapshot.get("schema_version"), 1, "snapshot schema version")
+	_expect_equal(snapshot.get("schema_version"), 2, "snapshot schema version")
 	_expect_false(snapshot.has("relation_indexes"), "reconstructible relation indexes are not persisted")
 	_expect_false(snapshot.has("epistemic_projection"), "epistemic projection is not persisted")
 	_expect_false(snapshot.has("effective_physical_profiles"), "physical profile cache is not persisted")
@@ -119,13 +121,14 @@ func _run_slice() -> void:
 	_expect_equal(query_after.find_relations(inside, restored_pouch, restored_crate).size(), relations_before, "relation query survives save/load")
 	_expect_true(restored.relations.validate_indexes().ok, "relation indexes rebuild valid")
 
-	var restored_proposition = BeliefProposition.new(&"was_impacted", [restored_crate, true])
+	var restored_proposition = BeliefProposition.new(EpistemicClaim.event_claim(restored_crate, event_type, &"target"))
 	var restored_belief = restored.beliefs.get_entry(restored_proposition)
 	_expect_true(restored_belief != null, "belief proposition restores")
 	if restored_belief != null:
 		_expect_equal(restored_belief.confidence, belief_before, "belief confidence survives save/load")
 		_expect_equal(restored_belief.evidence_count, 1, "belief evidence count survives save/load")
 	_expect_equal(restored.epistemic_projection.query_by_subject(restored_crate).size(), 1, "epistemic projection rebuilds from beliefs")
+	_expect_equal(restored.epistemic_projection.query_by_semantic_id(event_type).size(), 1, "typed semantic-id projection rebuilds")
 
 	_expect_true(restored.current_intention.has_current(), "current intention survives save/load")
 	if restored.current_intention.has_current():
