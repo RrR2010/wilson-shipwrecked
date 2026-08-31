@@ -29,6 +29,8 @@ func _run_slice() -> void:
 	var wilson = RuntimeWorldRef.wilson()
 	var stone = RuntimeWorldRef.entity(DomainId.entity(&"stone_42"))
 	var crate = RuntimeWorldRef.entity(DomainId.entity(&"crate_4"))
+	var impact_committed = DomainId.event_definition(&"impact_committed")
+	var distant_change = DomainId.event_definition(&"distant_change")
 
 	var bindings = RoleBinding.new()
 	bindings.bind(&"actor", wilson)
@@ -36,13 +38,13 @@ func _run_slice() -> void:
 	bindings.bind(&"target", crate)
 
 	var hit_event = WorldEvent.new(
-		&"impact_committed",
+		impact_committed,
 		DomainId.action(&"hit"),
 		bindings,
 		&"exec_hit_1"
 	)
 	var hidden_event = WorldEvent.new(
-		&"distant_change",
+		distant_change,
 		DomainId.action(&"inspect"),
 		bindings,
 		&"exec_hidden_1"
@@ -60,7 +62,7 @@ func _run_slice() -> void:
 
 	if result.observed_events.size() == 1:
 		var observed = result.observed_events[0]
-		_expect_equal(String(observed.event_type.value), "impact_committed", "observed event keeps semantic event type")
+		_expect_equal(observed.event_type.key(), impact_committed.key(), "observed event keeps semantic event type")
 		_expect_equal(observed.event_type.kind, DomainId.Kind.EVENT_DEFINITION, "observed event uses EventDefinitionId")
 		_expect_true(observed.perceived_bindings.has(&"target"), "target role is accessible")
 		_expect_false(observed.perceived_bindings.has(&"tool"), "hidden tool role does not leak from WorldEvent")
@@ -74,7 +76,7 @@ func _run_slice() -> void:
 		_expect_equal(String(evidence.predicate), "observed_event", "evidence is an observation proposal, not world truth")
 		_expect_equal(evidence.confidence, 0.75, "access confidence carried into evidence")
 		_expect_equal(String(evidence.modality), "hearing", "evidence records modality")
-		_expect_equal(String(evidence.value.event_type.value), "impact_committed", "claim references typed perceived event")
+		_expect_equal(evidence.value.event_type.key(), impact_committed.key(), "claim references typed perceived event")
 		_expect_equal(String(evidence.value.role_name), "target", "claim references perceived role")
 		_expect_true(evidence.value.sort_key().find("tool") == -1, "claim does not leak hidden tool role")
 		_expect_true(evidence.value.sort_key().find("actor") == -1, "claim does not leak hidden actor role")
