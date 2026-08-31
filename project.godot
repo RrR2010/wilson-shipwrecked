@@ -1,0 +1,9 @@
+; Engine configuration file.
+; Keep this root intentionally minimal while the authoritative domain is built
+; headlessly. Rendering/input/project settings will be introduced with their
+; owning implementation slices rather than as premature defaults.
+config_version=5
+
+[application]
+
+config/name="Wilson Shipwrecked"
