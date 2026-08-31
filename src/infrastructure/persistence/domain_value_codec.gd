@@ -3,7 +3,7 @@ extends RefCounted
 
 const DomainId = preload("res://src/domain/core/domain_id.gd")
 const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
-const ObservedEventClaim = preload("res://src/domain/cognition/observed_event_claim.gd")
+const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 
 ## JSON-friendly recursive codec for semantic values used by persistence.
 ## Persistence never relies on Object identity or var_to_str() reconstruction.
@@ -26,10 +26,14 @@ func encode(value: Variant) -> Variant:
 				"kind": value.kind,
 				"id": null if value.id == null else encode(value.id),
 			}
-		if value.get_script() == ObservedEventClaim:
+		if value.get_script() == EpistemicClaim:
 			return {
-				"$type": "observed_event_claim",
-				"event_type": encode(value.event_type),
+				"$type": "epistemic_claim",
+				"kind": value.kind,
+				"subject": encode(value.subject),
+				"semantic_id": encode(value.semantic_id),
+				"value": encode(value.value),
+				"object": encode(value.object),
 				"role": String(value.role_name),
 			}
 		assert(false, "Unsupported Object persistence value: %s" % value)
@@ -63,8 +67,15 @@ func decode(encoded: Variant) -> Variant:
 		"runtime_world_ref":
 			var decoded_id = null if encoded.get("id") == null else decode(encoded["id"])
 			return RuntimeWorldRef.new(int(encoded["kind"]), decoded_id)
-		"observed_event_claim":
-			return ObservedEventClaim.new(decode(encoded["event_type"]), StringName(encoded["role"]))
+		"epistemic_claim":
+			return EpistemicClaim.new(
+				int(encoded["kind"]),
+				decode(encoded["subject"]),
+				decode(encoded["semantic_id"]),
+				decode(encoded.get("value")),
+				decode(encoded.get("object")),
+				StringName(encoded.get("role", ""))
+			)
 		"array":
 			var decoded_array: Array = []
 			for item in encoded.get("items", []):
@@ -87,4 +98,6 @@ func _stable_key(value: Variant) -> String:
 		return str(value)
 	if value is Object and value.has_method("sort_key"):
 		return value.sort_key()
+	# Only dictionary ordering reaches this fallback. Durable semantic identity must
+	# never depend on it; typed claim/proposition keys are explicit above.
 	return var_to_str(value)
