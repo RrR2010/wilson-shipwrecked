@@ -9,12 +9,13 @@ const SimulationStepTrace = preload("res://src/infrastructure/diagnostics/simula
 ##
 ## Authoritative ordering:
 ## world progression -> action progression -> committed outcome application
-## -> perception -> immediate belief learning -> candidate generation -> routing
-## -> selected intention commit.
+## -> derived invalidation -> perception -> immediate belief learning
+## -> candidate generation -> routing -> selected intention commit.
 
 var _world_advance
 var _action_execution
 var _world_commands
+var _derived_invalidator
 var _activity_query
 var _perception_access
 var _perception
@@ -31,6 +32,7 @@ func _init(
 	world_advance,
 	action_execution,
 	world_commands,
+	derived_invalidator,
 	activity_query,
 	perception_access,
 	perception,
@@ -45,6 +47,7 @@ func _init(
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
 	assert(action_execution != null, "SimulationOrchestrator requires action execution")
 	assert(world_commands != null, "SimulationOrchestrator requires World command port")
+	assert(derived_invalidator != null, "SimulationOrchestrator requires derived state invalidator")
 	assert(activity_query != null, "SimulationOrchestrator requires activity query")
 	assert(perception_access != null, "SimulationOrchestrator requires perception access resolver")
 	assert(perception != null, "SimulationOrchestrator requires perception service")
@@ -57,6 +60,7 @@ func _init(
 	_world_advance = world_advance
 	_action_execution = action_execution
 	_world_commands = world_commands
+	_derived_invalidator = derived_invalidator
 	_activity_query = activity_query
 	_perception_access = perception_access
 	_perception = perception
@@ -88,6 +92,8 @@ func advance(step):
 		if action_progress != null and action_progress.new_outcome != null:
 			commit_result = _world_commands.apply_outcome(action_progress.new_outcome)
 			trace.record_result(&"world_commit", commit_result)
+			var invalidation_result = _derived_invalidator.apply(commit_result.change_set)
+			trace.record_result(&"derived_invalidation", invalidation_result)
 
 	var committed_events: Array = world_advance_result.events.duplicate()
 	if commit_result != null and commit_result.ok:
