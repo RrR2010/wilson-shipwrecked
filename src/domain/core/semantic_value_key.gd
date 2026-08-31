@@ -10,7 +10,11 @@ static func supports(value: Variant) -> bool:
 		return true
 	if value is int or value is float:
 		return is_finite(float(value))
-	return value is Object and value.has_method("sort_key")
+	return (
+		value is Object
+		and value.has_method("assert_kind")
+		and value.has_method("sort_key")
+	)
 
 
 static func canonical(value: Variant) -> String:
