@@ -21,9 +21,10 @@ func _init(
 	assert(p_execution_id != &"", "ActionOutcome requires execution id")
 	assert(p_action_id != null, "ActionOutcome requires action id")
 	assert(p_bindings != null, "ActionOutcome requires bindings")
+	assert(p_bindings.has_method("duplicate_binding"), "ActionOutcome bindings must support snapshot duplication")
 	assert(p_event_type != &"", "ActionOutcome requires event type")
 	execution_id = p_execution_id
 	action_id = p_action_id
-	bindings = p_bindings
+	bindings = p_bindings.duplicate_binding()
 	effects = p_effects.duplicate()
 	event_type = p_event_type
