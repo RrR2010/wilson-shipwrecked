@@ -35,6 +35,7 @@ func _run_slice() -> void:
 	var host_id = DomainId.entity(&"host_1")
 	var component_type = DomainId.entity_type(&"component")
 	var host_type = DomainId.entity_type(&"host")
+	var marker = DomainId.property(&"batch_marker")
 	var entities = EntityStore.new()
 	_expect_true(entities.add_entity(EntityInstance.new(component_id, component_type, camp)).ok, "component added")
 	_expect_true(entities.add_entity(EntityInstance.new(host_id, host_type, camp)).ok, "host added")
@@ -105,6 +106,35 @@ func _run_slice() -> void:
 	var duplicate_result = commands.apply_outcome(duplicate_create)
 	_expect_false(duplicate_result.ok, "duplicate exact qualified relation is rejected before mutation")
 	_expect_equal(relations.find_relations(attached_to, component, host).size(), 2, "failed duplicate create leaves relations unchanged")
+
+	# Prevalidation must model earlier effects in the same outcome. Two identical
+	# CREATEs cannot pass independently and leave the preceding property mutation applied.
+	var remove_again = ActionOutcome.new(
+		&"remove_head_again",
+		action_id,
+		bindings,
+		[ActionEffect.new(ActionEffect.Kind.REMOVE_RELATION, &"component", attached_to, head_slot, &"host")],
+		event_type
+	)
+	_expect_true(commands.apply_outcome(remove_again).ok, "head relation removed before batch atomicity check")
+	_expect_true(relations.get_relation(head_relation.key()) == null, "head relation absent before conflicting batch")
+	var conflicting_batch = ActionOutcome.new(
+		&"conflicting_batch",
+		action_id,
+		bindings,
+		[
+			ActionEffect.new(ActionEffect.Kind.SET_PROPERTY, &"component", marker, 1),
+			ActionEffect.new(ActionEffect.Kind.CREATE_RELATION, &"component", attached_to, head_slot, &"host"),
+			ActionEffect.new(ActionEffect.Kind.CREATE_RELATION, &"component", attached_to, head_slot, &"host"),
+		],
+		event_type
+	)
+	var conflicting_result = commands.apply_outcome(conflicting_batch)
+	_expect_false(conflicting_result.ok, "intra-batch duplicate relation is rejected during prevalidation")
+	_expect_equal(conflicting_result.mutation_results.size(), 0, "failed prevalidation applies no owner mutations")
+	_expect_false(entities.get_entity(component_id).has_property_override(marker), "earlier property effect is not partially applied")
+	_expect_true(relations.get_relation(head_relation.key()) == null, "first relation create is not partially applied")
+	_expect_true(relations.get_relation(handle_relation.key()) != null, "unrelated qualified relation remains")
 	_expect_true(relations.validate_indexes().ok, "qualified relation indexes remain valid")
 
 	_completed = true
