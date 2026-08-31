@@ -70,7 +70,7 @@ func _run_slice() -> void:
 		DomainId.action(&"damage"),
 		bindings,
 		[ActionEffect.new(ActionEffect.Kind.SET_PROPERTY, &"target", integrity, 1)],
-		&"damage_committed"
+		DomainId.event_definition(&"damage_committed")
 	)
 	var commit = DefaultWorldCommandPort.new(entities, relations).apply_outcome(outcome)
 	_expect_true(commit.ok, "World commit succeeds")
