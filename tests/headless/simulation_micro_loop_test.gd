@@ -101,7 +101,9 @@ func _run_slice() -> void:
 
 	var world_commands = DefaultWorldCommandPort.new(entities, relations)
 	var access = PerceptionAccess.new(true, [&"vision"], [&"target"], 0.8)
-	var access_resolver = StaticPerceptionAccessResolver.new({execution_id: access})
+	var access_map: Dictionary = {}
+	access_map[execution_id] = access
+	var access_resolver = StaticPerceptionAccessResolver.new(access_map)
 	var perception = PerceptionService.new()
 	var belief_store = BeliefStore.new()
 	var learning = BeliefLearningCoordinator.new(BeliefLearningService.new(), belief_store)
@@ -139,12 +141,13 @@ func _run_slice() -> void:
 		return
 
 	_expect_true(result.action_progress != null and result.action_progress.committed, "action crosses commit checkpoint")
-	_expect_true(result.world_commit != null and result.world_commit.committed, "outcome commits through World owner")
+	_expect_true(result.world_commit != null and result.world_commit.ok, "outcome commits through World owner")
 	_expect_equal(world_query.get_instance_property(crate, integrity), 2, "World mutation is visible after commit")
 	_expect_equal(result.world_commit.events.size(), 1, "World commit emits one event")
 	_expect_equal(result.perception.observed_events.size(), 1, "committed event becomes observed event")
 	_expect_equal(result.perception.evidence.size(), 1, "observation produces perceptual evidence")
-	_expect_equal(result.immediate_learning.derived_evidence.size(), 1, "perceptual evidence becomes belief evidence")
+	var learning_evidence: Array = result.immediate_learning.get("derived_evidence", [])
+	_expect_equal(learning_evidence.size(), 1, "perceptual evidence becomes belief evidence")
 	_expect_equal(belief_store.entries().size(), 1, "belief owner stores learned proposition")
 	_expect_equal(result.candidates.size(), 1, "learned/perceived opportunity becomes candidate")
 	_expect_true(result.decision.selected != null, "decision router selects candidate")
