@@ -30,36 +30,67 @@ func _run_slice() -> void:
 	var learner = BeliefLearningService.new()
 	var derived = learner.derive(perceptual)
 	_expect_equal(derived.size(), 1, "one belief evidence derived")
+	if derived.size() != 1:
+		return
 	var evidence = derived[0]
+	_expect_true(evidence != null, "belief evidence exists")
+	if evidence == null:
+		return
 	_expect_true(evidence.supports, "perception produces supporting evidence")
 	_expect_equal(evidence.strength, 0.5, "perceptual confidence preserved")
 
 	var store = BeliefStore.new()
-	_expect_true(store.apply_evidence(evidence).ok, "first evidence applied")
+	var first_result = store.apply_evidence(evidence)
+	_expect_true(first_result != null, "first evidence returns result")
+	if first_result == null:
+		return
+	_expect_true(first_result.ok, "first evidence applied")
 	var proposition = evidence.proposition
+	_expect_true(proposition != null, "evidence proposition exists")
+	if proposition == null:
+		return
 	var entry = store.get_entry(proposition)
+	_expect_true(entry != null, "belief entry created")
+	if entry == null:
+		return
 	_expect_equal(entry.confidence, 0.5, "first support sets bounded confidence")
 	_expect_equal(entry.evidence_count, 1, "evidence count tracked")
 
-	_expect_true(store.apply_evidence(evidence).ok, "repeated support applied")
+	var second_result = store.apply_evidence(evidence)
+	_expect_true(second_result != null, "repeated evidence returns result")
+	if second_result == null:
+		return
+	_expect_true(second_result.ok, "repeated support applied")
 	_expect_equal(entry.confidence, 0.75, "repeated support has diminishing return")
 
 	var contradiction = BeliefEvidence.new(proposition, false, 0.5, &"exec_2", &"vision")
-	_expect_true(store.apply_evidence(contradiction).ok, "contradictory evidence applied")
+	var contradiction_result = store.apply_evidence(contradiction)
+	_expect_true(contradiction_result != null, "contradiction returns result")
+	if contradiction_result == null:
+		return
+	_expect_true(contradiction_result.ok, "contradictory evidence applied")
 	_expect_equal(entry.confidence, 0.375, "contradiction revises confidence downward")
 	_expect_equal(entry.evidence_count, 3, "all evidence counted")
 	_expect_equal(String(entry.last_modality), "vision", "latest provenance retained")
 
 	var projection = EpistemicGraphProjection.new()
 	projection.rebuild(store)
-	_expect_equal(projection.query_by_predicate(&"was_impacted").size(), 1, "predicate projection rebuilt")
-	_expect_equal(projection.query_by_subject(crate).size(), 1, "subject projection rebuilt")
+	var by_predicate = projection.query_by_predicate(&"was_impacted")
+	var by_subject = projection.query_by_subject(crate)
+	_expect_equal(by_predicate.size(), 1, "predicate projection rebuilt")
+	_expect_equal(by_subject.size(), 1, "subject projection rebuilt")
+	if by_subject.size() != 1:
+		return
 
 	var projection2 = EpistemicGraphProjection.new()
 	projection2.rebuild(store)
+	var by_subject2 = projection2.query_by_subject(crate)
+	_expect_equal(by_subject2.size(), 1, "second subject projection rebuilt")
+	if by_subject2.size() != 1:
+		return
 	_expect_equal(
-		projection2.query_by_subject(crate)[0].proposition.key(),
-		projection.query_by_subject(crate)[0].proposition.key(),
+		by_subject2[0].proposition.key(),
+		by_subject[0].proposition.key(),
 		"projection reconstruction preserves semantic result"
 	)
 
