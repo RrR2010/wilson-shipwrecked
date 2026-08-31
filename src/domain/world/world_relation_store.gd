@@ -114,6 +114,8 @@ func traverse_relations(
 		if depth >= max_depth:
 			continue
 
+		# get_outgoing/get_incoming are already stably ordered by relation key, so
+		# breadth-first discovery order is deterministic and preserves graph depth.
 		var edges: Array
 		if direction == Direction.OUTGOING:
 			edges = get_outgoing(current)
@@ -141,14 +143,10 @@ func traverse_relations(
 			subjects.append(neighbor)
 
 			if subjects.size() >= result_limit:
-				_sort_relations(relations)
-				_sort_subjects(subjects)
 				return RelationTraversalResult.new(subjects, relations, true)
 
 			queued.append([neighbor, depth + 1])
 
-	_sort_relations(relations)
-	_sort_subjects(subjects)
 	return RelationTraversalResult.new(subjects, relations, false)
 
 
@@ -252,14 +250,6 @@ func _normalized_index(index: Dictionary) -> Dictionary:
 		values.sort_custom(_less_string_name)
 		normalized[String(index_key)] = values.map(func(value): return String(value))
 	return normalized
-
-
-func _sort_relations(relations: Array) -> void:
-	relations.sort_custom(func(a: WorldRelation, b: WorldRelation): return a.sort_key() < b.sort_key())
-
-
-func _sort_subjects(subjects: Array) -> void:
-	subjects.sort_custom(func(a: RuntimeWorldRef, b: RuntimeWorldRef): return a.sort_key() < b.sort_key())
 
 
 func _less_string_name(a, b) -> bool:
