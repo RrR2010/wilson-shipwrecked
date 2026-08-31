@@ -48,7 +48,7 @@ func sort_key() -> String:
 	return String(key())
 
 
-func equals(other: DomainId) -> bool:
+func equals(other) -> bool:
 	return other != null and kind == other.kind and value == other.value
 
 
@@ -88,41 +88,41 @@ static func _kind_name(p_kind: int) -> String:
 		_: return "UnknownDomainId"
 
 
-static func entity(p_value: StringName) -> DomainId:
-	return DomainId.new(Kind.ENTITY, p_value)
+static func entity(p_value: StringName):
+	return new(Kind.ENTITY, p_value)
 
 
-static func entity_type(p_value: StringName) -> DomainId:
-	return DomainId.new(Kind.ENTITY_TYPE, p_value)
+static func entity_type(p_value: StringName):
+	return new(Kind.ENTITY_TYPE, p_value)
 
 
-static func place(p_value: StringName) -> DomainId:
-	return DomainId.new(Kind.PLACE, p_value)
+static func place(p_value: StringName):
+	return new(Kind.PLACE, p_value)
 
 
-static func region(p_value: StringName) -> DomainId:
-	return DomainId.new(Kind.REGION, p_value)
+static func region(p_value: StringName):
+	return new(Kind.REGION, p_value)
 
 
-static func property(p_value: StringName) -> DomainId:
-	return DomainId.new(Kind.PROPERTY, p_value)
+static func property(p_value: StringName):
+	return new(Kind.PROPERTY, p_value)
 
 
-static func capability(p_value: StringName) -> DomainId:
-	return DomainId.new(Kind.CAPABILITY, p_value)
+static func capability(p_value: StringName):
+	return new(Kind.CAPABILITY, p_value)
 
 
-static func category(p_value: StringName) -> DomainId:
-	return DomainId.new(Kind.CATEGORY, p_value)
+static func category(p_value: StringName):
+	return new(Kind.CATEGORY, p_value)
 
 
-static func relation_type(p_value: StringName) -> DomainId:
-	return DomainId.new(Kind.RELATION_TYPE, p_value)
+static func relation_type(p_value: StringName):
+	return new(Kind.RELATION_TYPE, p_value)
 
 
-static func action(p_value: StringName) -> DomainId:
-	return DomainId.new(Kind.ACTION, p_value)
+static func action(p_value: StringName):
+	return new(Kind.ACTION, p_value)
 
 
-static func role(p_value: StringName) -> DomainId:
-	return DomainId.new(Kind.ROLE, p_value)
+static func role(p_value: StringName):
+	return new(Kind.ROLE, p_value)
