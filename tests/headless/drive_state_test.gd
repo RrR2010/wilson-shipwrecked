@@ -64,7 +64,9 @@ func _run_slice() -> void:
 	_expect_true(candidates[0].urgency_score > 0.0 and candidates[0].urgency_score <= 1.0, "drive urgency contribution remains bounded")
 	_expect_equal(candidates[0].provenance["source"], "drive", "candidate exposes drive provenance")
 
-	var explore = DecisionCandidate.new(explore_id, RoleBinding.new(), DecisionCandidate.Scope.INTENTIONAL, 0.95)
+	# Hunger at its maximum contributes 1.0 urgency plus 0.1 base score. A legitimate
+	# competing intention with a higher bounded score must still be able to win.
+	var explore = DecisionCandidate.new(explore_id, RoleBinding.new(), DecisionCandidate.Scope.INTENTIONAL, 1.2)
 	var router = DecisionRouter.new()
 	var ordinary_competition = router.resolve([candidates[0], explore], null)
 	_expect_equal(ordinary_competition.selected_candidate.intention_id.key(), explore_id.key(), "drive candidate can lose ordinary competition")
