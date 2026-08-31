@@ -92,7 +92,7 @@ func _run_slice() -> void:
 
 	var persistence = SimulationSnapshotService.new()
 	var snapshot = persistence.capture(entities, relations, wilson_world, beliefs, intention_store)
-	_expect_equal(snapshot.get("schema_version"), 3, "snapshot schema version")
+	_expect_equal(snapshot.get("schema_version"), 4, "snapshot schema version")
 	_expect_false(snapshot.has("relation_indexes"), "reconstructible relation indexes are not persisted")
 	_expect_false(snapshot.has("epistemic_projection"), "epistemic projection is not persisted")
 	_expect_false(snapshot.has("effective_physical_profiles"), "physical profile cache is not persisted")
