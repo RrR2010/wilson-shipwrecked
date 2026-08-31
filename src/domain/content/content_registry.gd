@@ -47,10 +47,7 @@ func register_entity_definition(definition: EntityDefinition) -> MutationResult:
 	assert(definition != null, "register_entity_definition requires EntityDefinition")
 	var definition_key := definition.id.key()
 	if _entity_definitions.has(definition_key):
-		return MutationResult.failure(
-			&"duplicate_entity_definition",
-			["Duplicate entity definition: %s" % definition.id.sort_key()]
-		)
+		return MutationResult.failure(&"duplicate_entity_definition", ["Duplicate entity definition: %s" % definition.id.sort_key()])
 	_entity_definitions[definition_key] = definition
 	return MutationResult.success(&"entity_definition_registered", definition)
 
@@ -62,10 +59,7 @@ func register_action_definition(definition) -> MutationResult:
 	definition.id.assert_kind(DomainId.Kind.ACTION)
 	var definition_key = definition.id.key()
 	if _action_definitions.has(definition_key):
-		return MutationResult.failure(
-			&"duplicate_action_definition",
-			["Duplicate action definition: %s" % definition.id.sort_key()]
-		)
+		return MutationResult.failure(&"duplicate_action_definition", ["Duplicate action definition: %s" % definition.id.sort_key()])
 	_action_definitions[definition_key] = definition
 	return MutationResult.success(&"action_definition_registered", definition)
 
@@ -77,10 +71,7 @@ func register_action_resolution_definition(definition) -> MutationResult:
 	definition.action_id.assert_kind(DomainId.Kind.ACTION)
 	assert(definition.definition_id != &"", "ActionResolutionDefinition requires stable definition_id")
 	if _action_resolution_definitions.has(definition.definition_id):
-		return MutationResult.failure(
-			&"duplicate_action_resolution_definition",
-			["Duplicate action resolution definition: %s" % String(definition.definition_id)]
-		)
+		return MutationResult.failure(&"duplicate_action_resolution_definition", ["Duplicate action resolution definition: %s" % String(definition.definition_id)])
 	_action_resolution_definitions[definition.definition_id] = definition
 	return MutationResult.success(&"action_resolution_definition_registered", definition)
 
@@ -95,10 +86,11 @@ func seal() -> MutationResult:
 				var value = entity_definition.get_base_property(property_definition.id)
 				if not property_definition.validate_value(value):
 					return MutationResult.failure(&"invalid_authored_property_value", ["Invalid value for %s on %s" % [property_definition.id.sort_key(), entity_definition.id.sort_key()]])
-	if not _event_definitions.is_empty():
-		for resolution in _action_resolution_definitions.values():
-			if not _event_definitions.has(resolution.event_type.key()):
-				return MutationResult.failure(&"missing_event_definition", ["Missing event definition for %s" % resolution.event_type.sort_key()])
+	for resolution in _action_resolution_definitions.values():
+		if not _action_definitions.has(resolution.action_id.key()):
+			return MutationResult.failure(&"missing_action_definition", ["Missing action definition for %s" % resolution.action_id.sort_key()])
+		if not _event_definitions.has(resolution.event_type.key()):
+			return MutationResult.failure(&"missing_event_definition", ["Missing event definition for %s" % resolution.event_type.sort_key()])
 	_sealed = true
 	return MutationResult.success(&"content_registry_sealed")
 
