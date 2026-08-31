@@ -14,11 +14,11 @@ func generate(perception_result, belief_store, definitions: Array) -> Array:
 	var result: Array = []
 	for evidence in perception_result.evidence:
 		for definition in definitions:
-			if evidence.predicate != definition.evidence_predicate:
+			if not definition.matches(evidence.claim):
 				continue
 			var binding = RoleBinding.new()
-			binding.bind(definition.target_role, evidence.subject)
-			var proposition = BeliefProposition.new(evidence.predicate, [evidence.subject, evidence.value])
+			binding.bind(definition.target_role, evidence.claim.subject)
+			var proposition = BeliefProposition.new(evidence.claim)
 			var entry = belief_store.get_entry(proposition)
 			var belief_support := 0.0
 			if entry != null:
@@ -34,7 +34,8 @@ func generate(perception_result, belief_store, definitions: Array) -> Array:
 				0.0,
 				{
 					"source": "perceptual_evidence",
-					"predicate": String(evidence.predicate),
+					"claim_kind": evidence.claim.kind,
+					"claim_key": evidence.claim.sort_key(),
 					"modality": String(evidence.modality),
 					"source_execution_id": String(evidence.source_execution_id),
 				}
