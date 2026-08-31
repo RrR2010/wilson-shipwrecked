@@ -1,6 +1,10 @@
 class_name EntityStore
 extends RefCounted
 
+const DomainId = preload("res://src/domain/core/domain_id.gd")
+const EntityInstance = preload("res://src/domain/world/entity_instance.gd")
+const MutationResult = preload("res://src/domain/core/mutation_result.gd")
+
 ## Authoritative runtime entity storage. Callers outside World should read through
 ## WorldQuery rather than receiving this store directly.
 

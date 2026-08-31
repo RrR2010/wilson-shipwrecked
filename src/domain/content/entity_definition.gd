@@ -1,6 +1,8 @@
 class_name EntityDefinition
 extends RefCounted
 
+const DomainId = preload("res://src/domain/core/domain_id.gd")
+
 ## Immutable-after-construction authored semantics for an entity family.
 ## Runtime mutable state belongs to EntityInstance/World, never here.
 

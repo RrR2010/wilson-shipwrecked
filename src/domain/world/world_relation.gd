@@ -1,9 +1,10 @@
 class_name WorldRelation
 extends RefCounted
 
+const DomainId = preload("res://src/domain/core/domain_id.gd")
+const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
+
 ## Authoritative typed edge between runtime world subjects.
-## RelationDefinition/cardinality validation will be added at the World command
-## boundary; this value object only guarantees typed identity and stable ordering.
 
 var relation_type: DomainId
 var subject: RuntimeWorldRef
@@ -27,9 +28,6 @@ func _init(
 
 
 func key() -> StringName:
-	# One authoritative relation payload per typed subject/object triple initially.
-	# RelationDefinition may later admit a stronger identity discriminator if a
-	# representative case requires parallel qualified edges of the same type.
 	return StringName("%s|%s|%s" % [
 		String(relation_type.key()),
 		String(subject.key()),

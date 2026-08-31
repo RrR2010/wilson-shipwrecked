@@ -1,6 +1,8 @@
 class_name EntityInstance
 extends RefCounted
 
+const DomainId = preload("res://src/domain/core/domain_id.gd")
+
 ## Mutable runtime occurrence of an authored EntityDefinition.
 
 enum Lifecycle {

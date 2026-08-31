@@ -1,6 +1,8 @@
 class_name RuntimeWorldRef
 extends RefCounted
 
+const DomainId = preload("res://src/domain/core/domain_id.gd")
+
 ## Stable reference to an authoritative runtime world subject.
 ## Wilson is explicit; entity/place/region refs carry the matching DomainId kind.
 

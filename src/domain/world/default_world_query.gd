@@ -1,19 +1,21 @@
 class_name DefaultWorldQuery
-extends WorldQuery
+extends "res://src/domain/world/world_query.gd"
+
+const DomainId = preload("res://src/domain/core/domain_id.gd")
+const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
+const EntityStore = preload("res://src/domain/world/entity_store.gd")
+const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
+const ContentRegistry = preload("res://src/domain/content/content_registry.gd")
+const RelationTraversalResult = preload("res://src/domain/world/relation_traversal_result.gd")
 
 ## Default read-only composition over authoritative World stores + sealed content.
-## This object owns no state and performs no mutation.
 
 var _entities: EntityStore
 var _relations: WorldRelationStore
 var _content: ContentRegistry
 
 
-func _init(
-	entities: EntityStore,
-	relations: WorldRelationStore,
-	content: ContentRegistry
-) -> void:
+func _init(entities: EntityStore, relations: WorldRelationStore, content: ContentRegistry) -> void:
 	assert(entities != null, "DefaultWorldQuery requires EntityStore")
 	assert(relations != null, "DefaultWorldQuery requires WorldRelationStore")
 	assert(content != null, "DefaultWorldQuery requires ContentRegistry")
@@ -32,9 +34,7 @@ func get_instance_property(subject: RuntimeWorldRef, property_id: DomainId) -> V
 	if entity.has_property_override(property_id):
 		return entity.get_property_override(property_id)
 	var definition := _content.get_entity_definition(entity.type_id)
-	if definition == null:
-		return null
-	return definition.get_base_property(property_id)
+	return null if definition == null else definition.get_base_property(property_id)
 
 
 func has_authored_capability(subject: RuntimeWorldRef, capability_id: DomainId) -> bool:
@@ -59,40 +59,18 @@ func has_category(subject: RuntimeWorldRef, category_id: DomainId) -> bool:
 	return definition != null and definition.has_category(category_id)
 
 
-func find_relations(
-	relation_type: DomainId = null,
-	subject: RuntimeWorldRef = null,
-	object: RuntimeWorldRef = null
-) -> Array:
+func find_relations(relation_type: DomainId = null, subject: RuntimeWorldRef = null, object: RuntimeWorldRef = null) -> Array:
 	return _relations.find_relations(relation_type, subject, object)
-
 
 func get_outgoing_relations(subject: RuntimeWorldRef, relation_type: DomainId = null) -> Array:
 	return _relations.get_outgoing(subject, relation_type)
 
-
 func get_incoming_relations(object: RuntimeWorldRef, relation_type: DomainId = null) -> Array:
 	return _relations.get_incoming(object, relation_type)
 
-
-func traverse_relations(
-	start: RuntimeWorldRef,
-	allowed_relation_types: Array,
-	max_depth: int,
-	result_limit: int,
-	direction: int = WorldRelationStore.Direction.OUTGOING
-) -> RelationTraversalResult:
-	return _relations.traverse_relations(
-		start,
-		allowed_relation_types,
-		max_depth,
-		result_limit,
-		direction
-	)
-
+func traverse_relations(start: RuntimeWorldRef, allowed_relation_types: Array, max_depth: int, result_limit: int, direction: int = WorldRelationStore.Direction.OUTGOING) -> RelationTraversalResult:
+	return _relations.traverse_relations(start, allowed_relation_types, max_depth, result_limit, direction)
 
 func query_nearby(_subject_or_place: RuntimeWorldRef, _constraints: Dictionary) -> Array:
-	# Spatial topology is intentionally unresolved. Fail loudly rather than expose
-	# an accidental global scan as a temporary implementation.
 	assert(false, "DefaultWorldQuery.query_nearby requires the future spatial query port")
 	return []

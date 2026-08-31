@@ -1,6 +1,10 @@
 class_name ContentRegistry
 extends RefCounted
 
+const DomainId = preload("res://src/domain/core/domain_id.gd")
+const EntityDefinition = preload("res://src/domain/content/entity_definition.gd")
+const MutationResult = preload("res://src/domain/core/mutation_result.gd")
+
 ## Validated authored-definition registry.
 ## Definitions may be registered only during bootstrap; seal() makes accidental
 ## runtime authoring mutation fail fast.
