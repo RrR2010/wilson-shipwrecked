@@ -22,7 +22,7 @@ The target feeling combines the ambient comedy and complete visual scenes of a c
 
 ## Wilson identity
 
-Wilson is **the Wilson**, not a fully randomized protagonist. Each run preserves a recognizable base personality while allowing randomized variation and progressive shaping by experience.
+Wilson is **the Wilson**, not a fully randomized protagonist. Each run preserves a recognizable base personality while allowing modest randomized variation and progressive shaping through learned state.
 
 Wilson:
 
@@ -30,7 +30,7 @@ Wilson:
 - begins as a competent adult with basic everyday and survival knowledge;
 - occasionally makes unexplained jokes suggesting that he may once have believed he was a ball;
 - never receives a canonical explanation for that belief;
-- can develop preferences, habits, fears, relationships and changing behavioral tendencies;
+- can develop preferences, habits, fears, relationships and changing learned behavior;
 - is relatively quiet: animation, reactions, grunts, shouts, swearing, onomatopoeia and occasional short lines are preferred over constant dialogue;
 - may very rarely acknowledge the camera visually, but never explicitly address a player.
 
@@ -322,46 +322,69 @@ Useful concepts include:
 
 Type/class-level preferences and instance-level preferences may coexist.
 
-The exact ownership of memory between Wilson and entity metadata remains a design/architecture question, but product behavior must support instance-specific history.
+The exact ownership of memory between Wilson and entity metadata is defined by the later behavioral/architecture documents; product behavior requires instance-specific history without duplicating authoritative ownership.
 
-## Wilson psychology — provisional requirements
+## Wilson behavioral core
 
-The final psychological model is intentionally open pending focused research. Product behavior requires at least the following phenomena:
+The canonical Wilson model is defined by `BEHAVIORAL_MODEL.md` and `STATE_REQUIREMENTS.md`. Product behavior currently relies on the following compact core.
 
-- short-term needs such as hunger and energy;
-- curiosity;
-- independence;
-- sociability/companionship where useful;
-- a caution ↔ recklessness dimension affecting risk-taking and experimentation;
-- transient emotions such as fear, anger, surprise and happiness;
-- preferences by type and individual entity;
-- short- and long-term memories with different decay/reinforcement;
-- medium-term habits;
-- a player/Wilson faith relationship.
-
-`Sanity` is not yet a committed concept. The intended behavior is closer to a caution/recklessness axis: one extreme is highly risk-averse, while the other permits strange experiments, more self-talk and larger behavioral variance. Research should determine whether this needs one or multiple dimensions.
-
-Faith is specifically about Wilson's interpretation of player intervention. Higher faith may increase willingness to accept suggestions, reduce surprise at interventions and enable ambiguous lines such as `Is someone watching me?`. Faith is not equivalent to low mental health.
-
-### Preferences
-
-Preferences change primarily through direct outcomes and the emotions produced by those outcomes, not arbitrary simultaneous context.
-
-They may exist at both type/class and instance level and can affect choice when urgent needs do not dominate. Wilson may also develop aesthetic preferences such as favored colors/materials.
-
-### Habits
-
-Habits are medium-term context → behavior associations rather than permanent traits.
-
-Example:
+### Stable run traits
 
 ```text
-WHEN wakes_up
-THEN look_at_horizon
-strength: high
+curiosity
+risk_tolerance
+independence
 ```
 
-Repetition reinforces them; disuse weakens them. Strong emotional outcomes may reinforce or suppress them. Habits can create running gags and temporary obsessions without requiring a separate obsession system.
+These are stable disposition modifiers rather than goals or continuously self-correcting values.
+
+### Core drives
+
+```text
+hunger
+energy
+comfort
+stimulation
+```
+
+These produce changing motivational pressure. There is no separate accumulating safety, loneliness or fun drive.
+
+### Persistent learned/personal state
+
+Wilson may accumulate:
+
+- beliefs/knowledge with scope/confidence where relevant;
+- associations with independent valence and attachment;
+- selected episodic history;
+- habits;
+- current and suspended intentions;
+- projects and project-related history;
+- a relationship with the unseen presence represented by `presence_belief`, `trust` and `dependency`.
+
+### Transient reactions
+
+Fear, anger, joy/excitement, surprise/orient, frustration, relief and similar scene reactions are primarily short-lived derived consequences. Durable effects consolidate into beliefs, associations, habits, episodes or relationship state rather than long-lived global mood bars.
+
+### Explicitly not separate canonical psychology
+
+Do not reintroduce old provisional product concepts as independent primitives unless new regression evidence requires them:
+
+```text
+sanity
+sociability
+loneliness
+caution/recklessness separate from risk_tolerance
+faith separate from presence_belief
+playfulness
+persistence
+forgiveness
+regret
+routine
+tradition
+global mood
+```
+
+Visible social, cautious, ritualistic, playful or regret-like behavior should compose from the admitted state where possible.
 
 ## Projects and construction
 
@@ -386,7 +409,7 @@ Target pacing is approximately:
 
 Most projects should eventually complete. Abandonment is possible but should not become the default. Abandoned projects may be dismantled and return resources.
 
-Functional projects have priority when meaningful needs are unresolved. Decorative projects become more likely when Wilson is relatively comfortable or bored.
+Functional projects have priority when meaningful needs are unresolved. Decorative projects become more likely when Wilson is relatively comfortable or under-stimulated.
 
 The intended technology ceiling is elaborate island survival: an improved shelter, functional furniture, tools and plausible island infrastructure. Wilson should not progress into implausible industrial technology such as rockets.
 
@@ -511,7 +534,7 @@ Offline simulation may:
 - advance ordinary needs/state;
 - progress projects partially;
 - produce ordinary learning;
-- change relationships/personality gradually;
+- change relationships/personality gradually where current canonical rules allow;
 - accumulate God Power up to a cap.
 
 Offline simulation must not:
@@ -648,9 +671,9 @@ For every scene, map which systems influence each beat, for example:
 
 | Scene beat | World/objects | Knowledge | Needs/status | Traits/emotions | Memory/habits | Project | Event/director | Player/God Power | Expected variation |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Wilson notices strange object | object appears | unfamiliar type | curiosity | caution vs recklessness | prior divine interventions | — | event setup | player may have created it | inspect / flee / ignore |
+| Wilson notices strange object | object appears | unfamiliar type | curiosity | risk tolerance / current danger beliefs | prior divine interventions | — | event setup | player may have created it | inspect / flee / ignore |
 | Wilson experiments | physical affordances | uncertain result | urgency limits curiosity | risk weighting | prior failures | — | normal autonomy | player may suggest | safe / absurd / refuse |
-| Consequence occurs | transformation/effect | new relation learned | needs may change | emotion reaction | memory reinforced | may create new possibility | possible follow-up | new intervention opportunity | success / failure / gag |
+| Consequence occurs | transformation/effect | new relation learned | needs may change | transient reaction | memory reinforced | may create new possibility | possible follow-up | new intervention opportunity | success / failure / gag |
 
 Use these scenes as **requirements probes**. A proposed trait, status, property, memory field, God Power rule or interaction verb should justify itself by changing one or more desirable scenes in a useful and observable way.
 
