@@ -88,7 +88,8 @@ func _run_slice() -> void:
 	var bindings = RoleBinding.new()
 	bindings.bind(&"actor", wilson)
 	bindings.bind(&"target", crate)
-	var resolution = ActionResolutionDefinition.new(action_id, 1.0, 0.5, [ActionEffect.new(ActionEffect.Kind.SET_PROPERTY, &"target", integrity, 2)], &"impact_committed")
+	var impact_committed = DomainId.event_definition(&"impact_committed")
+	var resolution = ActionResolutionDefinition.new(action_id, 1.0, 0.5, [ActionEffect.new(ActionEffect.Kind.SET_PROPERTY, &"target", integrity, 2)], impact_committed)
 	var execution_id: StringName = &"exec_micro_1"
 	var started = execution.start(execution_id, action, resolution, bindings)
 	_expect_true(started != null, "action execution starts")
