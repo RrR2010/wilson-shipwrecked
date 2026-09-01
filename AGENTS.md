@@ -107,8 +107,23 @@ Brainstorming asset rounds are historical breadth evidence, not normal productio
 - Validation traces/fixtures prove sufficiency; they do not create scene-specific APIs.
 - `docs/brainstorming/` is exploratory/historical evidence.
 - `docs/handoffs/` is stage-transition context, not durable design authority.
+- `docs/design-reviews/` contains temporary calibration/review evidence intended to be consumed by implementation work; it is not canonical authority.
 - Do not recreate permanent `*_REFINEMENTS`, `*_NOTES`, `*_V2` override chains.
 - Concrete schema versions/test counts belong in `DISCOVERY_STATUS.md`.
+
+## Design reviews
+
+Design/calibration reviews live under `docs/design-reviews/` and should begin with an explicit `Status: OPEN` or `Status: COMPLETED` marker.
+
+When an implementation task or PR consumes a design review:
+
+1. read the review as advisory evidence against the current canonical contracts and representative behavior;
+2. resolve every applicable checklist/recommendation through implementation, tests, canonical-document updates, or an explicit justified rejection/deferment;
+3. do not silently work around a review finding or leave consumed guidance looking open;
+4. before considering the consuming work complete, change the review to `Status: COMPLETED` and record the consuming PR/commit plus any rejected/deferred recommendation and rationale;
+5. if only part of a review is in scope, leave it `OPEN` and check/annotate only the items actually resolved rather than falsely closing the whole review.
+
+A completed review remains historical calibration evidence. It must not become a second canonical specification; durable decisions discovered while consuming it belong in the appropriate canonical owner document.
 
 ## Handoffs
 
