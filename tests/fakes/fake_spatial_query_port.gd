@@ -1,5 +1,5 @@
 class_name FakeSpatialQueryPort
-extends SpatialQueryPort
+extends "res://src/application/simulation/spatial_query_port.gd"
 
 const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
 
@@ -13,7 +13,7 @@ func set_distance(from_ref: RuntimeWorldRef, to_ref: RuntimeWorldRef, value: flo
 	_distance_by_pair[_pair_key(from_ref, to_ref)] = value
 
 func set_route(from_ref: RuntimeWorldRef, to_ref: RuntimeWorldRef, available: bool, cost: float = INF) -> void:
-	var key := _pair_key(from_ref, to_ref)
+	var key: String = _pair_key(from_ref, to_ref)
 	_route_by_pair[key] = available
 	_route_cost_by_pair[key] = cost
 
