@@ -13,11 +13,11 @@ func cancel_move(actor_ref: StringName) -> void:
 	if _status_by_actor.has(actor_ref):
 		_status_by_actor[actor_ref] = MotionStatus.CANCELLED
 
-func get_status(actor_ref: StringName) -> MotionStatus:
-	return int(_status_by_actor.get(actor_ref, MotionStatus.IDLE)) as MotionStatus
+func get_status(actor_ref: StringName) -> int:
+	return int(_status_by_actor.get(actor_ref, MotionStatus.IDLE))
 
-func set_status(actor_ref: StringName, status: MotionStatus) -> void:
+func set_status(actor_ref: StringName, status: int) -> void:
 	_status_by_actor[actor_ref] = status
 
 func get_target(actor_ref: StringName) -> StringName:
-	return _target_by_actor.get(actor_ref, &"") as StringName
+	return StringName(_target_by_actor.get(actor_ref, &""))
