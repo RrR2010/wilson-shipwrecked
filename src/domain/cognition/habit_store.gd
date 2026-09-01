@@ -24,7 +24,7 @@ func apply_evidence(evidence) -> bool:
 	return true
 
 
-func get(cue_id: StringName, intention_id, bindings):
+func get_habit(cue_id: StringName, intention_id, bindings):
 	var key: StringName = StringName("%s|%s|%s" % [String(cue_id), intention_id.sort_key(), bindings.stable_key()])
 	var entry = _entries.get(key)
 	return null if entry == null else _copy_entry(entry)
