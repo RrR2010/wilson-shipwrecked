@@ -22,6 +22,6 @@ func request_move(_actor_ref: StringName, _target_ref: StringName) -> bool:
 func cancel_move(_actor_ref: StringName) -> void:
 	push_error("MotionPort.cancel_move() is abstract")
 
-func get_status(_actor_ref: StringName) -> MotionStatus:
+func get_status(_actor_ref: StringName) -> int:
 	push_error("MotionPort.get_status() is abstract")
 	return MotionStatus.IDLE
