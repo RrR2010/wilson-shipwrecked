@@ -11,7 +11,8 @@ const SimulationStepTrace = preload("res://src/infrastructure/diagnostics/simula
 ## world progression -> derived invalidation -> action progression
 ## -> committed outcome application -> derived invalidation -> grounded project progression
 ## -> perception -> immediate Wilson learning -> drive progression
-## -> candidate generation -> routing -> selected intention commit.
+## -> perceived-threat + ordinary candidate generation -> routing
+## -> selected intention commit.
 
 var _world_advance
 var _action_execution
@@ -32,6 +33,7 @@ var _drive_candidate_source
 var _project_contribution
 var _project_candidate_source
 var _additional_candidate_sources: Array
+var _immediate_threat_candidate_source
 
 
 func _init(
@@ -53,7 +55,8 @@ func _init(
 	drive_candidate_source = null,
 	project_contribution = null,
 	project_candidate_source = null,
-	additional_candidate_sources: Array = []
+	additional_candidate_sources: Array = [],
+	immediate_threat_candidate_source = null
 ) -> void:
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
 	assert(action_execution != null, "SimulationOrchestrator requires action execution")
@@ -72,6 +75,8 @@ func _init(
 	assert((project_contribution == null) == (project_candidate_source == null), "Project contribution and candidate source must be provided together")
 	for source in additional_candidate_sources:
 		assert(source != null and source.has_method("generate"), "Additional candidate sources must implement generate()")
+	if immediate_threat_candidate_source != null:
+		assert(immediate_threat_candidate_source.has_method("generate"), "Immediate threat source must implement generate(perception_result)")
 	_world_advance = world_advance
 	_action_execution = action_execution
 	_world_commands = world_commands
@@ -91,6 +96,7 @@ func _init(
 	_project_contribution = project_contribution
 	_project_candidate_source = project_candidate_source
 	_additional_candidate_sources = additional_candidate_sources.duplicate()
+	_immediate_threat_candidate_source = immediate_threat_candidate_source
 
 
 func advance(step):
@@ -116,8 +122,9 @@ func advance(step):
 		if action_progress != null and action_progress.new_outcome != null:
 			commit_result = _world_commands.apply_outcome(action_progress.new_outcome)
 			trace.record_result(&"world_commit", commit_result)
-			var invalidation_result = _derived_invalidator.apply(commit_result.change_set)
-			trace.record_result(&"derived_invalidation", invalidation_result)
+			if commit_result.ok:
+				var invalidation_result = _derived_invalidator.apply(commit_result.change_set)
+				trace.record_result(&"derived_invalidation", invalidation_result)
 			if _project_contribution != null:
 				project_progress = _project_contribution.apply_grounded(action_progress.new_outcome, commit_result)
 				trace.record_result(&"project_progression", project_progress)
@@ -144,6 +151,10 @@ func advance(step):
 		_belief_store,
 		_opportunity_definitions
 	)
+	if _immediate_threat_candidate_source != null:
+		var threat_candidates: Array = _immediate_threat_candidate_source.generate(perception_result)
+		candidates.append_array(threat_candidates)
+		trace.record_result(&"immediate_threat_candidates", threat_candidates)
 	if _drive_candidate_source != null:
 		candidates.append_array(_drive_candidate_source.generate())
 	if _project_candidate_source != null:
