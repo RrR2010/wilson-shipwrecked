@@ -11,7 +11,6 @@ const AssociationStore = preload("res://src/domain/cognition/association_store.g
 const HabitStore = preload("res://src/domain/cognition/habit_store.gd")
 const HabitCandidateSource = preload("res://src/domain/cognition/habit_candidate_source.gd")
 const EpisodeStore = preload("res://src/domain/cognition/episode_store.gd")
-const PresenceRelationship = preload("res://src/domain/cognition/presence_relationship.gd")
 const ExperienceLearningRule = preload("res://src/domain/cognition/experience_learning_rule.gd")
 const ExperienceLearningService = preload("res://src/domain/cognition/experience_learning_service.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
@@ -120,14 +119,12 @@ func _run_slice() -> void:
 	var associations = AssociationStore.new()
 	var habits = HabitStore.new()
 	var episodes = EpisodeStore.new()
-	var presence = PresenceRelationship.new()
 	var learning = WilsonLearningCoordinator.new(
 		BeliefLearningCoordinator.new(BeliefLearningService.new(), beliefs),
 		ExperienceLearningService.new([rule]),
 		associations,
 		habits,
-		episodes,
-		presence
+		episodes
 	)
 	var intentions = CurrentIntentionStore.new()
 	var habit_source = HabitCandidateSource.new(habits, [&"gerald_near_food"], 0.35, 0.2)
