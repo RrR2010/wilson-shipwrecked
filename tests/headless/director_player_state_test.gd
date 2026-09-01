@@ -48,7 +48,7 @@ func _run() -> void:
 	var router = DecisionRouter.new()
 	var rest_candidate = DecisionCandidate.new(rest, RoleBinding.new(), DecisionCandidate.Scope.INTENTIONAL, 0.4)
 	var decision = router.resolve([director_candidate, rest_candidate])
-	_expect_equal(decision.selected.intention_id.key(), rest.key(), "Director opportunity does not force Wilson over stronger ordinary candidate")
+	_expect_equal(decision.selected_candidate.intention_id.key(), rest.key(), "Director opportunity does not force Wilson over stronger ordinary candidate")
 
 	_expect_true(director_service.resolve(&"shell_scene"), "active opportunity resolves")
 	var state = director_store.get_state(&"shell_scene")
@@ -67,7 +67,7 @@ func _run() -> void:
 	var suggestion_candidate = suggestion_source.generate()[0]
 	_expect_equal(suggestion_candidate.external_bias, 0.2, "suggestion contributes bounded bias")
 	decision = router.resolve([suggestion_candidate, rest_candidate])
-	_expect_equal(decision.selected.intention_id.key(), rest.key(), "suggestion remains a signal rather than a command")
+	_expect_equal(decision.selected_candidate.intention_id.key(), rest.key(), "suggestion remains a signal rather than a command")
 	_expect_true(suggestion_service.insist(), "first insistence is available")
 	_expect_true(suggestion_service.insist(), "second insistence is available")
 	_expect_false(suggestion_service.insist(), "insistence is bounded")
