@@ -12,9 +12,6 @@ var habit_cue_id: StringName
 var habit_intention_id
 var habit_binding_role: StringName
 var habit_strength_delta: float
-var presence_belief_delta: float
-var presence_trust_delta: float
-var presence_dependency_delta: float
 
 
 func _init(
@@ -26,10 +23,7 @@ func _init(
 	p_habit_cue_id: StringName = &"",
 	p_habit_intention_id = null,
 	p_habit_binding_role: StringName = &"",
-	p_habit_strength_delta: float = 0.0,
-	p_presence_belief_delta: float = 0.0,
-	p_presence_trust_delta: float = 0.0,
-	p_presence_dependency_delta: float = 0.0
+	p_habit_strength_delta: float = 0.0
 ) -> void:
 	assert(p_event_type != null, "ExperienceLearningRule requires event type")
 	p_event_type.assert_kind(DomainId.Kind.EVENT_DEFINITION)
@@ -38,10 +32,7 @@ func _init(
 	assert(is_finite(p_association_attachment_delta) and p_association_attachment_delta >= 0.0 and p_association_attachment_delta <= 1.0, "Association attachment delta must be within [0,1]")
 	assert(is_finite(p_episode_importance) and p_episode_importance >= 0.0 and p_episode_importance <= 1.0, "Episode importance must be within [0,1]")
 	assert(is_finite(p_habit_strength_delta) and p_habit_strength_delta >= -1.0 and p_habit_strength_delta <= 1.0, "Habit strength delta must be within [-1,1]")
-	assert(is_finite(p_presence_belief_delta) and p_presence_belief_delta >= -1.0 and p_presence_belief_delta <= 1.0, "Presence belief delta must be within [-1,1]")
-	assert(is_finite(p_presence_trust_delta) and p_presence_trust_delta >= -1.0 and p_presence_trust_delta <= 1.0, "Presence trust delta must be within [-1,1]")
-	assert(is_finite(p_presence_dependency_delta) and p_presence_dependency_delta >= -1.0 and p_presence_dependency_delta <= 1.0, "Presence dependency delta must be within [-1,1]")
-	var has_habit := p_habit_cue_id != &"" or p_habit_intention_id != null or p_habit_binding_role != &"" or not is_zero_approx(p_habit_strength_delta)
+	var has_habit: bool = p_habit_cue_id != &"" or p_habit_intention_id != null or p_habit_binding_role != &"" or not is_zero_approx(p_habit_strength_delta)
 	if has_habit:
 		assert(p_habit_cue_id != &"" and p_habit_intention_id != null and p_habit_binding_role != &"", "Habit learning rule requires cue, intention and binding role together")
 		p_habit_intention_id.assert_kind(DomainId.Kind.SEMANTIC_INTENTION)
@@ -54,9 +45,6 @@ func _init(
 	habit_intention_id = p_habit_intention_id
 	habit_binding_role = p_habit_binding_role
 	habit_strength_delta = p_habit_strength_delta
-	presence_belief_delta = p_presence_belief_delta
-	presence_trust_delta = p_presence_trust_delta
-	presence_dependency_delta = p_presence_dependency_delta
 
 
 func matches(claim) -> bool:
@@ -69,7 +57,3 @@ func has_association_impact() -> bool:
 
 func has_habit_evidence() -> bool:
 	return habit_cue_id != &""
-
-
-func has_presence_evidence() -> bool:
-	return not is_zero_approx(presence_belief_delta) or not is_zero_approx(presence_trust_delta) or not is_zero_approx(presence_dependency_delta)
