@@ -16,7 +16,7 @@ It owns:
 
 It does **not** mandate GDScript vs C#, ECS, one-class-per-module, Godot node layout, database technology, serialization syntax or dependency-injection framework.
 
-Concrete implemented foundation status/schema versions/test checkpoints belong in `DISCOVERY_STATUS.md`.
+Concrete implementation/schema/test checkpoints belong in `DISCOVERY_STATUS.md`.
 
 Governing shape:
 
@@ -45,6 +45,7 @@ Projects             own project lifecycle state
 ActionExecution      owns active/committed action lifecycle
 Director             owns directed-opportunity lifecycle
 PlayerRunState       owns current-run player-side state
+RunLifecycleState    owns current-run lifecycle metadata
 PlayerProfile        owns admitted cross-run state
 ```
 
@@ -57,6 +58,8 @@ World truth
 != Wilson observation
 != Wilson belief
 != player-private intent/knowledge
+!= Director intent
+!= cross-run profile state
 != presentation
 ```
 
@@ -87,6 +90,7 @@ Run
 ├── Projects
 ├── Director
 ├── PlayerRunState
+├── RunLifecycleState
 └── ActionExecution
 
 PlayerProfile
@@ -134,6 +138,10 @@ Owns directed-opportunity eligibility/active/cooldown/rarity lifecycle. It may a
 ## Player Run State / Intervention
 
 Owns God Power, non-intervention progress, mode permissions and suggestion-window state. Physical intervention reaches World only through explicit validated operations; suggestions are signals, not commands.
+
+## Run Lifecycle State
+
+Owns current-run lifecycle metadata such as `ACTIVE / DEAD / ENDED`, semantic death/end reasons and resurrection/death counts. It does not duplicate WilsonBody vitality/alive truth. Resurrection first restores physical truth through an explicit World/body port and only then transitions lifecycle state.
 
 ## Player Profile
 
@@ -338,6 +346,7 @@ Godot UI → direct World mutation
 asset socket → AssemblyRole identity
 index/cache → mutation authority
 persistence DTO → define domain meaning
+scenario fixture → direct owner mutation bypass
 ```
 
 ---
@@ -448,6 +457,8 @@ Fine distance, navigation, occlusion, visibility/hearing geometry and transform 
 
 `EventDefinition` describes an ordinary WorldEvent kind's potentially perceptible roles/modalities; runtime spatial access decides what Wilson actually observes.
 
+Fine spatial adapters may refine answers such as range, route or line-of-sight, but they do not replace semantic placement identity or mutate World merely because a transform moved visually.
+
 ---
 
 # 11. Epistemic boundary
@@ -515,7 +526,7 @@ Godot nodes, scene paths, meshes and sockets are not domain identity. UI queries
 
 ---
 
-# 15. Persistence boundary
+# 15. Persistence and common restore/bootstrap boundary
 
 Persist durable causes/minimal active lifecycle state; reconstruct derived projections.
 
@@ -528,7 +539,7 @@ meaningful current/suspended intention state
 ActionExecution lifecycle required for causality
 Projects
 Director continuity state
-PlayerRunState / PlayerProfile
+PlayerRunState / RunLifecycleState / PlayerProfile
 required gameplay RNG state
 ```
 
@@ -544,10 +555,37 @@ Protection/Exposure projections
 HazardProjection
 EpistemicGraph indexes
 salience/expectations/candidate evaluations
+routes unless a durable route cause is explicitly justified
 most transient reactions
 ```
 
 Persistence schema versions are implementation contracts and may evolve during development; incompatible development schemas fail explicitly rather than silently reinterpret meaning.
+
+## One authoritative bootstrap path
+
+Development scenarios, tests and debugging must not gain a privileged mutation architecture. The intended shape is:
+
+```text
+normal authoritative owner state
+            ↑
+common restore/bootstrap boundary
+            ↑
+real save | deterministic test fixture | debug scenario
+```
+
+A declarative fixture/debug scenario may describe durable owner causes and an explicit gameplay seed, but must enter through the same validation, owner construction and derived-state reconstruction rules used by normal restore/bootstrap.
+
+Required invariants:
+
+- fixtures do not write private stores after bootstrap merely to manufacture a desired result;
+- invalid fixture state fails admission rather than bypassing owner validation;
+- reconstructible projections/caches are rebuilt, not serialized as fixture truth;
+- active causal state such as committed actions/processes is restored through its real lifecycle representation;
+- a debug console or scenario launcher is an adapter over the same commands/bootstrap services, never an authority-bypassing mutation API;
+- scenario names are development identifiers, not gameplay/domain identity;
+- deterministic seeds and any intentionally varied seed population are explicit and reproducible.
+
+This boundary exists so any subsystem can be tested in a representative state without simulating all gameplay that would normally lead there.
 
 ---
 
@@ -595,15 +633,30 @@ Project never executes Wilson action
 EpistemicGraph never imports hidden World truth
 player-private intent never updates trust
 LLM failure never changes authoritative physical result
+fixture/bootstrap never bypasses owner validation
 ```
 
 ## Reconstruction tests
 
-Save/load must rebuild equivalent semantic queries and must not replay committed outcomes.
+Save/load and fixture/bootstrap must rebuild equivalent semantic queries and must not replay committed outcomes.
 
 ## Scenario/scale tests
 
-Use representative causal scenarios, larger relation/belief sets, bounded traversal/query checks and deterministic seed populations. Avoid wall-clock assertions as gameplay semantics.
+Representative validation must include more than hand-authored happy paths. Use:
+
+```text
+representative causal scenarios
+edge and boundary values
+empty/minimal populations
+dense/high-cardinality relation, belief, entity and process sets
+conflicting simultaneous stimuli/candidates
+long-running bounded accumulation
+multiple deterministic seeds / seed populations
+reconstruction at awkward lifecycle points
+invalid/adversarial fixture admission
+```
+
+Assert semantic bounds, stable ordering, deterministic replay and bounded query/traversal results. Avoid wall-clock assertions as gameplay semantics; performance profiling is separate.
 
 The strict headless runner is the implementation gate; `DISCOVERY_STATUS.md` records the current count.
 
@@ -626,14 +679,21 @@ unbounded global event bus
 persisted derived caches becoming truth
 object-type branching where composition suffices
 arbitrary Variant/Dictionary semantic identity
+fixture/debug direct-store mutation
 ```
 
 ---
 
 # 20. Phase boundary
 
-The **structural runtime foundation is complete**. This document should no longer carry an implementation roadmap for that foundation.
+The structural runtime foundation and the planned system-breadth owners through **run lifecycle / PlayerProfile** are implemented and locally validated. Current implementation work is now transitioning from owner/system breadth into:
 
-New work should implement system breadth — drives/body, projects, richer cognition producers, environment/processes, hazards/protection, shallow animals, Director/player/run lifecycle and Godot adapters — through the established owners/contracts.
+```text
+fine spatial/nav/occlusion + Godot presentation adapters
+→ deterministic scenario/bootstrap tooling
+→ representative multi-system scenario + seed-population validation
+```
+
+Cross-cutting correctness items should be pulled forward when representative scenarios require them rather than hidden behind bespoke scenario logic.
 
 A new owner/framework/core primitive requires concrete representative evidence that the existing architecture cannot express the behavior cleanly.
