@@ -84,8 +84,10 @@ func _run_slice() -> void:
 	candidates.append_array(threat_candidates)
 	var selected = DecisionRouter.new().resolve(candidates)
 	_expect_equal(selected.regime, &"immediate_threat", "immediate threat wins by routing regime rather than giant score")
-	_expect_equal(selected.selected.intention_id.sort_key(), dodge.sort_key(), "defensive intention is selected")
-	_expect_true(selected.selected.total_score() < ordinary.total_score(), "lower-scoring defense still wins across regimes")
+	_expect_true(selected.selected_candidate != null, "immediate-threat routing returns a selected candidate")
+	if selected.selected_candidate != null:
+		_expect_equal(selected.selected_candidate.intention_id.sort_key(), dodge.sort_key(), "defensive intention is selected")
+		_expect_true(selected.selected_candidate.total_score() < ordinary.total_score(), "lower-scoring defense still wins across regimes")
 
 	_completed = true
 
