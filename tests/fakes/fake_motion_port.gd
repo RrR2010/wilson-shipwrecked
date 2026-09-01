@@ -1,5 +1,5 @@
 class_name FakeMotionPort
-extends MotionPort
+extends "res://src/application/simulation/motion_port.gd"
 
 const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
 
@@ -12,7 +12,7 @@ func request_move(actor_ref: RuntimeWorldRef, target_ref: RuntimeWorldRef) -> bo
 	return true
 
 func cancel_move(actor_ref: RuntimeWorldRef) -> void:
-	var key := actor_ref.key()
+	var key: StringName = actor_ref.key()
 	if _status_by_actor.has(key):
 		_status_by_actor[key] = MotionStatus.CANCELLED
 
