@@ -6,27 +6,37 @@ Build Wilson Shipwrecked as a coherent systemic simulation and living 3D diorama
 
 ## Current project phase
 
-The **structural runtime foundation is complete** and has passed the strict Godot 4.7.1 headless gate.
+The **structural runtime foundation and planned system-breadth owners through run lifecycle / PlayerProfile are implemented and locally validated**.
+
+Current strict baseline is recorded in `docs/DISCOVERY_STATUS.md`. Do not copy test counts/schema versions into this file.
+
+The remaining major implementation sequence is:
+
+```text
+1. fine spatial/nav/occlusion + Godot presentation adapters
+2. deterministic playable scenario/bootstrap tooling
+3. representative multi-system scenarios + seed-population tests
+```
+
+Cross-cutting correctness items listed in `DISCOVERY_STATUS.md` should be pulled forward when a representative scenario requires them. Do not hide a real domain gap behind scenario-specific code.
 
 Before substantial work, read:
 
 1. [`docs/README.md`](docs/README.md) — documentation map/authority hierarchy;
-2. [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md) — current concrete foundation/test/schema baseline;
+2. [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md) — concrete validated baseline and remaining work;
 3. only the canonical bundle relevant to the task.
 
-The next phase is predominantly **system/content/presentation breadth** on the stabilized foundation: drives/body, projects, richer cognition learning/candidate producers, environment/processes, hazards/protection, shallow actors, Director/player/run lifecycle and Godot adapters.
-
-Do not reopen foundation ownership, replace established typed contracts with generic containers, or introduce a new universal framework merely because one new system needs implementation.
+Do not reopen foundation ownership, replace established typed contracts with generic containers, or introduce a new universal framework merely because one new adapter/scenario needs implementation.
 
 ---
 
 # Documentation workflow
 
-Do **not** read every document linearly by default. Read the smallest canonical bundle sufficient for the task; use fixtures/regressions as evidence rather than competing specifications.
+Read the smallest canonical bundle sufficient for the task. Fixtures/regressions are evidence, not competing specifications.
 
 ## Simulation/domain/architecture
 
-Relevant canonical core:
+Core canonical bundle:
 
 ```text
 ARCHITECTURE.md
@@ -40,7 +50,7 @@ DOMAIN_OPERATIONS.md
 DOMAIN_PROCEDURAL_COMPOSITION.md
 ```
 
-Read specialized appendices only when affected:
+Specialized appendices only when affected:
 
 ```text
 DOMAIN_ENVIRONMENTAL_PROTECTION.md
@@ -48,6 +58,21 @@ DOMAIN_HAZARD_DYNAMICS.md
 DOMAIN_EPISTEMIC_INVESTIGATION.md
 DOMAIN_MICRO_LOOP.md
 ```
+
+## Spatial / Godot presentation work
+
+Read at minimum:
+
+```text
+docs/ARCHITECTURE.md
+docs/SIMULATION_ORCHESTRATION.md
+docs/SIMULATION_CONTRACTS.md
+docs/MUTATION_AUTHORITY.md
+docs/ASSET_SPEC.md
+docs/ASSET_PIPELINE.md
+```
+
+Then inspect the relevant domain ports/tests before adding infrastructure adapters.
 
 ## Asset/content catalog
 
@@ -82,8 +107,8 @@ Brainstorming asset rounds are historical breadth evidence, not normal productio
 - Validation traces/fixtures prove sufficiency; they do not create scene-specific APIs.
 - `docs/brainstorming/` is exploratory/historical evidence.
 - `docs/handoffs/` is stage-transition context, not durable design authority.
-- Do not recreate permanent `*_REFINEMENTS`, `*_NOTES`, `*_V2` override chains when the accepted result belongs in an existing owner.
-- Concrete schema versions/test counts belong in `DISCOVERY_STATUS.md`, not duplicated across domain documents.
+- Do not recreate permanent `*_REFINEMENTS`, `*_NOTES`, `*_V2` override chains.
+- Concrete schema versions/test counts belong in `DISCOVERY_STATUS.md`.
 
 ## Handoffs
 
@@ -101,52 +126,67 @@ A handoff should:
 
 ---
 
-# Structural foundation invariants
+# Global authority invariants
 
-These contracts are already regression-backed. Preserve them unless new representative evidence proves a canonical change is required.
+These contracts are already regression-backed. Preserve them unless representative evidence proves a canonical change is required.
 
-## Authority
-
-```text
-World truth
-!= Wilson observation
-!= Wilson belief
-!= player-private intent
-!= presentation
-```
-
-State owners conceptually remain:
+## Owners
 
 ```text
 World
 Wilson Cognition
 Projects
-Player Run State / Intervention
 Director
-Action Execution / Resolution
-Player Profile across runs
+PlayerRunState / Intervention
+RunLifecycleState
+ActionExecution / Resolution
+PlayerProfile across runs
 ```
 
-A projection/service/index does not become an owner because it is convenient to mutate it.
+A projection/service/index/adapter does not become an owner because it is convenient to mutate it.
+
+Keep separate:
+
+```text
+World truth
+!= Wilson observation
+!= Wilson belief
+!= Wilson desirability
+!= player-private intent
+!= Director intent
+!= cross-run profile state
+!= presentation
+```
+
+## Owner/query/service/command split
+
+```text
+owner stores     = authoritative state
+query ports      = narrow semantic reads
+derived services = deterministic proposals/projections
+commands         = validated owner-local mutation
+```
+
+No presentation, debug, fixture or scenario path may bypass this split.
 
 ## Typed semantic identity
 
 - Use `DomainId`/typed semantic IDs rather than display strings/scene paths as identity.
 - Durable belief identity uses typed `EpistemicClaim`, currently `PROPERTY | RELATION | EVENT`.
-- Do **not** restore generic `predicate + arbitrary Variant arguments` as durable epistemic identity.
+- Do not restore generic `predicate + arbitrary Variant arguments` as durable epistemic identity.
 - Numeric semantic identity must survive JSON representation changes such as `3` ↔ `3.0`.
 - Property/qualifier semantic values are bounded; NaN/infinity are invalid.
 
 ## Event naming
 
 - `EventDefinition` = semantic/perceptual definition of an ordinary `WorldEvent` kind.
-- `WorldEvent` = authoritative occurrence fact after successful owner commit.
+- `WorldEvent` = authoritative occurrence fact.
 - `ObservedEvent` = Wilson-accessible projection.
-- Director-owned lifecycle uses `DirectedEventDefinition` / `DirectedEventInstance`.
+- Director-owned lifecycle uses directed-opportunity definitions/state.
 
-Do not overload unqualified `EventDefinition` for Director state.
+Do not overload ordinary event semantics for Director state.
 
-## World relations
+## World relations / composition
 
 `WorldRelation` exact identity includes:
 
@@ -154,56 +194,93 @@ Do not overload unqualified `EventDefinition` for Director state.
 RelationTypeId + subject + object + optional qualifier
 ```
 
-Qualifier is a bounded semantic scalar/symbol/typed ID — never an arbitrary Dictionary/Array.
+Qualifier is a bounded semantic scalar/symbol/typed ID, never an arbitrary Dictionary/Array.
 
-Broad endpoint queries may return multiple differently qualified relations. Exact create/remove includes qualifier identity.
+Assembly bindings use ordinary World relations. There is no `AssemblyStore`.
 
-Assembly bindings use ordinary World relations, currently:
-
-```text
-attached_to(component, host, qualifier = AssemblySlotId)
-```
-
-There is no `AssemblyStore`.
-
-## Composition / derived physical state
-
-- `EffectivePhysicalProfile`, `AssemblyValidity`, `CompositionDependencyProjection` are reconstructible derived semantics.
-- `AssemblyValidity != performance`.
-- component changes invalidate dependent host profiles through composition dependency projection; do not scatter manual host invalidation.
-- do not create target-specific crafting recipes when capabilities/properties/assembly semantics suffice.
+`EffectivePhysicalProfile`, `AssemblyValidity`, `CompositionDependencyProjection`, protection/exposure and hazard projections are reconstructible derived semantics, not authority.
 
 ## Action causality
 
-- `ActionAttemptability` is a pure authoritative read; it does not guarantee goal success.
-- `ActionExecution` owns progress/commit/terminal lifecycle but does not mutate World.
-- crossing commit emits one `ActionOutcome` exactly once.
-- World owner separately validates/applies the outcome.
-- supported effect batches are prospectively/sequentially prevalidated before mutation.
-- committed physical truth cannot be rewound by reconsideration, suggestion, Luck or load/reconstruction.
-- restore of an already-started action restores historical causal state and does not rerun current attemptability.
-
-Current coarse interruption classes:
-
 ```text
-PRE_COMMIT_ONLY
-NEVER
-ANYTIME
+ActionExecution
+→ ActionOutcome
+→ validated World commit
+→ WorldEvent + SemanticChangeSet
+→ derived invalidation
+→ Perception
+→ PerceptualEvidence
+→ owner-local learning
+→ reconsideration / decision
+→ CurrentIntention
 ```
 
-If richer safe checkpoints become necessary, add them explicitly through canonical review; do not encode them as animation/frame timing hacks.
+- `ActionAttemptability` is a pure authoritative read; it does not guarantee goal success.
+- ActionExecution owns progress/commit/terminal lifecycle but does not mutate World.
+- crossing commit emits one `ActionOutcome` exactly once.
+- committed physical truth cannot be rewound by reconsideration, suggestion, Luck, load or debug tools.
+- `SemanticChangeSet` is an invalidation contract, not a generic event bus.
 
 ## Perception / learning
 
 - Event perceptibility + runtime spatial access determine accessible roles/modalities.
-- cognition receives only accessible `ObservedEvent`/`PerceptualEvidence` semantics.
-- `PerceptualEvidence` carries a typed `EpistemicClaim` + bounded confidence/provenance.
-- `EpistemicGraphProjection` indexes only `BeliefStore`; never import hidden World truth.
-- relevant same-chain learning happens before the next tactical choice when it can change that choice.
+- cognition receives only accessible observation/evidence semantics.
+- `EpistemicGraphProjection` indexes only cognition-owned beliefs; never import hidden World truth.
+- same-chain learning happens before the next tactical choice when it can affect that choice.
+- Presence/association/habit/episode updates remain Wilson-relative; player-private intent is never evidence by itself.
 
-## Derived maintenance
+## Immediate threat
 
-`SemanticChangeSet` exists to invalidate/rebuild reconstructible derived state. It is not a generic gameplay event bus.
+Immediate threat wins through a separate routing regime, never giant/infinite utility scores. Wilson consumes `PerceivedThreat`, not hidden `HazardProjection` directly.
+
+## Run/Profile
+
+`RunLifecycleState` does not replace WilsonBody truth. Resurrection first passes the physical World/body boundary.
+
+`PlayerProfile` is outside active Run state. Legacy/profile admission is explicit and must not copy Wilson autobiography wholesale.
+
+---
+
+# Common restore/bootstrap invariant
+
+Every meaningful gameplay subsystem must be testable from an artificial but valid authoritative state without replaying all prior gameplay.
+
+Canonical architecture:
+
+```text
+normal authoritative owner state
+            ↑
+common restore/bootstrap boundary
+            ↑
+real save | deterministic test fixture | debug scenario
+```
+
+This is a global project invariant.
+
+A fixture/debug scenario may declare durable owner causes and deterministic seed state, but must pass the same validation/construction/reconstruction semantics as normal restore/bootstrap.
+
+Do not:
+
+```text
+mutate private stores after bootstrap to manufacture a scenario
+persist derived projections/caches as fixture truth
+skip action/process causal validation because the fixture is test-only
+use Godot transforms as authoritative scenario state
+build a debug console with arbitrary direct-store mutation
+create a second debug-only simulation architecture
+```
+
+A development scenario launcher and future debug console are adapters over the common bootstrap boundary and normal commands.
+
+Prefer declarative named scenarios such as:
+
+```text
+hungry_wilson_near_food
+wilson_mid_shelter_project
+storm_with_bad_roof
+```
+
+Scenario names are development identifiers, not domain identity.
 
 ---
 
@@ -216,9 +293,9 @@ If richer safe checkpoints become necessary, add them explicitly through canonic
 5. Do not couple game correctness to LLM availability.
 6. Prefer the smallest reusable primitive proven by current cases; avoid premature universal frameworks.
 7. Add deterministic/headless regressions for domain/system changes.
-8. Preserve explainability: decisions/derivations must expose useful provenance/diagnostics.
+8. Preserve explainability: decisions/derivations expose useful provenance/diagnostics.
 9. Keep code/comments/docs in English.
-10. Persist only state justified by state/domain contracts; do not persist reconstructible projections for convenience.
+10. Persist only durable causes; rebuild reconstructible projections/indexes/caches.
 11. Keep critical mutation order explicit; no broad event-bus authority.
 12. Keep evaluator contributions finite/bounded; no infinity/huge-score priority hacks.
 13. Keep physical truth, Wilson knowledge/belief and desirability distinct.
@@ -226,21 +303,21 @@ If richer safe checkpoints become necessary, add them explicitly through canonic
 15. Prefer effective properties/capabilities from material + condition + composition + contents over combinatorial entity variants.
 16. Do not model exploration as a universal percentage.
 17. Keep committed dynamic-process evolution distinct from unresolved future collision/consequence.
-18. Wilson emergency decisions consume perceived threat, never hidden hazard projections.
-19. Stable semantic ordering precedes deterministic tie-break/seeded random selection where order matters.
-20. Reconstruct indexes/caches from authority after load; never let a cache become truth.
+18. Stable semantic ordering precedes deterministic tie-break/seeded random selection.
+19. Reconstruct indexes/caches from authority after load/bootstrap; never let a cache become truth.
+20. Fine spatial/nav/occlusion adapters refine semantic queries; they do not replace `PlaceId`/relations or become action-legality authority.
 
 ---
 
 # Standard test gate
 
-For runtime/domain changes, the standard local checkpoint is:
+For runtime/domain changes:
 
 ```powershell
 .\tests\run_headless_tests.ps1
 ```
 
-The runner is stricter than Godot process exit status. It rejects:
+The runner rejects:
 
 ```text
 nonzero exit
@@ -253,81 +330,121 @@ missing expected PASS marker
 
 Do not claim a runtime slice green until the strict suite passes locally. `DISCOVERY_STATUS.md` records the latest validated count.
 
-When adding a test:
+## Required robustness beyond happy paths
 
-- use deterministic semantic assertions rather than wall-clock performance assertions;
-- include edge/reconstruction branches when causal state/persistence changes;
-- prefer representative integrated scenarios in addition to isolated unit slices;
-- test bounds/truncation/stable ordering explicitly for scalable queries;
+New scenario/scale work must deliberately exercise **variability, extremes and data volume**, not only one handcrafted success case.
+
+Use relevant combinations of:
+
+```text
+minimum/empty state
+boundary numeric values
+near-threshold hysteresis/bands
+maximum admitted values
+many entities / relations / beliefs / processes / projects / actors
+dense and sparse spatial layouts
+conflicting simultaneous candidates/stimuli/events
+multiple threats/opportunities at once
+long-running bounded accumulation/decay
+reconstruction before/at/after commit or lifecycle boundaries
+invalid/adversarial fixture input
+multiple deterministic seeds / fixed seed populations
+stable ordering under insertion-order variation
+```
+
+Assertions should prove semantic correctness, finite bounds, deterministic replay, stable ordering and bounded traversal/query behavior. Do not use wall-clock timing as a gameplay-semantic assertion; performance/load profiling is separate.
+
+When adding tests:
+
+- include pure/domain tests where useful;
+- include at least one focused integrated scenario for cross-system work;
+- include persistence/bootstrap reconstruction when durable state/causality is affected;
+- test failure/rejection branches, not only success;
 - never print PASS after an incomplete/erroring test body.
 
 ---
 
-# Architecture and system implementation
+# Current implementation focus
 
-Preserve:
+## 1. Fine spatial/nav/occlusion + Godot presentation adapters
 
-```text
-state-owning authoritative systems
-derived/composable services
-explicit application/orchestration
-presentation/infrastructure adapters
-```
-
-Do not create one state-owning `System` for every psychology noun/content family/procedural mechanic.
-
-When adding behavior, ask in order:
-
-1. Is this an existing action applied to a new compatible property/material/profile?
-2. Is one reusable property/capability/relation/typed claim/evidence rule enough?
-3. Can runtime composition derive it?
-4. Can existing belief/history/habit/project/decision composition explain it?
-5. Can an environmental/dynamic-process rule express it parametrically?
-6. Does it genuinely require a new primitive/owner?
-
-A large `if entity_type == ...` interaction chain is normally a design smell.
-
-## Current breadth sequence
-
-Default next sequence, unless representative evidence suggests otherwise:
+The coarse semantic spatial foundation is already closed:
 
 ```text
-1. Wilson body/drives + bounded candidate producers
-2. Project runtime/lifecycle + project candidate source
-3. associations/habits/episodes/Presence learning producers
-4. environment/weather + persisted dynamic processes
-5. protection/exposure + hazards/immediate-threat production
-6. shallow non-Wilson actors/animals
-7. Director + player intervention/suggestions
-8. death/resurrection/Legacy/Profile run lifecycle
-9. Godot spatial/presentation adapters
-10. broader multi-system scenario + seed-population tests
+Entity/ Wilson PlaceId
+→ bounded nearby/co-location semantics
+→ perception access boundary
 ```
 
-Implement breadth through existing ports first. Introduce a new core owner/framework only when an existing contract cannot express required behavior cleanly.
-
-## Catalog versus domain
-
-The asset catalog may state required properties, capabilities, interaction roles, assembly slots, states, contrasts and production assets.
-
-It must not silently introduce:
+The next spatial work refines infrastructure behind the ports:
 
 ```text
-new psychological primitives
-new authoritative property families
-new action semantics
-object-pair recipes
-hidden exploration flags
-scene-specific state machines
+metric distance
+route/path queries
+navmesh integration
+occlusion / visibility / hearing geometry
+semantic InteractionRegion anchors
+body/assembly/perch sockets
+entity ↔ scene-instance mapping
 ```
 
-If catalog work exposes a real domain gap, update the correct canonical domain owner as a separate reviewed decision.
+Rules:
+
+- Godot nodes/scene paths/navmesh IDs/colliders/meshes are adapters, not domain identity.
+- domain/application code consumes narrow spatial/perception ports.
+- UI/presentation queries simulation affordances/attemptability rather than duplicating legality.
+- render FPS/animation completion are not authoritative time/outcome.
+- a visual transform update does not itself commit World placement semantics.
+
+## 2. Deterministic playable scenario/bootstrap tooling
+
+Build the common bootstrap/restore mechanism before a proliferation of bespoke smoke scenes.
+
+Target:
+
+```text
+scenario definition
+→ common restore/bootstrap
+→ authoritative owners + rebuilt projections
+→ optional headless run
+→ optional Godot presentation scene
+```
+
+The same scenario should be usable by headless regression, development launcher and presentation smoke test where practical.
+
+## 3. Representative multi-system scenarios + seed-population tests
+
+Use `docs/SCENE_VALIDATION.md`, `docs/brainstorming/representative-scene-catalog.md` and `docs/asset-catalog/SCENE_COVERAGE.md` as evidence sources, not as new authority.
+
+Prefer representative scenes that force several already-implemented systems to interact and expose missing primitives honestly.
+
+Do not add scene-specific APIs just to make one scripted outcome pass.
+
+---
+
+# Known cross-cutting work
+
+`docs/DISCOVERY_STATUS.md` owns the current list. Pull items forward when required by representative behavior, including areas such as:
+
+```text
+grounded collision/body consequences
+generic reconsideration gating
+drive hysteresis-memory persistence
+Wilson-relative route/escape evaluation
+intervention causal windows
+automatic habit-disuse/context production
+Presence attribution production
+full run-save composition
+new-run bootstrap / Legacy seeding
+```
+
+Do not silently mark these solved because an adapter/scenario can work around them.
 
 ---
 
 # Guards and calibration
 
-Follow `docs/GUARDS_AND_CALIBRATION.md` for numeric accumulation/adaptive control.
+Follow `docs/GUARDS_AND_CALIBRATION.md`.
 
 - hard finite bounds are invariants;
 - prefer saturating/diminishing updates before clamp;
@@ -337,19 +454,6 @@ Follow `docs/GUARDS_AND_CALIBRATION.md` for numeric accumulation/adaptive contro
 - evaluate health across deterministic run populations instead of forcing each run to one distribution;
 - adaptive control is bounded/whitelisted;
 - immediate threat uses a separate regime.
-
----
-
-# Godot / implementation boundary
-
-- Godot nodes are presentation/infrastructure adapters, not domain identities.
-- Map stable domain entity IDs to scene instances explicitly.
-- Query simulation attemptability/affordances; do not duplicate legality in UI.
-- Use semantic animation/action names.
-- Use semantic interaction regions/anchors rather than object-specific offsets.
-- Render frame rate is not authoritative time.
-- Keep web-export constraints in mind and measure before adding expensive techniques.
-- Fine transforms/nav/occlusion may implement the spatial port; they do not replace coarse/domain semantic placement identity.
 
 ---
 
@@ -414,8 +518,27 @@ catalog requirement
 - deterministic behavior remains reproducible;
 - important autonomous decisions/derivations remain explainable;
 - numeric guards are explicit;
-- persistence/reconstruction implications are tested when affected;
+- persistence/bootstrap implications are tested when affected;
 - canonical docs are updated only if a contract actually changed.
+
+## Spatial/presentation adapter change
+
+- preserves domain identity/authority;
+- narrow port contract remains usable headlessly;
+- coarse semantic placement remains meaningful;
+- fine distance/nav/occlusion behavior has deterministic adapter tests where practical;
+- Godot integration smoke tests validate mapping/anchors without making presentation authoritative;
+- representative dense/sparse/occluded/blocked cases are covered.
+
+## Scenario/bootstrap change
+
+- fixture enters through common restore/bootstrap boundary;
+- no direct private-store mutation shortcut;
+- invalid fixture admission fails clearly;
+- rebuild semantics match real restore;
+- deterministic seed is explicit;
+- headless and presentation use the same authoritative scenario state where practical;
+- edge, extreme, volume and multi-seed validation is included.
 
 ## Architecture/design-contract change
 

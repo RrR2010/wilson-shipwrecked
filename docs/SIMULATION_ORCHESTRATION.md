@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-This document is the canonical orchestration-level contract for runtime ordering, semantic clocks, action progression/commit, perception/learning order, reconsideration, maintenance and offline substitutions.
+This document is the canonical orchestration-level contract for runtime ordering, semantic clocks, action progression/commit, perception/learning order, reconsideration, maintenance, reconstruction/bootstrap and offline substitutions.
 
 It complements `ARCHITECTURE.md`, `SIMULATION_CONTRACTS.md`, `STATE_REQUIREMENTS.md`, `GUARDS_AND_CALIBRATION.md` and `DOMAIN_MICRO_LOOP.md`.
 
@@ -203,7 +203,7 @@ WorldEvent + current authoritative placement/context
 
 `EventDefinition` describes potentially perceptible roles/modalities. Runtime access decides what Wilson actually receives.
 
-The current structural model uses coarse semantic `PlaceId` co-location; fine range/occlusion/nav perception can replace/refine the adapter behind the same contract.
+The current structural model uses coarse semantic `PlaceId` co-location; fine range/occlusion/nav perception may replace/refine the adapter behind the same contract.
 
 Hidden event bindings/provenance must not reappear in Wilson evidence.
 
@@ -440,12 +440,15 @@ Restore order conceptually:
 
 ```text
 load immutable compatible authored content
+→ validate bootstrap input/schema
 → restore World owners
 → rebuild relation indexes
 → restore Wilson durable cognition / intention
 → rebuild EpistemicGraphProjection
-→ restore action execution causal state
-→ leave physical/composition caches empty/reconstructible
+→ restore projects / Director / PlayerRunState / RunLifecycleState / PlayerProfile as applicable
+→ restore ActionExecution causal state
+→ leave physical/composition/hazard/perception/routes caches empty/reconstructible
+→ rebuild required derived projections
 → resume simulation
 ```
 
@@ -480,3 +483,53 @@ simulation step
 ```
 
 Trace is diagnostic evidence, not gameplay authority.
+
+---
+
+# 21. Deterministic fixture/debug bootstrap ordering
+
+Representative development scenarios must use the same reconstruction semantics as normal runtime restore rather than direct post-bootstrap store mutation.
+
+Canonical shape:
+
+```text
+real save -------------------┐
+deterministic fixture -------┼→ common restore/bootstrap boundary → authoritative owners
+named debug scenario --------┘                                → rebuild derived state
+```
+
+A fixture/debug scenario may provide a declarative snapshot of durable causes plus explicit deterministic seed state. It may intentionally place the run in an artificial but valid state such as:
+
+```text
+hungry_wilson_near_food
+wilson_mid_shelter_project
+storm_with_bad_roof
+```
+
+It must not need to simulate all earlier gameplay that would normally lead there.
+
+Admission order follows the same principles as save/load:
+
+```text
+load compatible authored content
+→ parse scenario/fixture input
+→ validate IDs, bounds, owner invariants and causal lifecycle state
+→ construct/restore owner state through the common bootstrap services
+→ rebuild indexes/projections/caches
+→ execute post-bootstrap semantic assertions/queries
+→ only then begin simulation or presentation
+```
+
+Forbidden shortcuts:
+
+```text
+set private owner fields after bootstrap to force a scene
+serialize EffectivePhysicalProfile/HazardProjection/routes as scenario truth
+skip action/process causal validation because the fixture is test-only
+use Godot node transforms as the authoritative fixture state
+allow debug commands to write arbitrary stores directly
+```
+
+A development scenario launcher and future debug console are adapters over this same boundary and normal commands. They do not constitute a separate debug simulation architecture.
+
+For scenario validation, deterministic reproducibility must coexist with **intentional variability**. Run fixed seed populations and vary boundary conditions/data density so results are not accidentally correct for one handcrafted ordering or tiny dataset.
