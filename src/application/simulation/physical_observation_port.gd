@@ -1,6 +1,8 @@
 class_name PhysicalObservationPort
 extends RefCounted
 
+const PhysicalObservation = preload("res://src/application/simulation/physical_observation.gd")
+
 ## Abstract boundary for engine-observed physical facts.
 ##
 ## Observations are typed inputs to consequence resolution; they are not themselves
