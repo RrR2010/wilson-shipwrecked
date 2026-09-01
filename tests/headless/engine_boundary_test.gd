@@ -37,8 +37,8 @@ func _run_slice() -> void:
 	_completed = true
 
 func _test_fixed_simulation_cadence_is_frame_partition_independent() -> void:
-	var sixty_hz := SimulationCadenceClock.new(0.1)
-	var thirty_hz := SimulationCadenceClock.new(0.1)
+	var sixty_hz = SimulationCadenceClock.new(0.1)
+	var thirty_hz = SimulationCadenceClock.new(0.1)
 	var sixty_steps := 0
 	var thirty_steps := 0
 	for _i in range(60):
@@ -48,15 +48,15 @@ func _test_fixed_simulation_cadence_is_frame_partition_independent() -> void:
 	_expect_equal(sixty_steps, 10, "60 Hz partition emits ten semantic steps per second")
 	_expect_equal(thirty_steps, 10, "30 Hz partition emits ten semantic steps per second")
 	_expect_true(absf(sixty_hz.remaining_seconds() - thirty_hz.remaining_seconds()) < 1.0e-6, "equal elapsed time leaves equal remainder")
-	var coarse := SimulationCadenceClock.new(0.1)
+	var coarse = SimulationCadenceClock.new(0.1)
 	_expect_equal(coarse.advance(0.35), 3, "large delta emits every due fixed step")
 	_expect_true(absf(coarse.remaining_seconds() - 0.05) < 1.0e-6, "large delta preserves deterministic remainder")
 
 func _test_spatial_queries_are_explicit_and_deterministic() -> void:
-	var wilson_ref := RuntimeWorldRef.wilson()
-	var coconut_ref := RuntimeWorldRef.entity(DomainId.entity(&"coconut_17"))
-	var unknown_ref := RuntimeWorldRef.entity(DomainId.entity(&"unknown"))
-	var spatial := FakeSpatialQueryPort.new()
+	var wilson_ref: RuntimeWorldRef = RuntimeWorldRef.wilson()
+	var coconut_ref: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"coconut_17"))
+	var unknown_ref: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"unknown"))
+	var spatial = FakeSpatialQueryPort.new()
 	spatial.set_distance(wilson_ref, coconut_ref, 13.8)
 	spatial.set_route(wilson_ref, coconut_ref, true, 15.2)
 	spatial.set_line_of_sight(wilson_ref, coconut_ref, false)
@@ -70,10 +70,10 @@ func _test_spatial_queries_are_explicit_and_deterministic() -> void:
 	_expect_true(is_inf(spatial.metric_distance(wilson_ref, unknown_ref)), "unmapped distance has explicit unavailable result")
 
 func _test_godot_scene_mapping_is_explicit_and_headless_safe() -> void:
-	var wilson_ref := RuntimeWorldRef.wilson()
-	var coconut_ref := RuntimeWorldRef.entity(DomainId.entity(&"coconut_17"))
-	var unknown_ref := RuntimeWorldRef.entity(DomainId.entity(&"unknown"))
-	var registry := GodotSceneSpatialRegistry.new()
+	var wilson_ref: RuntimeWorldRef = RuntimeWorldRef.wilson()
+	var coconut_ref: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"coconut_17"))
+	var unknown_ref: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"unknown"))
+	var registry = GodotSceneSpatialRegistry.new()
 	var wilson := Node3D.new()
 	var coconut := Node3D.new()
 	var pickup_anchor := Node3D.new()
@@ -87,7 +87,7 @@ func _test_godot_scene_mapping_is_explicit_and_headless_safe() -> void:
 	_expect_true(registry.bind(coconut_ref, coconut), "semantic target ref binds explicitly")
 	_expect_true(registry.bind_anchor(coconut_ref, &"pickup", pickup_anchor), "typed interaction anchor binds explicitly")
 	_expect_true(not registry.bind(wilson_ref, coconut), "duplicate semantic ref cannot silently remap")
-	var spatial := GodotSpatialQueryAdapter.new(registry)
+	var spatial = GodotSpatialQueryAdapter.new(registry)
 	_expect_true(is_equal_approx(spatial.metric_distance(wilson_ref, coconut_ref), 5.0), "Godot adapter reports metric Node3D distance")
 	_expect_true(is_inf(spatial.metric_distance(wilson_ref, unknown_ref)), "unmapped Godot ref fails explicitly")
 	_expect_true(spatial.is_interaction_reachable(wilson_ref, coconut_ref, &"pickup"), "interaction reachability uses semantic anchor rather than node name")
@@ -97,9 +97,9 @@ func _test_godot_scene_mapping_is_explicit_and_headless_safe() -> void:
 	coconut.queue_free()
 
 func _test_motion_reports_semantic_progress_without_engine_frames() -> void:
-	var wilson_ref := RuntimeWorldRef.wilson()
-	var coconut_ref := RuntimeWorldRef.entity(DomainId.entity(&"coconut_17"))
-	var motion := FakeMotionPort.new()
+	var wilson_ref: RuntimeWorldRef = RuntimeWorldRef.wilson()
+	var coconut_ref: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"coconut_17"))
+	var motion = FakeMotionPort.new()
 	_expect_true(motion.request_move(wilson_ref, coconut_ref), "semantic move request is accepted")
 	_expect_true(motion.get_target(wilson_ref).equals(coconut_ref), "motion keeps semantic target identity")
 	_expect_equal(motion.get_status(wilson_ref), MotionPort.MotionStatus.MOVING, "motion begins in moving state")
@@ -107,9 +107,9 @@ func _test_motion_reports_semantic_progress_without_engine_frames() -> void:
 	_expect_equal(motion.get_status(wilson_ref), MotionPort.MotionStatus.ARRIVED, "engine progression can report semantic arrival")
 
 func _test_physical_observation_is_typed_non_authoritative_input() -> void:
-	var wilson_ref := RuntimeWorldRef.wilson()
-	var rock_ref := RuntimeWorldRef.entity(DomainId.entity(&"falling_rock"))
-	var observation := PhysicalObservation.new(
+	var wilson_ref: RuntimeWorldRef = RuntimeWorldRef.wilson()
+	var rock_ref: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"falling_rock"))
+	var observation: PhysicalObservation = PhysicalObservation.new(
 		PhysicalObservation.Kind.CONTACT,
 		wilson_ref,
 		rock_ref,
@@ -123,15 +123,15 @@ func _test_physical_observation_is_typed_non_authoritative_input() -> void:
 	_expect_true(is_equal_approx(observation.magnitude, 4.5), "physical fact carries finite magnitude without implying consequence")
 
 func _test_physical_observations_drain_in_engine_order() -> void:
-	var wilson_ref := RuntimeWorldRef.wilson()
-	var rock_ref := RuntimeWorldRef.entity(DomainId.entity(&"falling_rock"))
-	var buffer := GodotPhysicalObservationBuffer.new()
-	var first := PhysicalObservation.new(PhysicalObservation.Kind.OVERLAP_ENTERED, wilson_ref, rock_ref)
-	var second := PhysicalObservation.new(PhysicalObservation.Kind.CONTACT, wilson_ref, rock_ref, 2.0)
+	var wilson_ref: RuntimeWorldRef = RuntimeWorldRef.wilson()
+	var rock_ref: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"falling_rock"))
+	var buffer = GodotPhysicalObservationBuffer.new()
+	var first: PhysicalObservation = PhysicalObservation.new(PhysicalObservation.Kind.OVERLAP_ENTERED, wilson_ref, rock_ref)
+	var second: PhysicalObservation = PhysicalObservation.new(PhysicalObservation.Kind.CONTACT, wilson_ref, rock_ref, 2.0)
 	_expect_true(buffer.enqueue(first), "first engine observation enqueues")
 	_expect_true(buffer.enqueue(second), "second engine observation enqueues")
 	_expect_equal(buffer.pending_count(), 2, "physics observations accumulate between semantic steps")
-	var drained := buffer.drain_observations()
+	var drained: Array[PhysicalObservation] = buffer.drain_observations()
 	_expect_equal(drained.size(), 2, "semantic step drains complete pending batch")
 	_expect_true(drained[0] == first and drained[1] == second, "physical observation order is preserved")
 	_expect_equal(buffer.pending_count(), 0, "drain consumes observations exactly once")
