@@ -33,6 +33,15 @@ func has_entity(entity_id: DomainId) -> bool:
 	return _entities.has(entity_id.key())
 
 
+func set_place(entity_id: DomainId, place_id: DomainId) -> MutationResult:
+	place_id.assert_kind(DomainId.Kind.PLACE)
+	var entity := get_entity(entity_id)
+	if entity == null:
+		return MutationResult.failure(&"entity_not_found", [entity_id.sort_key()])
+	entity.place_id = place_id
+	return MutationResult.success(&"entity_place_set", entity)
+
+
 func set_property_override(entity_id: DomainId, property_id: DomainId, value: Variant) -> MutationResult:
 	var entity := get_entity(entity_id)
 	if entity == null:
