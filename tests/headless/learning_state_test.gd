@@ -8,6 +8,7 @@ const PerceptionResult = preload("res://src/domain/cognition/perception_result.g
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const BeliefLearningService = preload("res://src/domain/cognition/belief_learning_service.gd")
 const AssociationStore = preload("res://src/domain/cognition/association_store.gd")
+const HabitEvidence = preload("res://src/domain/cognition/habit_evidence.gd")
 const HabitStore = preload("res://src/domain/cognition/habit_store.gd")
 const EpisodeStore = preload("res://src/domain/cognition/episode_store.gd")
 const PresenceRelationship = preload("res://src/domain/cognition/presence_relationship.gd")
@@ -108,6 +109,17 @@ func _run_slice() -> void:
 	_expect_true(float(association["attachment"]) >= 0.0 and float(association["attachment"]) <= 1.0, "association attachment remains bounded")
 	var habit = habits.entries()[0]
 	_expect_true(float(habit["strength"]) >= 0.0 and float(habit["strength"]) <= 1.0, "habit strength remains bounded")
+	var strength_before_weakening: float = float(habit["strength"])
+	_expect_true(habits.apply_evidence(HabitEvidence.new(
+		&"gerald_near_food",
+		protect_food,
+		habit["bindings"],
+		-0.5,
+		1.0,
+		&"exec_cue_without_action"
+	)), "negative habit evidence applies")
+	var strength_after_weakening: float = float(habits.entries()[0]["strength"])
+	_expect_true(strength_after_weakening < strength_before_weakening, "cue-without-action evidence can weaken habit")
 	_expect_true(presence.presence_belief >= 0.0 and presence.presence_belief <= 1.0, "Presence belief remains bounded")
 	_expect_true(presence.trust >= -1.0 and presence.trust <= 1.0, "Presence trust remains bounded")
 	_expect_true(presence.dependency >= 0.0 and presence.dependency <= 1.0, "Presence dependency remains bounded")
