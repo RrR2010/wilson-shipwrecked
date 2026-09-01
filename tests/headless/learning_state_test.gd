@@ -75,7 +75,7 @@ func _run_slice() -> void:
 
 	coordinator.process(PerceptionResult.new([], [evidence]))
 	_expect_equal(beliefs.entries().size(), 1, "perceived event still enters belief learning")
-	var association = associations.get(gerald)
+	var association = associations.get_association(gerald)
 	_expect_true(association != null, "event produces subject association")
 	if association != null:
 		_expect_true(float(association["valence"]) < 0.0, "negative experience lowers valence")
@@ -104,7 +104,7 @@ func _run_slice() -> void:
 			1.0,
 			StringName("exec_presence_repeat_%02d" % index)
 		))
-	association = associations.get(gerald)
+	association = associations.get_association(gerald)
 	_expect_true(float(association["valence"]) >= -1.0 and float(association["valence"]) <= 1.0, "association valence remains bounded")
 	_expect_true(float(association["attachment"]) >= 0.0 and float(association["attachment"]) <= 1.0, "association attachment remains bounded")
 	var habit = habits.entries()[0]
