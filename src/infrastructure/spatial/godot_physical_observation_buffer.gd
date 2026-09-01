@@ -1,5 +1,7 @@
 class_name GodotPhysicalObservationBuffer
-extends PhysicalObservationPort
+extends "res://src/application/simulation/physical_observation_port.gd"
+
+const PhysicalObservation = preload("res://src/application/simulation/physical_observation.gd")
 
 ## Ordered bridge from fine-grained Godot physics callbacks to semantic simulation steps.
 ##
