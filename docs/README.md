@@ -22,12 +22,20 @@ Read the smallest bundle sufficient for the task. Validation/history must not be
 For substantial work:
 
 1. [`../README.md`](../README.md) — project thesis;
-2. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current phase, concrete foundation baseline and closed gates;
+2. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current implementation/test/schema baseline and remaining work;
 3. then use the relevant bundle below.
 
-**Current phase:** structural runtime foundation is complete and validated by the strict headless suite. New work should primarily add system/content/presentation breadth through the established contracts rather than reopen foundation ownership by default.
+**Current phase:** the structural runtime foundation and the planned system-breadth owners through run lifecycle / PlayerProfile are implemented and locally validated. The remaining implementation sequence is now primarily:
 
-`AGENTS.md` owns repository workflow/invariants, not the full design specification.
+```text
+fine spatial/nav/occlusion + Godot presentation adapters
+→ deterministic restore/bootstrap scenario tooling
+→ representative multi-system scenarios + seed-population validation
+```
+
+Cross-cutting correctness items listed in `DISCOVERY_STATUS.md` should be pulled forward when representative scenarios require them. New work should preserve established owner boundaries rather than reopen foundation architecture by default.
+
+`AGENTS.md` owns repository workflow/global invariants, not the full design specification.
 
 ---
 
@@ -51,9 +59,9 @@ For substantial work:
 
 ## Canonical
 
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — **state owners, derived services, language-neutral module layout, dependency direction, graph/index placement, application/infrastructure/presentation boundaries**.
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — **state owners, derived services, module layout, dependency direction, Godot/persistence boundaries and the common restore/bootstrap boundary used by saves, deterministic fixtures and debug scenarios**.
 - [`SIMULATION_CONTRACTS.md`](SIMULATION_CONTRACTS.md) — semantic cross-system contracts.
-- [`SIMULATION_ORCHESTRATION.md`](SIMULATION_ORCHESTRATION.md) — clocks, update ordering, commit/perception/learning/reconsideration/offline orchestration.
+- [`SIMULATION_ORCHESTRATION.md`](SIMULATION_ORCHESTRATION.md) — clocks, update ordering, commit/perception/learning/reconsideration/offline orchestration and deterministic fixture/bootstrap ordering.
 - [`MUTATION_AUTHORITY.md`](MUTATION_AUTHORITY.md) — read/propose/mutate ownership matrix.
 - [`GUARDS_AND_CALIBRATION.md`](GUARDS_AND_CALIBRATION.md) — bounds, feedback-loop control and adaptive-policy constraints.
 - [`AI.md`](AI.md) — optional runtime LLM authority/fallback boundary.
@@ -63,7 +71,7 @@ For substantial work:
 - [`DECISION_TRACES.md`](DECISION_TRACES.md) — representative architecture traces.
 - [`IMPLEMENTATION_GATE.md`](IMPLEMENTATION_GATE.md) — historical pre-foundation readiness gate; passed.
 
-Use this bundle for modules, dependencies, orchestration, persistence ownership, graph/index placement and external adapters.
+Use this bundle for modules, dependencies, orchestration, persistence/bootstrap ownership, graph/index placement and external adapters.
 
 ---
 
@@ -110,20 +118,17 @@ The Scientific Method fixture remains in `DOMAIN_MICRO_LOOP.md` because it is al
 
 ---
 
-# 5. Concrete foundation status and tests
+# 5. Concrete implementation status and tests
 
 Use [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) for the authoritative implementation checkpoint, including:
 
 ```text
 strict headless test count
 current snapshot/content schema versions
-implemented ContentPack families
-coarse spatial boundary
-action lifecycle/interruption baseline
-typed EpistemicClaim baseline
-qualified WorldRelation identity
-implemented/reconstructible graph projections
-remaining system breadth
+implemented system breadth
+owner boundaries
+known correctness/support limitations
+remaining major verticals
 ```
 
 Do not copy version/test-count details into multiple domain documents; that creates avoidable drift.
@@ -135,6 +140,8 @@ The standard local regression command is:
 ```
 
 The runner is intentionally stricter than Godot process exit status and rejects script/engine errors, explicit failures and missing expected PASS markers.
+
+Scenario/scale validation must not stop at one happy-path fixture. Use deterministic but varied seed populations, edge/boundary values, empty and dense datasets, conflicting simultaneous inputs, long-running bounded accumulation, reconstruction at awkward lifecycle points and invalid/adversarial fixture admission where relevant.
 
 ---
 
@@ -196,7 +203,7 @@ Use these for intent/recall, not precedence over canonical contracts.
 When documents appear to disagree:
 
 1. **Product/behavior:** `PRODUCT.md` + `BEHAVIORAL_MODEL.md` + `STATE_REQUIREMENTS.md`.
-2. **Architecture/responsibility/module boundaries:** `ARCHITECTURE.md` + Contracts + Orchestration + Mutation Authority.
+2. **Architecture/responsibility/module/bootstrap boundaries:** `ARCHITECTURE.md` + Contracts + Orchestration + Mutation Authority.
 3. **Functional semantics:** core `DOMAIN_*` set and affected specialized appendix.
 4. **Operations:** `DOMAIN_OPERATIONS.md` is the single canonical public operation surface.
 5. **Concrete implementation checkpoint:** `DISCOVERY_STATUS.md` + source/tests; it does not redefine language-neutral product/domain meaning.
