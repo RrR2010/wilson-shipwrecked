@@ -1,6 +1,8 @@
 class_name GodotSpatialQueryAdapter
 extends SpatialQueryPort
 
+const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
+
 ## Godot-backed implementation of semantic spatial queries.
 ##
 ## The adapter resolves stable runtime refs through GodotSceneSpatialRegistry and may
@@ -15,17 +17,17 @@ func _init(p_registry: GodotSceneSpatialRegistry) -> void:
 	assert(p_registry != null)
 	registry = p_registry
 
-func metric_distance(from_ref: StringName, to_ref: StringName) -> float:
+func metric_distance(from_ref: RuntimeWorldRef, to_ref: RuntimeWorldRef) -> float:
 	var from_node := registry.resolve(from_ref)
 	var to_node := registry.resolve(to_ref)
 	if from_node == null or to_node == null:
 		return INF
 	return from_node.global_position.distance_to(to_node.global_position)
 
-func has_route(from_ref: StringName, to_ref: StringName) -> bool:
+func has_route(from_ref: RuntimeWorldRef, to_ref: RuntimeWorldRef) -> bool:
 	return not _route_points(from_ref, to_ref).is_empty()
 
-func route_cost(from_ref: StringName, to_ref: StringName) -> float:
+func route_cost(from_ref: RuntimeWorldRef, to_ref: RuntimeWorldRef) -> float:
 	var points := _route_points(from_ref, to_ref)
 	if points.is_empty():
 		return INF
@@ -34,7 +36,7 @@ func route_cost(from_ref: StringName, to_ref: StringName) -> float:
 		cost += points[index - 1].distance_to(points[index])
 	return cost
 
-func has_line_of_sight(observer_ref: StringName, target_ref: StringName) -> bool:
+func has_line_of_sight(observer_ref: RuntimeWorldRef, target_ref: RuntimeWorldRef) -> bool:
 	if physics_space_state == null:
 		return false
 	var observer := registry.resolve(observer_ref)
@@ -48,7 +50,7 @@ func has_line_of_sight(observer_ref: StringName, target_ref: StringName) -> bool
 	var collider = hit.get("collider")
 	return collider is Node and _is_same_or_descendant(collider as Node, target)
 
-func is_interaction_reachable(actor_ref: StringName, target_ref: StringName, interaction_id: StringName = &"") -> bool:
+func is_interaction_reachable(actor_ref: RuntimeWorldRef, target_ref: RuntimeWorldRef, interaction_id: StringName = &"") -> bool:
 	var actor := registry.resolve(actor_ref)
 	var anchor := registry.resolve_anchor(target_ref, interaction_id)
 	if actor == null or anchor == null:
@@ -64,7 +66,7 @@ func is_interaction_reachable(actor_ref: StringName, target_ref: StringName, int
 	var collider = hit.get("collider")
 	return collider is Node and _is_same_or_descendant(collider as Node, anchor)
 
-func _route_points(from_ref: StringName, to_ref: StringName) -> PackedVector3Array:
+func _route_points(from_ref: RuntimeWorldRef, to_ref: RuntimeWorldRef) -> PackedVector3Array:
 	if not navigation_map.is_valid():
 		return PackedVector3Array()
 	var from_node := registry.resolve(from_ref)
