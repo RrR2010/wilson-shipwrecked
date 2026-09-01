@@ -11,13 +11,17 @@ const BeliefProposition = preload("res://src/domain/cognition/belief_proposition
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
+const AssociationStore = preload("res://src/domain/cognition/association_store.gd")
+const HabitStore = preload("res://src/domain/cognition/habit_store.gd")
+const EpisodeStore = preload("res://src/domain/cognition/episode_store.gd")
+const PresenceRelationship = preload("res://src/domain/cognition/presence_relationship.gd")
 const ProjectInstance = preload("res://src/domain/projects/project_instance.gd")
 const ProjectStore = preload("res://src/domain/projects/project_store.gd")
 const EpistemicGraphProjection = preload("res://src/domain/cognition/epistemic_graph_projection.gd")
 const DomainValueCodec = preload("res://src/infrastructure/persistence/domain_value_codec.gd")
 const RestoredSimulationState = preload("res://src/infrastructure/persistence/restored_simulation_state.gd")
 
-const SCHEMA_VERSION := 6
+const SCHEMA_VERSION := 7
 
 var _codec
 
@@ -33,7 +37,11 @@ func capture(
 	belief_store,
 	intention_store,
 	drive_state = null,
-	project_store = null
+	project_store = null,
+	association_store = null,
+	habit_store = null,
+	episode_store = null,
+	presence_relationship = null
 ) -> Dictionary:
 	assert(entity_store != null, "capture requires EntityStore")
 	assert(relation_store != null, "capture requires WorldRelationStore")
@@ -42,6 +50,10 @@ func capture(
 	assert(intention_store != null, "capture requires CurrentIntentionStore")
 	var drives = drive_state if drive_state != null else DriveState.new()
 	var projects = project_store if project_store != null else ProjectStore.new()
+	var associations = association_store if association_store != null else AssociationStore.new()
+	var habits = habit_store if habit_store != null else HabitStore.new()
+	var episodes = episode_store if episode_store != null else EpisodeStore.new()
+	var presence = presence_relationship if presence_relationship != null else PresenceRelationship.new()
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"entities": _capture_entities(entity_store),
@@ -51,6 +63,10 @@ func capture(
 		"current_intention": _capture_intention(intention_store),
 		"drives": _capture_drives(drives),
 		"projects": _capture_projects(projects),
+		"associations": _capture_associations(associations),
+		"habits": _capture_habits(habits),
+		"episodes": _capture_episodes(episodes),
+		"presence": _capture_presence(presence),
 	}
 
 
@@ -125,6 +141,48 @@ func restore(snapshot: Dictionary):
 		)
 		assert(projects.add(project), "Failed to restore duplicate project instance")
 
+	var associations = AssociationStore.new()
+	for record in snapshot.get("associations", []):
+		associations.restore_entry(
+			_codec.decode(record["subject"]),
+			float(record["valence"]),
+			float(record["attachment"]),
+			int(record["evidence_count"]),
+			StringName(record.get("last_source_execution_id", ""))
+		)
+
+	var habits = HabitStore.new()
+	for record in snapshot.get("habits", []):
+		habits.restore_entry(
+			StringName(record["cue_id"]),
+			_codec.decode(record["intention_id"]),
+			_decode_binding(record["bindings"]),
+			float(record["strength"]),
+			int(record["evidence_count"]),
+			StringName(record.get("last_source_execution_id", ""))
+		)
+
+	var episodes = EpisodeStore.new()
+	for record in snapshot.get("episodes", []):
+		episodes.restore_entry(
+			_codec.decode(record["claim"]),
+			float(record["importance"]),
+			StringName(record["source_execution_id"]),
+			StringName(record["modality"]),
+			int(record["sequence"])
+		)
+
+	var presence_record = snapshot.get("presence")
+	assert(presence_record is Dictionary, "Snapshot missing Presence relationship")
+	var presence = PresenceRelationship.new()
+	presence.restore(
+		float(presence_record["presence_belief"]),
+		float(presence_record["trust"]),
+		float(presence_record["dependency"]),
+		int(presence_record["evidence_count"]),
+		StringName(presence_record.get("last_source_execution_id", ""))
+	)
+
 	var epistemic_projection = EpistemicGraphProjection.new()
 	epistemic_projection.rebuild(beliefs)
 	return RestoredSimulationState.new(
@@ -135,6 +193,10 @@ func restore(snapshot: Dictionary):
 		intention_store,
 		drives,
 		projects,
+		associations,
+		habits,
+		episodes,
+		presence,
 		epistemic_projection
 	)
 
@@ -199,7 +261,7 @@ func _capture_drives(drive_state) -> Dictionary:
 func _decode_drives(record: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
 	for drive_id in DriveState.DRIVE_IDS:
-		var key := String(drive_id)
+		var key: String = String(drive_id)
 		assert(record.has(key), "Drive snapshot missing %s" % key)
 		result[drive_id] = float(record[key])
 	return result
@@ -216,6 +278,56 @@ func _capture_projects(project_store) -> Array:
 			"contribution_count": project.contribution_count,
 		})
 	return result
+
+
+func _capture_associations(association_store) -> Array:
+	var result: Array = []
+	for entry in association_store.entries():
+		result.append({
+			"subject": _codec.encode(entry["subject"]),
+			"valence": entry["valence"],
+			"attachment": entry["attachment"],
+			"evidence_count": entry["evidence_count"],
+			"last_source_execution_id": String(entry["last_source_execution_id"]),
+		})
+	return result
+
+
+func _capture_habits(habit_store) -> Array:
+	var result: Array = []
+	for entry in habit_store.entries():
+		result.append({
+			"cue_id": String(entry["cue_id"]),
+			"intention_id": _codec.encode(entry["intention_id"]),
+			"bindings": _encode_binding(entry["bindings"]),
+			"strength": entry["strength"],
+			"evidence_count": entry["evidence_count"],
+			"last_source_execution_id": String(entry["last_source_execution_id"]),
+		})
+	return result
+
+
+func _capture_episodes(episode_store) -> Array:
+	var result: Array = []
+	for entry in episode_store.entries():
+		result.append({
+			"claim": _codec.encode(entry["claim"]),
+			"importance": entry["importance"],
+			"source_execution_id": String(entry["source_execution_id"]),
+			"modality": String(entry["modality"]),
+			"sequence": entry["sequence"],
+		})
+	return result
+
+
+func _capture_presence(presence) -> Dictionary:
+	return {
+		"presence_belief": presence.presence_belief,
+		"trust": presence.trust,
+		"dependency": presence.dependency,
+		"evidence_count": presence.evidence_count,
+		"last_source_execution_id": String(presence.last_source_execution_id),
+	}
 
 
 func _encode_binding(binding) -> Array:

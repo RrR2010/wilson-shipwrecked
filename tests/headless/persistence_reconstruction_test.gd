@@ -20,6 +20,14 @@ const BeliefEvidence = preload("res://src/domain/cognition/belief_evidence.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
+const AssociationImpact = preload("res://src/domain/cognition/association_impact.gd")
+const AssociationStore = preload("res://src/domain/cognition/association_store.gd")
+const HabitEvidence = preload("res://src/domain/cognition/habit_evidence.gd")
+const HabitStore = preload("res://src/domain/cognition/habit_store.gd")
+const EpisodeCandidate = preload("res://src/domain/cognition/episode_candidate.gd")
+const EpisodeStore = preload("res://src/domain/cognition/episode_store.gd")
+const PresenceEvidence = preload("res://src/domain/cognition/presence_evidence.gd")
+const PresenceRelationship = preload("res://src/domain/cognition/presence_relationship.gd")
 const ProjectInstance = preload("res://src/domain/projects/project_instance.gd")
 const ProjectStore = preload("res://src/domain/projects/project_store.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
@@ -95,6 +103,15 @@ func _run_slice() -> void:
 	var projects = ProjectStore.new()
 	_expect_true(projects.add(ProjectInstance.new(project_instance_id, project_definition_id, project_binding, ProjectInstance.Lifecycle.ACTIVE, 1)), "project instance added")
 
+	var associations = AssociationStore.new()
+	_expect_true(associations.apply_impact(AssociationImpact.new(crate, 0.3, 0.5, 0.8, &"exec_assoc")), "association impact applied")
+	var habits = HabitStore.new()
+	_expect_true(habits.apply_evidence(HabitEvidence.new(&"crate_nearby", investigate, intention_binding, 0.6, 0.7, &"exec_habit")), "habit evidence applied")
+	var episodes = EpisodeStore.new()
+	_expect_true(episodes.consider(EpisodeCandidate.new(proposition.claim, 0.8, &"exec_episode", &"vision")), "episode consolidated")
+	var presence = PresenceRelationship.new()
+	presence.apply_evidence(PresenceEvidence.new(0.4, 0.2, 0.3, 0.5, &"exec_presence"))
+
 	var policies = PhysicalDerivationPolicyRegistry.new()
 	var resistance_rule = PropertyDerivationDefinition.new(&"effective_resistance_v1", [hardness, structural_integrity], effective_resistance, &"min_numeric")
 	var graph_before = PropertyDependencyGraph.new()
@@ -106,10 +123,26 @@ func _run_slice() -> void:
 	var belief_before = beliefs.get_entry(proposition).confidence
 
 	var persistence = SimulationSnapshotService.new()
-	var snapshot = persistence.capture(entities, relations, wilson_world, beliefs, intention_store, drives, projects)
-	_expect_equal(snapshot.get("schema_version"), 6, "snapshot schema version")
+	var snapshot = persistence.capture(
+		entities,
+		relations,
+		wilson_world,
+		beliefs,
+		intention_store,
+		drives,
+		projects,
+		associations,
+		habits,
+		episodes,
+		presence
+	)
+	_expect_equal(snapshot.get("schema_version"), 7, "snapshot schema version")
 	_expect_true(snapshot.has("drives"), "durable Wilson drives are persisted")
 	_expect_true(snapshot.has("projects"), "durable project owner state is persisted")
+	_expect_true(snapshot.has("associations"), "durable associations are persisted")
+	_expect_true(snapshot.has("habits"), "durable habits are persisted")
+	_expect_true(snapshot.has("episodes"), "consolidated episodes are persisted")
+	_expect_true(snapshot.has("presence"), "Presence relationship is persisted")
 	_expect_false(snapshot.has("relation_indexes"), "reconstructible relation indexes are not persisted")
 	_expect_false(snapshot.has("epistemic_projection"), "epistemic projection is not persisted")
 	_expect_false(snapshot.has("effective_physical_profiles"), "physical profile cache is not persisted")
@@ -161,6 +194,24 @@ func _run_slice() -> void:
 		_expect_equal(restored_project.lifecycle, ProjectInstance.Lifecycle.ACTIVE, "project lifecycle survives")
 		_expect_equal(restored_project.contribution_count, 1, "project contribution metadata survives")
 		_expect_equal(restored_project.subject_bindings.get_subject(&"project_subject").key(), restored_crate.key(), "project physical subject binding survives")
+
+	var original_association = associations.get_association(crate)
+	var restored_association = restored.associations.get_association(restored_crate)
+	_expect_true(restored_association != null, "association survives save/load")
+	if restored_association != null:
+		_expect_equal(restored_association["valence"], original_association["valence"], "association valence survives")
+		_expect_equal(restored_association["attachment"], original_association["attachment"], "association attachment survives")
+	_expect_equal(restored.habits.entries().size(), 1, "habit survives save/load")
+	if restored.habits.entries().size() == 1:
+		_expect_equal(restored.habits.entries()[0]["strength"], habits.entries()[0]["strength"], "habit strength survives")
+		_expect_equal(restored.habits.entries()[0]["bindings"].get_subject(&"target").key(), restored_crate.key(), "habit binding survives")
+	_expect_equal(restored.episodes.entries().size(), 1, "episode survives save/load")
+	if restored.episodes.entries().size() == 1:
+		_expect_equal(restored.episodes.entries()[0]["claim"].key(), restored_proposition.claim.key(), "episode typed claim survives")
+		_expect_equal(restored.episodes.entries()[0]["importance"], 0.8, "episode importance survives")
+	_expect_equal(restored.presence.presence_belief, presence.presence_belief, "Presence belief survives")
+	_expect_equal(restored.presence.trust, presence.trust, "Presence trust survives")
+	_expect_equal(restored.presence.dependency, presence.dependency, "Presence dependency survives")
 
 	var graph_after = PropertyDependencyGraph.new()
 	_expect_true(graph_after.compile([resistance_rule], policies).ok, "property graph recompiles after load")
