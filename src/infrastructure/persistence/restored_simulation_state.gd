@@ -11,6 +11,10 @@ var beliefs
 var current_intention
 var drives
 var projects
+var associations
+var habits
+var episodes
+var presence
 var epistemic_projection
 
 
@@ -22,6 +26,10 @@ func _init(
 	p_current_intention,
 	p_drives,
 	p_projects,
+	p_associations,
+	p_habits,
+	p_episodes,
+	p_presence,
 	p_epistemic_projection
 ) -> void:
 	entities = p_entities
@@ -31,4 +39,8 @@ func _init(
 	current_intention = p_current_intention
 	drives = p_drives
 	projects = p_projects
+	associations = p_associations
+	habits = p_habits
+	episodes = p_episodes
+	presence = p_presence
 	epistemic_projection = p_epistemic_projection
