@@ -11,10 +11,13 @@ const AssociationStore = preload("res://src/domain/cognition/association_store.g
 const HabitStore = preload("res://src/domain/cognition/habit_store.gd")
 const EpisodeStore = preload("res://src/domain/cognition/episode_store.gd")
 const PresenceRelationship = preload("res://src/domain/cognition/presence_relationship.gd")
+const PresenceAttributionEvidence = preload("res://src/domain/cognition/presence_attribution_evidence.gd")
+const PresenceLearningService = preload("res://src/domain/cognition/presence_learning_service.gd")
 const ExperienceLearningRule = preload("res://src/domain/cognition/experience_learning_rule.gd")
 const ExperienceLearningService = preload("res://src/domain/cognition/experience_learning_service.gd")
 const BeliefLearningCoordinator = preload("res://src/application/simulation/belief_learning_coordinator.gd")
 const WilsonLearningCoordinator = preload("res://src/application/simulation/wilson_learning_coordinator.gd")
+const PresenceLearningCoordinator = preload("res://src/application/simulation/presence_learning_coordinator.gd")
 
 var _failures: Array[String] = []
 var _completed := false
@@ -47,10 +50,7 @@ func _run_slice() -> void:
 		&"gerald_near_food",
 		protect_food,
 		&"culprit",
-		0.6,
-		0.5,
-		-0.4,
-		0.2
+		0.6
 	)
 	var evidence = PerceptualEvidence.new(
 		EpistemicClaim.event_claim(gerald, interference, &"culprit"),
@@ -68,9 +68,9 @@ func _run_slice() -> void:
 		ExperienceLearningService.new([rule]),
 		associations,
 		habits,
-		episodes,
-		presence
+		episodes
 	)
+	var presence_coordinator = PresenceLearningCoordinator.new(PresenceLearningService.new(), presence)
 
 	coordinator.process(PerceptionResult.new([], [evidence]))
 	_expect_equal(beliefs.entries().size(), 1, "perceived event still enters belief learning")
@@ -81,8 +81,11 @@ func _run_slice() -> void:
 		_expect_true(float(association["attachment"]) > 0.0, "negative repeated relevance can still increase attachment")
 	_expect_equal(habits.entries().size(), 1, "event can reinforce one bounded habit")
 	_expect_equal(episodes.entries().size(), 1, "important event consolidates one episode")
-	_expect_true(presence.presence_belief > 0.0, "attributed experience can increase Presence belief")
-	_expect_true(presence.trust < 0.0, "harmful attributed experience can reduce Presence trust")
+	_expect_equal(presence.evidence_count, 0, "perceived event alone does not mutate Presence relationship")
+
+	presence_coordinator.process(PresenceAttributionEvidence.new(0.5, -0.4, 0.2, 0.8, &"exec_presence_1"))
+	_expect_true(presence.presence_belief > 0.0, "attributed agency evidence can increase Presence belief")
+	_expect_true(presence.trust < 0.0, "harmful attributed outcome can reduce Presence trust")
 	_expect_true(presence.dependency > 0.0, "Presence dependency remains independent dimension")
 
 	for index in range(20):
@@ -93,6 +96,13 @@ func _run_slice() -> void:
 			&"vision"
 		)
 		coordinator.process(PerceptionResult.new([], [repeated]))
+		presence_coordinator.process(PresenceAttributionEvidence.new(
+			0.5,
+			-0.4,
+			0.2,
+			1.0,
+			StringName("exec_presence_repeat_%02d" % index)
+		))
 	association = associations.get(gerald)
 	_expect_true(float(association["valence"]) >= -1.0 and float(association["valence"]) <= 1.0, "association valence remains bounded")
 	_expect_true(float(association["attachment"]) >= 0.0 and float(association["attachment"]) <= 1.0, "association attachment remains bounded")
