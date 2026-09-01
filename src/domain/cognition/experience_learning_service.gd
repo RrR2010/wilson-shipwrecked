@@ -5,7 +5,6 @@ const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 const AssociationImpact = preload("res://src/domain/cognition/association_impact.gd")
 const HabitEvidence = preload("res://src/domain/cognition/habit_evidence.gd")
 const EpisodeCandidate = preload("res://src/domain/cognition/episode_candidate.gd")
-const PresenceEvidence = preload("res://src/domain/cognition/presence_evidence.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 
 var _rules: Array
@@ -17,11 +16,10 @@ func _init(rules: Array) -> void:
 
 func derive(perceptual_evidence) -> Dictionary:
 	assert(perceptual_evidence != null, "ExperienceLearningService.derive requires PerceptualEvidence")
-	var result := {
+	var result: Dictionary = {
 		"association_impacts": [],
 		"habit_evidence": [],
 		"episode_candidates": [],
-		"presence_evidence": [],
 	}
 	var claim = perceptual_evidence.claim
 	if claim.kind != EpistemicClaim.Kind.EVENT:
@@ -52,14 +50,6 @@ func derive(perceptual_evidence) -> Dictionary:
 				rule.habit_intention_id,
 				bindings,
 				rule.habit_strength_delta,
-				perceptual_evidence.confidence,
-				perceptual_evidence.source_execution_id
-			))
-		if rule.has_presence_evidence():
-			result["presence_evidence"].append(PresenceEvidence.new(
-				rule.presence_belief_delta,
-				rule.presence_trust_delta,
-				rule.presence_dependency_delta,
 				perceptual_evidence.confidence,
 				perceptual_evidence.source_execution_id
 			))
