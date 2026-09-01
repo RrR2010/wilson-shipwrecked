@@ -10,6 +10,8 @@ const WorldRelationStore = preload("res://src/domain/world/world_relation_store.
 const EnvironmentState = preload("res://src/domain/world/environment_state.gd")
 const DynamicProcessInstance = preload("res://src/domain/world/dynamic_process_instance.gd")
 const DynamicProcessStore = preload("res://src/domain/world/dynamic_process_store.gd")
+const ActorRuntimeState = preload("res://src/domain/actors/actor_runtime_state.gd")
+const ActorStateStore = preload("res://src/domain/actors/actor_state_store.gd")
 const BeliefProposition = preload("res://src/domain/cognition/belief_proposition.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
@@ -24,7 +26,7 @@ const EpistemicGraphProjection = preload("res://src/domain/cognition/epistemic_g
 const DomainValueCodec = preload("res://src/infrastructure/persistence/domain_value_codec.gd")
 const RestoredSimulationState = preload("res://src/infrastructure/persistence/restored_simulation_state.gd")
 
-const SCHEMA_VERSION := 8
+const SCHEMA_VERSION := 9
 
 var _codec
 
@@ -46,7 +48,8 @@ func capture(
 	episode_store = null,
 	presence_relationship = null,
 	environment_state = null,
-	dynamic_process_store = null
+	dynamic_process_store = null,
+	actor_state_store = null
 ) -> Dictionary:
 	assert(entity_store != null, "capture requires EntityStore")
 	assert(relation_store != null, "capture requires WorldRelationStore")
@@ -61,6 +64,7 @@ func capture(
 	var presence = presence_relationship if presence_relationship != null else PresenceRelationship.new()
 	var environment = environment_state if environment_state != null else EnvironmentState.new()
 	var dynamic_processes = dynamic_process_store if dynamic_process_store != null else DynamicProcessStore.new()
+	var actors = actor_state_store if actor_state_store != null else ActorStateStore.new()
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"entities": _capture_entities(entity_store),
@@ -76,6 +80,7 @@ func capture(
 		"presence": _capture_presence(presence),
 		"environment": _capture_environment(environment),
 		"dynamic_processes": _capture_dynamic_processes(dynamic_processes),
+		"actors": _capture_actors(actors),
 	}
 
 
@@ -209,6 +214,16 @@ func restore(snapshot: Dictionary):
 			float(record["elapsed"])
 		)), "Failed to restore duplicate dynamic process")
 
+	var actors = ActorStateStore.new()
+	for record in snapshot.get("actors", []):
+		assert(actors.add(ActorRuntimeState.new(
+			_codec.decode(record["actor"]),
+			StringName(record["profile_id"]),
+			StringName(record["mode"]),
+			float(record["decision_cooldown"]),
+			StringName(record.get("last_rule_id", ""))
+		)), "Failed to restore duplicate shallow actor state")
+
 	var epistemic_projection = EpistemicGraphProjection.new()
 	epistemic_projection.rebuild(beliefs)
 	return RestoredSimulationState.new(
@@ -225,6 +240,7 @@ func restore(snapshot: Dictionary):
 		presence,
 		environment,
 		dynamic_processes,
+		actors,
 		epistemic_projection
 	)
 
@@ -374,6 +390,19 @@ func _capture_dynamic_processes(dynamic_process_store) -> Array:
 			"subject": _codec.encode(process.subject),
 			"lifecycle": process.lifecycle,
 			"elapsed": process.elapsed,
+		})
+	return result
+
+
+func _capture_actors(actor_state_store) -> Array:
+	var result: Array = []
+	for state in actor_state_store.states():
+		result.append({
+			"actor": _codec.encode(state.actor),
+			"profile_id": String(state.profile_id),
+			"mode": String(state.mode),
+			"decision_cooldown": state.decision_cooldown,
+			"last_rule_id": String(state.last_rule_id),
 		})
 	return result
 

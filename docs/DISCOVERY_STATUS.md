@@ -28,6 +28,7 @@ structural World/runtime foundation
 → authoritative environment state + persisted dynamic processes
 → protection/exposure projections
 → hazard projections + Wilson-relative immediate-threat production
+→ shallow non-Wilson actor runtime behavior
 ```
 
 The strict external runner is validated under **Godot 4.7.1** and rejects script/engine errors even when an individual Godot process exits `0`.
@@ -35,8 +36,8 @@ The strict external runner is validated under **Godot 4.7.1** and rejects script
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 33 PASS / 33 TOTAL
-PASS headless_suite (33 tests)
+RESULT: 35 PASS / 35 TOTAL
+PASS headless_suite (35 tests)
 ```
 
 ---
@@ -82,7 +83,9 @@ Protection projection / exposure resolution  PASS — Godot 4.7.1 headless
 Hazard projection                            PASS — Godot 4.7.1 headless
 Perceived-threat interpretation              PASS — Godot 4.7.1 headless
 Immediate-threat candidate routing           PASS — Godot 4.7.1 headless
-Strict headless suite                        PASS — 33 tests
+Shallow non-Wilson actor behavior            PASS — Godot 4.7.1 headless
+Shallow actor persistence                    PASS — Godot 4.7.1 headless
+Strict headless suite                        PASS — 35 tests
 ```
 
 ---
@@ -118,9 +121,9 @@ typed DomainId / RuntimeWorldRef
 World/environment progression includes:
 
 ```text
-EnvironmentState + DynamicProcessStore
-→ DynamicProcessAdvanceService
-→ authoritative bounded property mutation
+EnvironmentState + DynamicProcessStore + shallow actor state
+→ DynamicProcessAdvanceService + ShallowActorAdvanceService
+→ authoritative bounded World mutation
 → WorldAdvanceResult.change_set
 → derived invalidation
 → remaining simulation micro-loop
@@ -167,6 +170,9 @@ Current regressions support these boundaries:
 - `HazardProjection` does not commit a future victim or collision result.
 - Wilson emergency cognition is produced only from accessible perceptual evidence, not directly from authoritative hazard projections.
 - Immediate threat wins through a separate routing regime rather than infinity/oversized candidate scores.
+- Shallow non-Wilson actor runtime state belongs to World; actor profiles/rules are authored definitions.
+- Shallow actors do not receive Wilson cognition stores, projects, Presence psychology or long-horizon planning state.
+- Coarse actor locomotion/state progression occurs through World-owned progression; material interactions still require normal grounded action/outcome semantics.
 
 ---
 
@@ -369,17 +375,51 @@ This vertical intentionally does **not** yet implement:
 
 ---
 
+# Shallow non-Wilson actor baseline
+
+Current actor breadth is deliberately shallow and World-owned:
+
+```text
+ActorProfileDefinition
+ActorBehaviorRule
+ActorRuntimeState
+ActorStateStore
+ShallowActorAdvanceService
+```
+
+Validated behavior includes:
+
+- authored profiles/rules rather than actor-specific subclasses;
+- bounded rule priority with stable deterministic tie-breaking;
+- optional externally supplied coarse stimulus tags;
+- durable mode, decision cooldown and last-rule provenance;
+- coarse relocation between `PlaceId`s through the authoritative entity owner;
+- composition into the same World/environment advance boundary used by dynamic processes;
+- persistence/reconstruction of actor runtime state.
+
+This is not a second Wilson-like cognition stack. It intentionally does **not** add:
+
+- beliefs or episodic memory for animals;
+- project/Presence state;
+- long-horizon planning;
+- combat AI;
+- direct shortcuts for material interactions such as stealing, biting, consuming or breaking objects.
+
+Those material consequences must remain grounded through the normal physical/action contracts when added.
+
+---
+
 # Persistence baseline
 
 Current development schemas:
 
 ```text
-SimulationSnapshotService schema: v8
+SimulationSnapshotService schema: v9
 ActionExecutionSnapshotService schema: v2
 ContentPackLoader schema: v1
 ```
 
-`SimulationSnapshotService v8` currently persists/reconstructs tested authoritative/runtime causes including:
+`SimulationSnapshotService v9` currently persists/reconstructs tested authoritative/runtime causes including:
 
 ```text
 entities + runtime property overrides
@@ -395,7 +435,10 @@ EpisodeStore
 PresenceRelationship
 EnvironmentState
 DynamicProcessInstance state
+ActorRuntimeState
 ```
+
+Actor runtime persistence includes profile binding, current mode, decision cooldown and last selected rule. Authored actor profiles/rules are not duplicated into the save.
 
 Reconstructible state remains excluded from durable snapshots, including:
 
@@ -436,12 +479,11 @@ The remaining work is primarily system breadth and presentation rather than unre
 Recommended sequence from the current checkpoint:
 
 ```text
-1. shallow non-Wilson actor behavior
-2. Director + player intervention / suggestions
-3. run lifecycle / death / resurrection / Legacy / PlayerProfile
-4. fine spatial/nav/occlusion + Godot presentation adapters
-5. deterministic playable scenario/bootstrap tooling
-6. representative multi-system scenario suites + seed-population tests
+1. Director + player intervention / suggestions
+2. run lifecycle / death / resurrection / Legacy / PlayerProfile
+3. fine spatial/nav/occlusion + Godot presentation adapters
+4. deterministic playable scenario/bootstrap tooling
+5. representative multi-system scenario suites + seed-population tests
 ```
 
 Cross-cutting correctness/support slices still required before or alongside those verticals include:
