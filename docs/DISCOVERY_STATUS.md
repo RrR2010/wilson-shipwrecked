@@ -4,53 +4,53 @@
 
 This file records the **currently implemented and locally validated runtime baseline** for Wilson Shipwrecked.
 
-Canonical semantics remain in the domain/architecture documents. This file should not restate those documents in full; it answers:
+Canonical semantics remain in the domain and architecture documents. This file answers only:
 
 - what is implemented now;
 - what has passed the strict Godot gate;
-- which persistence versions are current;
+- which persistence schemas are current;
 - which known limitations remain;
 - what vertical comes next.
 
 ---
 
-# Current phase
-
-Product/behavior discovery, architecture contracts, the language-neutral functional domain, normalized cross-cutting asset catalog, and the structural runtime foundation are complete enough for active system implementation.
-
-The validated runtime currently includes:
-
-```text
-structural World/runtime foundation
-→ Wilson drives + drive candidate production
-→ Projects runtime + project candidate production
-→ Wilson learning state (associations / habits / episodes / Presence)
-→ authoritative environment state + persisted dynamic processes
-→ protection/exposure projections
-→ hazard projections + Wilson-relative immediate-threat production
-→ shallow non-Wilson actor runtime behavior
-```
+# Current validated baseline
 
 The strict external runner is validated under **Godot 4.7.1** and rejects script/engine errors even when an individual Godot process exits `0`.
 
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 35 PASS / 35 TOTAL
-PASS headless_suite (35 tests)
+RESULT: 37 PASS / 37 TOTAL
+PASS headless_suite (37 tests)
+```
+
+Validated breadth now includes:
+
+```text
+structural World/runtime foundation
+→ Wilson drives + bounded drive candidates
+→ Projects runtime + project candidates
+→ Wilson learning state (associations / habits / episodes / Presence boundary)
+→ authoritative EnvironmentState + persisted dynamic processes
+→ protection/exposure projections
+→ hazard projection + Wilson-relative immediate-threat production
+→ shallow non-Wilson actor runtime behavior
+→ Director opportunity lifecycle
+→ PlayerRunState + bounded suggestions
+→ validated physical player-intervention boundary
 ```
 
 ---
 
 # Closed implementation gates
 
-## Structural runtime foundation
+## Structural/runtime foundation
 
-The following foundation areas remain covered by strict headless regressions:
+Strict regressions continue to cover:
 
 ```text
-World relation runtime
-qualified relation identity
+World relation runtime + qualified identity
 PropertyDefinition/runtime property validation
 EffectivePhysicalProfile
 AssemblyBindingProjection / AssemblyValidity
@@ -68,344 +68,231 @@ mid-action causal reconstruction
 structural-scale reconstruction
 ```
 
-## System breadth verticals
+## System breadth
 
 ```text
-Drives                                       PASS — Godot 4.7.1 headless
-Projects                                     PASS — Godot 4.7.1 headless
-Associations / habits / episodes             PASS — Godot 4.7.1 headless
-Presence relationship learning boundary      PASS — Godot 4.7.1 headless
-EnvironmentState                             PASS — Godot 4.7.1 headless
-Dynamic World processes                      PASS — Godot 4.7.1 headless
-Dynamic-process derived invalidation         PASS — Godot 4.7.1 headless
-Environment/process persistence              PASS — Godot 4.7.1 headless
-Protection projection / exposure resolution  PASS — Godot 4.7.1 headless
-Hazard projection                            PASS — Godot 4.7.1 headless
-Perceived-threat interpretation              PASS — Godot 4.7.1 headless
-Immediate-threat candidate routing           PASS — Godot 4.7.1 headless
-Shallow non-Wilson actor behavior            PASS — Godot 4.7.1 headless
-Shallow actor persistence                    PASS — Godot 4.7.1 headless
-Strict headless suite                        PASS — 35 tests
+Drives                                         PASS
+Projects                                       PASS
+Associations / habits / episodes               PASS
+Presence relationship learning boundary        PASS
+EnvironmentState                               PASS
+Dynamic World processes                        PASS
+Dynamic-process derived invalidation           PASS
+Protection projection / exposure resolution    PASS
+Hazard projection                              PASS
+Perceived-threat interpretation                PASS
+Immediate-threat candidate routing             PASS
+Shallow non-Wilson actor behavior              PASS
+Shallow actor persistence                      PASS
+Director opportunity lifecycle                 PASS
+Director bounded candidate production          PASS
+Player suggestion / bounded insistence         PASS
+Player physical intervention commit boundary   PASS
+Director + PlayerRunState persistence           PASS
+Strict headless suite                          PASS — 37 tests
 ```
 
 ---
 
-# Current validated implementation chain
+# Current authority map
 
 ```text
-typed DomainId / RuntimeWorldRef
-→ immutable authored content registry
-→ bounded property/content schemas
-→ authoritative World stores
-→ relation / assembly / physical projections
-→ action attemptability
-→ action execution
-→ successful World commit
-→ SemanticChangeSet
-→ derived invalidation
-→ WorldEvent
-→ PerceptionAccess
-→ PerceptualEvidence
-→ belief + Wilson-local learning
-→ drive progression
-→ bounded candidate sources
-   - perceptual opportunities
-   - drives
-   - projects
-   - habits / additional composed sources
-   - immediate-threat defenses from PerceivedThreat
-→ DecisionRouter
-→ CurrentIntention
+World
+  physical truth
+  environment / dynamic processes
+  Wilson body truth
+  shallow non-Wilson actor runtime state
+
+WilsonCognition
+  drives / beliefs / associations / habits / episodes
+  Presence relationship
+  current intention
+
+Projects
+  project lifecycle + bounded metadata
+
+ActionExecution
+  execution lifecycle / committed outcomes
+
+Director
+  directed-opportunity lifecycle only
+
+PlayerRunState
+  God Power
+  run-local intervention permissions
+  non-intervention progress
+  active suggestion state
 ```
 
-World/environment progression includes:
+Validated invariants:
 
 ```text
-EnvironmentState + DynamicProcessStore + shallow actor state
-→ DynamicProcessAdvanceService + ShallowActorAdvanceService
-→ authoritative bounded World mutation
-→ WorldAdvanceResult.change_set
+World truth
+!= Wilson observation
+!= Wilson belief
+!= player-private intent
+!= Director intent
+```
+
+- Projects mutate only after successful grounded World outcomes.
+- Environment and actor progression remain World-owned.
+- Protection, exposure, hazard and perceived-threat values remain derived/non-owning.
+- Immediate threat wins through a separate routing regime rather than oversized scores.
+- Shallow actors do not receive a second Wilson-like cognition stack.
+- Director opportunities provide bounded candidate bias; Director never commits Wilson's intention.
+- Player suggestions provide bounded ordinary `INTENTIONAL` bias; they are signals, not commands.
+- Physical player intervention must pass an explicit World admission boundary.
+- God Power is spent only after World accepts the physical intervention.
+- Permission, affordability or World rejection leaves God Power and non-intervention progress unchanged.
+- Player-private intent does not directly mutate Wilson psychology; any psychological consequence still requires ordinary perception/attribution paths.
+
+---
+
+# Runtime decision inputs
+
+Current bounded candidate sources include:
+
+```text
+perceptual opportunities
+drives
+projects
+habits / additional composed sources
+Director opportunities
+active player suggestion
+immediate-threat defenses from PerceivedThreat
+```
+
+Routing remains:
+
+```text
+IMMEDIATE_THREAT
+  wins by regime
+
+TACTICAL
+  considered when appropriate to current intention
+
+INTENTIONAL
+  ordinary competition among bounded candidates
+```
+
+Director and player suggestion candidates participate in the ordinary intentional regime and therefore cannot bypass autonomy.
+
+---
+
+# Environment, hazards and actors
+
+World/environment progression currently composes:
+
+```text
+EnvironmentState
++ DynamicProcessStore
++ shallow ActorStateStore
+→ authoritative World progression
+→ SemanticChangeSet when applicable
 → derived invalidation
 → remaining simulation micro-loop
 ```
 
-Hazard/emergency interpretation remains explicitly split:
+Hazard interpretation remains deliberately split:
 
 ```text
 active/committed World process
-→ HazardProjection (authoritative derived risk envelope)
+→ HazardProjection
 
 accessible EVENT PerceptualEvidence
-→ PerceivedThreat (Wilson-relative)
-→ bounded defensive candidates
-→ IMMEDIATE_THREAT routing regime
-```
-
-A committed process is deliberately **not** a committed collision victim/result, and a `HazardProjection` is deliberately **not** Wilson knowledge.
-
----
-
-# Validated owner boundaries
-
-```text
-World truth != Wilson observation != Wilson belief != player-private intent
-```
-
-Current regressions support these boundaries:
-
-- World/action mutations emit semantic invalidation only after admitted mutation.
-- Rejected World commits do not trigger derived invalidation.
-- `WorldEvent` exists only for committed authoritative facts.
-- Perception exposes only accessible roles/semantics.
-- Belief and learning consume Wilson-accessible evidence rather than hidden World bindings.
-- Projects own project metadata/lifecycle; physical structures remain World-owned.
-- Project progress is accepted only after a successful grounded World commit.
-- Habits are bounded candidate bias, not commands.
-- Presence psychology is not updated merely because a WorldEvent exists; it requires Wilson-relative attribution evidence.
-- Environment and dynamic process state are World-owned.
-- Dynamic process definitions are authored; process instances/lifecycle/elapsed state are durable runtime causes.
-- Dynamic process property changes participate in the same derived-invalidation boundary as action-driven World changes.
-- `ProtectionProjection`, `ExposureResult`, `HazardProjection` and `PerceivedThreat` are derived/non-owning state.
-- Protection depends on current World configuration/properties rather than shelter-specific authority flags.
-- `HazardProjection` does not commit a future victim or collision result.
-- Wilson emergency cognition is produced only from accessible perceptual evidence, not directly from authoritative hazard projections.
-- Immediate threat wins through a separate routing regime rather than infinity/oversized candidate scores.
-- Shallow non-Wilson actor runtime state belongs to World; actor profiles/rules are authored definitions.
-- Shallow actors do not receive Wilson cognition stores, projects, Presence psychology or long-horizon planning state.
-- Coarse actor locomotion/state progression occurs through World-owned progression; material interactions still require normal grounded action/outcome semantics.
-
----
-
-# Implemented cognition breadth
-
-## Drives
-
-Accepted drives:
-
-```text
-hunger
-energy
-comfort
-stimulation
-```
-
-Values remain finite and bounded within `[0,1]`. Urgency uses hysteretic bands and drive candidates participate in ordinary decision competition.
-
-### Known drive correctness limitations
-
-Two details are **not yet closed** and must not be overstated:
-
-1. The current application orchestrator still performs decision routing every simulation tick. Upward drive-band crossings expose a meaningful signal, but generic reconsideration gating has not yet been implemented across all causes.
-2. Persistence currently stores drive values but not hysteresis-band memory. Inside a hysteresis deadband, save/load can reconstruct a different band from the same numeric value. Exact behavioral round-trip therefore requires persisting the band/hysteresis memory or equivalent authoritative state.
-
-These are follow-up correctness items, not reasons to reopen the validated bounded drive/candidate vertical.
-
-## Associations
-
-Durable Wilson-relative association state currently separates:
-
-```text
-valence: [-1,+1]
-attachment: [0,1]
-```
-
-Updates are bounded/saturating and the dimensions remain independent.
-
-## Habits
-
-Habits currently model bounded:
-
-```text
-cue + semantic intention + bindings → strength [0,1]
-```
-
-Evidence may strengthen or weaken them. Habit candidate production contributes through normal decision competition.
-
-## Episodes
-
-The current episode store supports:
-
-- importance threshold;
-- causal/provenance deduplication;
-- bounded capacity;
-- deterministic pruning of lower-importance history.
-
-It is not an unlimited autobiographical event log.
-
-## Presence
-
-Current durable dimensions are:
-
-```text
-presence_belief: [0,1]
-trust: [-1,+1]
-dependency: [0,1]
-```
-
-Presence updates require explicit Wilson-relative attribution evidence; player-private intent never mutates this state directly.
-
-## Immediate threat
-
-Current threat cognition includes:
-
-```text
-ThreatInterpretationRule
-PerceivedThreatService
-PerceivedThreat
-DefensiveCandidateDefinition
-ImmediateThreatCandidateSource
-```
-
-Only accessible typed EVENT evidence that satisfies an authored confidence threshold produces `PerceivedThreat`. Defensive candidate contributions remain bounded and ordinary within the emergency regime.
-
----
-
-# Projects baseline
-
-Current project runtime includes:
-
-```text
-ProjectDefinition
-ProjectInstance
-ProjectStore
-ProjectContributionService
-ProjectCandidateSource
-```
-
-Canonical implemented flow:
-
-```text
-project candidate
-→ ordinary decision competition
-→ action
-→ successful World commit
-→ grounded project contribution validation
-→ ProjectStore mutation
-```
-
-Definitions remain authored content. Runtime project instances persist lifecycle, subject bindings and bounded contribution metadata.
-
----
-
-# Environment / dynamic-process baseline
-
-`EnvironmentState` currently persists coarse semantic environment state:
-
-```text
-weather
-daylight_phase
-```
-
-The first generic dynamic-process runtime consists of:
-
-```text
-DynamicProcessDefinition
-DynamicProcessInstance
-DynamicProcessStore
-DynamicProcessAdvanceService
-```
-
-Current lifecycle:
-
-```text
-ACTIVE
-PAUSED
-COMPLETED
-```
-
-The generic property progression can represent first-order processes such as drying, ripening, spoilage, fuel consumption or gradual weakening without adding recipe-specific runtime classes.
-
----
-
-# Protection / exposure baseline
-
-Current environmental protection is derived rather than owner state:
-
-```text
-ProtectionRuleDefinition
-ProtectionProjectionService
-ProtectionProjection
-ExposureResolver
-ExposureResult
-```
-
-The first implementation uses ordinary World relations plus bounded physical properties to derive configuration-relative shielding.
-
-Validated semantics include:
-
-- a covering object does not protect a target merely by type/capability;
-- admitted World configuration is required;
-- degrading a cover's bounded protection property increases resolved exposure;
-- protection layers compose in a bounded derivation;
-- no universal `indoors`, `leak_level`, `ShelterSystem` or persisted protection cache is required.
-
----
-
-# Hazard / immediate-threat baseline
-
-Current hazard support includes:
-
-```text
-HazardRuleDefinition
-HazardProjectionService
-HazardProjection
-```
-
-Hazard projections are authoritative derived risk envelopes over active dynamic processes. They do not select or persist future victims/results.
-
-Wilson-relative emergency interpretation is separate:
-
-```text
-PerceptualEvidence(EVENT)
-→ ThreatInterpretationRule
 → PerceivedThreat
-→ ImmediateThreatCandidateSource
-→ DecisionRouter(IMMEDIATE_THREAT)
+→ bounded defensive candidates
+→ IMMEDIATE_THREAT routing
 ```
 
-The regression explicitly proves that a lower-scoring defensive candidate wins against a higher-scoring intentional candidate because the routing regime has priority.
+A committed process is not a committed future collision victim/result, and `HazardProjection` is not Wilson knowledge.
 
-This vertical intentionally does **not** yet implement:
-
-- collision/overlap resolution;
-- grounded body injury/death;
-- Wilson-relative route planning;
-- intervention windows / causal-window validation;
-- continuous geometry/future physics prediction.
+Shallow actors currently support authored profiles/rules, bounded deterministic rule priority, coarse stimulus tags, mode/cooldown state and coarse `PlaceId` relocation. Material interactions such as stealing, biting, consuming or breaking objects still require normal grounded physical/action contracts.
 
 ---
 
-# Shallow non-Wilson actor baseline
+# Director baseline
 
-Current actor breadth is deliberately shallow and World-owned:
+Implemented runtime:
 
 ```text
-ActorProfileDefinition
-ActorBehaviorRule
-ActorRuntimeState
-ActorStateStore
-ShallowActorAdvanceService
+DirectedOpportunityDefinition
+DirectorOpportunityState
+DirectorStateStore
+DirectorOpportunityService
+DirectorCandidateSource
 ```
 
-Validated behavior includes:
+Lifecycle:
 
-- authored profiles/rules rather than actor-specific subclasses;
-- bounded rule priority with stable deterministic tie-breaking;
-- optional externally supplied coarse stimulus tags;
-- durable mode, decision cooldown and last-rule provenance;
-- coarse relocation between `PlaceId`s through the authoritative entity owner;
-- composition into the same World/environment advance boundary used by dynamic processes;
-- persistence/reconstruction of actor runtime state.
+```text
+ELIGIBLE
+→ ACTIVE
+→ COOLDOWN
+→ ELIGIBLE
 
-This is not a second Wilson-like cognition stack. It intentionally does **not** add:
+or
 
-- beliefs or episodic memory for animals;
-- project/Presence state;
-- long-horizon planning;
-- combat AI;
-- direct shortcuts for material interactions such as stealing, biting, consuming or breaking objects.
+ACTIVE
+→ EXHAUSTED
+```
 
-Those material consequences must remain grounded through the normal physical/action contracts when added.
+Authored definitions provide bounded candidate bias, cooldown and maximum activation count. Runtime state owns lifecycle, cooldown remaining and activation count.
+
+Director does not:
+
+- mutate World;
+- mutate Wilson cognition;
+- select the final intention;
+- force an authored scene sequence.
+
+---
+
+# Player intervention baseline
+
+Implemented run-local state and services:
+
+```text
+PlayerRunState
+PlayerSuggestion
+PlayerSuggestionService
+PlayerSuggestionCandidateSource
+InterventionDefinition
+PhysicalInterventionRequest
+PlayerInterventionService
+```
+
+Suggestions:
+
+```text
+semantic intention + bindings
+→ bounded external_bias
+→ normal INTENTIONAL competition
+```
+
+Insistence is explicitly bounded. A suggestion remains rejectable because higher-priority or higher-value Wilson-relative candidates can still win.
+
+Physical intervention boundary:
+
+```text
+permission
++ affordability
+→ explicit World intervention port
+→ World accepts
+→ spend God Power
+→ reset non-intervention progress
+```
+
+If the World port rejects the request, no God Power is spent.
+
+This slice does **not** yet implement:
+
+- UI or drag/drop adapters;
+- natural-language suggestion interpretation;
+- concrete God Power-specific World mutation recipes;
+- passive God Power generation/balance curve;
+- intervention causal windows;
+- automatic Presence attribution from interventions.
 
 ---
 
@@ -415,11 +302,12 @@ Current development schemas:
 
 ```text
 SimulationSnapshotService schema: v9
+DirectorPlayerSnapshotService schema: v1
 ActionExecutionSnapshotService schema: v2
 ContentPackLoader schema: v1
 ```
 
-`SimulationSnapshotService v9` currently persists/reconstructs tested authoritative/runtime causes including:
+`SimulationSnapshotService v9` persists/reconstructs tested run causes including:
 
 ```text
 entities + runtime property overrides
@@ -438,72 +326,70 @@ DynamicProcessInstance state
 ActorRuntimeState
 ```
 
-Actor runtime persistence includes profile binding, current mode, decision cooldown and last selected rule. Authored actor profiles/rules are not duplicated into the save.
-
-Reconstructible state remains excluded from durable snapshots, including:
+`DirectorPlayerSnapshotService v1` currently persists/reconstructs owner-local causes for:
 
 ```text
-relation / epistemic / physical projections
-ProtectionProjection
-ExposureResult
-HazardProjection
-PerceivedThreat
-defensive candidates
+Director opportunity lifecycle
+Director cooldown remaining
+Director activation count
+God Power
+player permissions
+non-intervention progress
+active suggestion
+suggestion bindings / bounded bias / remaining insistence
 ```
 
-These are development schemas; unsupported versions fail fast and there is no current requirement to migrate early development snapshots.
+Director/PlayerRunState persistence is intentionally owner-local in this slice. A future full run-save boundary may compose these owner snapshots without changing authority semantics.
+
+Reconstructible state remains excluded, including relation/epistemic/physical projections, protection/exposure, hazard projections, perceived threats and generated decision candidates.
+
+These are development schemas. Unsupported versions fail fast; early-development migration is not currently required.
 
 ---
 
-# Strict runner
+# Known correctness/support limitations
 
-The PowerShell headless runner rejects:
+## Drives
 
-```text
-SCRIPT ERROR
-parse/compile failures
-generic Godot ERROR output
-explicit FAIL
-missing expected PASS marker
-nonzero process exit status
-```
+Two known issues remain open:
 
-It emits one compact result per test plus a final suite summary.
+1. The application orchestrator still performs decision routing every simulation tick. Upward drive-band crossings expose a reconsideration signal, but generic reconsideration gating across all causes is not implemented.
+2. Drive persistence stores numeric values but not hysteresis-band memory. A value inside a deadband can reconstruct a different urgency band after save/load.
 
----
+## Other cross-cutting work
 
-# Remaining major verticals
-
-The remaining work is primarily system breadth and presentation rather than unresolved foundational ownership.
-
-Recommended sequence from the current checkpoint:
+Still required before or alongside later breadth:
 
 ```text
-1. Director + player intervention / suggestions
-2. run lifecycle / death / resurrection / Legacy / PlayerProfile
-3. fine spatial/nav/occlusion + Godot presentation adapters
-4. deterministic playable scenario/bootstrap tooling
-5. representative multi-system scenario suites + seed-population tests
-```
-
-Cross-cutting correctness/support slices still required before or alongside those verticals include:
-
-```text
-collision/overlap + grounded body consequence for hazards
+collision/overlap + grounded Wilson body consequences
 generic reconsideration gating
 drive hysteresis-memory persistence
 Wilson-relative route/escape evaluation
 intervention causal windows
 automatic habit-disuse/context producers
 Presence causal-attribution production
+full run-save composition across owner-local snapshots
 ```
-
-Food/fire/cooking/freshness-specific breadth should use the generic World/property/process boundaries where sufficient and add new primitives only when representative behavior proves they are necessary.
 
 ---
 
-# Admission rule for future status claims
+# Remaining major verticals
 
-A new runtime capability should be marked PASS here only after the corresponding strict local Godot gate has been reported successful.
+Recommended sequence from the validated 37-test checkpoint:
 
-Do not record inferred test counts, unexecuted smoke results, or architectural intent as validated runtime behavior.
+```text
+1. run lifecycle / death / resurrection / Legacy / PlayerProfile
+2. fine spatial/nav/occlusion + Godot presentation adapters
+3. deterministic playable scenario/bootstrap tooling
+4. representative multi-system scenario suites + seed-population tests
+```
+
+Food/fire/cooking/freshness-specific breadth should continue to use generic World/property/process boundaries where sufficient and add new primitives only when representative behavior proves them necessary.
+
+---
+
+# Admission rule
+
+A runtime capability is marked PASS here only after the corresponding strict local Godot gate has been reported successful.
+
+Do not record inferred test counts, unexecuted smoke results or architectural intent as validated runtime behavior.
