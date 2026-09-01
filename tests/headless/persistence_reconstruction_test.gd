@@ -195,8 +195,8 @@ func _run_slice() -> void:
 		_expect_equal(restored_project.contribution_count, 1, "project contribution metadata survives")
 		_expect_equal(restored_project.subject_bindings.get_subject(&"project_subject").key(), restored_crate.key(), "project physical subject binding survives")
 
-	var original_association = associations.get(crate)
-	var restored_association = restored.associations.get(restored_crate)
+	var original_association = associations.get_association(crate)
+	var restored_association = restored.associations.get_association(restored_crate)
 	_expect_true(restored_association != null, "association survives save/load")
 	if restored_association != null:
 		_expect_equal(restored_association["valence"], original_association["valence"], "association valence survives")
