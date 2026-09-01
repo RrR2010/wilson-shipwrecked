@@ -2,6 +2,8 @@ extends SceneTree
 
 const SimulationCadenceClock = preload("res://src/application/simulation/simulation_cadence_clock.gd")
 const MotionPort = preload("res://src/application/simulation/motion_port.gd")
+const GodotSceneSpatialRegistry = preload("res://src/infrastructure/spatial/godot_scene_spatial_registry.gd")
+const GodotSpatialQueryAdapter = preload("res://src/infrastructure/spatial/godot_spatial_query_adapter.gd")
 const FakeMotionPort = preload("res://tests/fakes/fake_motion_port.gd")
 const FakeSpatialQueryPort = preload("res://tests/fakes/fake_spatial_query_port.gd")
 
@@ -24,6 +26,7 @@ func _init() -> void:
 func _run_slice() -> void:
 	_test_fixed_simulation_cadence_is_frame_partition_independent()
 	_test_spatial_queries_are_explicit_and_deterministic()
+	_test_godot_scene_mapping_is_explicit_and_headless_safe()
 	_test_motion_reports_semantic_progress_without_engine_frames()
 	_completed = true
 
@@ -58,6 +61,33 @@ func _test_spatial_queries_are_explicit_and_deterministic() -> void:
 	_expect_true(spatial.is_interaction_reachable(&"wilson", &"coconut_17", &"pickup"), "interaction reachability is explicit")
 	_expect_true(not spatial.has_route(&"wilson", &"unknown"), "unmapped route fails closed")
 	_expect_true(is_inf(spatial.metric_distance(&"wilson", &"unknown")), "unmapped distance has explicit unavailable result")
+
+func _test_godot_scene_mapping_is_explicit_and_headless_safe() -> void:
+	var registry := GodotSceneSpatialRegistry.new()
+	var wilson := Node3D.new()
+	var coconut := Node3D.new()
+	var pickup_anchor := Node3D.new()
+	root.add_child(wilson)
+	root.add_child(coconut)
+	coconut.add_child(pickup_anchor)
+	wilson.global_position = Vector3.ZERO
+	coconut.global_position = Vector3(3.0, 0.0, 4.0)
+	pickup_anchor.global_position = Vector3(1.0, 0.0, 0.0)
+
+	_expect_true(registry.bind(&"wilson", wilson), "semantic Wilson ref binds explicitly")
+	_expect_true(registry.bind(&"coconut_17", coconut), "semantic target ref binds explicitly")
+	_expect_true(registry.bind_anchor(&"coconut_17", &"pickup", pickup_anchor), "typed interaction anchor binds explicitly")
+	_expect_true(not registry.bind(&"wilson", coconut), "duplicate semantic ref cannot silently remap")
+
+	var spatial := GodotSpatialQueryAdapter.new(registry)
+	_expect_true(is_equal_approx(spatial.metric_distance(&"wilson", &"coconut_17"), 5.0), "Godot adapter reports metric Node3D distance")
+	_expect_true(is_inf(spatial.metric_distance(&"wilson", &"unknown")), "unmapped Godot ref fails explicitly")
+	_expect_true(spatial.is_interaction_reachable(&"wilson", &"coconut_17", &"pickup"), "interaction reachability uses semantic anchor rather than node name")
+	_expect_true(not spatial.has_route(&"wilson", &"coconut_17"), "route query fails closed without configured navigation map")
+	_expect_true(not spatial.has_line_of_sight(&"wilson", &"coconut_17"), "visibility query fails closed without physics space state")
+
+	wilson.queue_free()
+	coconut.queue_free()
 
 func _test_motion_reports_semantic_progress_without_engine_frames() -> void:
 	var motion := FakeMotionPort.new()
