@@ -6,22 +6,19 @@ var _experience_learning
 var _associations
 var _habits
 var _episodes
-var _presence
 
 
-func _init(belief_learning, experience_learning, associations, habits, episodes, presence) -> void:
+func _init(belief_learning, experience_learning, associations, habits, episodes) -> void:
 	assert(belief_learning != null, "WilsonLearningCoordinator requires belief learning coordinator")
 	assert(experience_learning != null, "WilsonLearningCoordinator requires experience learning service")
 	assert(associations != null, "WilsonLearningCoordinator requires AssociationStore")
 	assert(habits != null, "WilsonLearningCoordinator requires HabitStore")
 	assert(episodes != null, "WilsonLearningCoordinator requires EpisodeStore")
-	assert(presence != null, "WilsonLearningCoordinator requires PresenceRelationship")
 	_belief_learning = belief_learning
 	_experience_learning = experience_learning
 	_associations = associations
 	_habits = habits
 	_episodes = episodes
-	_presence = presence
 
 
 func process(perception_result) -> Dictionary:
@@ -30,7 +27,6 @@ func process(perception_result) -> Dictionary:
 	var association_results: Array = []
 	var habit_results: Array = []
 	var episode_results: Array = []
-	var presence_evidence_count := 0
 	for perceptual_evidence in perception_result.evidence:
 		var proposals: Dictionary = _experience_learning.derive(perceptual_evidence)
 		for impact in proposals["association_impacts"]:
@@ -39,13 +35,9 @@ func process(perception_result) -> Dictionary:
 			habit_results.append(_habits.apply_evidence(evidence))
 		for candidate in proposals["episode_candidates"]:
 			episode_results.append(_episodes.consider(candidate))
-		for evidence in proposals["presence_evidence"]:
-			_presence.apply_evidence(evidence)
-			presence_evidence_count += 1
 	return {
 		"belief": belief_result,
 		"association_results": association_results,
 		"habit_results": habit_results,
 		"episode_results": episode_results,
-		"presence_evidence_count": presence_evidence_count,
 	}
