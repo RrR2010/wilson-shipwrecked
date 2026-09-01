@@ -23,7 +23,8 @@ For substantial work:
 
 1. [`../README.md`](../README.md) — project thesis;
 2. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current implementation/test/schema baseline and remaining work;
-3. then use the relevant bundle below.
+3. [`handoffs/system-breadth-to-spatial-scenarios.md`](handoffs/system-breadth-to-spatial-scenarios.md) — **active stage-transition handoff for the remaining spatial/scenario/integrated-validation phase**;
+4. then use the relevant canonical bundle below.
 
 **Current phase:** the structural runtime foundation and the planned system-breadth owners through run lifecycle / PlayerProfile are implemented and locally validated. The remaining implementation sequence is now primarily:
 
