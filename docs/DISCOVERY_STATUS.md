@@ -1,246 +1,155 @@
 # Discovery Status
 
-## Current phase
+## Purpose
 
-The product/behavior discovery, architecture contracts, language-neutral functional domain, normalized cross-cutting asset catalog, and **structural runtime foundation** are complete enough to support active system implementation.
+This file records the **currently implemented and locally validated runtime baseline** for Wilson Shipwrecked.
 
-The authoritative runtime is validated end-to-end under **Godot 4.7.1** with a strict external headless runner that rejects engine/script errors even when an individual Godot process exits `0`.
+Canonical semantics remain in the domain/architecture documents. This file should not restate those documents in full; it answers:
 
-Current validated implementation chain:
+- what is implemented now;
+- what has passed the strict Godot gate;
+- which persistence versions are current;
+- which known limitations remain;
+- what vertical comes next.
+
+---
+
+# Current phase
+
+Product/behavior discovery, architecture contracts, the language-neutral functional domain, normalized cross-cutting asset catalog, and the structural runtime foundation are complete enough for active system implementation.
+
+The validated runtime currently includes:
+
+```text
+structural World/runtime foundation
+→ Wilson drives + drive candidate production
+→ Projects runtime + project candidate production
+→ Wilson learning state (associations / habits / episodes / Presence)
+→ authoritative environment state + persisted dynamic processes
+```
+
+The strict external runner is validated under **Godot 4.7.1** and rejects script/engine errors even when an individual Godot process exits `0`.
+
+Latest locally validated checkpoint:
+
+```text
+RESULT: 31 PASS / 31 TOTAL
+PASS headless_suite (31 tests)
+```
+
+---
+
+# Closed implementation gates
+
+## Structural runtime foundation
+
+The following foundation areas remain covered by strict headless regressions:
+
+```text
+World relation runtime
+qualified relation identity
+PropertyDefinition/runtime property validation
+EffectivePhysicalProfile
+AssemblyBindingProjection / AssemblyValidity
+CompositionDependencyProjection / derived invalidation
+SemanticPattern / RequirementPredicate / ActionAttemptability
+ActionExecution lifecycle / interruption / commit checkpoint
+transactional supported World effect batches
+WorldEvent commit boundary
+coarse spatial PerceptionAccess
+Perception / PerceptualEvidence
+BeliefStore / EpistemicGraphProjection
+DecisionRouter / CurrentIntention
+save/load/rebuild reconstruction
+mid-action causal reconstruction
+structural-scale reconstruction
+```
+
+## System breadth verticals
+
+```text
+Drives                                       PASS — Godot 4.7.1 headless
+Projects                                     PASS — Godot 4.7.1 headless
+Associations / habits / episodes             PASS — Godot 4.7.1 headless
+Presence relationship learning boundary      PASS — Godot 4.7.1 headless
+EnvironmentState                             PASS — Godot 4.7.1 headless
+Dynamic World processes                      PASS — Godot 4.7.1 headless
+Dynamic-process derived invalidation         PASS — Godot 4.7.1 headless
+Environment/process persistence              PASS — Godot 4.7.1 headless
+Strict headless suite                        PASS — 31 tests
+```
+
+---
+
+# Current validated implementation chain
 
 ```text
 typed DomainId / RuntimeWorldRef
 → immutable authored content registry
-→ versioned bounded JSON ContentPack loading
-→ bounded PropertyDefinition schemas
-→ authoritative EntityStore / WorldRelationStore / WilsonWorldState
-→ exact qualified relation identity + reconstructible indexes
-→ coarse PlaceId spatial query boundary
-→ property dependency DAG + EffectivePhysicalProfile
-→ AssemblyBindingProjection + AssemblyValidity
-→ CompositionDependencyProjection + transitive derived invalidation
-→ SemanticPattern / RequirementPredicate + ActionAttemptability
-→ ActionExecution lifecycle + explicit commit checkpoint
-→ exact World owner commit + transactional prevalidation for supported effect batches
-→ SemanticChangeSet + derived-state invalidation
-→ typed EventDefinitionId / WorldEvent / ObservedEvent
-→ spatially-derived PerceptionAccess
-→ typed EpistemicClaim(PROPERTY | RELATION | EVENT)
-→ PerceptualEvidence → BeliefStore → EpistemicGraphProjection
-→ bounded DriveState progression + hysteretic urgency
-→ perceptual + drive candidate production
-→ decision routing
-→ durable CurrentIntention
-→ application micro-loop orchestration + semantic trace
-→ JSON snapshot / restore / rebuild of authoritative runtime causes, including drives
-→ mid-action reconstruction across pre/post-commit checkpoints
-→ heavier causal reconstruction and structural-scale regression scenarios
+→ bounded property/content schemas
+→ authoritative World stores
+→ relation / assembly / physical projections
+→ action attemptability
+→ action execution
+→ successful World commit
+→ SemanticChangeSet
+→ derived invalidation
+→ WorldEvent
+→ PerceptionAccess
+→ PerceptualEvidence
+→ belief + Wilson-local learning
+→ drive progression
+→ bounded candidate sources
+   - perceptual opportunities
+   - drives
+   - projects
+   - habits / additional composed sources
+→ DecisionRouter
+→ CurrentIntention
 ```
 
-Model/content production may proceed independently from the normalized [`asset-catalog/`](asset-catalog/).
+World progression now also has a first persistent dynamic-process path:
 
-For documentation navigation and authority use [`README.md`](README.md).
+```text
+EnvironmentState + DynamicProcessStore
+→ DynamicProcessAdvanceService
+→ authoritative bounded property mutation
+→ WorldAdvanceResult.change_set
+→ derived invalidation
+→ remaining simulation micro-loop
+```
+
+A committed dynamic process is deliberately **not** a committed unresolved future hazard result. For example, gradual palm weakening may be committed World evolution while a later falling-object victim remains unresolved until the hazard/collision stage.
 
 ---
 
-# Closed gates
-
-## Discovery / design gates
-
-```text
-Product / behavioral discovery             PASS
-Architecture responsibility boundaries     PASS
-Simulation contracts / orchestration       PASS
-Mutation authority                         PASS
-Guards / bounded calibration               PASS
-Structural functional domain               PASS
-Vocabulary normalization                   PASS
-Representative-scene regression            PASS
-Canonical operation surface                PASS
-Functional asset breadth                   PASS
-Asset catalog functional normalization     PASS
-Asset catalog scene-coverage regression    PASS
-Gradual exploration / evidence             PASS
-Composite-object semantics                 PASS
-Environmental protection / exposure        PASS
-Scientific Method micro-loop               PASS
-Falling Palm hazard micro-loop              PASS
-Sabotaged Storage epistemic micro-loop     PASS
-Improvised hammer fixture                  PASS
-Cloth/shelter/weather fixture              PASS
-Typed semantic graph/index contracts       PASS
-Language-neutral module dependency layout  PASS
-Documentation consolidation                PASS
-```
-
-## Structural runtime foundation gates
-
-```text
-World relation runtime                     PASS — Godot 4.7.1 headless
-Effective physical profile                 PASS — Godot 4.7.1 headless
-Semantic pattern / attemptability           PASS — Godot 4.7.1 headless
-Committed action execution                  PASS — Godot 4.7.1 headless
-Action lifecycle / interruption             PASS — Godot 4.7.1 headless
-Perception projection                       PASS — Godot 4.7.1 headless
-Spatial perception access                   PASS — Godot 4.7.1 headless
-Belief learning / epistemic                 PASS — Godot 4.7.1 headless
-Typed epistemic claim persistence           PASS — Godot 4.7.1 headless
-Decision routing                            PASS — Godot 4.7.1 headless
-End-to-end simulation micro-loop            PASS — Godot 4.7.1 headless
-Save/load/rebuild reconstruction            PASS — Godot 4.7.1 headless
-Mid-action reconstruction                   PASS — Godot 4.7.1 headless
-Causal reconstruction scenario              PASS — Godot 4.7.1 headless
-Structural-scale reconstruction             PASS — Godot 4.7.1 headless
-Derived invalidation                        PASS — Godot 4.7.1 headless
-Composition-dependent invalidation          PASS — Godot 4.7.1 headless
-Semantic snapshot immutability              PASS — Godot 4.7.1 headless
-Assembly validity                           PASS — Godot 4.7.1 headless
-Improvised hammer composition               PASS — Godot 4.7.1 headless
-Property schema/bootstrap                   PASS — Godot 4.7.1 headless
-Property runtime schema/comparison          PASS — Godot 4.7.1 headless
-Authored content-pack loading               PASS — Godot 4.7.1 headless
-Qualified relation identity / exact command PASS — Godot 4.7.1 headless
-```
-
-## System implementation gates
-
-```text
-Wilson drive state / bounds                 PASS — Godot 4.7.1 headless
-Drive urgency hysteresis                    PASS — Godot 4.7.1 headless
-Drive candidate production                  PASS — Godot 4.7.1 headless
-Drive integration with decision routing     PASS — Godot 4.7.1 headless
-Drive persistence / reconstruction          PASS — Godot 4.7.1 headless
-Strict headless suite                       PASS — 25 tests
-```
-
-**Functional-domain stabilization gate: PASS.**
-
-**Asset-catalog functional normalization gate: PASS for current P0/P1 breadth.**
-
-**Module/dependency-layout gate: PASS.**
-
-**Structural runtime foundation gate: PASS.**
-
-**First system-breadth vertical (drives): PASS.**
-
----
-
-# Validated runtime invariants
-
-The implementation has explicit regression coverage for these boundaries:
+# Validated owner boundaries
 
 ```text
 World truth != Wilson observation != Wilson belief != player-private intent
-
-ActionAttemptability is pure
-ActionExecution does not mutate World directly
-commit checkpoint emits one ActionOutcome
-pre/post-commit save/load does not rewind or duplicate committed outcomes
-interruption is explicit terminal execution state and never rewinds committed truth
-terminal execution cleanup is explicit
-
-WorldEvent appears only after successful owner commit
-ActionOutcome / WorldEvent snapshot transient RoleBinding defensively
-supported World effect batches are prevalidated as a sequence before mutation
-invalid batches do not leave intentional partial relation/property mutation
-
-World mutations emit SemanticChangeSet for reconstructible derived-state maintenance
-component property changes invalidate dependent composite hosts transitively
-relation changes invalidate direct/dependent physical profiles
-SemanticChangeSet is an invalidation contract, not a gameplay event bus
-
-WorldRelation qualifier is a bounded semantic value and participates in exact identity
-same relation endpoints may coexist with distinct admitted qualifiers
-exact CREATE_RELATION / REMOVE_RELATION includes qualifier identity
-numeric qualifier identity canonicalizes int/float representation
-
-Assembly bindings are projected from authoritative World relations
-AssemblyValidity is derived and separate from effective performance
-component condition may degrade performance while assembly remains VALID
-component-aware property derivation does not require recipe-specific runtime types
-
-PropertyDefinition validates authored values during sealed content bootstrap
-SET_PROPERTY validates typed values/bounds before authoritative mutation
-numeric PropertyValue rejects NaN/infinity
-ordered comparisons are limited to compatible ordered families
-invalid property mutations emit no WorldEvent or SemanticChange
-
-EventDefinitionId remains typed through World → observation → evidence
-Perception projects only spatially accessible/perceptible roles
-PerceptualEvidence carries a typed EpistemicClaim
-EpistemicClaim has closed current kinds: PROPERTY, RELATION, EVENT
-numeric epistemic identity is stable across JSON int/float round-trips
-Belief learning is bounded and revisable
-EpistemicGraphProjection is reconstructible from BeliefStore and never imports hidden World truth
-
-Drive values remain finite and bounded within [0,1]
-Drive urgency bands use hysteresis to avoid threshold chatter
-Ordinary drive changes do not trigger reconsideration every simulation tick
-Upward urgency-band crossings expose meaningful reconsideration triggers
-Drive candidates remain ordinary bounded candidates and may lose legitimate competition
-Immediate threat still wins by routing regime rather than oversized drive scores
-Drive values are durable cognition state; urgency/bands remain reconstructible from those values
-
-Decision routing separates immediate-threat / tactical / intentional regimes
-external bias is bounded and cannot become a command
-selected intention is owner-local durable cognition state
-simulation trace is diagnostic-only
-
-save stores authoritative/runtime causes, not reconstructible indexes/caches
-save → JSON → load → rebuild preserves tested semantic queries
-Wilson coarse PlaceId truth survives reconstruction
-drive state survives reconstruction
-active/completed action execution reconstructs without re-running past attemptability
 ```
 
-The strict PowerShell runner rejects `SCRIPT ERROR`, parse/compile failures, generic engine `ERROR:` output, explicit `FAIL`, missing expected `PASS`, or nonzero process exit status. It emits one compact line per test and a final PASS/FAIL/ERROR summary.
+Current regressions support these boundaries:
+
+- World/action mutations emit semantic invalidation only after admitted mutation.
+- `WorldEvent` exists only for committed authoritative facts.
+- Perception exposes only accessible roles/semantics.
+- Belief and learning consume Wilson-accessible evidence rather than hidden World bindings.
+- Projects own project metadata/lifecycle; physical structures remain World-owned.
+- Project progress is accepted only after a successful grounded World commit.
+- Habits are bounded candidate bias, not commands.
+- Presence psychology is not updated merely because a WorldEvent exists; it requires Wilson-relative attribution evidence.
+- Environment and dynamic process state are World-owned.
+- Dynamic process definitions are authored; process instances/lifecycle/elapsed state are durable runtime causes.
+- Dynamic process property changes participate in the same derived-invalidation boundary as action-driven World changes.
 
 ---
 
-# Concrete foundation baseline
+# Implemented cognition breadth
 
-## Spatial boundary
+## Drives
 
-The current foundation deliberately uses coarse semantic placement:
-
-```text
-EntityInstance.place_id
-WilsonWorldState.place_id
-→ DefaultWorldQuery co-location / bounded nearby queries
-→ CoarsePerceptionAccessResolver
-```
-
-Fine metric distance, occlusion, navmesh/pathfinding and Godot transforms remain infrastructure/presentation concerns behind the same semantic boundary.
-
-## Action lifecycle
-
-Current authored interruption classes are:
-
-```text
-PRE_COMMIT_ONLY
-NEVER
-ANYTIME
-```
-
-Execution state explicitly tracks running/committed/completed/interrupted causality. `ANYTIME` may terminate a post-commit tail but cannot undo the already-emitted committed outcome.
-
-## Epistemic identity
-
-Durable belief identity no longer uses generic `predicate + Variant arguments` serialization.
-
-Current closed algebra:
-
-```text
-EpistemicClaim.PROPERTY(subject, PropertyId, PropertyValue)
-EpistemicClaim.RELATION(subject, RelationTypeId, object)
-EpistemicClaim.EVENT(subject, EventDefinitionId, perceived_role)
-```
-
-Future epistemic families must be added as explicit typed claim kinds/contracts rather than restoring a generic arbitrary-argument identity scheme.
-
-## Drive state
-
-The first implemented system-breadth cognition state uses the accepted drives:
+Accepted drives:
 
 ```text
 hunger
@@ -249,132 +158,212 @@ comfort
 stimulation
 ```
 
-Drive values are durable cognition-owned causes. Current urgency bands and urgency scores are derived from those values and are not persisted separately.
+Values remain finite and bounded within `[0,1]`. Urgency uses hysteretic bands and drive candidates participate in ordinary decision competition.
 
-Drive progression is owner-local and bounded. Candidate production feeds the existing decision competition rather than bypassing it.
+### Known drive correctness limitations
 
-## Authored content
+Two details are **not yet closed** and must not be overstated:
 
-`ContentPackLoader` currently accepts a versioned bounded JSON pack for the implemented foundation families:
+1. The current application orchestrator still performs decision routing every simulation tick. Upward drive-band crossings expose a meaningful signal, but generic reconsideration gating has not yet been implemented across all causes.
+2. Persistence currently stores drive values but not hysteresis-band memory. Inside a hysteresis deadband, save/load can reconstruct a different band from the same numeric value. Exact behavioral round-trip therefore requires persisting the band/hysteresis memory or equivalent authoritative state.
+
+These are follow-up correctness items, not reasons to reopen the validated bounded drive/candidate vertical.
+
+## Associations
+
+Durable Wilson-relative association state currently separates:
 
 ```text
-properties
-entities
-events
-actions
-action resolutions
-assemblies
-property derivations
-bounded predicates/effects/selectors
+valence: [-1,+1]
+attachment: [0,1]
 ```
 
-Loading produces typed definitions and ends in `ContentRegistry.seal()` validation. Arbitrary authored callbacks and arbitrary relation-qualifier dictionaries are rejected.
+Updates are bounded/saturating and the dimensions remain independent.
 
-## Persistence versions
+## Habits
 
-Current implementation baseline:
+Habits currently model bounded:
 
 ```text
-SimulationSnapshotService schema: v5
+cue + semantic intention + bindings → strength [0,1]
+```
+
+Evidence may strengthen or weaken them. Habit candidate production contributes through normal decision competition.
+
+## Episodes
+
+The current episode store supports:
+
+- importance threshold;
+- causal/provenance deduplication;
+- bounded capacity;
+- deterministic pruning of lower-importance history.
+
+It is not an unlimited autobiographical event log.
+
+## Presence
+
+Current durable dimensions are:
+
+```text
+presence_belief: [0,1]
+trust: [-1,+1]
+dependency: [0,1]
+```
+
+Presence updates require explicit Wilson-relative attribution evidence; player-private intent never mutates this state directly.
+
+---
+
+# Projects baseline
+
+Current project runtime includes:
+
+```text
+ProjectDefinition
+ProjectInstance
+ProjectStore
+ProjectContributionService
+ProjectCandidateSource
+```
+
+Canonical implemented flow:
+
+```text
+project candidate
+→ ordinary decision competition
+→ action
+→ successful World commit
+→ grounded project contribution validation
+→ ProjectStore mutation
+```
+
+Definitions remain authored content. Runtime project instances persist lifecycle, subject bindings and bounded contribution metadata.
+
+---
+
+# Environment / dynamic-process baseline
+
+`EnvironmentState` currently persists coarse semantic environment state:
+
+```text
+weather
+daylight_phase
+```
+
+The first generic dynamic-process runtime consists of:
+
+```text
+DynamicProcessDefinition
+  id
+  target_property
+  rate_per_second
+  lower_bound / upper_bound
+
+DynamicProcessInstance
+  id
+  definition_id
+  subject
+  lifecycle
+  elapsed
+
+DynamicProcessStore
+DynamicProcessAdvanceService
+```
+
+Current lifecycle:
+
+```text
+ACTIVE
+PAUSED
+COMPLETED
+```
+
+The generic property progression can represent first-order processes such as drying, ripening, spoilage, fuel consumption or gradual weakening without adding recipe-specific runtime classes.
+
+This vertical intentionally does **not** yet implement:
+
+- hazard projection;
+- collision/victim resolution;
+- protection/exposure;
+- stochastic environmental response selection;
+- detailed food/fire-specific process semantics.
+
+---
+
+# Persistence baseline
+
+Current development schemas:
+
+```text
+SimulationSnapshotService schema: v8
 ActionExecutionSnapshotService schema: v2
 ContentPackLoader schema: v1
 ```
 
-These are development schemas. Unsupported versions fail fast; there is no requirement to migrate pre-foundation development snapshots.
+`SimulationSnapshotService v8` currently persists/reconstructs tested authoritative/runtime causes including:
+
+```text
+entities + runtime property overrides
+qualified World relations
+Wilson coarse PlaceId
+BeliefStore typed claims
+CurrentIntention
+DriveState values
+ProjectInstance state
+AssociationStore
+HabitStore
+EpisodeStore
+PresenceRelationship
+EnvironmentState
+DynamicProcessInstance state
+```
+
+Reconstructible indexes/projections/caches remain excluded from durable state and are rebuilt as required.
+
+These are development schemas; unsupported versions fail fast and there is no current requirement to migrate early development snapshots.
 
 ---
 
-# Stabilized architectural shape
+# Strict runner
 
-State-owning families remain:
-
-```text
-World
-Wilson Cognition
-Projects
-Player Run State / Intervention
-Director
-Action Execution / Resolution
-Player Profile across runs
-```
-
-Important derived/non-owning concerns include:
+The PowerShell headless runner rejects:
 
 ```text
-Perception / PerceptualEvidence
-Expectation / salience
-Drive urgency / candidate projection
-EffectivePhysicalProfile / AssemblyValidity
-Protection / exposure
-Affordance / ActionAttemptability
-HazardProjection / PerceivedThreat
-bounded investigation / causal attribution
-tactical / intentional decision projections
-learning proposals / reaction
-Luck
-
-World relation indexes
-PropertyDependencyGraph
-AssemblyBindingProjection
-CompositionDependencyProjection
-EpistemicGraphProjection
-bounded SemanticPattern matcher
+SCRIPT ERROR
+parse/compile failures
+generic Godot ERROR output
+explicit FAIL
+missing expected PASS marker
+nonzero process exit status
 ```
 
-Core invariant:
-
-```text
-graph representation / index / projection
-!= authority owner
-```
-
-There is intentionally no generic `GraphSystem`, `EverythingGraph`, `AssemblyStore`, global crafting owner or omniscient Wilson cognition shortcut.
+It emits one compact result per test plus a final suite summary.
 
 ---
 
-# What is intentionally not implemented yet
+# Remaining major verticals
 
-The remaining work is predominantly **system breadth and presentation**, not unresolved structural ownership.
+The remaining work is primarily system breadth and presentation rather than unresolved foundational ownership.
 
-Major families still to implement include:
+Recommended sequence from the current checkpoint:
 
-1. project runtime/lifecycle and project candidate sources;
-2. habits, associations, episodes and Presence update flows beyond the minimal belief vertical;
-3. Director opportunity lifecycle and bounded candidate influence;
-4. environment/weather and persisted dynamic processes;
-5. protection/exposure runtime;
-6. hazards and immediate-threat production from real dynamic processes;
-7. shallow non-Wilson actor/animal behavior;
-8. food/fire/cooking/freshness processes;
-9. player intervention / God Power / suggestions;
-10. run death/resurrection/Legacy/Profile lifecycle;
-11. fine spatial/nav/occlusion infrastructure;
-12. Godot presentation adapters, anchors, InteractionRegions and assembly sockets;
-13. broader authored content packs covering the normalized asset catalog;
-14. deterministic gameplay-scenario/bootstrap tooling for fast playable smoke tests;
-15. larger multi-system deterministic scenario/population tests.
+```text
+1. protection / exposure + hazards / immediate-threat production
+2. shallow non-Wilson actor behavior
+3. Director + player intervention / suggestions
+4. run lifecycle / death / resurrection / Legacy / PlayerProfile
+5. fine spatial/nav/occlusion + Godot presentation adapters
+6. deterministic playable scenario/bootstrap tooling
+7. representative multi-system scenario suites + seed-population tests
+```
 
-These systems must preserve the established owners and contact contracts. A new state owner or generic framework requires new evidence, not convenience.
+Food/fire/cooking/freshness-specific breadth should use the generic World/property/process boundaries where sufficient and add new primitives only when representative behavior proves they are necessary.
 
 ---
 
-# Next phase
+# Admission rule for future status claims
 
-The project remains in **system implementation on the completed structural foundation**.
+A new runtime capability should be marked PASS here only after the corresponding strict local Godot gate has been reported successful.
 
-Recommended order from the current checkpoint:
-
-```text
-1. Project runtime + project candidate producer
-2. habits/associations/episodes/Presence learning producers
-3. environment + dynamic-process owner/rules
-4. hazards/protection + immediate-threat production
-5. shallow animal actors
-6. Director + player intervention/suggestions
-7. run lifecycle / resurrection / Legacy/Profile
-8. Godot presentation/spatial adapters
-9. deterministic playable scenario/bootstrap tooling as concrete visual cases appear
-10. representative multi-system scenario suites and seed-population tests
-```
-
-The implementation should continue expanding breadth through existing contracts before adding new primitives.
+Do not record inferred test counts, unexecuted smoke results, or architectural intent as validated runtime behavior.

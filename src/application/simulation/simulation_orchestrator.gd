@@ -8,10 +8,10 @@ const SimulationStepTrace = preload("res://src/infrastructure/diagnostics/simula
 ## Durable truth remains in World, ActionExecution, Wilson Cognition and Projects owners.
 ##
 ## Authoritative ordering:
-## world progression -> action progression -> committed outcome application
-## -> derived invalidation -> grounded project progression -> perception
-## -> immediate Wilson learning -> drive progression -> candidate generation
-## -> routing -> selected intention commit.
+## world progression -> derived invalidation -> action progression
+## -> committed outcome application -> derived invalidation -> grounded project progression
+## -> perception -> immediate Wilson learning -> drive progression
+## -> candidate generation -> routing -> selected intention commit.
 
 var _world_advance
 var _action_execution
@@ -102,6 +102,9 @@ func advance(step):
 	var world_advance_result = _world_advance.advance(step.elapsed, step)
 	assert(world_advance_result != null, "world advance must return WorldAdvanceResult")
 	trace.record_result(&"world_advance", world_advance_result)
+	if world_advance_result.change_set != null and not world_advance_result.change_set.is_empty():
+		var world_invalidation_result = _derived_invalidator.apply(world_advance_result.change_set)
+		trace.record_result(&"world_derived_invalidation", world_invalidation_result)
 
 	var action_progress = null
 	var commit_result = null
