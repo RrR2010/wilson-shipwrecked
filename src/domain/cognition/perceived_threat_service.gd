@@ -15,9 +15,9 @@ func derive(perception_result) -> Array:
 	assert(perception_result != null, "PerceivedThreatService requires PerceptionResult")
 	var result: Array = []
 	for evidence in perception_result.evidence:
-		if evidence == null or evidence.proposition == null:
+		if evidence == null or evidence.claim == null:
 			continue
-		var claim = evidence.proposition.claim
+		var claim = evidence.claim
 		if claim.kind != EpistemicClaim.Kind.EVENT:
 			continue
 		for rule in _rules:
