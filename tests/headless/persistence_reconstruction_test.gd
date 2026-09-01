@@ -150,7 +150,7 @@ func _run_slice() -> void:
 		environment,
 		dynamic_processes
 	)
-	_expect_equal(snapshot.get("schema_version"), 8, "snapshot schema version")
+	_expect_equal(snapshot.get("schema_version"), 9, "snapshot schema version")
 	_expect_true(snapshot.has("drives"), "durable Wilson drives are persisted")
 	_expect_true(snapshot.has("projects"), "durable project owner state is persisted")
 	_expect_true(snapshot.has("associations"), "durable associations are persisted")
@@ -159,6 +159,7 @@ func _run_slice() -> void:
 	_expect_true(snapshot.has("presence"), "Presence relationship is persisted")
 	_expect_true(snapshot.has("environment"), "environment state is persisted")
 	_expect_true(snapshot.has("dynamic_processes"), "dynamic process causes are persisted")
+	_expect_true(snapshot.has("actors"), "shallow actor state family is present")
 	_expect_false(snapshot.has("relation_indexes"), "reconstructible relation indexes are not persisted")
 	_expect_false(snapshot.has("epistemic_projection"), "epistemic projection is not persisted")
 	_expect_false(snapshot.has("effective_physical_profiles"), "physical profile cache is not persisted")
