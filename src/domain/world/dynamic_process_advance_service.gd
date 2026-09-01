@@ -60,7 +60,7 @@ func advance(elapsed: float) -> Dictionary:
 			progressed.append(instance.id)
 		instance.elapsed += elapsed
 		if is_equal_approx(next_value, definition.terminal_value()):
-			instance.lifecycle = DynamicProcessInstance.Lifecycle.COMPLETED
+			_store.set_lifecycle(instance.id, DynamicProcessInstance.Lifecycle.COMPLETED)
 			completed.append(instance.id)
 	return _result(change_set, progressed, completed, diagnostics)
 
