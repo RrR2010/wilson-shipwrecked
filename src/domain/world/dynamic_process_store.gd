@@ -1,6 +1,8 @@
 class_name DynamicProcessStore
 extends RefCounted
 
+const DynamicProcessInstance = preload("res://src/domain/world/dynamic_process_instance.gd")
+
 var _instances: Dictionary = {}
 
 
@@ -24,8 +26,11 @@ func instances() -> Array:
 
 
 func set_lifecycle(process_id: StringName, lifecycle: int) -> bool:
+	assert(lifecycle >= 0 and lifecycle < DynamicProcessInstance.Lifecycle.size(), "Invalid dynamic process lifecycle")
 	var instance = get_process(process_id)
 	if instance == null:
+		return false
+	if instance.lifecycle == DynamicProcessInstance.Lifecycle.COMPLETED and lifecycle != DynamicProcessInstance.Lifecycle.COMPLETED:
 		return false
 	instance.lifecycle = lifecycle
 	return true
