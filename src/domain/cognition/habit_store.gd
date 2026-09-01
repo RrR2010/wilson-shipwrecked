@@ -25,7 +25,7 @@ func apply_evidence(evidence) -> bool:
 
 
 func get(cue_id: StringName, intention_id, bindings):
-	var key := StringName("%s|%s|%s" % [String(cue_id), intention_id.sort_key(), bindings.stable_key()])
+	var key: StringName = StringName("%s|%s|%s" % [String(cue_id), intention_id.sort_key(), bindings.stable_key()])
 	var entry = _entries.get(key)
 	return null if entry == null else _copy_entry(entry)
 
@@ -50,7 +50,7 @@ func restore_entry(
 	assert(cue_id != &"", "Habit restore requires cue id")
 	assert(is_finite(strength) and strength >= 0.0 and strength <= 1.0, "Habit strength must be within [0,1]")
 	assert(evidence_count >= 0, "Habit evidence count must be non-negative")
-	var key := StringName("%s|%s|%s" % [String(cue_id), intention_id.sort_key(), bindings.stable_key()])
+	var key: StringName = StringName("%s|%s|%s" % [String(cue_id), intention_id.sort_key(), bindings.stable_key()])
 	_entries[key] = {
 		"cue_id": cue_id,
 		"intention_id": intention_id,
@@ -62,6 +62,6 @@ func restore_entry(
 
 
 func _copy_entry(entry: Dictionary) -> Dictionary:
-	var copy := entry.duplicate(true)
+	var copy: Dictionary = entry.duplicate(true)
 	copy["bindings"] = entry["bindings"].duplicate_binding()
 	return copy
