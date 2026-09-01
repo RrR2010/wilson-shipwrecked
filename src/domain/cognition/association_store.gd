@@ -30,8 +30,8 @@ func apply_impact(impact) -> bool:
 	return true
 
 
-func get(subject):
-	assert(subject != null and subject.has_method("sort_key"), "AssociationStore.get requires semantic subject")
+func get_association(subject):
+	assert(subject != null and subject.has_method("sort_key"), "AssociationStore.get_association requires semantic subject")
 	var entry = _entries.get(subject.sort_key())
 	return null if entry == null else entry.duplicate(true)
 
