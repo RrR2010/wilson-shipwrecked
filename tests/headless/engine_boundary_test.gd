@@ -7,6 +7,7 @@ const MotionPort = preload("res://src/application/simulation/motion_port.gd")
 const PhysicalObservation = preload("res://src/application/simulation/physical_observation.gd")
 const GodotSceneSpatialRegistry = preload("res://src/infrastructure/spatial/godot_scene_spatial_registry.gd")
 const GodotSpatialQueryAdapter = preload("res://src/infrastructure/spatial/godot_spatial_query_adapter.gd")
+const GodotPhysicalObservationBuffer = preload("res://src/infrastructure/spatial/godot_physical_observation_buffer.gd")
 const FakeMotionPort = preload("res://tests/fakes/fake_motion_port.gd")
 const FakeSpatialQueryPort = preload("res://tests/fakes/fake_spatial_query_port.gd")
 
@@ -32,6 +33,7 @@ func _run_slice() -> void:
 	_test_godot_scene_mapping_is_explicit_and_headless_safe()
 	_test_motion_reports_semantic_progress_without_engine_frames()
 	_test_physical_observation_is_typed_non_authoritative_input()
+	_test_physical_observations_drain_in_engine_order()
 	_completed = true
 
 func _test_fixed_simulation_cadence_is_frame_partition_independent() -> void:
@@ -119,6 +121,20 @@ func _test_physical_observation_is_typed_non_authoritative_input() -> void:
 	_expect_true(observation.subject.equals(wilson_ref), "physical fact preserves typed subject identity")
 	_expect_true(observation.other.equals(rock_ref), "physical fact preserves typed counterpart identity")
 	_expect_true(is_equal_approx(observation.magnitude, 4.5), "physical fact carries finite magnitude without implying consequence")
+
+func _test_physical_observations_drain_in_engine_order() -> void:
+	var wilson_ref := RuntimeWorldRef.wilson()
+	var rock_ref := RuntimeWorldRef.entity(DomainId.entity(&"falling_rock"))
+	var buffer := GodotPhysicalObservationBuffer.new()
+	var first := PhysicalObservation.new(PhysicalObservation.Kind.OVERLAP_ENTERED, wilson_ref, rock_ref)
+	var second := PhysicalObservation.new(PhysicalObservation.Kind.CONTACT, wilson_ref, rock_ref, 2.0)
+	_expect_true(buffer.enqueue(first), "first engine observation enqueues")
+	_expect_true(buffer.enqueue(second), "second engine observation enqueues")
+	_expect_equal(buffer.pending_count(), 2, "physics observations accumulate between semantic steps")
+	var drained := buffer.drain_observations()
+	_expect_equal(drained.size(), 2, "semantic step drains complete pending batch")
+	_expect_true(drained[0] == first and drained[1] == second, "physical observation order is preserved")
+	_expect_equal(buffer.pending_count(), 0, "drain consumes observations exactly once")
 
 func _expect_true(condition: bool, message: String) -> void:
 	if not condition:
