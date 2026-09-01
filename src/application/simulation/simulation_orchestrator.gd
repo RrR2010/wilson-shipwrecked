@@ -10,7 +10,7 @@ const SimulationStepTrace = preload("res://src/infrastructure/diagnostics/simula
 ## Authoritative ordering:
 ## world progression -> action progression -> committed outcome application
 ## -> derived invalidation -> grounded project progression -> perception
-## -> immediate belief learning -> drive progression -> candidate generation
+## -> immediate Wilson learning -> drive progression -> candidate generation
 ## -> routing -> selected intention commit.
 
 var _world_advance
@@ -31,6 +31,7 @@ var _drive_progression
 var _drive_candidate_source
 var _project_contribution
 var _project_candidate_source
+var _additional_candidate_sources: Array
 
 
 func _init(
@@ -51,7 +52,8 @@ func _init(
 	drive_progression = null,
 	drive_candidate_source = null,
 	project_contribution = null,
-	project_candidate_source = null
+	project_candidate_source = null,
+	additional_candidate_sources: Array = []
 ) -> void:
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
 	assert(action_execution != null, "SimulationOrchestrator requires action execution")
@@ -68,6 +70,8 @@ func _init(
 	assert(trace_sink != null, "SimulationOrchestrator requires trace sink")
 	assert((drive_progression == null) == (drive_candidate_source == null), "Drive progression and candidate source must be provided together")
 	assert((project_contribution == null) == (project_candidate_source == null), "Project contribution and candidate source must be provided together")
+	for source in additional_candidate_sources:
+		assert(source != null and source.has_method("generate"), "Additional candidate sources must implement generate()")
 	_world_advance = world_advance
 	_action_execution = action_execution
 	_world_commands = world_commands
@@ -86,6 +90,7 @@ func _init(
 	_drive_candidate_source = drive_candidate_source
 	_project_contribution = project_contribution
 	_project_candidate_source = project_candidate_source
+	_additional_candidate_sources = additional_candidate_sources.duplicate()
 
 
 func advance(step):
@@ -140,6 +145,8 @@ func advance(step):
 		candidates.append_array(_drive_candidate_source.generate())
 	if _project_candidate_source != null:
 		candidates.append_array(_project_candidate_source.generate())
+	for source in _additional_candidate_sources:
+		candidates.append_array(source.generate())
 	candidates.sort_custom(func(a, b): return a.stable_key() < b.stable_key())
 	trace.record_result(&"decision_candidates", candidates)
 	var decision_result = _decision_router.resolve(candidates, _activity_query.current_intention())
