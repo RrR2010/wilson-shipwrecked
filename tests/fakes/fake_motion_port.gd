@@ -1,23 +1,26 @@
 class_name FakeMotionPort
 extends MotionPort
 
+const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
+
 var _status_by_actor: Dictionary = {}
 var _target_by_actor: Dictionary = {}
 
-func request_move(actor_ref: StringName, target_ref: StringName) -> bool:
-	_target_by_actor[actor_ref] = target_ref
-	_status_by_actor[actor_ref] = MotionStatus.MOVING
+func request_move(actor_ref: RuntimeWorldRef, target_ref: RuntimeWorldRef) -> bool:
+	_target_by_actor[actor_ref.key()] = target_ref
+	_status_by_actor[actor_ref.key()] = MotionStatus.MOVING
 	return true
 
-func cancel_move(actor_ref: StringName) -> void:
-	if _status_by_actor.has(actor_ref):
-		_status_by_actor[actor_ref] = MotionStatus.CANCELLED
+func cancel_move(actor_ref: RuntimeWorldRef) -> void:
+	var key := actor_ref.key()
+	if _status_by_actor.has(key):
+		_status_by_actor[key] = MotionStatus.CANCELLED
 
-func get_status(actor_ref: StringName) -> int:
-	return int(_status_by_actor.get(actor_ref, MotionStatus.IDLE))
+func get_status(actor_ref: RuntimeWorldRef) -> int:
+	return int(_status_by_actor.get(actor_ref.key(), MotionStatus.IDLE))
 
-func set_status(actor_ref: StringName, status: int) -> void:
-	_status_by_actor[actor_ref] = status
+func set_status(actor_ref: RuntimeWorldRef, status: int) -> void:
+	_status_by_actor[actor_ref.key()] = status
 
-func get_target(actor_ref: StringName) -> StringName:
-	return StringName(_target_by_actor.get(actor_ref, &""))
+func get_target(actor_ref: RuntimeWorldRef) -> RuntimeWorldRef:
+	return _target_by_actor.get(actor_ref.key()) as RuntimeWorldRef
