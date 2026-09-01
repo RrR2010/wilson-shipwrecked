@@ -46,7 +46,7 @@ func restore_entry(claim, importance: float, source_execution_id: StringName, mo
 	assert(claim != null and claim.has_method("sort_key"), "Episode restore requires claim")
 	assert(is_finite(importance) and importance >= 0.0 and importance <= 1.0, "Episode importance must be within [0,1]")
 	assert(sequence > 0, "Episode sequence must be positive")
-	var key := StringName("%s|%s" % [String(source_execution_id), claim.sort_key()])
+	var key: StringName = StringName("%s|%s" % [String(source_execution_id), claim.sort_key()])
 	_entries[key] = {
 		"claim": claim,
 		"importance": importance,
@@ -61,8 +61,8 @@ func restore_entry(claim, importance: float, source_execution_id: StringName, mo
 func _prune_if_needed() -> void:
 	while _entries.size() > _max_entries:
 		var weakest_key = null
-		var weakest_importance := INF
-		var oldest_sequence := 2147483647
+		var weakest_importance: float = 2.0
+		var oldest_sequence: int = 2147483647
 		for key in _entries.keys():
 			var entry: Dictionary = _entries[key]
 			var importance: float = float(entry["importance"])
