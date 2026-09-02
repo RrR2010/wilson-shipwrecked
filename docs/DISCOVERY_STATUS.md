@@ -181,7 +181,9 @@ Validated boundary semantics:
 - queued physical observations drain at an explicit semantic boundary;
 - fine transforms, navigation paths and physics observations remain non-persisted infrastructure facts.
 
-This boundary does **not** yet include a concrete `CharacterBody3D` / `NavigationAgent3D` motion implementation, a real navmesh/LOS smoke scene, physics callback producer wiring, or authoritative consequence resolution from physical observations.
+The validated `SimulationCadenceClock` is only an engine-to-semantic bridge primitive. Its current `0.1 s` default is **not** a validated universal update rate for perception, cognition, drives, environment, projects, Director or maintenance.
+
+This boundary does **not** yet include a concrete `CharacterBody3D` / `NavigationAgent3D` motion implementation, a real navmesh/LOS smoke scene, physics callback producer wiring, passive spatial perception while Wilson remains `MOVING`, or authoritative consequence resolution from physical observations.
 
 ---
 
@@ -265,10 +267,13 @@ Still open:
 ```text
 concrete Godot motion host + CharacterBody3D/NavigationAgent3D integration
 real navmesh / line-of-sight integration smoke coverage
+passive bounded spatial perception while MOVING
 physics callback producer wiring
 physical observation → validated World consequence resolution
 collision/overlap + grounded Wilson body consequences
-generic reconsideration gating
+generic reconsideration gating / trigger coalescing
+owner/service due scheduling from one authoritative simulation time
+semantic threshold/coalescing for gradual physical/environmental changes
 drive hysteresis-band memory persistence
 Wilson-relative route/escape evaluation
 intervention causal windows
@@ -279,10 +284,13 @@ full new-run bootstrap/reset
 Legacy-to-new-Wilson seeding policy
 ```
 
-Drive-specific known issues remain:
+Timing/decision-specific known issues:
 
-1. the application orchestrator still performs decision routing every simulation tick; generic reconsideration gating is not yet implemented;
-2. drive persistence stores numeric values but not hysteresis-band memory, so deadband state can reconstruct differently after save/load.
+1. the application orchestrator still performs candidate generation and decision routing every simulation step; `SimulationStepContext.trigger_set` is not yet consumed as a generic reconsideration gate;
+2. drive progression currently participates in the orchestrator step rather than a general owner/service due-scheduling policy;
+3. passive spatial perception while motion remains `MOVING` is not implemented yet;
+4. the Godot/domain event boundary still needs explicit threshold/coalescing policy for continuously changing physical/environment values;
+5. drive persistence stores numeric values but not hysteresis-band memory, so deadband state can reconstruct differently after save/load.
 
 ---
 
@@ -291,10 +299,17 @@ Drive-specific known issues remain:
 Recommended sequence from the validated 40-test checkpoint:
 
 ```text
-1. concrete Godot physics/motion host + navmesh/LOS integration
+1. concrete Godot physics/motion host + timing/trigger calibration
+   - one authoritative simulation time + due work
+   - passive spatial perception during MOVING
+   - event/threshold spatial refresh
+   - generic reconsideration gating/coalescing
+   - navmesh/LOS integration
 2. deterministic playable scenario/bootstrap tooling
 3. representative multi-system scenario suites + seed-population tests
 ```
+
+The timing/trigger requirements above consume the open design review at `docs/design-reviews/2026-09-01-simulation-cadence-engine-domain-integration.md`; the review remains OPEN until the corresponding runtime behavior is locally validated.
 
 Cross-cutting correctness slices above should be pulled forward whenever a representative scenario requires them.
 
