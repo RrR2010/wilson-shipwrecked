@@ -1,8 +1,6 @@
 class_name FakeMotionPort
 extends "res://src/application/simulation/motion_port.gd"
 
-const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
-
 var _status_by_actor: Dictionary = {}
 var _target_by_actor: Dictionary = {}
 
