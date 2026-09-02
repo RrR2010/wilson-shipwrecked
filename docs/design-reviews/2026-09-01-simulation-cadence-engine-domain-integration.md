@@ -342,21 +342,23 @@ The test should assert semantic ordering and routing, not exact render-frame cou
 
 The consuming implementation agent should resolve each item below.
 
-- [ ] Treat `SimulationCadenceClock(0.1)` as a deterministic engine→semantic bridge, not a cognition frequency.
-- [ ] Preserve one authoritative simulation-time model rather than creating independent subsystem clocks by default.
+- [x] Treat `SimulationCadenceClock(0.1)` as a deterministic engine→semantic bridge, not a cognition frequency. **Canonicalized in `SIMULATION_ORCHESTRATION.md`; concrete host consumption remains part of the next runtime slice.**
+- [x] Preserve one authoritative simulation-time model rather than creating independent subsystem clocks by default. **Already canonical; due-scheduling implementation remains open.**
 - [ ] Define/implement bounded passive spatial perception during movement; perception must not wait for `ARRIVED`.
-- [ ] Keep event-driven perception for meaningful engine/world changes alongside passive refresh.
+- [ ] Keep event-driven perception for meaningful engine/world changes alongside passive refresh. **Event-driven path exists; combined runtime path remains open until passive refresh is implemented.**
 - [ ] Ensure perception can occur without automatically triggering broad intentional reconsideration.
 - [ ] Ensure immediate threats reach the threat routing regime at the next admissible semantic boundary.
 - [ ] Keep gradual systems due/time-driven and cognition boundary/event-driven.
 - [ ] Coalesce/threshold gradual physical/environmental changes before producing semantic event spam.
-- [ ] Confirm complex same-step physical observations preserve deterministic causal ordering; add sequence/time metadata only if representative cases prove it necessary.
-- [ ] Add or plan an integrated timing scenario similar to the proposed 20 m walk / Gerald / falling-palm trace.
+- [x] Confirm complex same-step physical observations preserve deterministic causal ordering; add sequence/time metadata only if representative cases prove it necessary. **PR #14 preserves insertion order. Sequence/timestamp metadata deliberately deferred until a representative accident demonstrates ambiguity.**
+- [ ] Add or plan an integrated timing scenario similar to the proposed 20 m walk / Gerald / falling-palm trace. **Planned after isolated motion/perception/gating regressions exist.**
+
+## Consumption progress
+
+A calibration pass after PR #14 incorporated the durable timing/trigger rules into `docs/SIMULATION_ORCHESTRATION.md` and exposed the remaining runtime gaps in `docs/DISCOVERY_STATUS.md`. The review intentionally remains `OPEN`: canonical agreement is not counted as runtime completion.
 
 ## Completion record
 
-When all applicable items are resolved, replace the status at the top with `COMPLETED` and fill this section.
-
-**Consumed by:** _pending_  
+**Consumed by:** `calibration/simulation-trigger-gating` (partial; PR pending)  
 **Completion date:** _pending_  
-**Rejected/deferred recommendations and rationale:** _pending_
+**Rejected/deferred recommendations and rationale:** stable sequence/physics timestamp metadata for `PhysicalObservation` is deferred until a representative same-step accident demonstrates that insertion ordering is insufficient. The integrated 20 m / Gerald / falling-palm regression is deferred until smaller motion-perception and trigger-gating tests exist, so failures remain diagnosable.
