@@ -81,6 +81,24 @@ Memory consolidation, habit disuse, weak admitted decay, project/director aging/
 
 May run every rendered frame but consumes semantic snapshots/events and never determines authoritative success.
 
+## Engine-to-semantic bridge is not a universal subsystem tick
+
+A concrete Godot host may use a fixed bridge such as `SimulationCadenceClock(0.1)` to convert variable/fine engine progression into deterministic semantic boundaries. That bridge frequency does **not** define a universal frequency for perception, cognition, drives, projects, Director evaluation, environment drift or maintenance.
+
+Prefer:
+
+```text
+one authoritative simulation time
++ deterministic semantic bridge
++ owner/service due scheduling
++ event/semantic-boundary triggers
++ sparse maintenance
+```
+
+Avoid independent subsystem clocks by default. Gradual owners/services may keep bounded due metadata or receive elapsed time only when the orchestrator determines they are due. Numeric frequencies remain calibration policy, not domain identity.
+
+If nothing semantically relevant changed and no due work exists, a semantic boundary may legitimately perform little or no cognition work.
+
 ---
 
 # 3. Canonical active semantic cycle
@@ -124,6 +142,16 @@ presentation after domain meaning is established
 Advance due non-Wilson authoritative state such as weather, fire, rot/growth, moving hazards, shallow actors and active physical processes.
 
 Meaningful changes may produce `WorldEvent`s. Wilson does not automatically learn those facts.
+
+Continuously changing physical/environmental values should normally cross semantic threshold/coalescing boundaries before producing event traffic. Prefer facts such as:
+
+```text
+wind_became_dangerous
+object_started_sliding
+possession_became_unsecured
+```
+
+rather than one event for every small numeric change. Thresholding/coalescing must preserve grounded causality and must not hide a transition needed by action validity, perception or immediate-threat handling.
 
 Dynamic-process commitment does not imply a future collision/victim is already committed. Consequence resolution remains grounded at its actual boundary.
 
@@ -193,7 +221,7 @@ This maintenance completes before downstream logic relies on affected derived ph
 
 Perception does not receive omniscient World state as cognition truth.
 
-Conceptual boundary:
+Conceptual event-driven boundary:
 
 ```text
 WorldEvent + current authoritative placement/context
@@ -206,6 +234,33 @@ WorldEvent + current authoritative placement/context
 The current structural model uses coarse semantic `PlaceId` co-location; fine range/occlusion/nav perception may replace/refine the adapter behind the same contract.
 
 Hidden event bindings/provenance must not reappear in Wilson evidence.
+
+## Event-driven and passive spatial perception coexist
+
+Not every perceptual opportunity originates from a `WorldEvent`. Wilson may move into a useful viewing/hearing position relative to an already-existing object or actor. The engine/domain boundary therefore supports a bounded passive spatial refresh path alongside event-driven perception.
+
+Conceptual shape:
+
+```text
+movement / orientation / local-membership change
+→ bounded nearby perceptible query
+→ modality + range + occlusion/access filtering
+→ newly accessible subjects/evidence
+→ optional reconsideration trigger
+```
+
+A passive refresh may be requested when, for example:
+
+- Wilson moved far enough since the previous spatial sample;
+- orientation/view/hearing context changed materially;
+- local spatial membership changed;
+- an explicit low-cost fallback refresh becomes due.
+
+Perception must be able to use the **current engine-backed spatial state while motion is still `MOVING`**. It must not wait for `MotionStatus.ARRIVED`.
+
+Passive refresh remains bounded: do not turn every physics frame into an omniscient world scan.
+
+Perception itself does not imply broad reconsideration. Evidence may produce no decision trigger, a local/tactical reaction, an intentional reconsideration, or immediate-threat routing depending on semantic significance.
 
 ---
 
@@ -250,6 +305,8 @@ CONTEXT_TRANSITION
 PERIODIC_REVIEW
 ```
 
+Triggers may enter the semantic step from already-known boundary facts (for example `SimulationStepContext.trigger_set`) or be derived during the same causal chain from newly admitted outcomes/perception. The orchestrator must combine them deterministically rather than treating the presence of a simulation step itself as a trigger.
+
 Equivalent triggers are coalesced/debounced. Trigger priority determines **when** to reconsider, not utility magnitude.
 
 Routing result:
@@ -261,9 +318,13 @@ INTENTIONAL
 NONE
 ```
 
+When no meaningful trigger survives gating, ordinary behavior continues and broad candidate competition is skipped. `NONE` is an expected steady-state routing result, not an error condition.
+
 ### Immediate threat
 
 Uses perceived threat/body consequences and a narrow defensive candidate space. Hidden `HazardProjection` is not a cognition input.
+
+A newly accessible immediate threat must be able to reach this regime at the next admissible semantic boundary without waiting for ordinary periodic review or motion arrival.
 
 ### Tactical
 
@@ -273,13 +334,15 @@ Asks how to continue/refine the current intention after new evidence/outcome.
 
 Asks whether the broader objective remains preferable to other needs/projects/opportunities.
 
-Do not run broad intentional competition after every ordinary tactic failure.
+Do not run broad intentional competition after every ordinary tactic failure, every perceptual update, or every fixed semantic bridge step.
 
 ---
 
 # 10. Candidate generation/evaluation/selection
 
 Composable candidate sources may include drives, learned interactions, exploration, habits, projects, suspended interests, suggestions, Director opportunities and transient reaction.
+
+Candidate generation should respect the routed reconsideration regime. Expensive or broad candidate sources need not run when routing is `NONE`, and narrow threat/tactical routing should not implicitly become a full intentional competition pass.
 
 Equivalent semantic candidates should deduplicate and preserve multiple provenance reasons rather than become duplicate lottery tickets.
 
@@ -481,6 +544,8 @@ simulation step
 → candidates/contributions
 → selection/intention transition
 ```
+
+Trace should make skipped due work and `NONE` reconsideration observable enough to diagnose cadence mistakes without turning those diagnostics into gameplay authority.
 
 Trace is diagnostic evidence, not gameplay authority.
 
