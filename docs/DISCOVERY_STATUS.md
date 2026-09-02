@@ -21,8 +21,8 @@ The strict external runner is validated under **Godot 4.7.1**.
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 39 PASS / 39 TOTAL
-PASS headless_suite (39 tests)
+RESULT: 40 PASS / 40 TOTAL
+PASS headless_suite (40 tests)
 ```
 
 Validated breadth now includes:
@@ -39,6 +39,7 @@ structural World/runtime foundation
 → PlayerRunState + bounded suggestions + physical intervention boundary
 → current-run lifecycle + resurrection transaction boundary
 → cross-run PlayerProfile / Legacy admission
+→ Godot/domain spatial-query, motion, physical-observation, and simulation-cadence boundary
 ```
 
 ---
@@ -63,7 +64,8 @@ Run lifecycle                                     PASS
 Resurrection transaction boundary                 PASS
 PlayerProfile / cross-run Legacy admission        PASS
 Owner-local persistence for implemented owners    PASS
-Strict headless suite                              PASS — 39 tests
+Godot spatial / engine boundary                    PASS
+Strict headless suite                              PASS — 40 tests
 ```
 
 ---
@@ -155,6 +157,34 @@ Player-private intent does not directly mutate Wilson psychology.
 
 ---
 
+# Godot spatial / engine boundary
+
+Implemented and locally validated:
+
+```text
+SimulationCadenceClock
+SpatialQueryPort
+MotionPort
+PhysicalObservation / PhysicalObservationPort
+GodotSceneSpatialRegistry
+GodotSpatialQueryAdapter
+GodotPhysicalObservationBuffer
+```
+
+Validated boundary semantics:
+
+- render/physics frame partitioning does not define semantic simulation cadence;
+- stable `RuntimeWorldRef` identity maps explicitly to live `Node3D` instances and interaction anchors;
+- metric/spatial queries remain behind an application port rather than leaking Godot nodes into domain state;
+- semantic movement status remains separated from fine-grained engine progression;
+- collision/overlap/grounding/fall observations are typed engine facts and do not directly mutate World;
+- queued physical observations drain at an explicit semantic boundary;
+- fine transforms, navigation paths and physics observations remain non-persisted infrastructure facts.
+
+This boundary does **not** yet include a concrete `CharacterBody3D` / `NavigationAgent3D` motion implementation, a real navmesh/LOS smoke scene, physics callback producer wiring, or authoritative consequence resolution from physical observations.
+
+---
+
 # Environment / hazard / actor boundaries
 
 World/environment progression composes authoritative environment, dynamic-process and shallow-actor causes. Derived protection, exposure, hazard and perceived-threat values remain non-owning/reconstructible.
@@ -233,6 +263,10 @@ A future full run-save boundary still needs to compose these owner snapshots int
 Still open:
 
 ```text
+concrete Godot motion host + CharacterBody3D/NavigationAgent3D integration
+real navmesh / line-of-sight integration smoke coverage
+physics callback producer wiring
+physical observation → validated World consequence resolution
 collision/overlap + grounded Wilson body consequences
 generic reconsideration gating
 drive hysteresis-band memory persistence
@@ -254,10 +288,10 @@ Drive-specific known issues remain:
 
 # Remaining major verticals
 
-Recommended sequence from the validated 39-test checkpoint:
+Recommended sequence from the validated 40-test checkpoint:
 
 ```text
-1. fine spatial/nav/occlusion + Godot presentation adapters
+1. concrete Godot physics/motion host + navmesh/LOS integration
 2. deterministic playable scenario/bootstrap tooling
 3. representative multi-system scenario suites + seed-population tests
 ```
