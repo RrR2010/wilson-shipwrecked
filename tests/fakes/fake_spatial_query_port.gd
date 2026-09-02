@@ -1,8 +1,6 @@
 class_name FakeSpatialQueryPort
 extends "res://src/application/simulation/spatial_query_port.gd"
 
-const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
-
 var _distance_by_pair: Dictionary = {}
 var _route_by_pair: Dictionary = {}
 var _route_cost_by_pair: Dictionary = {}
