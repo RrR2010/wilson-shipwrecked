@@ -1,7 +1,6 @@
 class_name GodotSpatialQueryAdapter
 extends "res://src/application/simulation/spatial_query_port.gd"
 
-const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
 const SceneSpatialRegistry = preload("res://src/infrastructure/spatial/godot_scene_spatial_registry.gd")
 
 ## Godot-backed implementation of semantic spatial queries.
