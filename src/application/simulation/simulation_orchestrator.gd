@@ -3,6 +3,7 @@ extends RefCounted
 
 const SimulationStepResult = preload("res://src/application/simulation/simulation_step_result.gd")
 const SimulationStepTrace = preload("res://src/infrastructure/diagnostics/simulation_step_trace.gd")
+const ReconsiderationGate = preload("res://src/application/simulation/reconsideration_gate.gd")
 
 ## Thin application-layer coordinator. Owns deterministic ordering only.
 ## Durable truth remains in World, ActionExecution, Wilson Cognition and Projects owners.
@@ -11,7 +12,7 @@ const SimulationStepTrace = preload("res://src/infrastructure/diagnostics/simula
 ## world progression -> derived invalidation -> action progression
 ## -> committed outcome application -> derived invalidation -> grounded project progression
 ## -> perception -> immediate Wilson learning -> drive progression
-## -> perceived-threat + ordinary candidate generation -> routing
+## -> reconsideration gating -> candidate generation/routing when admitted
 ## -> selected intention commit.
 
 var _world_advance
@@ -34,6 +35,7 @@ var _project_contribution
 var _project_candidate_source
 var _additional_candidate_sources: Array
 var _immediate_threat_candidate_source
+var _reconsideration_gate
 
 
 func _init(
@@ -56,7 +58,8 @@ func _init(
 	project_contribution = null,
 	project_candidate_source = null,
 	additional_candidate_sources: Array = [],
-	immediate_threat_candidate_source = null
+	immediate_threat_candidate_source = null,
+	reconsideration_gate = null
 ) -> void:
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
 	assert(action_execution != null, "SimulationOrchestrator requires action execution")
@@ -97,6 +100,7 @@ func _init(
 	_project_candidate_source = project_candidate_source
 	_additional_candidate_sources = additional_candidate_sources.duplicate()
 	_immediate_threat_candidate_source = immediate_threat_candidate_source
+	_reconsideration_gate = reconsideration_gate if reconsideration_gate != null else ReconsiderationGate.new()
 
 
 func advance(step):
@@ -146,28 +150,37 @@ func advance(step):
 		var drive_progress = _drive_progression.advance(step.elapsed)
 		trace.record_result(&"drive_progression", drive_progress)
 
-	var candidates: Array = _opportunity_service.generate(
-		perception_result,
-		_belief_store,
-		_opportunity_definitions
-	)
-	if _immediate_threat_candidate_source != null:
-		var threat_candidates: Array = _immediate_threat_candidate_source.generate(perception_result)
-		candidates.append_array(threat_candidates)
-		trace.record_result(&"immediate_threat_candidates", threat_candidates)
-	if _drive_candidate_source != null:
-		candidates.append_array(_drive_candidate_source.generate())
-	if _project_candidate_source != null:
-		candidates.append_array(_project_candidate_source.generate())
-	for source in _additional_candidate_sources:
-		candidates.append_array(source.generate())
-	candidates.sort_custom(func(a, b): return a.stable_key() < b.stable_key())
-	trace.record_result(&"decision_candidates", candidates)
-	var decision_result = _decision_router.resolve(candidates, _activity_query.current_intention())
-	trace.record_result(&"decision", decision_result)
-
-	var intention_commit = _decision_commit.apply(decision_result, step.step_id)
-	trace.record_result(&"intention_commit", intention_commit)
+	var admitted_triggers: Array[int] = _reconsideration_gate.coalesce(step.trigger_set)
+	trace.record_result(&"reconsideration_triggers", admitted_triggers)
+	var candidates: Array = []
+	var decision_result = null
+	var intention_commit = null
+	if _reconsideration_gate.should_reconsider(admitted_triggers):
+		candidates = _opportunity_service.generate(
+			perception_result,
+			_belief_store,
+			_opportunity_definitions
+		)
+		if _immediate_threat_candidate_source != null:
+			var threat_candidates: Array = _immediate_threat_candidate_source.generate(perception_result)
+			candidates.append_array(threat_candidates)
+			trace.record_result(&"immediate_threat_candidates", threat_candidates)
+		if _drive_candidate_source != null:
+			candidates.append_array(_drive_candidate_source.generate())
+		if _project_candidate_source != null:
+			candidates.append_array(_project_candidate_source.generate())
+		for source in _additional_candidate_sources:
+			candidates.append_array(source.generate())
+		candidates.sort_custom(func(a, b): return a.stable_key() < b.stable_key())
+		trace.record_result(&"decision_candidates", candidates)
+		decision_result = _decision_router.resolve(candidates, _activity_query.current_intention())
+		trace.record_result(&"decision", decision_result)
+		intention_commit = _decision_commit.apply(decision_result, step.step_id)
+		trace.record_result(&"intention_commit", intention_commit)
+	else:
+		trace.record_result(&"decision_candidates", candidates)
+		trace.record_result(&"decision", null)
+		trace.record_result(&"intention_commit", null)
 
 	var result = SimulationStepResult.new(
 		step.step_id,
