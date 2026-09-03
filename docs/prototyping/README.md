@@ -2,61 +2,67 @@
 
 ## Purpose
 
-This area owns **temporary, implementation-facing prototype instructions** used to prove engine, spatial, interaction and presentation contracts before production assets exist.
+This area documents **prototype asset production only**. Prototype assets support executable engine and gameplay tests before production art exists.
 
-Prototype content is deliberately simpler than production content. It must preserve the dimensions, pivots, semantic roles and physical distinctions required by a test, but it does not need final topology, texturing, art direction or animation quality.
+Runtime scene composition, assertions and visual checkpoints do not live here. They live under `tests/scenes/` so executable test code is the integration truth.
+
+Prototype content may simplify production objects while preserving dimensions, pivots and semantic readability required by a test. It does not redefine production asset requirements.
 
 Prototype documents do not replace:
 
 - `ASSET_SPEC.md` / `ASSET_PIPELINE.md` for production asset contracts;
 - `VISUAL_GUIDE.md` / `art/` for final visual direction;
 - `asset-catalog/` for the durable object/content backlog;
-- source/tests for executable runtime truth.
+- `tests/scenes/` and `tests/headless/` for executable runtime truth.
 
 ## Structure
 
 ```text
 docs/prototyping/
 ├── README.md
-├── blender/
-│   ├── BLENDER_PROTOTYPING_GUIDE.md
-│   └── MCP_AGENT_WORKFLOW.md
-└── smoke-tests/
-    └── <smoke-test>/
-        ├── README.md
-        ├── ASSET_SPEC.md
-        └── SCENE_SPEC.md
+└── blender/
+    ├── BLENDER_PROTOTYPING_GUIDE.md
+    └── MCP_AGENT_WORKFLOW.md
 ```
 
-The Blender documents are reusable instructions for local modeling agents. Each smoke-test folder is an incremental work order: read the generic guide first, then only the test-specific documents.
+The Blender documents are reusable instructions for a local modeling agent. Keep that agent constrained to visible geometry/source/export work; Godot interpretation and runtime semantics stay in repository-owned scenes/scripts.
 
-## Repository shape for prototype artifacts
-
-Create prototype artifact directories only when a smoke test actually needs them. Preferred shape:
+## Repository shape for prototype assets
 
 ```text
 prototypes/
-└── <smoke-test>/
-    ├── source/       # intentional .blend source
-    ├── exports/      # GLB assets consumed by Godot
-    └── godot/        # prototype-only scenes/resources when not better placed in tests
+└── <fixture-name>/
+    ├── source/       # intentional modeling source such as .blend
+    └── exports/      # GLB assets consumed by executable scenes
 ```
 
-Do not create empty directory trees. Do not place prototype objects in the production asset catalog merely because a smoke test needs a box, capsule or marker.
+Executable scenes belong in:
+
+```text
+tests/scenes/<fixture-name>/
+```
+
+A stable automated wrapper may additionally live in:
+
+```text
+tests/headless/<fixture-name>_scene_test.gd
+```
+
+Do not create a parallel `godot/` subtree under each prototype. This avoids splitting scene authority between prototype work orders and the test suite.
 
 ## Prototype authority
 
-A smoke-test specification may intentionally simplify a production object. For example, Wilson may be represented by a capsule and a crate by a box. The prototype geometry proves runtime integration only; it does not redefine the corresponding production asset.
+A prototype may intentionally represent Wilson as a capsule, a wall as a box or an object as a simple colored primitive. Those choices prove integration only.
 
-Prefer explicit, inspectable primitives over visual realism. Every added modeling detail must answer: **which contract does this help validate?**
+Prefer explicit, inspectable geometry over visual realism. Every added modeling detail should support a concrete test or readability requirement.
 
-## Agent handoff
+## Modeling handoff
 
-A local Blender/Godot agent should receive:
+A local modeling agent should receive:
 
 1. this README;
-2. the relevant generic tool guide;
-3. the smoke test `README.md`;
-4. its `ASSET_SPEC.md` or `SCENE_SPEC.md` depending on responsibility.
+2. `blender/BLENDER_PROTOTYPING_GUIDE.md`;
+3. `blender/MCP_AGENT_WORKFLOW.md` when MCP is used;
+4. a compact object manifest supplied by the human/implementing agent.
 
-The agent should not need the entire Wilson design corpus to execute a bounded prototype task.
+The modeling agent should return source geometry plus exports. It should not author navigation, collision semantics, runtime identity, perception logic or test assertions.
