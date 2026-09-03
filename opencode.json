@@ -12,7 +12,8 @@
     "blender": {
       "type": "local",
       "command": ["uv", "--directory", "C:\\Users\\Richard De Souza\\Projetos\\MCP_servers\\blender_mcp\\mcp", "run", "blender-mcp"],
-      "enabled": true
+      "enabled": true,
+      "timeout": 60000
     }
   }
 }
