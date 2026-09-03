@@ -1,0 +1,114 @@
+class_name GodotPassiveSpatialSensor
+extends Node
+
+## Collision-backed broadphase candidate source for passive perception.
+##
+## Area/body overlap means only "worth rechecking". It never means visible, heard,
+## reachable, dangerous, or otherwise semantically perceived.
+
+var _sensor_area: Area3D
+var _ref_by_collision_id: Dictionary = {}
+var _active_by_key: Dictionary = {}
+var _dirty := false
+
+
+func configure(sensor_area: Area3D) -> void:
+	assert(sensor_area != null, "GodotPassiveSpatialSensor requires Area3D")
+	if _sensor_area != null:
+		_disconnect_area()
+	_sensor_area = sensor_area
+	_sensor_area.body_entered.connect(_on_body_entered)
+	_sensor_area.body_exited.connect(_on_body_exited)
+	_sensor_area.area_entered.connect(_on_area_entered)
+	_sensor_area.area_exited.connect(_on_area_exited)
+
+
+func bind_candidate(runtime_ref, collision_object: CollisionObject3D) -> bool:
+	if runtime_ref == null or collision_object == null:
+		return false
+	var instance_id := collision_object.get_instance_id()
+	if _ref_by_collision_id.has(instance_id):
+		return _ref_by_collision_id[instance_id].equals(runtime_ref)
+	_ref_by_collision_id[instance_id] = runtime_ref
+	return true
+
+
+func unbind_candidate(runtime_ref, collision_object: CollisionObject3D) -> void:
+	if runtime_ref == null or collision_object == null:
+		return
+	var instance_id := collision_object.get_instance_id()
+	var mapped = _ref_by_collision_id.get(instance_id)
+	if mapped != null and mapped.equals(runtime_ref):
+		_ref_by_collision_id.erase(instance_id)
+		if _active_by_key.erase(runtime_ref.key()):
+			_dirty = true
+
+
+func has_pending_refresh() -> bool:
+	return _dirty
+
+
+func consume_refresh_candidates() -> Array:
+	var result: Array = _active_by_key.values()
+	result.sort_custom(func(a, b): return a.sort_key() < b.sort_key())
+	_dirty = false
+	return result
+
+
+func request_refresh() -> void:
+	_dirty = true
+
+
+func active_candidate_count() -> int:
+	return _active_by_key.size()
+
+
+func _on_body_entered(body: Node3D) -> void:
+	_enter_collision_object(body)
+
+
+func _on_body_exited(body: Node3D) -> void:
+	_exit_collision_object(body)
+
+
+func _on_area_entered(area: Area3D) -> void:
+	_enter_collision_object(area)
+
+
+func _on_area_exited(area: Area3D) -> void:
+	_exit_collision_object(area)
+
+
+func _enter_collision_object(node: Object) -> void:
+	if node == null:
+		return
+	var runtime_ref = _ref_by_collision_id.get(node.get_instance_id())
+	if runtime_ref == null:
+		return
+	var key = runtime_ref.key()
+	if not _active_by_key.has(key):
+		_active_by_key[key] = runtime_ref
+		_dirty = true
+
+
+func _exit_collision_object(node: Object) -> void:
+	if node == null:
+		return
+	var runtime_ref = _ref_by_collision_id.get(node.get_instance_id())
+	if runtime_ref == null:
+		return
+	if _active_by_key.erase(runtime_ref.key()):
+		_dirty = true
+
+
+func _disconnect_area() -> void:
+	if not is_instance_valid(_sensor_area):
+		return
+	if _sensor_area.body_entered.is_connected(_on_body_entered):
+		_sensor_area.body_entered.disconnect(_on_body_entered)
+	if _sensor_area.body_exited.is_connected(_on_body_exited):
+		_sensor_area.body_exited.disconnect(_on_body_exited)
+	if _sensor_area.area_entered.is_connected(_on_area_entered):
+		_sensor_area.area_entered.disconnect(_on_area_entered)
+	if _sensor_area.area_exited.is_connected(_on_area_exited):
+		_sensor_area.area_exited.disconnect(_on_area_exited)
