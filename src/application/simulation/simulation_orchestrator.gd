@@ -1,6 +1,7 @@
 class_name SimulationOrchestrator
 extends RefCounted
 
+const PerceptionResult = preload("res://src/domain/cognition/perception_result.gd")
 const SimulationStepResult = preload("res://src/application/simulation/simulation_step_result.gd")
 const SimulationStepTrace = preload("res://src/infrastructure/diagnostics/simulation_step_trace.gd")
 const ReconsiderationGate = preload("res://src/application/simulation/reconsideration_gate.gd")
@@ -11,7 +12,7 @@ const ReconsiderationGate = preload("res://src/application/simulation/reconsider
 ## Authoritative ordering:
 ## world progression -> derived invalidation -> action progression
 ## -> committed outcome application -> derived invalidation -> grounded project progression
-## -> perception -> immediate Wilson learning -> drive progression
+## -> event + passive spatial perception -> immediate Wilson learning -> drive progression
 ## -> reconsideration gating -> candidate generation/routing when admitted
 ## -> selected intention commit.
 
@@ -36,6 +37,7 @@ var _project_candidate_source
 var _additional_candidate_sources: Array
 var _immediate_threat_candidate_source
 var _reconsideration_gate
+var _passive_perception_source
 
 
 func _init(
@@ -59,7 +61,8 @@ func _init(
 	project_candidate_source = null,
 	additional_candidate_sources: Array = [],
 	immediate_threat_candidate_source = null,
-	reconsideration_gate = null
+	reconsideration_gate = null,
+	passive_perception_source = null
 ) -> void:
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
 	assert(action_execution != null, "SimulationOrchestrator requires action execution")
@@ -80,6 +83,8 @@ func _init(
 		assert(source != null and source.has_method("generate"), "Additional candidate sources must implement generate()")
 	if immediate_threat_candidate_source != null:
 		assert(immediate_threat_candidate_source.has_method("generate"), "Immediate threat source must implement generate(perception_result)")
+	if passive_perception_source != null:
+		assert(passive_perception_source.has_method("collect"), "Passive perception source must implement collect(step_context)")
 	_world_advance = world_advance
 	_action_execution = action_execution
 	_world_commands = world_commands
@@ -101,6 +106,7 @@ func _init(
 	_additional_candidate_sources = additional_candidate_sources.duplicate()
 	_immediate_threat_candidate_source = immediate_threat_candidate_source
 	_reconsideration_gate = reconsideration_gate if reconsideration_gate != null else ReconsiderationGate.new()
+	_passive_perception_source = passive_perception_source
 
 
 func advance(step):
@@ -140,7 +146,13 @@ func advance(step):
 
 	var access_by_execution: Dictionary = _perception_access.resolve(committed_events, step)
 	trace.record_result(&"perception_access", access_by_execution)
-	var perception_result = _perception.perceive(committed_events, access_by_execution)
+	var event_perception = _perception.perceive(committed_events, access_by_execution)
+	var passive_perception = PerceptionResult.new()
+	if _passive_perception_source != null:
+		passive_perception = _passive_perception_source.collect(step)
+		assert(passive_perception != null, "Passive perception source must return PerceptionResult")
+	trace.record_result(&"passive_perception", passive_perception)
+	var perception_result = _merge_perception(event_perception, passive_perception)
 	trace.record_result(&"perception", perception_result)
 
 	var learning_result = _learning.process(perception_result)
@@ -200,3 +212,13 @@ func advance(step):
 	trace.complete(result)
 	_trace_sink.record(trace)
 	return result
+
+
+func _merge_perception(first, second):
+	var observed_events: Array = first.observed_events.duplicate()
+	observed_events.append_array(second.observed_events)
+	var evidence: Array = first.evidence.duplicate()
+	evidence.append_array(second.evidence)
+	var diagnostics: Array[String] = first.diagnostics.duplicate()
+	diagnostics.append_array(second.diagnostics)
+	return PerceptionResult.new(observed_events, evidence, diagnostics)
