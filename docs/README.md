@@ -187,6 +187,15 @@ README.md / PRODUCT.md
 
 `art/` must not maintain a second object catalog. Asset identity/backlog lives in `asset-catalog/`.
 
+## Prototype / smoke-test production
+
+- [`prototyping/README.md`](prototyping/README.md) — authority, folder structure and agent handoff for temporary engine-validation assets.
+- [`prototyping/blender/BLENDER_PROTOTYPING_GUIDE.md`](prototyping/blender/BLENDER_PROTOTYPING_GUIDE.md) — reusable primitive modeling/export rules.
+- [`prototyping/blender/MCP_AGENT_WORKFLOW.md`](prototyping/blender/MCP_AGENT_WORKFLOW.md) — constrained local Blender MCP workflow.
+- `prototyping/smoke-tests/` — incremental asset/scene work orders for concrete engine smoke tests.
+
+Prototype geometry validates runtime integration and never silently redefines production asset requirements.
+
 ---
 
 # 8. Historical / exploratory material
@@ -210,8 +219,9 @@ When documents appear to disagree:
 5. **Concrete implementation checkpoint:** `DISCOVERY_STATUS.md` + source/tests; it does not redefine language-neutral product/domain meaning.
 6. **Asset/content requirements:** `asset-catalog/` owns required modeled families/cross-cutting content requirements.
 7. **Art:** `VISUAL_GUIDE.md` + `art/`; technical production in `ASSET_SPEC.md`/`ASSET_PIPELINE.md`.
-8. **Fixtures/regressions:** evidence only.
-9. **Brainstorming/handoffs:** historical/operational evidence only.
+8. **Prototype work orders:** `prototyping/` may simplify geometry for a test but does not override production asset/domain/art contracts.
+9. **Fixtures/regressions:** evidence only.
+10. **Brainstorming/handoffs:** historical/operational evidence only.
 
 If implementation evidence invalidates a canonical rule, update the owning document instead of adding another permanent override.
 
@@ -226,6 +236,7 @@ To prevent renewed fragmentation:
 - do not create permanent `*_REFINEMENTS`, `*_NOTES`, `*_V2` or edge-case override chains;
 - keep scenario evidence in fixtures/regressions;
 - keep cross-cutting content requirements in `asset-catalog/`;
+- keep temporary engine-validation work orders in `prototyping/smoke-tests/`;
 - keep exploratory breadth in `brainstorming/`;
 - keep stage-transition instructions in `handoffs/`;
 - after consolidating a superseding document, remove the old override and repair this map in the same change.
