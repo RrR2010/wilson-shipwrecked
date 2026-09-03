@@ -1,0 +1,18 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "godot": {
+      "type": "local",
+      "command": ["node", "C:\\Users\\Richard De Souza\\Projetos\\MCP_servers\\godot_mcp\\server\\build\\index.js"],
+      "environment": {
+        "GODOT_MCP_PORT": "6505"
+      },
+      "enabled": true
+    },
+    "blender": {
+      "type": "local",
+      "command": ["uv", "--directory", "C:\\Users\\Richard De Souza\\Projetos\\MCP_servers\\blender_mcp\\mcp", "run", "blender-mcp"],
+      "enabled": true
+    }
+  }
+}

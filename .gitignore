@@ -1,6 +1,9 @@
 # Godot generated/import state
 .godot/
 
+# OpenCode local state
+.opencode/
+
 # Common local/editor noise
 .DS_Store
 Thumbs.db
