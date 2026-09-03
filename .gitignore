@@ -1,8 +1,11 @@
 # Godot generated/import state
 .godot/
+*.import
 
-# OpenCode local state
+# Local AI/editor tooling
 .opencode/
+opencode.json
+addons/godot_mcp/
 
 # Common local/editor noise
 .DS_Store
