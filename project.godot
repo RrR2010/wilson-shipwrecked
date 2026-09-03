@@ -1,9 +1,25 @@
 ; Engine configuration file.
-; Keep this root intentionally minimal while the authoritative domain is built
-; headlessly. Rendering/input/project settings will be introduced with their
-; owning implementation slices rather than as premature defaults.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
 config_version=5
 
 [application]
 
 config/name="Wilson Shipwrecked"
+run/main_scene="uid://mgjjdqfe414l"
+config/features=PackedStringArray("4.7")
+
+[autoload]
+
+MCPRuntimeBridge="*res://addons/godot_mcp/services/mcp_runtime_bridge.gd"
+MCPInputBridge="*res://addons/godot_mcp/services/mcp_input_bridge.gd"
+MCPScreenshotBridge="*res://addons/godot_mcp/services/mcp_screenshot_bridge.gd"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")

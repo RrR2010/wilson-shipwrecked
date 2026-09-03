@@ -1,0 +1,106 @@
+[gd_scene format=3 uid="uid://mgjjdqfe414l"]
+
+[ext_resource type="PackedScene" uid="uid://dnpqkrom5jthw" path="res://prototypes/spatial-navigation-perception/exports/ground.glb" id="1_ground"]
+[ext_resource type="PackedScene" uid="uid://dadxst1doy30w" path="res://prototypes/spatial-navigation-perception/exports/wilson.glb" id="2_wilson"]
+[ext_resource type="PackedScene" uid="uid://cadfig00peyg3" path="res://prototypes/spatial-navigation-perception/exports/wall.glb" id="3_wall"]
+[ext_resource type="PackedScene" uid="uid://cfawc4lkljtoj" path="res://prototypes/spatial-navigation-perception/exports/target.glb" id="4_target"]
+[ext_resource type="PackedScene" uid="uid://c0r4fs3p2uw66" path="res://prototypes/spatial-navigation-perception/exports/perceptible.glb" id="5_perceptible"]
+[ext_resource type="Script" uid="uid://cvtj44u33xqsn" path="res://prototypes/spatial-navigation-perception/godot/smoke_test.gd" id="6_script"]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_main"]
+vertices = PackedVector3Array(-9.5, 0.30000007, 1, -2.5, 0.30000007, 1, -2.25, 0.30000007, 0.25, -1, 0.30000007, -9.5, -9.5, 0.30000007, -9.5, -0.75, 0.30000007, 0.25, 1, 0.30000007, 0.25, 1.25, 0.30000007, -9.5, 2.5, 0.30000007, 0.25, 2.75, 0.30000007, 1, 9.5, 0.30000007, 1, 9.5, 0.30000007, -9.5, -2.25, 0.30000007, 2, 0, 0.30000007, 9.5, 0, 0.30000007, 2, -9.5, 0.30000007, 9.5, 2.25, 0.30000007, 2, 9.5, 0.30000007, 9.5)
+polygons = [PackedInt32Array(1, 0, 2), PackedInt32Array(2, 0, 4), PackedInt32Array(2, 4, 3), PackedInt32Array(3, 5, 2), PackedInt32Array(5, 3, 6), PackedInt32Array(6, 3, 7), PackedInt32Array(9, 8, 10), PackedInt32Array(10, 8, 11), PackedInt32Array(11, 8, 7), PackedInt32Array(8, 6, 7), PackedInt32Array(0, 1, 12), PackedInt32Array(12, 14, 13), PackedInt32Array(0, 12, 15), PackedInt32Array(15, 12, 13), PackedInt32Array(9, 10, 16), PackedInt32Array(16, 10, 17), PackedInt32Array(16, 17, 13), PackedInt32Array(13, 14, 16)]
+cell_height = 0.1
+agent_height = 1.8
+agent_radius = 0.3
+agent_max_climb = 0.3
+region_merge_size = 5.0
+edge_max_length = 12.0
+edge_max_error = 1.0
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(20, 0.35, 20)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wall"]
+size = Vector3(4, 2, 0.5)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_wilson"]
+radius = 0.3
+height = 1.8
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_perception"]
+radius = 3.0
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_perceptible"]
+size = Vector3(0.5, 0.5, 0.5)
+
+[node name="SpatialNavigationPerceptionSmoke" type="Node3D" unique_id=1788474519]
+script = ExtResource("6_script")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=115094559]
+navigation_mesh = SubResource("NavigationMesh_main")
+
+[node name="Ground" type="StaticBody3D" parent="NavigationRegion3D" unique_id=1786879833]
+
+[node name="Visual" parent="NavigationRegion3D/Ground" unique_id=1144514841 instance=ExtResource("1_ground")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Ground" unique_id=109365098]
+shape = SubResource("BoxShape3D_ground")
+
+[node name="Wall" type="StaticBody3D" parent="NavigationRegion3D" unique_id=1534895420]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+
+[node name="Visual" parent="NavigationRegion3D/Wall" unique_id=2028630221 instance=ExtResource("3_wall")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Wall" unique_id=1060871048]
+shape = SubResource("BoxShape3D_wall")
+
+[node name="Wilson" type="CharacterBody3D" parent="." unique_id=135792771]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, 1)
+
+[node name="Visual" parent="Wilson" unique_id=1402753339 instance=ExtResource("2_wilson")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Wilson" unique_id=626384850]
+shape = SubResource("CapsuleShape3D_wilson")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="Wilson" unique_id=1878752998]
+target_desired_distance = 1.5
+path_max_distance = 2.0
+height = 1.8
+radius = 0.3
+debug_enabled = true
+
+[node name="PerceptionArea" type="Area3D" parent="Wilson" unique_id=1079134303]
+collision_layer = 0
+collision_mask = 4
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Wilson/PerceptionArea" unique_id=1304765270]
+shape = SubResource("SphereShape3D_perception")
+
+[node name="TargetMarker" type="Node3D" parent="." unique_id=2145675196]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 0.1)
+
+[node name="Visual" parent="TargetMarker" unique_id=4456239 instance=ExtResource("4_target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.175992, 0, 0)
+
+[node name="PerceptibleObject" type="StaticBody3D" parent="." unique_id=375466076]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0.25)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Visual" parent="PerceptibleObject" unique_id=1284602317 instance=ExtResource("5_perceptible")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PerceptibleObject" unique_id=469961841]
+shape = SubResource("BoxShape3D_perceptible")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1414516562]
+transform = Transform3D(1, 0, 0, 0, 0.707, 0.707, 0, -0.707, 0.707, 0, 10, 0)
+shadow_enabled = true
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=398191781]
+transform = Transform3D(1, 0, 0, 0, 0.707, 0.707, 0, -0.707, 0.707, 0, 15, 15)
+projection = 1
+size = 25.0
+near = 0.1
+far = 100.0
