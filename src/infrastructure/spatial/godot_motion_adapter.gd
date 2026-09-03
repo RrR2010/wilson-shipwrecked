@@ -24,7 +24,7 @@ func bind_actor(actor_ref, body: CharacterBody3D, navigation_agent: NavigationAg
 		return false
 	if not is_finite(speed_mps) or speed_mps <= 0.0:
 		return false
-	var key := actor_ref.key()
+	var key: String = String(actor_ref.key())
 	if _body_by_key.has(key):
 		return _body_by_key[key] == body and _agent_by_key[key] == navigation_agent
 	_body_by_key[key] = body
@@ -37,7 +37,7 @@ func bind_actor(actor_ref, body: CharacterBody3D, navigation_agent: NavigationAg
 func unbind_actor(actor_ref) -> void:
 	if actor_ref == null:
 		return
-	var key := actor_ref.key()
+	var key: String = String(actor_ref.key())
 	_body_by_key.erase(key)
 	_agent_by_key.erase(key)
 	_speed_by_key.erase(key)
@@ -48,7 +48,7 @@ func unbind_actor(actor_ref) -> void:
 func request_move(actor_ref, target_ref) -> bool:
 	if actor_ref == null or target_ref == null:
 		return false
-	var key := actor_ref.key()
+	var key: String = String(actor_ref.key())
 	var body: CharacterBody3D = _resolve_body(key)
 	var agent: NavigationAgent3D = _resolve_agent(key)
 	var target_node: Node3D = _registry.resolve(target_ref)
@@ -71,7 +71,7 @@ func request_move(actor_ref, target_ref) -> bool:
 func cancel_move(actor_ref) -> void:
 	if actor_ref == null:
 		return
-	var key := actor_ref.key()
+	var key: String = String(actor_ref.key())
 	var body: CharacterBody3D = _resolve_body(key)
 	if body != null:
 		body.velocity.x = 0.0
@@ -83,20 +83,20 @@ func cancel_move(actor_ref) -> void:
 func get_status(actor_ref) -> int:
 	if actor_ref == null:
 		return MotionStatus.IDLE
-	return int(_status_by_key.get(actor_ref.key(), MotionStatus.IDLE))
+	return int(_status_by_key.get(String(actor_ref.key()), MotionStatus.IDLE))
 
 
 func get_target(actor_ref):
 	if actor_ref == null:
 		return null
-	return _target_by_key.get(actor_ref.key())
+	return _target_by_key.get(String(actor_ref.key()))
 
 
 func physics_tick(_delta_seconds: float) -> void:
 	var keys: Array = _status_by_key.keys()
 	keys.sort_custom(func(a, b): return String(a) < String(b))
 	for raw_key in keys:
-		var key := String(raw_key)
+		var key: String = String(raw_key)
 		if int(_status_by_key.get(key, MotionStatus.IDLE)) != MotionStatus.MOVING:
 			continue
 		var body: CharacterBody3D = _resolve_body(key)
@@ -110,14 +110,14 @@ func physics_tick(_delta_seconds: float) -> void:
 			_status_by_key[key] = MotionStatus.ARRIVED
 			continue
 		var next_position: Vector3 = agent.get_next_path_position()
-		var direction := next_position - body.global_position
+		var direction: Vector3 = next_position - body.global_position
 		direction.y = 0.0
 		if direction.length_squared() <= 1.0e-8:
 			body.velocity.x = 0.0
 			body.velocity.z = 0.0
 			continue
 		direction = direction.normalized()
-		var speed: float = _speed_by_key.get(key, 3.0)
+		var speed: float = float(_speed_by_key.get(key, 3.0))
 		body.velocity.x = direction.x * speed
 		body.velocity.z = direction.z * speed
 		body.move_and_slide()
