@@ -37,6 +37,7 @@ const DefaultSimulationActivityQuery = preload("res://src/application/simulation
 const CoarsePerceptionAccessResolver = preload("res://src/application/simulation/coarse_perception_access_resolver.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
 const SimulationStepContext = preload("res://src/application/simulation/simulation_step_context.gd")
+const ReconsiderationGate = preload("res://src/application/simulation/reconsideration_gate.gd")
 const StaticWorldAdvance = preload("res://tests/headless/fixtures/static_world_advance.gd")
 const InMemoryTraceSink = preload("res://tests/headless/fixtures/in_memory_trace_sink.gd")
 
@@ -119,7 +120,13 @@ func _run_slice() -> void:
 		belief_store, opportunity_definitions, router, decision_commit, trace_sink
 	)
 
-	var result = orchestrator.advance(SimulationStepContext.new(&"step_1", 0.5, 10.0, null, []))
+	var result = orchestrator.advance(SimulationStepContext.new(
+		&"step_1",
+		0.5,
+		10.0,
+		null,
+		[ReconsiderationGate.Trigger.MAJOR_EVENT_OR_OPPORTUNITY]
+	))
 	_expect_true(result != null, "orchestrator returns result")
 	if result == null:
 		return
@@ -135,25 +142,34 @@ func _run_slice() -> void:
 	var learning_evidence: Array = result.immediate_learning.get("derived_evidence", [])
 	_expect_equal(learning_evidence.size(), 1, "perceptual evidence becomes belief evidence")
 	_expect_equal(belief_store.entries().size(), 1, "belief owner stores learned proposition")
-	_expect_equal(result.candidates.size(), 1, "learned/perceived opportunity becomes candidate")
-	_expect_true(result.decision.selected_candidate != null, "decision router selects candidate")
-	if result.decision.selected_candidate != null:
+	_expect_equal(result.candidates.size(), 1, "admitted reconsideration generates candidate")
+	_expect_true(result.decision != null and result.decision.selected_candidate != null, "decision router selects candidate")
+	if result.decision != null and result.decision.selected_candidate != null:
 		_expect_equal(result.decision.selected_candidate.intention_id.key(), investigate.key(), "selected intention matches perceived opportunity")
 		_expect_equal(String(result.decision.regime), "intentional", "decision uses intentional regime")
 	_expect_true(result.intention_commit != null and result.intention_commit.ok, "selected intention commits through cognition owner")
 	_expect_true(intention_store.has_current(), "current intention becomes durable state")
-	_expect_equal(trace_sink.traces.size(), 1, "one semantic trace recorded")
-	if trace_sink.traces.size() == 1:
+
+	var quiet_step = orchestrator.advance(SimulationStepContext.new(&"step_2", 0.1, 10.1, null, []))
+	_expect_true(quiet_step != null, "quiet semantic step still advances simulation")
+	if quiet_step != null:
+		_expect_equal(quiet_step.candidates.size(), 0, "quiet semantic step skips candidate generation")
+		_expect_true(quiet_step.decision == null, "quiet semantic step skips decision routing")
+		_expect_true(quiet_step.intention_commit == null, "quiet semantic step does not rewrite intention")
+	_expect_equal(intention_store.current().intention_id.key(), investigate.key(), "quiet semantic step preserves current intention")
+
+	_expect_equal(trace_sink.traces.size(), 2, "both semantic steps are traced")
+	if trace_sink.traces.size() >= 1:
 		var trace = trace_sink.traces[0]
 		_expect_true(trace.stage_results.has(&"world_commit"), "trace records World commit")
 		_expect_true(trace.stage_results.has(&"derived_invalidation"), "trace records derived invalidation")
 		_expect_true(trace.stage_results.has(&"perception"), "trace records perception")
 		_expect_true(trace.stage_results.has(&"immediate_learning"), "trace records learning")
+		_expect_true(trace.stage_results.has(&"reconsideration_triggers"), "trace records reconsideration triggers")
 		_expect_true(trace.stage_results.has(&"decision_candidates"), "trace records candidates")
 		_expect_true(trace.stage_results.has(&"decision"), "trace records decision")
 		_expect_true(trace.stage_results.has(&"intention_commit"), "trace records intention commit")
 
-	# Completion is reflected directly by the owner-backed activity query.
 	var completion = execution.advance(execution_id, 0.5)
 	_expect_true(completion.completed, "action can complete")
 	_expect_equal(String(activity.active_execution_id()), "", "completed action is not reported active")
