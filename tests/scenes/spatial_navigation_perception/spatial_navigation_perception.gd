@@ -19,8 +19,6 @@ const GodotSpatialQueryAdapter = preload("res://src/infrastructure/spatial/godot
 @export var movement_speed_mps: float = 3.0
 @export var max_motion_frames: int = 720
 
-@onready var navigation_region: NavigationRegion3D = $NavigationRegion3D
-@onready var ground: StaticBody3D = $Ground
 @onready var wall: StaticBody3D = $Wall
 @onready var wilson: CharacterBody3D = $Wilson
 @onready var wilson_agent: NavigationAgent3D = $Wilson/NavigationAgent3D
@@ -59,7 +57,8 @@ func _ready() -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE:
+	var key_event := event as InputEventKey
+	if key_event != null and key_event.pressed and not key_event.echo and key_event.keycode == KEY_SPACE:
 		continue_requested.emit()
 
 
@@ -184,6 +183,8 @@ func _prove_motion_and_passive_perception() -> void:
 	await _physics_frames(2)
 	_expect(_motion.request_move(_wilson_ref, _target_ref), "GodotMotionAdapter accepts movement request")
 	_expect(_motion.get_status(_wilson_ref) == MotionPort.MotionStatus.MOVING, "motion status becomes MOVING")
+	# NavigationServer/NavigationAgent changes synchronize on the next physics boundary.
+	await _physics_frames(1)
 
 	var evidence_count: int = 0
 	for frame in range(max_motion_frames):
