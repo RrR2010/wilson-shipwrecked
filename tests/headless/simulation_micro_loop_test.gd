@@ -156,7 +156,7 @@ func _run_slice() -> void:
 		_expect_equal(quiet_step.candidates.size(), 0, "quiet semantic step skips candidate generation")
 		_expect_true(quiet_step.decision == null, "quiet semantic step skips decision routing")
 		_expect_true(quiet_step.intention_commit == null, "quiet semantic step does not rewrite intention")
-	_expect_equal(intention_store.current_intention().intention_id.key(), investigate.key(), "quiet semantic step preserves current intention")
+	_expect_equal(intention_store.current().intention_id.key(), investigate.key(), "quiet semantic step preserves current intention")
 
 	_expect_equal(trace_sink.traces.size(), 2, "both semantic steps are traced")
 	if trace_sink.traces.size() >= 1:
@@ -170,7 +170,6 @@ func _run_slice() -> void:
 		_expect_true(trace.stage_results.has(&"decision"), "trace records decision")
 		_expect_true(trace.stage_results.has(&"intention_commit"), "trace records intention commit")
 
-	# Completion is reflected directly by the owner-backed activity query.
 	var completion = execution.advance(execution_id, 0.5)
 	_expect_true(completion.completed, "action can complete")
 	_expect_equal(String(activity.active_execution_id()), "", "completed action is not reported active")
