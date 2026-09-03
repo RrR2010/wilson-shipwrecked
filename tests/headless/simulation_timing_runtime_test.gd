@@ -56,8 +56,8 @@ func _test_shared_due_scheduler_uses_authoritative_time() -> void:
 	_expect_equal(scheduler.collect_due(0.9), [], "nothing is due before first authoritative deadline")
 	_expect_equal(scheduler.collect_due(1.0), [&"drives"], "drive work becomes due at one authoritative second")
 	_expect_equal(scheduler.collect_due(4.9), [&"drives"], "missed drive periods coalesce into one due invocation")
-	_expect_equal(scheduler.collect_due(5.0), [&"maintenance"], "separate work shares the same authoritative clock")
-	_expect_true(is_equal_approx(scheduler.next_due_time(&"drives"), 5.0), "drive next-due boundary advances deterministically")
+	_expect_equal(scheduler.collect_due(5.0), [&"drives", &"maintenance"], "all work due at the same authoritative boundary is returned")
+	_expect_true(is_equal_approx(scheduler.next_due_time(&"drives"), 6.0), "drive next-due boundary advances deterministically")
 
 
 func _test_reconsideration_gate_coalesces_semantic_triggers() -> void:
@@ -104,8 +104,9 @@ func _test_motion_adapter_fails_closed_without_live_navigation_tree() -> void:
 	_expect_true(motion.bind_actor(wilson_ref, body, agent, 2.5), "motion adapter binds explicit body/navigation pair")
 	_expect_true(not motion.request_move(wilson_ref, target_ref), "detached navigation actor fails closed instead of inventing a route")
 	_expect_equal(motion.get_status(wilson_ref), GodotMotionAdapter.MotionStatus.ROUTE_INVALID, "failed live navigation request reports semantic route invalidity")
-	body.free()
+	motion.unbind_actor(wilson_ref)
 	agent.free()
+	body.free()
 	target.free()
 
 
