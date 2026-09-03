@@ -44,6 +44,7 @@ func has_line_of_sight(observer_ref: RuntimeWorldRef, target_ref: RuntimeWorldRe
 	if observer == null or target == null:
 		return false
 	var query := PhysicsRayQueryParameters3D.create(observer.global_position, target.global_position)
+	_exclude_collision_root(query, observer)
 	var hit := physics_space_state.intersect_ray(query)
 	if hit.is_empty():
 		return true
@@ -60,6 +61,7 @@ func is_interaction_reachable(actor_ref: RuntimeWorldRef, target_ref: RuntimeWor
 	if physics_space_state == null:
 		return true
 	var query := PhysicsRayQueryParameters3D.create(actor.global_position, anchor.global_position)
+	_exclude_collision_root(query, actor)
 	var hit := physics_space_state.intersect_ray(query)
 	if hit.is_empty():
 		return true
@@ -79,6 +81,17 @@ func _route_points(from_ref: RuntimeWorldRef, to_ref: RuntimeWorldRef) -> Packed
 		to_node.global_position,
 		true
 	)
+
+func _exclude_collision_root(query: PhysicsRayQueryParameters3D, root: Node) -> void:
+	var exclusions: Array[RID] = []
+	_collect_collision_rids(root, exclusions)
+	query.exclude = exclusions
+
+func _collect_collision_rids(node: Node, output: Array[RID]) -> void:
+	if node is CollisionObject3D:
+		output.append((node as CollisionObject3D).get_rid())
+	for child in node.get_children():
+		_collect_collision_rids(child, output)
 
 func _is_same_or_descendant(candidate: Node, expected_root: Node) -> bool:
 	var current: Node = candidate
