@@ -18,6 +18,7 @@ const WorldCommitResult = preload("res://src/domain/world/world_commit_result.gd
 const DecisionCommitCoordinator = preload("res://src/application/simulation/decision_commit_coordinator.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
 const SimulationStepContext = preload("res://src/application/simulation/simulation_step_context.gd")
+const ReconsiderationGate = preload("res://src/application/simulation/reconsideration_gate.gd")
 const WorldAdvanceResult = preload("res://src/application/simulation/world_advance_result.gd")
 
 var _failures: Array[String] = []
@@ -144,7 +145,13 @@ func _run_slice() -> void:
 		project_source
 	)
 
-	var result = orchestrator.advance(SimulationStepContext.new(&"project_step_1", 1.0, 1.0, null, []))
+	var result = orchestrator.advance(SimulationStepContext.new(
+		&"project_step_1",
+		1.0,
+		1.0,
+		null,
+		[ReconsiderationGate.Trigger.PROJECT_CHECKPOINT]
+	))
 	_expect_equal(instance.contribution_count, 1, "grounded committed outcome advances project before candidate generation")
 	_expect_equal(instance.lifecycle, ProjectInstance.Lifecycle.ACTIVE, "project remains active until completion condition")
 	_expect_equal(result.candidates.size(), 1, "active project candidate joins normal decision competition")
