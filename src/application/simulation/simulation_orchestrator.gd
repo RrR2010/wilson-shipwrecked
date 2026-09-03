@@ -146,11 +146,15 @@ func advance(step):
 	var learning_result = _learning.process(perception_result)
 	trace.record_result(&"immediate_learning", learning_result)
 
+	var drive_progress = null
 	if _drive_progression != null:
-		var drive_progress = _drive_progression.advance(step.elapsed)
+		drive_progress = _drive_progression.advance(step.elapsed)
 		trace.record_result(&"drive_progression", drive_progress)
 
-	var admitted_triggers: Array[int] = _reconsideration_gate.coalesce(step.trigger_set)
+	var raw_triggers: Array = [] if step.trigger_set == null else Array(step.trigger_set).duplicate()
+	if drive_progress != null and drive_progress.has_method("requires_reconsideration") and drive_progress.requires_reconsideration():
+		raw_triggers.append(ReconsiderationGate.Trigger.DRIVE_URGENCY_CHANGE)
+	var admitted_triggers: Array[int] = _reconsideration_gate.coalesce(raw_triggers)
 	trace.record_result(&"reconsideration_triggers", admitted_triggers)
 	var candidates: Array = []
 	var decision_result = null
