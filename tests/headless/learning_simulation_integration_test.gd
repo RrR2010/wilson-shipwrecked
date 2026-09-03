@@ -20,6 +20,7 @@ const WilsonLearningCoordinator = preload("res://src/application/simulation/wils
 const DecisionCommitCoordinator = preload("res://src/application/simulation/decision_commit_coordinator.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
 const SimulationStepContext = preload("res://src/application/simulation/simulation_step_context.gd")
+const ReconsiderationGate = preload("res://src/application/simulation/reconsideration_gate.gd")
 const WorldAdvanceResult = preload("res://src/application/simulation/world_advance_result.gd")
 
 var _failures: Array[String] = []
@@ -151,7 +152,13 @@ func _run_slice() -> void:
 		[habit_source]
 	)
 
-	var result = orchestrator.advance(SimulationStepContext.new(&"learning_step_1", 1.0, 1.0, null, []))
+	var result = orchestrator.advance(SimulationStepContext.new(
+		&"learning_step_1",
+		1.0,
+		1.0,
+		null,
+		[ReconsiderationGate.Trigger.MAJOR_EVENT_OR_OPPORTUNITY]
+	))
 	_expect_equal(beliefs.entries().size(), 1, "perception still updates belief owner")
 	_expect_equal(associations.entries().size(), 1, "same accessible evidence updates association owner")
 	_expect_equal(habits.entries().size(), 1, "same accessible evidence updates habit owner")
