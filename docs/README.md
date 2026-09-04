@@ -142,6 +142,8 @@ The standard local regression command is:
 
 The runner is intentionally stricter than Godot process exit status and rejects script/engine errors, explicit failures and missing expected PASS markers.
 
+For real-engine spatial/physics/navigation fixtures, also read [`testing/SCENE_TESTS.md`](testing/SCENE_TESTS.md). Executable scene fixtures live under `tests/scenes/`; stable wrappers may join the strict runner under `tests/headless/`.
+
 Scenario/scale validation must not stop at one happy-path fixture. Use deterministic but varied seed populations, edge/boundary values, empty and dense datasets, conflicting simultaneous inputs, long-running bounded accumulation, reconstruction at awkward lifecycle points and invalid/adversarial fixture admission where relevant.
 
 ---
@@ -187,14 +189,13 @@ README.md / PRODUCT.md
 
 `art/` must not maintain a second object catalog. Asset identity/backlog lives in `asset-catalog/`.
 
-## Prototype / smoke-test production
+## Prototype asset production
 
-- [`prototyping/README.md`](prototyping/README.md) — authority, folder structure and agent handoff for temporary engine-validation assets.
+- [`prototyping/README.md`](prototyping/README.md) — prototype-asset authority and repository placement.
 - [`prototyping/blender/BLENDER_PROTOTYPING_GUIDE.md`](prototyping/blender/BLENDER_PROTOTYPING_GUIDE.md) — reusable primitive modeling/export rules.
-- [`prototyping/blender/MCP_AGENT_WORKFLOW.md`](prototyping/blender/MCP_AGENT_WORKFLOW.md) — constrained local Blender MCP workflow.
-- `prototyping/smoke-tests/` — incremental asset/scene work orders for concrete engine smoke tests.
+- [`prototyping/blender/MCP_AGENT_WORKFLOW.md`](prototyping/blender/MCP_AGENT_WORKFLOW.md) — constrained local Blender MCP workflow when a modeling agent is used.
 
-Prototype geometry validates runtime integration and never silently redefines production asset requirements.
+Prototype source/exports may support executable fixtures, but Godot scene composition and assertions belong under `tests/scenes/`, not under `docs/prototyping/` or `prototypes/*/godot/`.
 
 ---
 
@@ -219,8 +220,8 @@ When documents appear to disagree:
 5. **Concrete implementation checkpoint:** `DISCOVERY_STATUS.md` + source/tests; it does not redefine language-neutral product/domain meaning.
 6. **Asset/content requirements:** `asset-catalog/` owns required modeled families/cross-cutting content requirements.
 7. **Art:** `VISUAL_GUIDE.md` + `art/`; technical production in `ASSET_SPEC.md`/`ASSET_PIPELINE.md`.
-8. **Prototype work orders:** `prototyping/` may simplify geometry for a test but does not override production asset/domain/art contracts.
-9. **Fixtures/regressions:** evidence only.
+8. **Prototype assets:** `prototyping/` may simplify geometry for a test but does not override production asset/domain/art contracts.
+9. **Fixtures/regressions:** `tests/scenes/`, `tests/headless/` and other validation artifacts are evidence only.
 10. **Brainstorming/handoffs:** historical/operational evidence only.
 
 If implementation evidence invalidates a canonical rule, update the owning document instead of adding another permanent override.
@@ -234,9 +235,10 @@ To prevent renewed fragmentation:
 - prefer updating an existing canonical owner over creating a new top-level document;
 - create a new canonical document only when a concern has genuinely distinct authority/lifecycle and cannot remain readable in an existing owner;
 - do not create permanent `*_REFINEMENTS`, `*_NOTES`, `*_V2` or edge-case override chains;
+- keep executable engine-validation fixtures in `tests/scenes/` and stable strict-runner wrappers in `tests/headless/`;
+- keep prototype modeling guidance in `prototyping/` and prototype source/exports under `prototypes/`;
 - keep scenario evidence in fixtures/regressions;
 - keep cross-cutting content requirements in `asset-catalog/`;
-- keep temporary engine-validation work orders in `prototyping/smoke-tests/`;
 - keep exploratory breadth in `brainstorming/`;
 - keep stage-transition instructions in `handoffs/`;
 - after consolidating a superseding document, remove the old override and repair this map in the same change.
