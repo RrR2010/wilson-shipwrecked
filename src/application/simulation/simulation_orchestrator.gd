@@ -13,8 +13,8 @@ const ReconsiderationGate = preload("res://src/application/simulation/reconsider
 ## world progression -> derived invalidation -> action progression
 ## -> committed outcome application -> derived invalidation -> grounded project progression
 ## -> event + passive spatial perception -> immediate Wilson learning -> drive progression
-## -> reconsideration gating -> candidate generation/routing when admitted
-## -> selected intention commit.
+## -> perception/external trigger derivation -> reconsideration gating
+## -> candidate generation/routing when admitted -> selected intention commit.
 
 var _world_advance
 var _action_execution
@@ -38,6 +38,7 @@ var _additional_candidate_sources: Array
 var _immediate_threat_candidate_source
 var _reconsideration_gate
 var _passive_perception_source
+var _perception_trigger_source
 
 
 func _init(
@@ -62,7 +63,8 @@ func _init(
 	additional_candidate_sources: Array = [],
 	immediate_threat_candidate_source = null,
 	reconsideration_gate = null,
-	passive_perception_source = null
+	passive_perception_source = null,
+	perception_trigger_source = null
 ) -> void:
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
 	assert(action_execution != null, "SimulationOrchestrator requires action execution")
@@ -85,6 +87,8 @@ func _init(
 		assert(immediate_threat_candidate_source.has_method("generate"), "Immediate threat source must implement generate(perception_result)")
 	if passive_perception_source != null:
 		assert(passive_perception_source.has_method("collect"), "Passive perception source must implement collect(step_context)")
+	if perception_trigger_source != null:
+		assert(perception_trigger_source.has_method("derive"), "Perception trigger source must implement derive(perception_result)")
 	_world_advance = world_advance
 	_action_execution = action_execution
 	_world_commands = world_commands
@@ -107,6 +111,7 @@ func _init(
 	_immediate_threat_candidate_source = immediate_threat_candidate_source
 	_reconsideration_gate = reconsideration_gate if reconsideration_gate != null else ReconsiderationGate.new()
 	_passive_perception_source = passive_perception_source
+	_perception_trigger_source = perception_trigger_source
 
 
 func advance(step):
@@ -164,6 +169,11 @@ func advance(step):
 		trace.record_result(&"drive_progression", drive_progress)
 
 	var raw_triggers: Array = [] if step.trigger_set == null else Array(step.trigger_set).duplicate()
+	var perception_triggers: Array = []
+	if _perception_trigger_source != null:
+		perception_triggers = _perception_trigger_source.derive(perception_result)
+		raw_triggers.append_array(perception_triggers)
+	trace.record_result(&"perception_reconsideration_triggers", perception_triggers)
 	if drive_progress != null and drive_progress.has_method("requires_reconsideration") and drive_progress.requires_reconsideration():
 		raw_triggers.append(ReconsiderationGate.Trigger.DRIVE_URGENCY_CHANGE)
 	var admitted_triggers: Array[int] = _reconsideration_gate.coalesce(raw_triggers)
