@@ -7,14 +7,14 @@ extends Node
 ## reachable, dangerous, or otherwise semantically perceived.
 ##
 ## Godot overlap signals are the fast path. A bounded reconciliation fallback samples
-## the Area3D snapshot more often while the sensor is moving and sparsely while static,
-## preventing callback ordering or missed edges from leaving candidates stale without
-## scanning every physics frame.
+## the Area3D snapshot and also queries the physics space directly using the sensor's
+## collision shapes. The direct query avoids depending on Area3D's once-per-physics-step
+## overlap cache when a moving sensor crosses a candidate between cache updates.
 
 const MOVING_RECONCILE_FRAMES := 6
 const STATIC_RECONCILE_FRAMES := 60
 const MOVEMENT_REFRESH_DISTANCE := 0.10
-const DEBUG_BUILD := "passive_sensor_reconcile_v2"
+const DEBUG_BUILD := "passive_sensor_reconcile_v3_direct_shape"
 
 var _sensor_area: Area3D
 var _ref_by_collision_id: Dictionary = {}
@@ -86,6 +86,7 @@ func active_candidate_count() -> int:
 func reconcile_overlaps() -> bool:
 	if _sensor_area == null or not is_instance_valid(_sensor_area) or not _sensor_area.is_inside_tree():
 		return false
+
 	var overlapping_bodies: Array[Node3D] = _sensor_area.get_overlapping_bodies()
 	var overlapping_areas: Array[Area3D] = _sensor_area.get_overlapping_areas()
 	var current_by_key: Dictionary = {}
@@ -94,19 +95,22 @@ func reconcile_overlaps() -> bool:
 	for area in overlapping_areas:
 		_collect_bound_overlap(area, current_by_key)
 
+	var direct_hits: int = _collect_direct_shape_overlaps(current_by_key)
 	var changed: bool = not _same_key_set(_active_by_key, current_by_key)
 	if changed:
 		_active_by_key = current_by_key
 		_dirty = true
+
 	_last_reconcile_position = _sensor_area.global_position
 	_has_reconcile_position = true
 	_physics_frames_since_reconcile = 0
 	_reconcile_count += 1
-	if changed or not overlapping_bodies.is_empty() or not overlapping_areas.is_empty() or _reconcile_count == 1:
-		print("[PASSIVE_SENSOR][RECONCILE] count=%d raw_bodies=%d raw_areas=%d bound=%d changed=%s position=%s" % [
+	if changed or direct_hits > 0 or not overlapping_bodies.is_empty() or not overlapping_areas.is_empty() or _reconcile_count <= 2:
+		print("[PASSIVE_SENSOR][RECONCILE] count=%d cached_bodies=%d cached_areas=%d direct_hits=%d bound=%d changed=%s position=%s" % [
 			_reconcile_count,
 			overlapping_bodies.size(),
 			overlapping_areas.size(),
+			direct_hits,
 			current_by_key.size(),
 			changed,
 			str(_sensor_area.global_position),
@@ -133,6 +137,37 @@ func _physics_process(_delta: float) -> void:
 	var due_frames: int = MOVING_RECONCILE_FRAMES if moved else STATIC_RECONCILE_FRAMES
 	if _physics_frames_since_reconcile >= due_frames:
 		reconcile_overlaps()
+
+
+func _collect_direct_shape_overlaps(output: Dictionary) -> int:
+	var world: World3D = _sensor_area.get_world_3d()
+	if world == null:
+		return 0
+	var space_state: PhysicsDirectSpaceState3D = world.direct_space_state
+	if space_state == null:
+		return 0
+
+	var hit_ids: Dictionary = {}
+	for child in _sensor_area.get_children():
+		var collision_shape := child as CollisionShape3D
+		if collision_shape == null or collision_shape.disabled or collision_shape.shape == null:
+			continue
+		var query := PhysicsShapeQueryParameters3D.new()
+		query.shape = collision_shape.shape
+		query.transform = collision_shape.global_transform
+		query.collision_mask = _sensor_area.collision_mask
+		query.collide_with_bodies = true
+		query.collide_with_areas = true
+		query.exclude = [_sensor_area.get_rid()]
+		var hits: Array[Dictionary] = space_state.intersect_shape(query, 32)
+		for hit in hits:
+			var collider = hit.get("collider")
+			if collider == null or not is_instance_valid(collider):
+				continue
+			var instance_id: int = collider.get_instance_id()
+			hit_ids[instance_id] = true
+			_collect_bound_overlap(collider, output)
+	return hit_ids.size()
 
 
 func _on_body_entered(body: Node3D) -> void:
