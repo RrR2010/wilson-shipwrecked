@@ -9,6 +9,7 @@ var elapsed: float
 var simulation_time: float
 var random_streams
 var trigger_set
+var physical_observations: Array
 
 
 func _init(
@@ -16,10 +17,12 @@ func _init(
 	p_elapsed: float,
 	p_simulation_time: float,
 	p_random_streams,
-	p_trigger_set
+	p_trigger_set,
+	p_physical_observations: Array = []
 ) -> void:
 	step_id = p_step_id
 	elapsed = p_elapsed
 	simulation_time = p_simulation_time
 	random_streams = p_random_streams
 	trigger_set = p_trigger_set
+	physical_observations = p_physical_observations.duplicate()
