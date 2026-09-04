@@ -160,15 +160,17 @@ position = Vector3(0, 1, 0)
 shape = SubResource("WallShape")
 
 [node name="Wilson" type="CharacterBody3D" parent="."]
-position = Vector3(-7, 0.9, 0)
+position = Vector3(-7, 0, 0)
 collision_layer = 1
 collision_mask = 1
 floor_snap_length = 0.2
 
 [node name="Visual" type="MeshInstance3D" parent="Wilson"]
+position = Vector3(0, 0.9, 0)
 mesh = SubResource("WilsonMesh")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Wilson"]
+position = Vector3(0, 0.9, 0)
 shape = SubResource("WilsonShape")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="Wilson"]
@@ -181,6 +183,7 @@ max_speed = 3.0
 debug_enabled = true
 
 [node name="PerceptionArea" type="Area3D" parent="Wilson"]
+position = Vector3(0, 0.9, 0)
 collision_layer = 0
 collision_mask = 4
 monitoring = true
@@ -190,20 +193,23 @@ monitorable = false
 shape = SubResource("PerceptionShape")
 
 [node name="Target" type="Node3D" parent="."]
-position = Vector3(7, 0.1, 2)
+position = Vector3(7, 0, 2)
 
 [node name="Visual" type="MeshInstance3D" parent="Target"]
+position = Vector3(0, 0.1, 0)
 mesh = SubResource("TargetMesh")
 
 [node name="Perceptible" type="StaticBody3D" parent="."]
-position = Vector3(-1.5, 0.25, 2.2)
+position = Vector3(-1.5, 0, 2.2)
 collision_layer = 4
 collision_mask = 0
 
 [node name="Visual" type="MeshInstance3D" parent="Perceptible"]
+position = Vector3(0, 0.25, 0)
 mesh = SubResource("PerceptibleMesh")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Perceptible"]
+position = Vector3(0, 0.25, 0)
 shape = SubResource("PerceptibleShape")
 
 [node name="Camera3D" type="Camera3D" parent="."]
