@@ -5,6 +5,10 @@ extends Node
 ##
 ## Area/body overlap means only "worth rechecking". It never means visible, heard,
 ## reachable, dangerous, or otherwise semantically perceived.
+##
+## Godot overlap signals are the fast path. reconcile_overlaps() is a bounded fallback
+## for movement/context refreshes where callback ordering or a missed edge would
+## otherwise leave the candidate snapshot stale.
 
 var _sensor_area: Area3D
 var _ref_by_collision_id: Dictionary = {}
@@ -63,6 +67,28 @@ func active_candidate_count() -> int:
 	return _active_by_key.size()
 
 
+func reconcile_overlaps() -> bool:
+	if _sensor_area == null or not is_instance_valid(_sensor_area) or not _sensor_area.is_inside_tree():
+		return false
+	var current_by_key: Dictionary = {}
+	for body in _sensor_area.get_overlapping_bodies():
+		_collect_bound_overlap(body, current_by_key)
+	for area in _sensor_area.get_overlapping_areas():
+		_collect_bound_overlap(area, current_by_key)
+
+	var changed: bool = not _same_key_set(_active_by_key, current_by_key)
+	if changed:
+		_active_by_key = current_by_key
+		_dirty = true
+	return changed
+
+
+func raw_overlap_count() -> int:
+	if _sensor_area == null or not is_instance_valid(_sensor_area) or not _sensor_area.is_inside_tree():
+		return 0
+	return _sensor_area.get_overlapping_bodies().size() + _sensor_area.get_overlapping_areas().size()
+
+
 func _on_body_entered(body: Node3D) -> void:
 	_enter_collision_object(body)
 
@@ -99,6 +125,24 @@ func _exit_collision_object(node: Object) -> void:
 		return
 	if _active_by_key.erase(runtime_ref.key()):
 		_dirty = true
+
+
+func _collect_bound_overlap(node: Object, output: Dictionary) -> void:
+	if node == null:
+		return
+	var runtime_ref = _ref_by_collision_id.get(node.get_instance_id())
+	if runtime_ref == null:
+		return
+	output[runtime_ref.key()] = runtime_ref
+
+
+func _same_key_set(a: Dictionary, b: Dictionary) -> bool:
+	if a.size() != b.size():
+		return false
+	for key in a:
+		if not b.has(key):
+			return false
+	return true
 
 
 func _disconnect_area() -> void:
