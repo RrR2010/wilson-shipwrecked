@@ -21,8 +21,8 @@ The strict external runner is validated under **Godot 4.7.1**.
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 44 PASS / 44 TOTAL
-PASS headless_suite (44 tests)
+RESULT: 45 PASS / 45 TOTAL
+PASS headless_suite (45 tests)
 ```
 
 Manual real-engine validation also passed for `tests/scenes/spatial_navigation_perception/spatial_navigation_perception.tscn` with:
@@ -50,6 +50,7 @@ structural World/runtime foundation
 → bounded passive spatial perception while MOVING
 → perceived-threat evidence → same-chain THREAT reconsideration trigger
 → real CharacterBody3D / NavigationAgent3D / navmesh / Area3D / raycast integration fixture
+→ authored physical-observation admission → authoritative semantic WorldEvent → ordinary perception/evidence
 ```
 
 ---
@@ -79,8 +80,9 @@ Godot spatial / engine boundary                    PASS
 Godot motion / navmesh integration                 PASS
 Passive spatial perception while MOVING            PASS
 Real LOS / occlusion integration                   PASS
+Physical observation semantic admission           PASS
 Generic reconsideration gate / trigger coalescing PASS
-Strict headless suite                              PASS — 44 tests
+Strict headless suite                              PASS — 45 tests
 ```
 
 ---
@@ -188,6 +190,9 @@ PerceivedThreatTriggerSource
 SpatialQueryPort
 MotionPort
 PhysicalObservation / PhysicalObservationPort
+PhysicalObservationConsequenceRule
+PhysicalObservationConsequenceResolver
+PhysicalConsequenceWorldAdvanceDecorator
 GodotSceneSpatialRegistry
 GodotSpatialQueryAdapter
 GodotMotionAdapter
@@ -212,7 +217,10 @@ Validated boundary semantics:
 - passive evidence can be produced while motion remains `MOVING` and does not by itself force broad intentional reconsideration;
 - authored immediate-threat evidence can wake the threat routing regime while motion is still `MOVING`, without a pre-injected external `THREAT` trigger;
 - collision/overlap/grounding/fall observations remain typed engine facts and do not directly mutate World;
-- queued physical observations drain at an explicit semantic boundary;
+- queued physical observations drain only at an explicit semantic boundary;
+- authored physical consequence rules can admit selected observations, including magnitude-thresholded discrete contacts, as authoritative semantic events;
+- rejected/below-threshold observations remain non-authoritative and produce no WorldEvent;
+- admitted non-action physical events preserve subject/counterpart identity without fabricating an ActionExecution and then enter the ordinary perception/evidence path;
 - fine transforms, navigation paths and physics observations remain non-persisted infrastructure facts.
 
 The validated `SimulationCadenceClock` is only an engine-to-semantic bridge primitive. Its current `0.1 s` default is **not** a universal update rate for perception, cognition, drives, environment, projects, Director or maintenance.
@@ -299,7 +307,7 @@ A future full run-save boundary still needs to compose these owner snapshots int
 Still open:
 
 ```text
-physical observation → validated World consequence resolution
+physical observation → grounded World/body injury/death consequences
 collision/overlap + grounded Wilson body consequences
 semantic threshold/coalescing for gradual physical/environmental changes
 owner/service due scheduling fully wired across drives/processes/maintenance
@@ -320,34 +328,35 @@ Timing/decision-specific known issues:
 1. `SemanticDueScheduler` exists, but drives and other elapsed-time owners are not yet fully routed through one general due-scheduling policy;
 2. passive spatial perception now works during `MOVING`, but orientation/view-cone refresh and negative/absence evidence remain open;
 3. authored perceived threats now synthesize the same-chain `THREAT` reconsideration trigger; other semantic trigger families still need representative producers rather than a generic "any perception changed" rule;
-4. the Godot/domain event boundary still needs explicit threshold/coalescing policy for continuously changing physical/environment values;
+4. discrete physical observations can now be threshold-admitted into semantic events, but continuously changing physical/environment values still need coalescing/threshold policy to avoid semantic spam;
 5. drive persistence stores numeric values but not hysteresis-band memory, so deadband state can reconstruct differently after save/load;
-6. physical observation callbacks still need an authoritative World consequence resolver and richer accident integration coverage;
+6. physical observation admission currently produces semantic facts, not grounded Wilson-body injury/death mutations;
 7. the immediate-threat slice commits a defensive intention but does not yet cancel/redirect concrete Godot motion or execute an escape route.
 
 ---
 
 # Remaining major verticals
 
-Recommended sequence from the validated 44-test checkpoint:
+Recommended sequence from the validated 45-test checkpoint:
 
 ```text
-1. physical observations → authoritative World/body consequences
-   - grounding/fall/collision consequence admission
-   - semantic threshold/coalescing
+1. admitted physical events → grounded World/body consequences
+   - collision/fall/body-condition resolution
+   - injury/death semantics without engine callbacks owning truth
 2. representative immediate-threat interruption scenario
    - physical hazard observation/consequence
    - perceived threat wake-up (now available)
    - concrete motion cancellation/redirection/escape
-3. deterministic playable scenario/bootstrap tooling
-4. representative multi-system timing/scenario suites
+3. semantic threshold/coalescing for gradual physical/environmental changes
+4. deterministic playable scenario/bootstrap tooling
+5. representative multi-system timing/scenario suites
    - longer movement traces
    - accident / immediate-threat routing
    - seed-population tests
-5. full run-save/new-run composition
+6. full run-save/new-run composition
 ```
 
-The open design review at `docs/design-reviews/2026-09-01-simulation-cadence-engine-domain-integration.md` is now partially consumed by the validated motion/perception/trigger work from PRs #17, #18, #19 and #21. It remains OPEN only for the still-unimplemented due-scheduling, gradual-threshold and representative accident/timing items recorded there.
+The open design review at `docs/design-reviews/2026-09-01-simulation-cadence-engine-domain-integration.md` is now partially consumed by the validated motion/perception/trigger/physical-admission work from PRs #17, #18, #19, #21 and #23. It remains OPEN only for the still-unimplemented due-scheduling, gradual-threshold/coalescing and representative accident/timing items recorded there.
 
 Cross-cutting correctness slices above should be pulled forward whenever a representative scenario requires them.
 
