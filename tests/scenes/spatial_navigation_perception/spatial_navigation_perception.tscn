@@ -173,6 +173,9 @@ mesh = SubResource("WilsonMesh")
 position = Vector3(0, 0.9, 0)
 shape = SubResource("WilsonShape")
 
+[node name="SpatialReference" type="Node3D" parent="Wilson"]
+position = Vector3(0, 0.9, 0)
+
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="Wilson"]
 path_desired_distance = 0.3
 target_desired_distance = 0.6
@@ -211,6 +214,9 @@ mesh = SubResource("PerceptibleMesh")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Perceptible"]
 position = Vector3(0, 0.25, 0)
 shape = SubResource("PerceptibleShape")
+
+[node name="SpatialReference" type="Node3D" parent="Perceptible"]
+position = Vector3(0, 0.25, 0)
 
 [node name="Camera3D" type="Camera3D" parent="."]
 position = Vector3(0, 18, 12)
