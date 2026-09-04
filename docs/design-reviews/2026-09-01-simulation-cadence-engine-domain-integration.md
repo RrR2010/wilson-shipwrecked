@@ -9,13 +9,13 @@
 
 Calibrate the proposed Godot/domain timing boundary against the representative scene catalog before the engine-integration work becomes deeper and harder to change.
 
-This review is advisory evidence, not a canonical architecture owner. If implementation work consumes this review, the consuming agent must resolve the checklist below and then change this file to `Status: COMPLETED`, recording the consuming PR/commit and any deliberately rejected recommendation with rationale.
+This review is advisory evidence, not a canonical architecture owner. If implementation work consumes this review, the consuming agent must resolve the checklist below and then change this file to `Status: COMPLETED`, recording the consuming PR/commit and any deliberately rejected recommendation with rationale. If only part of the checklist is consumed, keep the review `OPEN` and annotate only the resolved items.
 
 ---
 
 # Executive assessment
 
-The PR #14 direction is sound and is potentially capable of supporting the representative scenes.
+The PR #14 direction is sound and is capable of supporting the representative scenes validated so far.
 
 The strongest choices are:
 
@@ -26,9 +26,9 @@ The strongest choices are:
 - fine distance/navigation/visibility remains behind explicit semantic ports;
 - Godot scene identity remains distinct from durable domain identity.
 
-The main calibration required is this:
+The main calibration remains:
 
-> The current `0.1 s` cadence should be treated as a deterministic physics-to-semantic bridge, not as a universal frequency for perception, cognition or every simulation system.
+> The current `0.1 s` cadence is a deterministic physics-to-semantic bridge, not a universal frequency for perception, cognition or every simulation system.
 
 The representative scenes require different classes of work to advance for different reasons: some by continuous engine progression, some by elapsed semantic time, some by bounded spatial sampling, and many only when a meaningful event/boundary occurs.
 
@@ -101,6 +101,8 @@ movement/context change
 
 Do not wait for `MotionStatus.ARRIVED` before perception can observe the current engine-backed position.
 
+Validated implementation now uses Godot overlap signals as the fast path plus bounded shape reconciliation while moving. Broadphase membership remains only a candidate source; metric distance and LOS are revalidated through `SpatialQueryPort`, and positive evidence is edge-driven so the same continuously visible object does not emit evidence every refresh.
+
 ---
 
 # Representative-scene checks
@@ -118,7 +120,7 @@ bird lands nearby
 
 This demonstrates that perception must not imply broad intentional reconsideration.
 
-**Assessment:** supported by the proposed boundary if event perception can produce a small reaction without forcing global candidate competition.
+**Assessment:** supported. Passive evidence can be admitted without opening broad candidate competition when no reconsideration trigger exists.
 
 ## Breakfast First
 
@@ -132,7 +134,7 @@ Wilson walks toward storage
 → movement can continue
 ```
 
-**Assessment:** requires perception during `MOVING`, using current Godot-backed spatial state rather than only arrival events.
+**Assessment:** validated at the engine boundary. The real integration fixture produces perceptual evidence while `GodotMotionAdapter` remains `MOVING`, then continues to `ARRIVED`.
 
 ## The Long Way Around
 
@@ -145,7 +147,7 @@ short route = 8 m + strong learned aversion
 long route  = 14 m + no learned aversion
 ```
 
-**Assessment:** the engine/domain separation is especially suitable for this scene. Objective navigation truth and Wilson-relative desirability should remain separate.
+**Assessment:** the engine/domain separation is suitable. Real route cost/path availability is now validated, but Wilson-relative learned route aversion remains a later cognition slice.
 
 ## Scientific Method
 
@@ -160,13 +162,13 @@ action commit
 → tactical reconsideration
 ```
 
-**Assessment:** strongly aligned with the existing micro-loop contract.
+**Assessment:** aligned with the existing micro-loop contract. Same-chain learning exists; generic consequence-trigger synthesis remains incomplete.
 
 ## The Missing Spoon
 
 Wilson does not need to continuously perceive the moved spoon while asleep. The important boundary can be an expectation mismatch when the habitual reach fails, followed by a bounded search/perception refresh.
 
-**Assessment:** event/anomaly-driven cognition is preferable to continuous polling.
+**Assessment:** event/anomaly-driven cognition remains preferable to continuous polling.
 
 ## Gerald
 
@@ -176,7 +178,7 @@ Useful perceptual boundaries include:
 - Gerald becoming visible;
 - Gerald changing trajectory in a semantically relevant way, such as approaching protected food.
 
-**Assessment:** supported, but avoid requiring cognition to inspect raw trajectory every physics frame.
+**Assessment:** broadphase + bounded revalidation now supports the spatial side. Gerald-specific semantic trigger production remains open.
 
 ## Storm Priorities
 
@@ -192,19 +194,19 @@ wind_became_dangerous
 
 rather than emitting every tiny numeric wind change.
 
-**Assessment:** requires semantic thresholding/coalescing, otherwise the event stream will become noisy.
+**Assessment:** still requires semantic thresholding/coalescing.
 
 ## Falling Palm / Victory Lap / Faster Than Walking / Brilliant Shortcut / Unwanted Rescue
 
 These scenes contain accidents that develop across multiple physics frames and may require timely intervention/reaction.
 
-**Assessment:** the 0.1 s semantic bridge is fast enough as an initial default, but physical observations inside one semantic batch should preserve enough causal ordering to resolve complex accidents deterministically.
+**Assessment:** the 0.1 s semantic bridge is fast enough as an initial default, but physical observations inside one semantic batch should preserve enough causal ordering to resolve complex accidents deterministically. Physical observation → authoritative World consequence resolution and same-chain threat wake-up remain open.
 
 ---
 
 # Physical observation ordering
 
-PR #14 currently preserves callback insertion order in `GodotPhysicalObservationBuffer`, which is a good minimum.
+PR #14 preserves callback insertion order in `GodotPhysicalObservationBuffer`, which remains the current minimum.
 
 As physical scenarios become more complex, consider whether each observation should also carry a stable monotonic ordering field or semantic/physics timestamp.
 
@@ -226,29 +228,21 @@ Do not add elaborate timestamp infrastructure until a representative accident re
 
 # Movement integration requirement
 
-`MotionPort` is correctly minimal at this stage, but the simulation must be able to observe semantically relevant spatial facts while motion remains `MOVING`.
-
-The following must be possible:
+The following is now validated with a real Godot fixture:
 
 ```text
 Wilson starts a long move
 → engine progresses continuously
 → current transform changes
-→ passive/event perception can query current distance/visibility
-→ meaningful evidence may trigger tactical/threat reconsideration
-→ movement may continue, redirect or cancel
+→ passive perception queries current distance/visibility
+→ newly accessible evidence is emitted while MOVING
+→ ordinary passive evidence does not automatically force broad reconsideration
+→ movement continues to ARRIVED
 ```
 
-Do not reduce movement semantics to only:
+The current fixture also validates real obstacle collision, navmesh detour routing, explicit `RuntimeWorldRef` mapping, clear LOS and wall-occluded LOS.
 
-```text
-request_move
-→ wait
-→ ARRIVED
-→ think again
-```
-
-That model would make several representative scenes impossible or visibly late.
+The remaining movement-adjacent gap is interruption/redirection from same-chain tactical or immediate-threat evidence, not basic perception during transit.
 
 ---
 
@@ -304,13 +298,13 @@ one authoritative simulation time
 + sparse maintenance
 ```
 
-Likewise, do not make cognition run at 10 Hz merely because the physics-to-semantic bridge runs at 10 Hz.
+Likewise, do not make cognition run at 10 Hz merely because passive spatial revalidation or the physics-to-semantic bridge can run near that cadence.
 
 ---
 
 # Proposed integration test
 
-A representative timing regression should eventually prove a trace similar to:
+A broader representative timing regression should eventually prove a trace similar to:
 
 ```text
 Wilson decides to walk 20 m toward a tree.
@@ -334,7 +328,7 @@ At second 6:
 - Wilson chooses/executes escape movement.
 ```
 
-The test should assert semantic ordering and routing, not exact render-frame counts.
+The current real-engine fixture covers the isolated movement + passive-perception + LOS portion of this trace. The Gerald semantic reaction and falling-palm consequence/threat routing remain deliberately deferred so later failures remain diagnosable.
 
 ---
 
@@ -342,23 +336,29 @@ The test should assert semantic ordering and routing, not exact render-frame cou
 
 The consuming implementation agent should resolve each item below.
 
-- [x] Treat `SimulationCadenceClock(0.1)` as a deterministic engine→semantic bridge, not a cognition frequency. **Canonicalized in `SIMULATION_ORCHESTRATION.md`; concrete host consumption remains part of the next runtime slice.**
-- [x] Preserve one authoritative simulation-time model rather than creating independent subsystem clocks by default. **Already canonical; due-scheduling implementation remains open.**
-- [ ] Define/implement bounded passive spatial perception during movement; perception must not wait for `ARRIVED`.
-- [ ] Keep event-driven perception for meaningful engine/world changes alongside passive refresh. **Event-driven path exists; combined runtime path remains open until passive refresh is implemented.**
-- [ ] Ensure perception can occur without automatically triggering broad intentional reconsideration.
-- [ ] Ensure immediate threats reach the threat routing regime at the next admissible semantic boundary.
-- [ ] Keep gradual systems due/time-driven and cognition boundary/event-driven.
+- [x] Treat `SimulationCadenceClock(0.1)` as a deterministic engine→semantic bridge, not a cognition frequency. **Canonicalized in `SIMULATION_ORCHESTRATION.md`; concrete host exists without making the bridge a universal subsystem clock.**
+- [x] Preserve one authoritative simulation-time model rather than creating independent subsystem clocks by default. **Canonicalized and preserved; `SemanticDueScheduler` exists, but full owner/service wiring remains open.**
+- [x] Define/implement bounded passive spatial perception during movement; perception must not wait for `ARRIVED`. **Validated by PRs #18/#19 with real `Area3D`/shape broadphase, bounded moving refresh, metric/LOS revalidation and evidence while `MOVING`.**
+- [x] Keep event-driven perception for meaningful engine/world changes alongside passive refresh. **Event perception remains separate; passive refresh is now implemented as a complementary path rather than replacing event perception.**
+- [x] Ensure perception can occur without automatically triggering broad intentional reconsideration. **Validated by `passive_spatial_perception_test.gd`: ordinary passive evidence keeps reconsideration `NONE`.**
+- [ ] Ensure immediate threats reach the threat routing regime at the next admissible semantic boundary. **Immediate-threat routing exists, but newly perceived/passive threat evidence does not yet synthesize every required same-chain trigger.**
+- [ ] Keep gradual systems due/time-driven and cognition boundary/event-driven. **Architecture is canonical and `SemanticDueScheduler` exists, but drives/processes/maintenance are not yet fully wired through it.**
 - [ ] Coalesce/threshold gradual physical/environmental changes before producing semantic event spam.
-- [x] Confirm complex same-step physical observations preserve deterministic causal ordering; add sequence/time metadata only if representative cases prove it necessary. **PR #14 preserves insertion order. Sequence/timestamp metadata deliberately deferred until a representative accident demonstrates ambiguity.**
-- [ ] Add or plan an integrated timing scenario similar to the proposed 20 m walk / Gerald / falling-palm trace. **Planned after isolated motion/perception/gating regressions exist.**
+- [x] Confirm complex same-step physical observations preserve deterministic causal ordering; add sequence/time metadata only if representative cases prove it necessary. **PR #14 preserves insertion order. Sequence/timestamp metadata remains deliberately deferred until a representative accident demonstrates ambiguity.**
+- [ ] Add or plan an integrated timing scenario similar to the proposed 20 m walk / Gerald / falling-palm trace. **The isolated real-engine walk/perception/LOS portion is validated in PR #19; Gerald semantic reaction and falling-palm consequence/threat routing remain open.**
 
 ## Consumption progress
 
-A calibration pass after PR #14 incorporated the durable timing/trigger rules into `docs/SIMULATION_ORCHESTRATION.md` and exposed the remaining runtime gaps in `docs/DISCOVERY_STATUS.md`. The review intentionally remains `OPEN`: canonical agreement is not counted as runtime completion.
+- PR #16 canonicalized bridge cadence, trigger gating, passive-moving perception requirements and semantic threshold/coalescing rules.
+- PR #17 implemented `SemanticDueScheduler`, `ReconsiderationGate`, trigger coalescing, quiet-step `NONE` behavior, Godot motion host/adapters and semantic/physics separation.
+- PR #18 implemented the application-side passive spatial perception path and proved ordinary passive evidence can occur while `MOVING` without forcing broad reconsideration.
+- PR #19 adds the real-engine integration fixture and validates `CharacterBody3D` collision, `NavigationAgent3D` routing, navmesh detour, bounded passive broadphase/revalidation, edge-driven evidence during `MOVING`, and real clear/occluded LOS.
+
+The review intentionally remains **OPEN** because the remaining unchecked items are substantive runtime work rather than documentation-only cleanup.
 
 ## Completion record
 
-**Consumed by:** `calibration/simulation-trigger-gating` (partial; PR pending)  
-**Completion date:** _pending_  
-**Rejected/deferred recommendations and rationale:** stable sequence/physics timestamp metadata for `PhysicalObservation` is deferred until a representative same-step accident demonstrates that insertion ordering is insufficient. The integrated 20 m / Gerald / falling-palm regression is deferred until smaller motion-perception and trigger-gating tests exist, so failures remain diagnosable.
+**Consumed by:** PR #16 (partial), PR #17 (partial), PR #18 (partial), PR #19 (partial)  
+**Latest validated consumption:** PR #19 — manual `PASS spatial_navigation_perception_scene`; strict runner `43 PASS / 43 TOTAL` under Godot 4.7.1  
+**Completion date:** _pending remaining checklist items_  
+**Rejected/deferred recommendations and rationale:** stable sequence/physics timestamp metadata for `PhysicalObservation` is deferred until a representative same-step accident demonstrates that insertion ordering is insufficient. The full 20 m / Gerald / falling-palm regression is deferred until physical-observation consequence resolution and threat-trigger synthesis exist, so failures remain attributable to one boundary at a time.
