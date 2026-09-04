@@ -6,12 +6,15 @@ extends "res://src/application/simulation/motion_port.gd"
 ## Fine transform, steering and path progression remain engine-owned. The domain sees
 ## only semantic request/status state keyed by RuntimeWorldRef.
 
+const PATH_SYNC_GRACE_TICKS := 8
+
 var _registry
 var _body_by_key: Dictionary = {}
 var _agent_by_key: Dictionary = {}
 var _speed_by_key: Dictionary = {}
 var _target_by_key: Dictionary = {}
 var _status_by_key: Dictionary = {}
+var _path_sync_ticks_by_key: Dictionary = {}
 
 
 func _init(registry) -> void:
@@ -31,6 +34,7 @@ func bind_actor(actor_ref, body: CharacterBody3D, navigation_agent: NavigationAg
 	_agent_by_key[key] = navigation_agent
 	_speed_by_key[key] = speed_mps
 	_status_by_key[key] = MotionStatus.IDLE
+	_path_sync_ticks_by_key[key] = 0
 	return true
 
 
@@ -43,6 +47,7 @@ func unbind_actor(actor_ref) -> void:
 	_speed_by_key.erase(key)
 	_target_by_key.erase(key)
 	_status_by_key.erase(key)
+	_path_sync_ticks_by_key.erase(key)
 
 
 func request_move(actor_ref, target_ref) -> bool:
@@ -64,6 +69,7 @@ func request_move(actor_ref, target_ref) -> bool:
 		return false
 	agent.target_position = target_node.global_position
 	_target_by_key[key] = target_ref
+	_path_sync_ticks_by_key[key] = 0
 	_status_by_key[key] = MotionStatus.MOVING
 	return true
 
@@ -77,6 +83,7 @@ func cancel_move(actor_ref) -> void:
 		body.velocity.x = 0.0
 		body.velocity.z = 0.0
 	_target_by_key.erase(key)
+	_path_sync_ticks_by_key[key] = 0
 	_status_by_key[key] = MotionStatus.CANCELLED
 
 
@@ -104,23 +111,48 @@ func physics_tick(_delta_seconds: float) -> void:
 		if body == null or agent == null or not body.is_inside_tree() or not agent.is_inside_tree():
 			_status_by_key[key] = MotionStatus.ROUTE_INVALID
 			continue
-		if agent.is_navigation_finished():
-			body.velocity.x = 0.0
-			body.velocity.z = 0.0
-			_status_by_key[key] = MotionStatus.ARRIVED
-			continue
+
+		# NavigationAgent3D needs at least one physics/navigation synchronization after
+		# target_position changes. get_next_path_position() is intentionally called
+		# before interpreting is_navigation_finished(), otherwise a freshly requested
+		# move can be misclassified as ARRIVED while the previous empty path is stale.
 		var next_position: Vector3 = agent.get_next_path_position()
+		var path: PackedVector3Array = agent.get_current_navigation_path()
+		if path.is_empty():
+			if agent.is_target_reached():
+				_stop_body(body)
+				_status_by_key[key] = MotionStatus.ARRIVED
+				continue
+			var sync_ticks: int = int(_path_sync_ticks_by_key.get(key, 0))
+			if sync_ticks < PATH_SYNC_GRACE_TICKS:
+				_path_sync_ticks_by_key[key] = sync_ticks + 1
+				_stop_body(body)
+				continue
+			_stop_body(body)
+			_status_by_key[key] = MotionStatus.ROUTE_INVALID
+			continue
+
+		_path_sync_ticks_by_key[key] = PATH_SYNC_GRACE_TICKS
+		if agent.is_navigation_finished():
+			_stop_body(body)
+			_status_by_key[key] = MotionStatus.ARRIVED if agent.is_target_reached() else MotionStatus.BLOCKED
+			continue
+
 		var direction: Vector3 = next_position - body.global_position
 		direction.y = 0.0
 		if direction.length_squared() <= 1.0e-8:
-			body.velocity.x = 0.0
-			body.velocity.z = 0.0
+			_stop_body(body)
 			continue
 		direction = direction.normalized()
 		var speed: float = float(_speed_by_key.get(key, 3.0))
 		body.velocity.x = direction.x * speed
 		body.velocity.z = direction.z * speed
 		body.move_and_slide()
+
+
+func _stop_body(body: CharacterBody3D) -> void:
+	body.velocity.x = 0.0
+	body.velocity.z = 0.0
 
 
 func _resolve_body(key: String) -> CharacterBody3D:
