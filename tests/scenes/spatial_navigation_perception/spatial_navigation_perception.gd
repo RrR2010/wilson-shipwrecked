@@ -181,17 +181,37 @@ func _prove_motion_and_passive_perception() -> void:
 	target.global_position = TARGET_POSITION
 	wilson.velocity = Vector3.ZERO
 	await _physics_frames(2)
+	var motion_start: Vector3 = wilson.global_position
 	_expect(_motion.request_move(_wilson_ref, _target_ref), "GodotMotionAdapter accepts movement request")
 	_expect(_motion.get_status(_wilson_ref) == MotionPort.MotionStatus.MOVING, "motion status becomes MOVING")
-	# NavigationServer/NavigationAgent changes synchronize on the next physics boundary.
-	await _physics_frames(1)
 
 	var evidence_count: int = 0
+	var max_displacement: float = 0.0
+	var terminal_frame: int = -1
 	for frame in range(max_motion_frames):
 		wilson.velocity.y = -0.5
 		_motion.physics_tick(1.0 / 60.0)
+		var displacement: float = Vector2(
+			wilson.global_position.x - motion_start.x,
+			wilson.global_position.z - motion_start.z
+		).length()
+		max_displacement = maxf(max_displacement, displacement)
+
+		if frame % 60 == 0:
+			print("[SMOKE][MOTION] frame=%d status=%d position=%s displacement=%.3f path_points=%d candidates=%d dirty=%s" % [
+				frame,
+				_motion.get_status(_wilson_ref),
+				str(wilson.global_position),
+				displacement,
+				wilson_agent.get_current_navigation_path().size(),
+				_sensor.active_candidate_count(),
+				_sensor.has_pending_refresh(),
+			])
+
 		if _motion.get_status(_wilson_ref) == MotionPort.MotionStatus.MOVING and _sensor.has_pending_refresh():
 			var perception = _passive.collect()
+			if not perception.diagnostics.is_empty():
+				print("[SMOKE][PERCEPTION] diagnostics=%s" % str(perception.diagnostics))
 			if not perception.evidence.is_empty():
 				evidence_count += perception.evidence.size()
 				_observed_passive_while_moving = true
@@ -203,18 +223,43 @@ func _prove_motion_and_passive_perception() -> void:
 					"candidate_count": _sensor.active_candidate_count(),
 					"evidence_count": perception.evidence.size(),
 				})
-		if _motion.get_status(_wilson_ref) == MotionPort.MotionStatus.ARRIVED:
+
+		var status: int = _motion.get_status(_wilson_ref)
+		if status == MotionPort.MotionStatus.ARRIVED or status == MotionPort.MotionStatus.BLOCKED or status == MotionPort.MotionStatus.ROUTE_INVALID:
+			terminal_frame = frame
 			break
 		await get_tree().physics_frame
 
+	var final_status: int = _motion.get_status(_wilson_ref)
+	var arrived: bool = final_status == MotionPort.MotionStatus.ARRIVED
+	_expect(max_displacement > 10.0, "GodotMotionAdapter physically moves Wilson across the fixture")
 	_expect(_observed_passive_while_moving, "real Area3D candidate becomes evidence while Wilson remains MOVING")
 	_expect(evidence_count > 0, "PassiveSpatialPerceptionSource emits positive evidence")
-	_expect(_motion.get_status(_wilson_ref) == MotionPort.MotionStatus.ARRIVED, "GodotMotionAdapter reaches ARRIVED")
-	await _checkpoint(&"ARRIVED", {
-		"instruction": "Wilson arrived through GodotMotionAdapter. Capture final route position; press Space to continue.",
-		"wilson": wilson.global_position,
-		"target": target.global_position,
-	})
+	_expect(arrived, "GodotMotionAdapter reaches ARRIVED")
+	print("[SMOKE][MOTION] terminal_frame=%d final_status=%d final_position=%s max_displacement=%.3f evidence=%d" % [
+		terminal_frame,
+		final_status,
+		str(wilson.global_position),
+		max_displacement,
+		evidence_count,
+	])
+
+	if arrived:
+		await _checkpoint(&"ARRIVED", {
+			"instruction": "Wilson arrived through GodotMotionAdapter. Capture final route position; press Space to continue.",
+			"wilson": wilson.global_position,
+			"target": target.global_position,
+			"displacement": max_displacement,
+		})
+	else:
+		await _checkpoint(&"MOTION_FAILED", {
+			"instruction": "Motion terminated without ARRIVED. Capture Wilson, path overlay and console before continuing.",
+			"wilson": wilson.global_position,
+			"target": target.global_position,
+			"motion_status": final_status,
+			"displacement": max_displacement,
+			"path_points": wilson_agent.get_current_navigation_path().size(),
+		})
 
 
 func _prove_line_of_sight() -> void:
