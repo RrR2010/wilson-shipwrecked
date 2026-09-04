@@ -78,6 +78,8 @@ Use engine/domain events when something can naturally announce a meaningful chan
 
 These events should not themselves imply Wilson perceived or understood the fact. They trigger the normal accessibility/perception boundary.
 
+PR #23 now validates the missing engine side of this path for discrete physical facts: queued `PhysicalObservation` values drain only at a semantic boundary, an authored consequence rule may admit a matching observation as an authoritative non-action `WorldEvent`, and only then can the normal accessibility/perception path produce evidence. Below-threshold contacts remain non-authoritative and produce no event.
+
 ## 2. Passive spatial refresh
 
 Some important discoveries have no originating event. Example: in **Breakfast First**, fruit may already be lying on the route and Wilson notices it only because he walks into a useful viewing position.
@@ -194,19 +196,19 @@ wind_became_dangerous
 
 rather than emitting every tiny numeric wind change.
 
-**Assessment:** still requires semantic thresholding/coalescing.
+**Assessment:** discrete physical observation threshold admission now exists, but general threshold/coalescing for gradual physical/environmental values remains open.
 
 ## Falling Palm / Victory Lap / Faster Than Walking / Brilliant Shortcut / Unwanted Rescue
 
 These scenes contain accidents that develop across multiple physics frames and may require timely intervention/reaction.
 
-**Assessment:** the 0.1 s semantic bridge is fast enough as an initial default. Accessible authored threat evidence now wakes the immediate-threat routing regime at the next semantic orchestration boundary without a pre-injected external trigger. Physical observation → authoritative World consequence resolution, concrete motion interruption/redirection and integrated accident timing remain open.
+**Assessment:** the 0.1 s semantic bridge is fast enough as an initial default. Accessible authored threat evidence wakes the immediate-threat routing regime at the next semantic orchestration boundary without a pre-injected external trigger. PR #23 now closes the raw-physical-observation → authoritative-semantic-event boundary for authored discrete observations while preserving callback insertion order. Grounded Wilson-body injury/death resolution, concrete motion interruption/redirection and integrated accident timing remain open.
 
 ---
 
 # Physical observation ordering
 
-PR #14 preserves callback insertion order in `GodotPhysicalObservationBuffer`, which remains the current minimum.
+PR #14 preserves callback insertion order in `GodotPhysicalObservationBuffer`, which remains the current minimum. PR #23 preserves that order through semantic-boundary draining and authored consequence admission.
 
 As physical scenarios become more complex, consider whether each observation should also carry a stable monotonic ordering field or semantic/physics timestamp.
 
@@ -329,7 +331,7 @@ At second 6:
 - Wilson chooses/executes escape movement.
 ```
 
-The current real-engine fixture covers the isolated movement + passive-perception + LOS portion of this trace. PR #21 covers perception-derived threat wake-up and immediate-threat selection while motion is still `MOVING`. Gerald semantic reaction, physical hazard consequence production and concrete escape execution remain deliberately deferred so later failures remain diagnosable.
+The current real-engine fixture covers the isolated movement + passive-perception + LOS portion of this trace. PR #21 covers perception-derived threat wake-up and immediate-threat selection while motion is still `MOVING`. PR #23 covers deterministic semantic-boundary admission of authored physical observations into ordinary WorldEvent/perception flow. Gerald semantic reaction, grounded body consequence production and concrete escape execution remain deliberately deferred so later failures remain diagnosable.
 
 ---
 
@@ -340,13 +342,13 @@ The consuming implementation agent should resolve each item below.
 - [x] Treat `SimulationCadenceClock(0.1)` as a deterministic engine→semantic bridge, not a cognition frequency. **Canonicalized in `SIMULATION_ORCHESTRATION.md`; concrete host exists without making the bridge a universal subsystem clock.**
 - [x] Preserve one authoritative simulation-time model rather than creating independent subsystem clocks by default. **Canonicalized and preserved; `SemanticDueScheduler` exists, but full owner/service wiring remains open.**
 - [x] Define/implement bounded passive spatial perception during movement; perception must not wait for `ARRIVED`. **Validated by PRs #18/#19 with real `Area3D`/shape broadphase, bounded moving refresh, metric/LOS revalidation and evidence while `MOVING`.**
-- [x] Keep event-driven perception for meaningful engine/world changes alongside passive refresh. **Event perception remains separate; passive refresh is now implemented as a complementary path rather than replacing event perception.**
+- [x] Keep event-driven perception for meaningful engine/world changes alongside passive refresh. **Event perception remains separate; PR #23 validates authored engine observation admission into that event path, while passive refresh remains complementary.**
 - [x] Ensure perception can occur without automatically triggering broad intentional reconsideration. **Validated by `passive_spatial_perception_test.gd` and PR #21: ordinary evidence keeps reconsideration `NONE`.**
 - [x] Ensure immediate threats reach the threat routing regime at the next admissible semantic boundary. **PR #21 adds `PerceivedThreatTriggerSource`; evidence admitted by the same authored `PerceivedThreatService` rules derives `THREAT` before gate coalescing, and the regression proves immediate-threat routing while motion remains `MOVING` without an externally supplied threat trigger.**
 - [ ] Keep gradual systems due/time-driven and cognition boundary/event-driven. **Architecture is canonical and `SemanticDueScheduler` exists, but drives/processes/maintenance are not yet fully wired through it.**
-- [ ] Coalesce/threshold gradual physical/environmental changes before producing semantic event spam.
-- [x] Confirm complex same-step physical observations preserve deterministic causal ordering; add sequence/time metadata only if representative cases prove it necessary. **PR #14 preserves insertion order. Sequence/timestamp metadata remains deliberately deferred until a representative accident demonstrates ambiguity.**
-- [ ] Add or plan an integrated timing scenario similar to the proposed 20 m walk / Gerald / falling-palm trace. **The real-engine walk/perception/LOS portion is validated in PR #19 and semantic threat wake-up in PR #21; Gerald semantics, physical consequence production and concrete escape execution remain open.**
+- [ ] Coalesce/threshold gradual physical/environmental changes before producing semantic event spam. **PR #23 adds threshold admission for discrete physical observations only; general gradual-value coalescing remains unresolved.**
+- [x] Confirm complex same-step physical observations preserve deterministic causal ordering; add sequence/time metadata only if representative cases prove it necessary. **PR #14 preserves insertion order and PR #23 preserves it through semantic drain/admission. Sequence/timestamp metadata remains deliberately deferred until a representative accident demonstrates ambiguity.**
+- [ ] Add or plan an integrated timing scenario similar to the proposed 20 m walk / Gerald / falling-palm trace. **The real-engine walk/perception/LOS portion is validated in PR #19, semantic threat wake-up in PR #21, and physical-event admission in PR #23; Gerald semantics, grounded body consequence production and concrete escape execution remain open.**
 
 ## Consumption progress
 
@@ -355,12 +357,13 @@ The consuming implementation agent should resolve each item below.
 - PR #18 implemented the application-side passive spatial perception path and proved ordinary passive evidence can occur while `MOVING` without forcing broad reconsideration.
 - PR #19 added the real-engine integration fixture and validated `CharacterBody3D` collision, `NavigationAgent3D` routing, navmesh detour, bounded passive broadphase/revalidation, edge-driven evidence during `MOVING`, and real clear/occluded LOS.
 - PR #21 adds perception-derived threat trigger synthesis through `PerceivedThreatService` and validates that authored threat evidence wakes immediate-threat routing while motion remains `MOVING`, whereas ordinary evidence still leaves cognition at `NONE`.
+- PR #23 adds semantic-boundary physical observation draining plus authored consequence admission, validates below-threshold rejection and deterministic observation order, and routes admitted non-action physical facts through the ordinary `WorldEvent → perception/evidence` path without fabricating an ActionExecution.
 
 The review intentionally remains **OPEN** because the remaining unchecked items are substantive runtime work rather than documentation-only cleanup.
 
 ## Completion record
 
-**Consumed by:** PR #16 (partial), PR #17 (partial), PR #18 (partial), PR #19 (partial), PR #21 (partial)  
-**Latest validated consumption:** PR #21 — strict runner `44 PASS / 44 TOTAL` under Godot 4.7.1; prior PR #19 real-engine fixture also reported `PASS spatial_navigation_perception_scene`  
+**Consumed by:** PR #16 (partial), PR #17 (partial), PR #18 (partial), PR #19 (partial), PR #21 (partial), PR #23 (partial)  
+**Latest validated consumption:** PR #23 — strict runner `45 PASS / 45 TOTAL` under Godot 4.7.1; prior PR #19 real-engine fixture also reported `PASS spatial_navigation_perception_scene`  
 **Completion date:** _pending remaining checklist items_  
-**Rejected/deferred recommendations and rationale:** stable sequence/physics timestamp metadata for `PhysicalObservation` is deferred until a representative same-step accident demonstrates that insertion ordering is insufficient. The full 20 m / Gerald / falling-palm regression remains deferred until physical-observation consequence resolution and concrete defensive motion redirection exist, so failures remain attributable to one boundary at a time.
+**Rejected/deferred recommendations and rationale:** stable sequence/physics timestamp metadata for `PhysicalObservation` is deferred until a representative same-step accident demonstrates that insertion ordering is insufficient. General gradual physical/environmental coalescing is not claimed by PR #23 because its threshold rule applies only to discrete observations. The full 20 m / Gerald / falling-palm regression remains deferred until grounded body consequence resolution and concrete defensive motion redirection exist, so failures remain attributable to one boundary at a time.
