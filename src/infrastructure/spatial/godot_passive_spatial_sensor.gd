@@ -10,11 +10,13 @@ extends Node
 ## the Area3D snapshot and also queries the physics space directly using the sensor's
 ## collision shapes. The direct query avoids depending on Area3D's once-per-physics-step
 ## overlap cache when a moving sensor crosses a candidate between cache updates.
+## Active candidates are re-requested for semantic validation while the sensor moves,
+## because metric distance and LOS can change without any broadphase membership edge.
 
 const MOVING_RECONCILE_FRAMES := 6
 const STATIC_RECONCILE_FRAMES := 60
 const MOVEMENT_REFRESH_DISTANCE := 0.10
-const DEBUG_BUILD := "passive_sensor_reconcile_v3_direct_shape"
+const DEBUG_BUILD := "passive_sensor_reconcile_v4_revalidate"
 
 var _sensor_area: Area3D
 var _ref_by_collision_id: Dictionary = {}
@@ -83,7 +85,7 @@ func active_candidate_count() -> int:
 	return _active_by_key.size()
 
 
-func reconcile_overlaps() -> bool:
+func reconcile_overlaps(request_active_revalidation: bool = false) -> bool:
 	if _sensor_area == null or not is_instance_valid(_sensor_area) or not _sensor_area.is_inside_tree():
 		return false
 
@@ -100,19 +102,23 @@ func reconcile_overlaps() -> bool:
 	if changed:
 		_active_by_key = current_by_key
 		_dirty = true
+	elif request_active_revalidation and not _active_by_key.is_empty():
+		_dirty = true
 
 	_last_reconcile_position = _sensor_area.global_position
 	_has_reconcile_position = true
 	_physics_frames_since_reconcile = 0
 	_reconcile_count += 1
-	if changed or direct_hits > 0 or not overlapping_bodies.is_empty() or not overlapping_areas.is_empty() or _reconcile_count <= 2:
-		print("[PASSIVE_SENSOR][RECONCILE] count=%d cached_bodies=%d cached_areas=%d direct_hits=%d bound=%d changed=%s position=%s" % [
+	if changed or request_active_revalidation or direct_hits > 0 or not overlapping_bodies.is_empty() or not overlapping_areas.is_empty() or _reconcile_count <= 2:
+		print("[PASSIVE_SENSOR][RECONCILE] count=%d cached_bodies=%d cached_areas=%d direct_hits=%d bound=%d changed=%s revalidate=%s dirty=%s position=%s" % [
 			_reconcile_count,
 			overlapping_bodies.size(),
 			overlapping_areas.size(),
 			direct_hits,
 			current_by_key.size(),
 			changed,
+			request_active_revalidation,
+			_dirty,
 			str(_sensor_area.global_position),
 		])
 	return changed
@@ -136,7 +142,7 @@ func _physics_process(_delta: float) -> void:
 	var moved: bool = current_position.distance_to(_last_reconcile_position) >= MOVEMENT_REFRESH_DISTANCE
 	var due_frames: int = MOVING_RECONCILE_FRAMES if moved else STATIC_RECONCILE_FRAMES
 	if _physics_frames_since_reconcile >= due_frames:
-		reconcile_overlaps()
+		reconcile_overlaps(moved)
 
 
 func _collect_direct_shape_overlaps(output: Dictionary) -> int:
