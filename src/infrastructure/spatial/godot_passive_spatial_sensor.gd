@@ -6,14 +6,22 @@ extends Node
 ## Area/body overlap means only "worth rechecking". It never means visible, heard,
 ## reachable, dangerous, or otherwise semantically perceived.
 ##
-## Godot overlap signals are the fast path. reconcile_overlaps() is a bounded fallback
-## for movement/context refreshes where callback ordering or a missed edge would
-## otherwise leave the candidate snapshot stale.
+## Godot overlap signals are the fast path. A bounded reconciliation fallback samples
+## the Area3D snapshot more often while the sensor is moving and sparsely while static,
+## preventing callback ordering or missed edges from leaving candidates stale without
+## scanning every physics frame.
+
+const MOVING_RECONCILE_FRAMES := 6
+const STATIC_RECONCILE_FRAMES := 60
+const MOVEMENT_REFRESH_DISTANCE := 0.10
 
 var _sensor_area: Area3D
 var _ref_by_collision_id: Dictionary = {}
 var _active_by_key: Dictionary = {}
 var _dirty := false
+var _physics_frames_since_reconcile: int = 0
+var _last_reconcile_position := Vector3.ZERO
+var _has_reconcile_position := false
 
 
 func configure(sensor_area: Area3D) -> void:
@@ -25,6 +33,9 @@ func configure(sensor_area: Area3D) -> void:
 	_sensor_area.body_exited.connect(_on_body_exited)
 	_sensor_area.area_entered.connect(_on_area_entered)
 	_sensor_area.area_exited.connect(_on_area_exited)
+	_physics_frames_since_reconcile = 0
+	_has_reconcile_position = false
+	set_physics_process(true)
 
 
 func bind_candidate(runtime_ref, collision_object: CollisionObject3D) -> bool:
@@ -80,6 +91,9 @@ func reconcile_overlaps() -> bool:
 	if changed:
 		_active_by_key = current_by_key
 		_dirty = true
+	_last_reconcile_position = _sensor_area.global_position
+	_has_reconcile_position = true
+	_physics_frames_since_reconcile = 0
 	return changed
 
 
@@ -87,6 +101,21 @@ func raw_overlap_count() -> int:
 	if _sensor_area == null or not is_instance_valid(_sensor_area) or not _sensor_area.is_inside_tree():
 		return 0
 	return _sensor_area.get_overlapping_bodies().size() + _sensor_area.get_overlapping_areas().size()
+
+
+func _physics_process(_delta: float) -> void:
+	if _sensor_area == null or not is_instance_valid(_sensor_area) or not _sensor_area.is_inside_tree():
+		return
+	_physics_frames_since_reconcile += 1
+	var current_position: Vector3 = _sensor_area.global_position
+	if not _has_reconcile_position:
+		_last_reconcile_position = current_position
+		_has_reconcile_position = true
+		return
+	var moved: bool = current_position.distance_to(_last_reconcile_position) >= MOVEMENT_REFRESH_DISTANCE
+	var due_frames: int = MOVING_RECONCILE_FRAMES if moved else STATIC_RECONCILE_FRAMES
+	if _physics_frames_since_reconcile >= due_frames:
+		reconcile_overlaps()
 
 
 func _on_body_entered(body: Node3D) -> void:
