@@ -14,6 +14,7 @@ const DefensiveCandidateDefinition = preload("res://src/domain/cognition/defensi
 const ImmediateThreatCandidateSource = preload("res://src/domain/cognition/immediate_threat_candidate_source.gd")
 const DecisionCandidate = preload("res://src/domain/cognition/decision_candidate.gd")
 const DecisionCommitCoordinator = preload("res://src/application/simulation/decision_commit_coordinator.gd")
+const MotionPort = preload("res://src/application/simulation/motion_port.gd")
 const PerceivedThreatTriggerSource = preload("res://src/application/simulation/perceived_threat_trigger_source.gd")
 const ReconsiderationGate = preload("res://src/application/simulation/reconsideration_gate.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
@@ -118,7 +119,7 @@ func _run_slice() -> void:
 
 	var motion: Variant = FakeMotionPort.new()
 	_expect_true(motion.request_move(wilson_ref, palm_ref), "movement request starts before perception changes")
-	_expect_equal(motion.get_status(wilson_ref), 1, "Wilson begins in MOVING state")
+	_expect_equal(motion.get_status(wilson_ref), MotionPort.MotionStatus.MOVING, "Wilson begins in MOVING state")
 
 	var rule = ThreatInterpretationRule.new(threat_event, &"source", 0.9, 0.95, 0.5)
 	var threat_service = PerceivedThreatService.new([rule])
@@ -164,11 +165,11 @@ func _run_slice() -> void:
 	var ordinary_step = orchestrator.advance(
 		SimulationStepContext.new(&"ordinary_while_moving", 0.1, 0.1, null, [])
 	)
-	_expect_equal(motion.get_status(wilson_ref), 1, "ordinary evidence is processed while Wilson remains MOVING")
+	_expect_equal(motion.get_status(wilson_ref), MotionPort.MotionStatus.MOVING, "ordinary evidence is processed while Wilson remains MOVING")
 	_expect_equal(ordinary_step.perception.evidence.size(), 1, "ordinary evidence reaches the semantic chain")
 	_expect_true(ordinary_step.decision == null, "ordinary evidence does not force reconsideration")
 	_expect_equal(ordinary_step.candidates.size(), 0, "ordinary evidence does not generate decision candidates without a trigger")
-	_expect_true(not intentions.has_current(), "ordinary evidence does not replace the current movement intention")
+	_expect_true(not intentions.has_current(), "ordinary evidence does not create a cognition intention")
 
 	var threat_evidence = PerceptualEvidence.new(
 		EpistemicClaim.event_claim(palm_ref, threat_event, &"source"),
@@ -180,7 +181,7 @@ func _run_slice() -> void:
 	var threat_step = orchestrator.advance(
 		SimulationStepContext.new(&"threat_while_moving", 0.1, 0.2, null, [])
 	)
-	_expect_equal(motion.get_status(wilson_ref), 1, "threat routing occurs before movement reaches ARRIVED")
+	_expect_equal(motion.get_status(wilson_ref), MotionPort.MotionStatus.MOVING, "threat routing occurs before movement reaches ARRIVED")
 	_expect_equal(threat_step.perception.evidence.size(), 1, "accessible threat evidence reaches the semantic chain")
 	_expect_true(threat_step.decision != null, "perceived threat wakes reconsideration without an external trigger")
 	if threat_step.decision != null:
@@ -191,7 +192,7 @@ func _run_slice() -> void:
 			_expect_equal(threat_step.decision.selected_candidate.intention_id.sort_key(), dodge.sort_key(), "selected defense uses authored dodge intention")
 	_expect_true(intentions.has_current(), "selected defense is committed as current intention")
 	if intentions.has_current():
-		_expect_equal(intentions.current().intention_id.sort_key(), dodge.sort_key(), "threat decision replaces cognition intention with defense")
+		_expect_equal(intentions.current().intention_id.sort_key(), dodge.sort_key(), "threat decision commits the authored defense")
 	_expect_equal(learning.evidence_counts, [1, 1], "ordinary and threat evidence both learn before routing")
 
 	var derived_triggers: Array[int] = threat_triggers.derive(PerceptionResult.new([], [threat_evidence]))
