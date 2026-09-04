@@ -1,11 +1,6 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://tests/scenes/spatial_navigation_perception/spatial_navigation_perception.gd" id="1_script"]
-[ext_resource type="PackedScene" path="res://prototypes/spatial-navigation-perception/exports/ground.glb" id="2_ground"]
-[ext_resource type="PackedScene" path="res://prototypes/spatial-navigation-perception/exports/wall.glb" id="3_wall"]
-[ext_resource type="PackedScene" path="res://prototypes/spatial-navigation-perception/exports/wilson.glb" id="4_wilson"]
-[ext_resource type="PackedScene" path="res://prototypes/spatial-navigation-perception/exports/target.glb" id="5_target"]
-[ext_resource type="PackedScene" path="res://prototypes/spatial-navigation-perception/exports/perceptible.glb" id="6_perceptible"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_smoke"]
 vertices = PackedVector3Array(-9, 0, -9, 9, 0, -9, 9, 0, 9, -9, 0, 9, -2.5, 0, -0.75, 2.5, 0, -0.75, 2.5, 0, 0.75, -2.5, 0, 0.75)
@@ -31,6 +26,49 @@ height = 1.8
 radius = 3.0
 
 [sub_resource type="BoxShape3D" id="PerceptibleShape"]
+size = Vector3(0.5, 0.5, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="GroundMaterial"]
+albedo_color = Color(0.24, 0.32, 0.24, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="WallMaterial"]
+albedo_color = Color(0.85, 0.18, 0.18, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="WilsonMaterial"]
+albedo_color = Color(0.18, 0.42, 0.95, 1)
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="TargetMaterial"]
+albedo_color = Color(0.95, 0.85, 0.12, 1)
+roughness = 0.65
+
+[sub_resource type="StandardMaterial3D" id="PerceptibleMaterial"]
+albedo_color = Color(1, 0.48, 0.08, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="GroundMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(20, 0.2, 20)
+
+[sub_resource type="BoxMesh" id="WallMesh"]
+material = SubResource("WallMaterial")
+size = Vector3(4, 2, 0.5)
+
+[sub_resource type="CapsuleMesh" id="WilsonMesh"]
+material = SubResource("WilsonMaterial")
+radius = 0.3
+height = 1.8
+
+[sub_resource type="CylinderMesh" id="TargetMesh"]
+material = SubResource("TargetMaterial")
+top_radius = 0.3
+bottom_radius = 0.3
+height = 0.2
+
+[sub_resource type="BoxMesh" id="PerceptibleMesh"]
+material = SubResource("PerceptibleMaterial")
 size = Vector3(0.5, 0.5, 0.5)
 
 [sub_resource type="StandardMaterial3D" id="NavDebugMaterial"]
@@ -85,7 +123,9 @@ navigation_mesh = SubResource("NavigationMesh_smoke")
 collision_layer = 1
 collision_mask = 1
 
-[node name="Visual" parent="Ground" instance=ExtResource("2_ground")]
+[node name="Visual" type="MeshInstance3D" parent="Ground"]
+position = Vector3(0, -0.1, 0)
+mesh = SubResource("GroundMesh")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
 position = Vector3(0, -0.1, 0)
@@ -111,7 +151,9 @@ mesh = SubResource("NavDebugEast")
 collision_layer = 1
 collision_mask = 1
 
-[node name="Visual" parent="Wall" instance=ExtResource("3_wall")]
+[node name="Visual" type="MeshInstance3D" parent="Wall"]
+position = Vector3(0, 1, 0)
+mesh = SubResource("WallMesh")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Wall"]
 position = Vector3(0, 1, 0)
@@ -123,8 +165,8 @@ collision_layer = 1
 collision_mask = 1
 floor_snap_length = 0.2
 
-[node name="Visual" parent="Wilson" instance=ExtResource("4_wilson")]
-position = Vector3(0, -0.9, 0)
+[node name="Visual" type="MeshInstance3D" parent="Wilson"]
+mesh = SubResource("WilsonMesh")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Wilson"]
 shape = SubResource("WilsonShape")
@@ -150,24 +192,25 @@ shape = SubResource("PerceptionShape")
 [node name="Target" type="Node3D" parent="."]
 position = Vector3(7, 0.1, 2)
 
-[node name="Visual" parent="Target" instance=ExtResource("5_target")]
+[node name="Visual" type="MeshInstance3D" parent="Target"]
+mesh = SubResource("TargetMesh")
 
 [node name="Perceptible" type="StaticBody3D" parent="."]
 position = Vector3(-1.5, 0.25, 2.2)
 collision_layer = 4
 collision_mask = 0
 
-[node name="Visual" parent="Perceptible" instance=ExtResource("6_perceptible")]
-position = Vector3(0, -0.25, 0)
+[node name="Visual" type="MeshInstance3D" parent="Perceptible"]
+mesh = SubResource("PerceptibleMesh")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Perceptible"]
 shape = SubResource("PerceptibleShape")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-position = Vector3(0, 16, 16)
-rotation_degrees = Vector3(-45, 0, 0)
+position = Vector3(0, 18, 12)
+rotation_degrees = Vector3(-56.31, 0, 0)
 projection = 1
-size = 20.0
+size = 22.0
 current = true
 
 [node name="DebugUI" type="CanvasLayer" parent="."]
@@ -175,7 +218,7 @@ current = true
 [node name="Margin" type="MarginContainer" parent="DebugUI"]
 offset_left = 20.0
 offset_top = 20.0
-offset_right = 900.0
+offset_right = 980.0
 offset_bottom = 190.0
 
 [node name="Status" type="Label" parent="DebugUI/Margin"]
