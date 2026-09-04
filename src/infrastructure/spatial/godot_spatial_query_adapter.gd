@@ -44,12 +44,12 @@ func has_line_of_sight(observer_ref: RuntimeWorldRef, target_ref: RuntimeWorldRe
 	if observer == null or target == null:
 		return false
 	var query := PhysicsRayQueryParameters3D.create(observer.global_position, target.global_position)
-	_exclude_collision_root(query, observer)
+	_exclude_collision_subject(query, observer)
 	var hit := physics_space_state.intersect_ray(query)
 	if hit.is_empty():
 		return true
 	var collider = hit.get("collider")
-	return collider is Node and _is_same_or_descendant(collider as Node, target)
+	return collider is Node and _matches_spatial_subject(collider as Node, target)
 
 func is_interaction_reachable(actor_ref: RuntimeWorldRef, target_ref: RuntimeWorldRef, interaction_id: StringName = &"") -> bool:
 	var actor: Node3D = registry.resolve(actor_ref)
@@ -61,12 +61,12 @@ func is_interaction_reachable(actor_ref: RuntimeWorldRef, target_ref: RuntimeWor
 	if physics_space_state == null:
 		return true
 	var query := PhysicsRayQueryParameters3D.create(actor.global_position, anchor.global_position)
-	_exclude_collision_root(query, actor)
+	_exclude_collision_subject(query, actor)
 	var hit := physics_space_state.intersect_ray(query)
 	if hit.is_empty():
 		return true
 	var collider = hit.get("collider")
-	return collider is Node and _is_same_or_descendant(collider as Node, anchor)
+	return collider is Node and _matches_spatial_subject(collider as Node, anchor)
 
 func _route_points(from_ref: RuntimeWorldRef, to_ref: RuntimeWorldRef) -> PackedVector3Array:
 	if not navigation_map.is_valid():
@@ -82,16 +82,33 @@ func _route_points(from_ref: RuntimeWorldRef, to_ref: RuntimeWorldRef) -> Packed
 		true
 	)
 
-func _exclude_collision_root(query: PhysicsRayQueryParameters3D, root: Node) -> void:
+func _exclude_collision_subject(query: PhysicsRayQueryParameters3D, subject: Node) -> void:
+	var collision_root: CollisionObject3D = _nearest_collision_ancestor(subject)
+	if collision_root == null:
+		return
 	var exclusions: Array[RID] = []
-	_collect_collision_rids(root, exclusions)
+	_collect_collision_rids(collision_root, exclusions)
 	query.exclude = exclusions
+
+func _nearest_collision_ancestor(node: Node) -> CollisionObject3D:
+	var current: Node = node
+	while current != null:
+		if current is CollisionObject3D:
+			return current as CollisionObject3D
+		current = current.get_parent()
+	return null
 
 func _collect_collision_rids(node: Node, output: Array[RID]) -> void:
 	if node is CollisionObject3D:
 		output.append((node as CollisionObject3D).get_rid())
 	for child in node.get_children():
 		_collect_collision_rids(child, output)
+
+func _matches_spatial_subject(candidate: Node, expected: Node) -> bool:
+	if _is_same_or_descendant(candidate, expected):
+		return true
+	var expected_collision_root: CollisionObject3D = _nearest_collision_ancestor(expected)
+	return expected_collision_root != null and _is_same_or_descendant(candidate, expected_collision_root)
 
 func _is_same_or_descendant(candidate: Node, expected_root: Node) -> bool:
 	var current: Node = candidate
