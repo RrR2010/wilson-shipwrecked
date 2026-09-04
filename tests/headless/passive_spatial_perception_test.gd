@@ -149,13 +149,27 @@ func _run_slice() -> void:
 	_expect_equal(result.candidates.size(), 0, "passive evidence alone does not force broad candidate generation")
 	_expect_true(result.decision == null, "passive evidence alone keeps reconsideration NONE")
 
-	var quiet = orchestrator.advance(SimulationStepContext.new(&"moving_passive_2", 0.1, 0.2, null, []))
-	_expect_equal(quiet.perception.evidence.size(), 0, "unchanged overlap does not rescan every semantic boundary")
+	# Bounded spatial refresh may revalidate a visible candidate repeatedly while moving,
+	# but unchanged access must not spam duplicate positive evidence.
+	sensor.request_refresh()
+	var unchanged_visible = orchestrator.advance(SimulationStepContext.new(&"moving_passive_2", 0.1, 0.2, null, []))
+	_expect_equal(unchanged_visible.perception.evidence.size(), 0, "unchanged visible access does not duplicate positive evidence")
+
+	# Losing metric access rearms the transition. Returning to access can emit evidence again.
+	spatial.set_distance(wilson_ref, fruit_ref, 12.0)
+	sensor.request_refresh()
+	var outside_access = orchestrator.advance(SimulationStepContext.new(&"moving_passive_3", 0.1, 0.3, null, []))
+	_expect_equal(outside_access.perception.evidence.size(), 0, "candidate outside metric access emits no positive evidence")
+
+	spatial.set_distance(wilson_ref, fruit_ref, 4.0)
+	sensor.request_refresh()
+	var regained_access = orchestrator.advance(SimulationStepContext.new(&"moving_passive_4", 0.1, 0.4, null, []))
+	_expect_equal(regained_access.perception.evidence.size(), 1, "regained perceptual access emits a new positive transition")
 
 	sensor_area.body_exited.emit(fruit_body)
 	_expect_equal(sensor.active_candidate_count(), 0, "body_exited removes collision candidate")
 	_expect_true(sensor.has_pending_refresh(), "collision exit marks passive set dirty")
-	var after_exit = orchestrator.advance(SimulationStepContext.new(&"moving_passive_3", 0.1, 0.3, null, []))
+	var after_exit = orchestrator.advance(SimulationStepContext.new(&"moving_passive_5", 0.1, 0.5, null, []))
 	_expect_equal(after_exit.perception.evidence.size(), 0, "exit refresh does not fabricate positive evidence")
 
 	sensor.unbind_candidate(fruit_ref, fruit_body)
