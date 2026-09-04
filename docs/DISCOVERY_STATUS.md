@@ -21,8 +21,8 @@ The strict external runner is validated under **Godot 4.7.1**.
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 43 PASS / 43 TOTAL
-PASS headless_suite (43 tests)
+RESULT: 44 PASS / 44 TOTAL
+PASS headless_suite (44 tests)
 ```
 
 Manual real-engine validation also passed for `tests/scenes/spatial_navigation_perception/spatial_navigation_perception.tscn` with:
@@ -48,6 +48,7 @@ structural World/runtime foundation
 → Godot/domain spatial-query, motion, physical-observation, and simulation-cadence boundary
 → trigger-gated cognition with NONE as a normal steady state
 → bounded passive spatial perception while MOVING
+→ perceived-threat evidence → same-chain THREAT reconsideration trigger
 → real CharacterBody3D / NavigationAgent3D / navmesh / Area3D / raycast integration fixture
 ```
 
@@ -65,6 +66,7 @@ EnvironmentState / dynamic processes              PASS
 Protection / exposure                             PASS
 Hazard projection / perceived threat              PASS
 Immediate-threat routing                          PASS
+Perceived-threat same-chain wake-up               PASS
 Shallow non-Wilson actors                         PASS
 Director opportunity lifecycle                    PASS
 Player suggestions / bounded insistence           PASS
@@ -78,7 +80,7 @@ Godot motion / navmesh integration                 PASS
 Passive spatial perception while MOVING            PASS
 Real LOS / occlusion integration                   PASS
 Generic reconsideration gate / trigger coalescing PASS
-Strict headless suite                              PASS — 43 tests
+Strict headless suite                              PASS — 44 tests
 ```
 
 ---
@@ -157,6 +159,8 @@ immediate-threat defenses from PerceivedThreat
 
 Routing remains separated by regime. `ReconsiderationGate` coalesces semantic triggers and permits `NONE` as the ordinary steady state so broad candidate competition is skipped when no meaningful trigger exists.
 
+Accessible evidence that matches an authored `ThreatInterpretationRule` now derives `ReconsiderationGate.Trigger.THREAT` through the same `PerceivedThreatService` interpretation boundary used by `ImmediateThreatCandidateSource`. Ordinary perceptual evidence still derives no trigger, so perception/learning does not imply broad reconsideration.
+
 Director and player suggestions participate in ordinary bounded competition and cannot force Wilson.
 
 Physical intervention remains:
@@ -180,6 +184,7 @@ Implemented and locally validated:
 SimulationCadenceClock
 SemanticDueScheduler
 ReconsiderationGate
+PerceivedThreatTriggerSource
 SpatialQueryPort
 MotionPort
 PhysicalObservation / PhysicalObservationPort
@@ -205,6 +210,7 @@ Validated boundary semantics:
 - active passive candidates are revalidated while Wilson moves because metric range/LOS can change without a membership edge;
 - passive perceptual evidence is edge-driven: unchanged accessibility does not emit repeated evidence every refresh;
 - passive evidence can be produced while motion remains `MOVING` and does not by itself force broad intentional reconsideration;
+- authored immediate-threat evidence can wake the threat routing regime while motion is still `MOVING`, without a pre-injected external `THREAT` trigger;
 - collision/overlap/grounding/fall observations remain typed engine facts and do not directly mutate World;
 - queued physical observations drain at an explicit semantic boundary;
 - fine transforms, navigation paths and physics observations remain non-persisted infrastructure facts.
@@ -295,7 +301,6 @@ Still open:
 ```text
 physical observation → validated World consequence resolution
 collision/overlap + grounded Wilson body consequences
-threat-specific passive trigger synthesis from newly admitted evidence
 semantic threshold/coalescing for gradual physical/environmental changes
 owner/service due scheduling fully wired across drives/processes/maintenance
 drive hysteresis-band memory persistence
@@ -314,31 +319,35 @@ Timing/decision-specific known issues:
 
 1. `SemanticDueScheduler` exists, but drives and other elapsed-time owners are not yet fully routed through one general due-scheduling policy;
 2. passive spatial perception now works during `MOVING`, but orientation/view-cone refresh and negative/absence evidence remain open;
-3. passive/event perception does not yet synthesize every possible same-chain reconsideration trigger; immediate-threat wake-up from newly perceived danger remains a separate integration slice;
+3. authored perceived threats now synthesize the same-chain `THREAT` reconsideration trigger; other semantic trigger families still need representative producers rather than a generic "any perception changed" rule;
 4. the Godot/domain event boundary still needs explicit threshold/coalescing policy for continuously changing physical/environment values;
 5. drive persistence stores numeric values but not hysteresis-band memory, so deadband state can reconstruct differently after save/load;
-6. physical observation callbacks still need an authoritative World consequence resolver and richer accident integration coverage.
+6. physical observation callbacks still need an authoritative World consequence resolver and richer accident integration coverage;
+7. the immediate-threat slice commits a defensive intention but does not yet cancel/redirect concrete Godot motion or execute an escape route.
 
 ---
 
 # Remaining major verticals
 
-Recommended sequence from the validated 43-test checkpoint:
+Recommended sequence from the validated 44-test checkpoint:
 
 ```text
 1. physical observations → authoritative World/body consequences
    - grounding/fall/collision consequence admission
    - semantic threshold/coalescing
-   - threat-specific same-chain trigger synthesis
-2. deterministic playable scenario/bootstrap tooling
-3. representative multi-system timing/scenario suites
+2. representative immediate-threat interruption scenario
+   - physical hazard observation/consequence
+   - perceived threat wake-up (now available)
+   - concrete motion cancellation/redirection/escape
+3. deterministic playable scenario/bootstrap tooling
+4. representative multi-system timing/scenario suites
    - longer movement traces
    - accident / immediate-threat routing
    - seed-population tests
-4. full run-save/new-run composition
+5. full run-save/new-run composition
 ```
 
-The open design review at `docs/design-reviews/2026-09-01-simulation-cadence-engine-domain-integration.md` is now partially consumed by the validated motion/perception/trigger work from PRs #17, #18 and #19. It remains OPEN only for the still-unimplemented threat, due-scheduling, gradual-threshold and representative accident/timing items recorded there.
+The open design review at `docs/design-reviews/2026-09-01-simulation-cadence-engine-domain-integration.md` is now partially consumed by the validated motion/perception/trigger work from PRs #17, #18, #19 and #21. It remains OPEN only for the still-unimplemented due-scheduling, gradual-threshold and representative accident/timing items recorded there.
 
 Cross-cutting correctness slices above should be pulled forward whenever a representative scenario requires them.
 
