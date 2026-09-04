@@ -21,10 +21,12 @@ const GodotSpatialQueryAdapter = preload("res://src/infrastructure/spatial/godot
 
 @onready var wall: StaticBody3D = $Wall
 @onready var wilson: CharacterBody3D = $Wilson
+@onready var wilson_spatial_reference: Node3D = $Wilson/SpatialReference
 @onready var wilson_agent: NavigationAgent3D = $Wilson/NavigationAgent3D
 @onready var perception_area: Area3D = $Wilson/PerceptionArea
 @onready var target: Node3D = $Target
 @onready var perceptible: StaticBody3D = $Perceptible
+@onready var perceptible_spatial_reference: Node3D = $Perceptible/SpatialReference
 @onready var status_label: Label = $DebugUI/Margin/Status
 
 var _registry: GodotSceneSpatialRegistry
@@ -40,14 +42,14 @@ var _failures: Array[String] = []
 var _observed_passive_while_moving: bool = false
 var _completed: bool = false
 
-const START_POSITION := Vector3(-7.0, 0.9, 0.0)
-const TARGET_POSITION := Vector3(7.0, 0.1, 2.0)
-const PERCEPTIBLE_ROUTE_POSITION := Vector3(-1.5, 0.25, 2.2)
-const COLLISION_PROBE_START := Vector3(-3.2, 0.9, 0.0)
-const LOS_CLEAR_WILSON := Vector3(-4.0, 0.9, 3.0)
-const LOS_CLEAR_TARGET := Vector3(0.0, 0.25, 3.0)
-const LOS_BLOCKED_WILSON := Vector3(-4.0, 0.9, 0.0)
-const LOS_BLOCKED_TARGET := Vector3(4.0, 0.25, 0.0)
+const START_POSITION := Vector3(-7.0, 0.0, 0.0)
+const TARGET_POSITION := Vector3(7.0, 0.0, 2.0)
+const PERCEPTIBLE_ROUTE_POSITION := Vector3(-1.5, 0.0, 2.2)
+const COLLISION_PROBE_START := Vector3(-3.2, 0.0, 0.0)
+const LOS_CLEAR_WILSON := Vector3(-4.0, 0.0, 3.0)
+const LOS_CLEAR_TARGET := Vector3(0.0, 0.0, 3.0)
+const LOS_BLOCKED_WILSON := Vector3(-4.0, 0.0, 0.0)
+const LOS_BLOCKED_TARGET := Vector3(4.0, 0.0, 0.0)
 
 
 func _ready() -> void:
@@ -103,9 +105,9 @@ func _setup_runtime_adapters() -> void:
 	_perceptible_ref = RuntimeWorldRef.entity(DomainId.entity(&"spatial_smoke_perceptible"))
 
 	_registry = GodotSceneSpatialRegistry.new()
-	_expect(_registry.bind(_wilson_ref, wilson), "Wilson binds to explicit RuntimeWorldRef")
+	_expect(_registry.bind(_wilson_ref, wilson_spatial_reference), "Wilson binds to explicit spatial query reference")
 	_expect(_registry.bind(_target_ref, target), "target binds to explicit RuntimeWorldRef")
-	_expect(_registry.bind(_perceptible_ref, perceptible), "perceptible binds to explicit RuntimeWorldRef")
+	_expect(_registry.bind(_perceptible_ref, perceptible_spatial_reference), "perceptible binds to explicit spatial query reference")
 
 	_motion = GodotMotionAdapter.new(_registry)
 	_expect(_motion.bind_actor(_wilson_ref, wilson, wilson_agent, movement_speed_mps), "GodotMotionAdapter binds Wilson")
@@ -128,6 +130,8 @@ func _setup_runtime_adapters() -> void:
 
 	_expect(_spatial.navigation_map.is_valid(), "navigation map RID is valid")
 	_expect(_spatial.physics_space_state != null, "physics direct space state is available")
+	_expect(is_equal_approx(wilson.global_position.y, 0.0), "Wilson navigation origin is aligned to navmesh plane")
+	_expect(wilson_spatial_reference.global_position.y > wilson.global_position.y, "Wilson spatial query reference is above navigation origin")
 
 
 func _prove_collision() -> void:
@@ -198,10 +202,12 @@ func _prove_motion_and_passive_perception() -> void:
 		max_displacement = maxf(max_displacement, displacement)
 
 		if frame % 60 == 0:
-			print("[SMOKE][MOTION] frame=%d status=%d position=%s displacement=%.3f path_points=%d candidates=%d dirty=%s" % [
+			var next_point: Vector3 = wilson_agent.get_next_path_position()
+			print("[SMOKE][MOTION] frame=%d status=%d position=%s next=%s displacement=%.3f path_points=%d candidates=%d dirty=%s" % [
 				frame,
 				_motion.get_status(_wilson_ref),
 				str(wilson.global_position),
+				str(next_point),
 				displacement,
 				wilson_agent.get_current_navigation_path().size(),
 				_sensor.active_candidate_count(),
