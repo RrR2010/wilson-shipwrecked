@@ -80,7 +80,7 @@ func _run_slice() -> void:
 		null,
 		states
 	)
-	_expect_equal(snapshot["schema_version"], 9, "actor persistence uses snapshot v9")
+	_expect_equal(snapshot["schema_version"], 10, "actor persistence uses current simulation snapshot schema")
 	_expect_equal(snapshot["actors"].size(), 1, "actor runtime cause is persisted")
 	var parsed = JSON.parse_string(JSON.stringify(snapshot))
 	var restored = persistence.restore(parsed)
