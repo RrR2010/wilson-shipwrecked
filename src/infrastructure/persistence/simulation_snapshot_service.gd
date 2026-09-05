@@ -8,7 +8,6 @@ const WilsonWorldState = preload("res://src/domain/world/wilson_world_state.gd")
 const WorldRelation = preload("res://src/domain/world/world_relation.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
 const EnvironmentState = preload("res://src/domain/world/environment_state.gd")
-const DynamicProcessInstance = preload("res://src/domain/world/dynamic_process_instance.gd")
 const DynamicProcessStore = preload("res://src/domain/world/dynamic_process_store.gd")
 const ActorRuntimeState = preload("res://src/domain/actors/actor_runtime_state.gd")
 const ActorStateStore = preload("res://src/domain/actors/actor_state_store.gd")
@@ -106,23 +105,8 @@ func restore(snapshot: Dictionary):
 	var habits = owners.habits
 	var episodes = owners.episodes
 	var presence = owners.presence
-
-	var environment_record = snapshot.get("environment")
-	assert(environment_record is Dictionary, "Snapshot missing environment state")
-	var environment = EnvironmentState.new(
-		StringName(environment_record["weather"]),
-		StringName(environment_record["daylight_phase"])
-	)
-
-	var dynamic_processes = DynamicProcessStore.new()
-	for record in snapshot.get("dynamic_processes", []):
-		assert(dynamic_processes.add(DynamicProcessInstance.new(
-			StringName(record["id"]),
-			StringName(record["definition_id"]),
-			_codec.decode(record["subject"]),
-			int(record["lifecycle"]),
-			float(record["elapsed"])
-		)), "Failed to restore duplicate dynamic process")
+	var environment = owners.environment
+	var dynamic_processes = owners.dynamic_processes
 
 	var actors = ActorStateStore.new()
 	for record in snapshot.get("actors", []):
