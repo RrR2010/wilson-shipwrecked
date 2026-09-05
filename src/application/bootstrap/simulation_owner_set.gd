@@ -9,10 +9,19 @@ var relations
 var wilson_world_state
 var beliefs
 var current_intention
+var wilson_body_state
 
-func _init(p_entities, p_relations, p_wilson_world_state, p_beliefs, p_current_intention) -> void:
+func _init(
+	p_entities,
+	p_relations,
+	p_wilson_world_state,
+	p_beliefs,
+	p_current_intention,
+	p_wilson_body_state
+) -> void:
 	entities = p_entities
 	relations = p_relations
 	wilson_world_state = p_wilson_world_state
 	beliefs = p_beliefs
 	current_intention = p_current_intention
+	wilson_body_state = p_wilson_body_state
