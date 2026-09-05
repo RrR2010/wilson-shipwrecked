@@ -21,8 +21,8 @@ The strict external runner is validated under **Godot 4.7.1**.
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 49 PASS / 49 TOTAL
-PASS headless_suite (49 tests)
+RESULT: 50 PASS / 50 TOTAL
+PASS headless_suite (50 tests)
 ```
 
 The strict suite includes the real-engine `tests/scenes/spatial_navigation_perception/spatial_navigation_perception.tscn` fixture. Its validated coverage now includes ordinary movement/perception plus defensive motion redirection.
@@ -50,6 +50,7 @@ structural World/runtime foundation
 → grounded Wilson death WorldEvent → RunLifecycleState ACTIVE→DEAD
 → committed defensive intention → deterministic escape selection → MotionPort cancellation/redirection → concrete Godot escape movement
 → shared SemanticDueScheduler → owner-local elapsed gates → due-only drive/dynamic-process progression
+→ gradual environment numeric transitions → authored threshold crossing → coalesced semantic WorldEvent
 ```
 
 ---
@@ -69,6 +70,7 @@ Immediate-threat routing                          PASS
 Perceived-threat same-chain wake-up               PASS
 Immediate-threat concrete motion redirection      PASS
 Shared due scheduling — drives/processes          PASS
+Gradual environment semantic thresholds           PASS
 Shallow non-Wilson actors                         PASS
 Director opportunity lifecycle                    PASS
 Player suggestions / bounded insistence           PASS
@@ -85,7 +87,7 @@ Real LOS / occlusion integration                  PASS
 Physical observation semantic admission           PASS
 Grounded Wilson body impact consequences          PASS
 Generic reconsideration gate / trigger coalescing PASS
-Strict headless suite                             PASS — 49 tests
+Strict headless suite                             PASS — 50 tests
 ```
 
 ---
@@ -216,6 +218,8 @@ PhysicalConsequenceResolution
 PhysicalConsequenceWorldAdvanceDecorator
 WilsonBodyImpactRule
 WilsonBodyImpactConsequenceResolver
+GradualSemanticBoundaryRule
+GradualSemanticEventProjector
 GodotSceneSpatialRegistry
 GodotSpatialQueryAdapter
 GodotMotionAdapter
@@ -246,6 +250,8 @@ Validated engine/domain semantics:
 - drives and dynamic processes can share one `SemanticDueScheduler` while retaining independent due keys;
 - skipped 0.1 s semantic heartbeats conserve elapsed time and release it once at the owner due boundary instead of forcing 10 Hz progression;
 - missed due periods coalesce into one owner invocation, and drive cognition still wakes only on the existing urgency-band semantic crossing;
+- gradual environment property changes remain authoritative numeric World truth while only authored threshold crossings produce semantic events;
+- duplicate crossings of the same rule/subject within one semantic step coalesce into one deterministic non-action `WorldEvent`;
 - fine transforms, navigation paths, passive candidate sets and physics observations remain non-persisted infrastructure facts.
 
 `SimulationCadenceClock` remains a physics→semantic bridge primitive. Its current ~`0.1 s` default is **not** a universal update rate for perception, cognition, drives, environment, projects, Director or maintenance.
@@ -316,7 +322,7 @@ Still open:
 
 ```text
 collision/grounding/fall-specific consequence policies beyond impact damage
-semantic threshold/coalescing for gradual physical/environmental changes
+physical gradual-value threshold policies beyond the validated environment path
 sparse maintenance/other gradual owners not yet wired through shared due scheduling
 drive hysteresis-band memory persistence
 richer Wilson-relative route/escape evaluation beyond deterministic objective safety
@@ -335,7 +341,7 @@ Timing/decision-specific notes:
 1. drives and dynamic processes are now validated through one shared `SemanticDueScheduler`; maintenance and other sparse elapsed-time owners remain to be wired only when representative work requires them;
 2. passive perception works during `MOVING`, but orientation/view-cone refresh and negative/absence evidence remain open;
 3. authored perceived threats synthesize same-chain `THREAT`; other semantic trigger families still need representative producers rather than a generic “any perception changed” rule;
-4. discrete physical observations can be threshold-admitted, but continuously changing physical/environment values still need semantic coalescing;
+4. environment gradual numeric transitions now support authored threshold events and same-step coalescing; equivalent physical gradual-value policies should be added only when a representative physical owner requires them;
 5. drive persistence stores values but not hysteresis-band memory;
 6. body injury/death and lifecycle propagation are grounded, but body persistence/full save composition remain open;
 7. immediate-threat motion execution is now concrete, but escape choice is still objective/configured rather than Wilson-relative learned route reasoning.
@@ -344,21 +350,20 @@ Timing/decision-specific notes:
 
 # Remaining major verticals
 
-Recommended sequence from the validated 49-test checkpoint:
+Recommended sequence from the validated 50-test checkpoint:
 
 ```text
-1. semantic threshold/coalescing for gradual physical/environmental changes
-2. deterministic playable scenario/bootstrap tooling
-3. representative integrated timing/scenario suite
+1. deterministic playable scenario/bootstrap tooling
+2. representative integrated timing/scenario suite
    - longer movement trace
    - Gerald ordinary perception
    - falling-palm threat wake-up
    - concrete escape execution
    - admitted impact/death branch where appropriate
-4. Wilson body + full run-save/new-run composition
+3. Wilson body + full run-save/new-run composition
 ```
 
-The open design review at `docs/design-reviews/2026-09-01-simulation-cadence-engine-domain-integration.md` is partially consumed through PR #31. Representative drive and dynamic-process due scheduling is now validated; the review remains OPEN for gradual threshold/coalescing and the integrated 20 m / Gerald / falling-palm timing scenario.
+The open design review at `docs/design-reviews/2026-09-01-simulation-cadence-engine-domain-integration.md` is partially consumed through PR #33. Representative due scheduling and gradual environment threshold/coalescing are now validated; the review remains OPEN only for the integrated 20 m / Gerald / falling-palm timing scenario.
 
 Cross-cutting correctness slices should continue to be pulled forward only when a representative scenario requires them.
 
