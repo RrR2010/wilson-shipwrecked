@@ -9,10 +9,13 @@ const SimulationBootstrapDefinition = preload("res://src/application/bootstrap/s
 const SimulationOwnerBootstrapper = preload("res://src/application/bootstrap/simulation_owner_bootstrapper.gd")
 
 var _failures: Array[String] = []
+var _completed := false
 
 
 func _init() -> void:
 	_run()
+	if not _completed:
+		_failures.append("Test body did not complete; check runtime errors above")
 	if _failures.is_empty():
 		print("PASS project_bootstrap_test")
 		quit(0)
@@ -69,6 +72,8 @@ func _run() -> void:
 	_expect_true(empty.ok, "default project bootstrap succeeds")
 	if empty.ok:
 		_expect_equal(empty.owners.projects.instances().size(), 0, "new-run default project store starts empty")
+
+	_completed = true
 
 
 func _expect_true(condition: bool, message: String) -> void:
