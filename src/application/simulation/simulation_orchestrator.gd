@@ -15,7 +15,8 @@ const ReconsiderationGate = preload("res://src/application/simulation/reconsider
 ## -> committed-event lifecycle propagation -> event + passive spatial perception
 ## -> immediate Wilson learning -> drive progression
 ## -> perception/external trigger derivation -> reconsideration gating
-## -> candidate generation/routing when admitted -> selected intention commit.
+## -> candidate generation/routing when admitted -> selected intention commit
+## -> optional execution of the committed intention through composed application ports.
 
 var _world_advance
 var _action_execution
@@ -41,6 +42,7 @@ var _reconsideration_gate
 var _passive_perception_source
 var _perception_trigger_source
 var _lifecycle_event_coordinator
+var _selected_intention_executor
 
 
 func _init(
@@ -67,7 +69,8 @@ func _init(
 	reconsideration_gate = null,
 	passive_perception_source = null,
 	perception_trigger_source = null,
-	lifecycle_event_coordinator = null
+	lifecycle_event_coordinator = null,
+	selected_intention_executor = null
 ) -> void:
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
 	assert(action_execution != null, "SimulationOrchestrator requires action execution")
@@ -94,6 +97,8 @@ func _init(
 		assert(perception_trigger_source.has_method("derive"), "Perception trigger source must implement derive(perception_result)")
 	if lifecycle_event_coordinator != null:
 		assert(lifecycle_event_coordinator.has_method("process"), "Lifecycle event coordinator must implement process(committed_events)")
+	if selected_intention_executor != null:
+		assert(selected_intention_executor.has_method("apply"), "Selected intention executor must implement apply(current_intention)")
 	_world_advance = world_advance
 	_action_execution = action_execution
 	_world_commands = world_commands
@@ -118,6 +123,7 @@ func _init(
 	_passive_perception_source = passive_perception_source
 	_perception_trigger_source = perception_trigger_source
 	_lifecycle_event_coordinator = lifecycle_event_coordinator
+	_selected_intention_executor = selected_intention_executor
 
 
 func advance(step):
@@ -191,6 +197,7 @@ func advance(step):
 	var candidates: Array = []
 	var decision_result = null
 	var intention_commit = null
+	var intention_execution = null
 	if _reconsideration_gate.should_reconsider(admitted_triggers):
 		candidates = _opportunity_service.generate(
 			perception_result,
@@ -213,10 +220,14 @@ func advance(step):
 		trace.record_result(&"decision", decision_result)
 		intention_commit = _decision_commit.apply(decision_result, step.step_id)
 		trace.record_result(&"intention_commit", intention_commit)
+		if _selected_intention_executor != null and intention_commit != null and intention_commit.ok:
+			intention_execution = _selected_intention_executor.apply(_activity_query.current_intention())
+		trace.record_result(&"intention_execution", intention_execution)
 	else:
 		trace.record_result(&"decision_candidates", candidates)
 		trace.record_result(&"decision", null)
 		trace.record_result(&"intention_commit", null)
+		trace.record_result(&"intention_execution", null)
 
 	var result = SimulationStepResult.new(
 		step.step_id,

@@ -15,12 +15,15 @@ const ImmediateThreatCandidateSource = preload("res://src/domain/cognition/immed
 const DecisionCandidate = preload("res://src/domain/cognition/decision_candidate.gd")
 const DecisionCommitCoordinator = preload("res://src/application/simulation/decision_commit_coordinator.gd")
 const MotionPort = preload("res://src/application/simulation/motion_port.gd")
+const EscapeDestinationResolver = preload("res://src/application/simulation/escape_destination_resolver.gd")
+const DefensiveMotionExecutionCoordinator = preload("res://src/application/simulation/defensive_motion_execution_coordinator.gd")
 const PerceivedThreatTriggerSource = preload("res://src/application/simulation/perceived_threat_trigger_source.gd")
 const ReconsiderationGate = preload("res://src/application/simulation/reconsideration_gate.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
 const SimulationStepContext = preload("res://src/application/simulation/simulation_step_context.gd")
 const WorldAdvanceResult = preload("res://src/application/simulation/world_advance_result.gd")
 const FakeMotionPort = preload("res://tests/fakes/fake_motion_port.gd")
+const FakeSpatialQueryPort = preload("res://tests/fakes/fake_spatial_query_port.gd")
 
 var _failures: Array[String] = []
 var _completed := false
@@ -113,13 +116,29 @@ func _run_slice() -> void:
 	var wilson_ref: RuntimeWorldRef = RuntimeWorldRef.wilson()
 	var palm_ref: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"moving_threat_palm"))
 	var ordinary_ref: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"ordinary_route_object"))
+	var escape_near: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"escape_near"))
+	var escape_far: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"escape_far"))
 	var threat_event = DomainId.event_definition(&"palm_crack_visible")
 	var nearby_relation = DomainId.relation_type(&"perceptibly_near")
 	var dodge = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"dodge_threat")
 
 	var motion: Variant = FakeMotionPort.new()
-	_expect_true(motion.request_move(wilson_ref, palm_ref), "movement request starts before perception changes")
+	_expect_true(motion.request_move(wilson_ref, ordinary_ref), "movement request starts before perception changes")
 	_expect_equal(motion.get_status(wilson_ref), MotionPort.MotionStatus.MOVING, "Wilson begins in MOVING state")
+
+	var spatial = FakeSpatialQueryPort.new()
+	spatial.set_distance(wilson_ref, palm_ref, 2.5)
+	spatial.set_route(wilson_ref, escape_near, true, 2.0)
+	spatial.set_distance(escape_near, palm_ref, 5.0)
+	spatial.set_route(wilson_ref, escape_far, true, 5.0)
+	spatial.set_distance(escape_far, palm_ref, 8.0)
+	var escape_resolver = EscapeDestinationResolver.new(spatial, [escape_near, escape_far])
+	var motion_executor = DefensiveMotionExecutionCoordinator.new(
+		motion,
+		escape_resolver,
+		wilson_ref,
+		[dodge]
+	)
 
 	var rule = ThreatInterpretationRule.new(threat_event, &"source", 0.9, 0.95, 0.5)
 	var threat_service = PerceivedThreatService.new([rule])
@@ -152,7 +171,9 @@ func _run_slice() -> void:
 		threat_candidates,
 		null,
 		null,
-		threat_triggers
+		threat_triggers,
+		null,
+		motion_executor
 	)
 
 	var ordinary_evidence = PerceptualEvidence.new(
@@ -170,6 +191,8 @@ func _run_slice() -> void:
 	_expect_true(ordinary_step.decision == null, "ordinary evidence does not force reconsideration")
 	_expect_equal(ordinary_step.candidates.size(), 0, "ordinary evidence does not generate decision candidates without a trigger")
 	_expect_true(not intentions.has_current(), "ordinary evidence does not create a cognition intention")
+	_expect_equal(motion.cancel_history.size(), 0, "ordinary evidence does not cancel active movement")
+	_expect_ref(motion.get_target(wilson_ref), ordinary_ref, "ordinary evidence preserves the original movement target")
 
 	var threat_evidence = PerceptualEvidence.new(
 		EpistemicClaim.event_claim(palm_ref, threat_event, &"source"),
@@ -181,7 +204,7 @@ func _run_slice() -> void:
 	var threat_step = orchestrator.advance(
 		SimulationStepContext.new(&"threat_while_moving", 0.1, 0.2, null, [])
 	)
-	_expect_equal(motion.get_status(wilson_ref), MotionPort.MotionStatus.MOVING, "threat routing occurs before movement reaches ARRIVED")
+	_expect_equal(motion.get_status(wilson_ref), MotionPort.MotionStatus.MOVING, "threat selection redirects into a new MOVING request")
 	_expect_equal(threat_step.perception.evidence.size(), 1, "accessible threat evidence reaches the semantic chain")
 	_expect_true(threat_step.decision != null, "perceived threat wakes reconsideration without an external trigger")
 	if threat_step.decision != null:
@@ -193,7 +216,18 @@ func _run_slice() -> void:
 	_expect_true(intentions.has_current(), "selected defense is committed as current intention")
 	if intentions.has_current():
 		_expect_equal(intentions.current().intention_id.sort_key(), dodge.sort_key(), "threat decision commits the authored defense")
+	_expect_equal(motion.cancel_history.size(), 1, "committed defensive intention cancels the pre-threat movement exactly once")
+	_expect_ref(motion.get_target(wilson_ref), escape_far, "defensive execution redirects toward the safer reachable destination")
+	_expect_equal(motion.request_history.size(), 2, "one initial request and one defensive redirect are issued")
 	_expect_equal(learning.evidence_counts, [1, 1], "ordinary and threat evidence both learn before routing")
+
+	if traces.traces.size() >= 2:
+		var execution_result = traces.traces[1].stage_results.get(&"intention_execution")
+		_expect_true(execution_result != null and bool(execution_result.get("redirected", false)), "trace records motion execution after intention commit")
+		if execution_result != null:
+			_expect_ref(execution_result.get("target_ref"), escape_far, "trace records the selected escape target")
+	else:
+		_failures.append("threat step trace was not recorded")
 
 	var derived_triggers: Array[int] = threat_triggers.derive(PerceptionResult.new([], [threat_evidence]))
 	_expect_equal(derived_triggers, [ReconsiderationGate.Trigger.THREAT], "threat evidence derives only the THREAT gate trigger")
@@ -209,4 +243,9 @@ func _expect_true(condition: bool, message: String) -> void:
 
 func _expect_equal(actual: Variant, expected: Variant, message: String) -> void:
 	if actual != expected:
+		_failures.append("%s (expected=%s actual=%s)" % [message, expected, actual])
+
+
+func _expect_ref(actual, expected, message: String) -> void:
+	if actual == null or expected == null or not actual.equals(expected):
 		_failures.append("%s (expected=%s actual=%s)" % [message, expected, actual])

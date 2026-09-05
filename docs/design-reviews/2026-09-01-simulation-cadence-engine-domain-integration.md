@@ -204,7 +204,7 @@ rather than emitting every tiny numeric wind change.
 
 These scenes contain accidents that develop across multiple physics frames and may require timely intervention/reaction.
 
-**Assessment:** the 0.1 s semantic bridge is fast enough as an initial default. Accessible authored threat evidence wakes the immediate-threat routing regime at the next semantic orchestration boundary without a pre-injected external trigger. PR #23 closes raw physical observation → authoritative semantic event admission for authored discrete observations. PR #25 now closes the next body-truth step for authored Wilson impacts: vitality is mutated/clamped before injury/death semantics, and the alive→dead edge is not repeated. Automatic body-death → run-lifecycle death propagation, concrete motion interruption/redirection and the integrated accident timing scenario remain open.
+**Assessment:** the 0.1 s semantic bridge is fast enough as an initial default. Accessible authored threat evidence wakes the immediate-threat routing regime at the next semantic orchestration boundary without a pre-injected external trigger. PR #23 closes raw physical observation → authoritative semantic event admission for authored discrete observations. PR #25 closes authored body-impact → Wilson body truth. PR #27 propagates an already-committed Wilson death fact into run lifecycle. PR #29 closes the cognition→motion boundary for an already-selected defensive intention: route-aware escape selection cancels the prior move and redirects `GodotMotionAdapter` toward a safer authored destination. The broader integrated accident timing scenario remains open.
 
 ---
 
@@ -242,12 +242,15 @@ Wilson starts a long move
 → newly accessible evidence is emitted while MOVING
 → ordinary passive evidence does not automatically force broad reconsideration
 → authored threat evidence derives THREAT at the next semantic boundary
-→ immediate-threat routing can replace Wilson's cognitive intention before ARRIVED
+→ immediate-threat routing replaces Wilson's cognitive intention before ARRIVED
+→ committed defensive intention selects a route-aware escape destination
+→ existing move is cancelled
+→ Godot motion is redirected and physically progresses toward escape
 ```
 
-The real fixture validates obstacle collision, navmesh detour routing, explicit `RuntimeWorldRef` mapping, clear LOS and wall-occluded LOS. PR #21 validates semantic threat wake-up while motion remains `MOVING`. PRs #23/#25 establish the physical-fact → admitted consequence → World/body truth side needed for accident scenarios.
+The real fixture validates obstacle collision, navmesh detour routing, explicit `RuntimeWorldRef` mapping, clear LOS and wall-occluded LOS. PR #21 validates semantic threat wake-up while motion remains `MOVING`. PRs #23/#25 establish the physical-fact → admitted consequence → World/body truth side needed for accident scenarios. PR #29 validates the execution boundary from committed defensive cognition to concrete `NavigationAgent3D` redirection.
 
-The remaining movement-adjacent gap is concrete Godot motion cancellation/redirection and execution of an escape route after the defensive intention is committed.
+The remaining movement-adjacent work is no longer basic cancellation/redirection; it is richer Wilson-relative escape evaluation and a representative integrated hazard timing scenario.
 
 ---
 
@@ -333,7 +336,7 @@ At second 6:
 - Wilson chooses/executes escape movement.
 ```
 
-The current real-engine fixture covers isolated movement + passive perception + LOS. PR #21 covers perception-derived threat wake-up and immediate-threat selection while motion is still `MOVING`. PR #23 covers semantic-boundary admission of authored physical observations. PR #25 covers grounded Wilson body mutation and edge-driven death semantics after admitted impacts. Gerald semantics, body-death → run-lifecycle propagation and concrete escape execution remain deliberately deferred so failures remain attributable to one boundary at a time.
+The current real-engine fixture covers movement + passive perception + LOS and now also concrete escape redirection. PR #21 covers perception-derived threat wake-up and immediate-threat selection while motion is still `MOVING`. PR #23 covers semantic-boundary admission of authored physical observations. PR #25 covers grounded Wilson body mutation and edge-driven death semantics after admitted impacts. PR #27 covers grounded death → run lifecycle. PR #29 covers committed defense → route-aware concrete motion interruption/redirection. Gerald semantics, full due scheduling and the single integrated accident/timing trace remain deliberately deferred so failures remain attributable to one boundary at a time.
 
 ---
 
@@ -346,11 +349,11 @@ The consuming implementation agent should resolve each item below.
 - [x] Define/implement bounded passive spatial perception during movement; perception must not wait for `ARRIVED`. **Validated by PRs #18/#19 with real `Area3D`/shape broadphase, bounded moving refresh, metric/LOS revalidation and evidence while `MOVING`.**
 - [x] Keep event-driven perception for meaningful engine/world changes alongside passive refresh. **Event perception remains separate; PR #23 validates authored engine observation admission into that event path, while passive refresh remains complementary.**
 - [x] Ensure perception can occur without automatically triggering broad intentional reconsideration. **Validated by `passive_spatial_perception_test.gd` and PR #21: ordinary evidence keeps reconsideration `NONE`.**
-- [x] Ensure immediate threats reach the threat routing regime at the next admissible semantic boundary. **PR #21 adds `PerceivedThreatTriggerSource`; evidence admitted by the same authored `PerceivedThreatService` rules derives `THREAT` before gate coalescing, and the regression proves immediate-threat routing while motion remains `MOVING` without an externally supplied threat trigger.**
+- [x] Ensure immediate threats reach the threat routing regime at the next admissible semantic boundary. **PR #21 adds `PerceivedThreatTriggerSource`; evidence admitted by the same authored `PerceivedThreatService` rules derives `THREAT` before gate coalescing, and PR #29 validates that the resulting committed defensive intention can cancel/redirect concrete Godot motion.**
 - [ ] Keep gradual systems due/time-driven and cognition boundary/event-driven. **Architecture is canonical and `SemanticDueScheduler` exists, but drives/processes/maintenance are not yet fully wired through it.**
 - [ ] Coalesce/threshold gradual physical/environmental changes before producing semantic event spam. **PRs #23/#25 add authored threshold admission for discrete physical observations/impacts only; general gradual-value coalescing remains unresolved.**
 - [x] Confirm complex same-step physical observations preserve deterministic causal ordering; add sequence/time metadata only if representative cases prove it necessary. **PR #14 preserves insertion order; PR #23 preserves it through semantic drain/admission and PR #25 through body consequence resolution. Sequence/timestamp metadata remains deliberately deferred until a representative accident demonstrates ambiguity.**
-- [ ] Add or plan an integrated timing scenario similar to the proposed 20 m walk / Gerald / falling-palm trace. **The walk/perception/LOS portion is validated in PR #19, semantic threat wake-up in PR #21, physical-event admission in PR #23, and grounded body-impact consequences in PR #25. Gerald semantics, run-lifecycle death propagation and concrete escape execution remain open.**
+- [ ] Add or plan an integrated timing scenario similar to the proposed 20 m walk / Gerald / falling-palm trace. **The component boundaries are now individually covered through PR #29, including concrete escape execution. What remains is the single integrated timing scenario plus Gerald semantics and due-scheduled gradual work.**
 
 ## Consumption progress
 
@@ -361,12 +364,14 @@ The consuming implementation agent should resolve each item below.
 - PR #21 adds perception-derived threat trigger synthesis through `PerceivedThreatService` and validates that authored threat evidence wakes immediate-threat routing while motion remains `MOVING`, whereas ordinary evidence still leaves cognition at `NONE`.
 - PR #23 adds semantic-boundary physical observation draining plus authored consequence admission, validates below-threshold rejection and deterministic observation order, and routes admitted non-action physical facts through ordinary `WorldEvent → perception/evidence` without fabricating an `ActionExecution`.
 - PR #25 adds minimal World-owned `WilsonBodyState`, authored impact-to-damage policy, structured physical consequence resolution with `SemanticChangeSet`, clamped vitality, one-shot `alive → dead` transition, and reuse of the existing resurrection port so physical restoration still precedes lifecycle revival.
+- PR #27 propagates an already-committed authored Wilson death event into `RunLifecycleState.ACTIVE → DEAD` without lifecycle reading body vitality or Godot callbacks.
+- PR #29 adds `EscapeDestinationResolver` and `DefensiveMotionExecutionCoordinator`, validating deterministic route-aware escape selection, cancellation-before-redirection, the same-chain threat-selection→motion boundary, and concrete real-engine `NavigationAgent3D` redirection toward escape.
 
 The review intentionally remains **OPEN** because the remaining unchecked items are substantive runtime work rather than documentation-only cleanup.
 
 ## Completion record
 
-**Consumed by:** PR #16 (partial), PR #17 (partial), PR #18 (partial), PR #19 (partial), PR #21 (partial), PR #23 (partial), PR #25 (partial)  
-**Latest validated consumption:** PR #25 — strict runner `46 PASS / 46 TOTAL` under Godot 4.7.1; prior PR #19 real-engine fixture also reported `PASS spatial_navigation_perception_scene`  
+**Consumed by:** PR #16 (partial), PR #17 (partial), PR #18 (partial), PR #19 (partial), PR #21 (partial), PR #23 (partial), PR #25 (partial), PR #27 (partial), PR #29 (partial)  
+**Latest validated consumption:** PR #29 — strict runner `48 PASS / 48 TOTAL` under Godot 4.7.1; real-engine spatial fixture remains part of the strict suite  
 **Completion date:** _pending remaining checklist items_  
-**Rejected/deferred recommendations and rationale:** stable sequence/physics timestamp metadata for `PhysicalObservation` is deferred until a representative same-step accident demonstrates that insertion ordering is insufficient. General gradual physical/environmental coalescing is not claimed by PRs #23/#25 because their thresholds apply only to discrete observations. Automatic body-death → run-lifecycle propagation is separated from PR #25 to keep World body truth and lifecycle ownership explicit. The full 20 m / Gerald / falling-palm regression remains deferred until concrete defensive motion redirection exists, so failures remain attributable to one boundary at a time.
+**Rejected/deferred recommendations and rationale:** stable sequence/physics timestamp metadata for `PhysicalObservation` remains deferred until a representative same-step accident demonstrates that insertion ordering is insufficient. General gradual physical/environmental coalescing is not claimed by PRs #23/#25 because their thresholds apply only to discrete observations. The full 20 m / Gerald / falling-palm regression remains deferred until due scheduling and representative scenario composition are ready; concrete defensive motion redirection itself is now validated by PR #29.
