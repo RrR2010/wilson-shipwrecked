@@ -12,6 +12,10 @@ var current_intention
 var wilson_body_state
 var drives
 var projects
+var associations
+var habits
+var episodes
+var presence
 
 func _init(
 	p_entities,
@@ -21,7 +25,11 @@ func _init(
 	p_current_intention,
 	p_wilson_body_state,
 	p_drives,
-	p_projects
+	p_projects,
+	p_associations,
+	p_habits,
+	p_episodes,
+	p_presence
 ) -> void:
 	entities = p_entities
 	relations = p_relations
@@ -31,3 +39,7 @@ func _init(
 	wilson_body_state = p_wilson_body_state
 	drives = p_drives
 	projects = p_projects
+	associations = p_associations
+	habits = p_habits
+	episodes = p_episodes
+	presence = p_presence
