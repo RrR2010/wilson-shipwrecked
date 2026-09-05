@@ -5,7 +5,6 @@ const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const EntityInstance = preload("res://src/domain/world/entity_instance.gd")
 const EntityStore = preload("res://src/domain/world/entity_store.gd")
 const WilsonWorldState = preload("res://src/domain/world/wilson_world_state.gd")
-const WilsonBodyState = preload("res://src/domain/world/wilson_body_state.gd")
 const WorldRelation = preload("res://src/domain/world/world_relation.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
 const EnvironmentState = preload("res://src/domain/world/environment_state.gd")
@@ -69,13 +68,13 @@ func capture(
 	var environment = environment_state if environment_state != null else EnvironmentState.new()
 	var dynamic_processes = dynamic_process_store if dynamic_process_store != null else DynamicProcessStore.new()
 	var actors = actor_state_store if actor_state_store != null else ActorStateStore.new()
-	var body = wilson_body_state if wilson_body_state != null else WilsonBodyState.new()
+	var body_vitality: float = 1.0 if wilson_body_state == null else float(wilson_body_state.vitality)
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"entities": _capture_entities(entity_store),
 		"relations": _capture_relations(relation_store),
 		"wilson_world": {"place_id": _codec.encode(wilson_world_state.place_id)},
-		"wilson_body": {"vitality": body.vitality},
+		"wilson_body": {"vitality": body_vitality},
 		"beliefs": _capture_beliefs(belief_store),
 		"current_intention": _capture_intention(intention_store),
 		"drives": _capture_drives(drives),
@@ -99,7 +98,7 @@ func restore(snapshot: Dictionary):
 	var entities = owners.entities
 	var relations = owners.relations
 	var wilson_world_state = owners.wilson_world_state
-	var wilson_body = owners.wilson_body
+	var wilson_body = owners.wilson_body_state
 	var beliefs = owners.beliefs
 	var intention_store = owners.current_intention
 
