@@ -41,5 +41,5 @@ func matches(outcome) -> bool:
 
 
 func stable_key() -> String:
-	var event_key := "*" if event_type == null else event_type.sort_key()
+	var event_key: String = "*" if event_type == null else String(event_type.sort_key())
 	return "%s|%s|%s" % [action_id.sort_key(), event_key, String(drive_id)]
