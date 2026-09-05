@@ -7,7 +7,11 @@ signal continue_requested()
 
 const DomainId = preload("res://src/domain/core/domain_id.gd")
 const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
+const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
+const CurrentIntentionState = preload("res://src/domain/cognition/current_intention_state.gd")
 const MotionPort = preload("res://src/application/simulation/motion_port.gd")
+const EscapeDestinationResolver = preload("res://src/application/simulation/escape_destination_resolver.gd")
+const DefensiveMotionExecutionCoordinator = preload("res://src/application/simulation/defensive_motion_execution_coordinator.gd")
 const PassiveSpatialPerceptionSource = preload("res://src/application/simulation/passive_spatial_perception_source.gd")
 const GodotSceneSpatialRegistry = preload("res://src/infrastructure/spatial/godot_scene_spatial_registry.gd")
 const GodotMotionAdapter = preload("res://src/infrastructure/spatial/godot_motion_adapter.gd")
@@ -25,6 +29,7 @@ const GodotSpatialQueryAdapter = preload("res://src/infrastructure/spatial/godot
 @onready var wilson_agent: NavigationAgent3D = $Wilson/NavigationAgent3D
 @onready var perception_area: Area3D = $Wilson/PerceptionArea
 @onready var target: Node3D = $Target
+@onready var escape_target: Node3D = $EscapeTarget
 @onready var perceptible: StaticBody3D = $Perceptible
 @onready var perceptible_spatial_reference: Node3D = $Perceptible/SpatialReference
 @onready var status_label: Label = $DebugUI/Margin/Status
@@ -37,13 +42,16 @@ var _passive: PassiveSpatialPerceptionSource
 
 var _wilson_ref: RuntimeWorldRef
 var _target_ref: RuntimeWorldRef
+var _escape_ref: RuntimeWorldRef
 var _perceptible_ref: RuntimeWorldRef
 var _failures: Array[String] = []
 var _observed_passive_while_moving: bool = false
+var _observed_threat_redirect: bool = false
 var _completed: bool = false
 
 const START_POSITION := Vector3(-7.0, 0.0, 0.0)
 const TARGET_POSITION := Vector3(7.0, 0.0, 2.0)
+const ESCAPE_POSITION := Vector3(-7.0, 0.0, 5.5)
 const PERCEPTIBLE_ROUTE_POSITION := Vector3(-1.5, 0.0, 2.2)
 const COLLISION_PROBE_START := Vector3(-3.2, 0.0, 0.0)
 const LOS_CLEAR_WILSON := Vector3(-4.0, 0.0, 3.0)
@@ -71,12 +79,14 @@ func _run_smoke() -> void:
 		"instruction": "Capture the full scene before movement. Press Space to continue.",
 		"wilson": wilson.global_position,
 		"target": target.global_position,
+		"escape_target": escape_target.global_position,
 		"perceptible": perceptible.global_position,
 	})
 
 	await _prove_collision()
 	await _prove_navigation()
 	await _prove_motion_and_passive_perception()
+	await _prove_threat_motion_interruption()
 	await _prove_line_of_sight()
 
 	_completed = true
@@ -85,6 +95,7 @@ func _run_smoke() -> void:
 		"success": success,
 		"failures": _failures.duplicate(),
 		"passive_while_moving": _observed_passive_while_moving,
+		"threat_redirect": _observed_threat_redirect,
 		"motion_status": _motion.get_status(_wilson_ref),
 	}
 	await _checkpoint(&"COMPLETE", {
@@ -102,11 +113,13 @@ func _run_smoke() -> void:
 func _setup_runtime_adapters() -> void:
 	_wilson_ref = RuntimeWorldRef.wilson()
 	_target_ref = RuntimeWorldRef.entity(DomainId.entity(&"spatial_smoke_target"))
+	_escape_ref = RuntimeWorldRef.entity(DomainId.entity(&"spatial_smoke_escape"))
 	_perceptible_ref = RuntimeWorldRef.entity(DomainId.entity(&"spatial_smoke_perceptible"))
 
 	_registry = GodotSceneSpatialRegistry.new()
 	_expect(_registry.bind(_wilson_ref, wilson_spatial_reference), "Wilson binds to explicit spatial query reference")
 	_expect(_registry.bind(_target_ref, target), "target binds to explicit RuntimeWorldRef")
+	_expect(_registry.bind(_escape_ref, escape_target), "escape target binds to explicit RuntimeWorldRef")
 	_expect(_registry.bind(_perceptible_ref, perceptible_spatial_reference), "perceptible binds to explicit spatial query reference")
 
 	_motion = GodotMotionAdapter.new(_registry)
@@ -183,6 +196,7 @@ func _prove_motion_and_passive_perception() -> void:
 	wilson.global_position = START_POSITION
 	perceptible.global_position = PERCEPTIBLE_ROUTE_POSITION
 	target.global_position = TARGET_POSITION
+	escape_target.global_position = ESCAPE_POSITION
 	wilson.velocity = Vector3.ZERO
 	await _physics_frames(2)
 	var motion_start: Vector3 = wilson.global_position
@@ -266,6 +280,77 @@ func _prove_motion_and_passive_perception() -> void:
 			"displacement": max_displacement,
 			"path_points": wilson_agent.get_current_navigation_path().size(),
 		})
+
+
+func _prove_threat_motion_interruption() -> void:
+	_log_stage("THREAT_REDIRECT", "redirecting an already-selected defensive intention through real Godot motion")
+	wilson.global_position = START_POSITION
+	wilson.velocity = Vector3.ZERO
+	target.global_position = TARGET_POSITION
+	escape_target.global_position = ESCAPE_POSITION
+	perceptible.global_position = PERCEPTIBLE_ROUTE_POSITION
+	await _physics_frames(2)
+
+	_expect(_spatial.has_route(_wilson_ref, _escape_ref), "authored escape destination has a real navigation route")
+	_expect(_motion.request_move(_wilson_ref, _target_ref), "pre-threat movement toward original target starts")
+	for _frame in range(45):
+		wilson.velocity.y = -0.5
+		_motion.physics_tick(1.0 / 60.0)
+		await get_tree().physics_frame
+	_expect(_motion.get_status(_wilson_ref) == MotionPort.MotionStatus.MOVING, "pre-threat movement is still MOVING before interruption")
+	var original_motion_target = _motion.get_target(_wilson_ref)
+	_expect(original_motion_target != null and original_motion_target.equals(_target_ref), "pre-threat motion still targets the original destination")
+
+	var distance_before: float = _spatial.metric_distance(_wilson_ref, _perceptible_ref)
+	var dodge = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"dodge_threat")
+	var bindings = RoleBinding.new()
+	bindings.bind(&"threat_source", _perceptible_ref)
+	var selected_defense = CurrentIntentionState.new(dodge, bindings, &"real_engine_threat_step")
+	var resolver = EscapeDestinationResolver.new(_spatial, [_escape_ref], 0.25)
+	var executor = DefensiveMotionExecutionCoordinator.new(_motion, resolver, _wilson_ref, [dodge])
+	var execution: Dictionary = executor.apply(selected_defense)
+	_observed_threat_redirect = bool(execution.get("redirected", false))
+	_expect(_observed_threat_redirect, "selected defensive intention redirects real Godot motion")
+	var redirected_target = _motion.get_target(_wilson_ref)
+	_expect(redirected_target != null and redirected_target.equals(_escape_ref), "real motion target changes from original target to authored escape target")
+	_expect(_motion.get_status(_wilson_ref) == MotionPort.MotionStatus.MOVING, "redirect immediately resumes semantic MOVING state")
+
+	var redirect_start: Vector3 = wilson.global_position
+	var terminal_frame: int = -1
+	for frame in range(max_motion_frames):
+		wilson.velocity.y = -0.5
+		_motion.physics_tick(1.0 / 60.0)
+		var status: int = _motion.get_status(_wilson_ref)
+		if status == MotionPort.MotionStatus.ARRIVED or status == MotionPort.MotionStatus.BLOCKED or status == MotionPort.MotionStatus.ROUTE_INVALID:
+			terminal_frame = frame
+			break
+		await get_tree().physics_frame
+
+	var final_status: int = _motion.get_status(_wilson_ref)
+	var distance_after: float = _spatial.metric_distance(_wilson_ref, _perceptible_ref)
+	var redirect_displacement: float = Vector2(
+		wilson.global_position.x - redirect_start.x,
+		wilson.global_position.z - redirect_start.z
+	).length()
+	_expect(final_status == MotionPort.MotionStatus.ARRIVED, "redirected real motion reaches escape destination")
+	_expect(redirect_displacement > 1.0, "redirect produces physical displacement toward escape destination")
+	_expect(is_finite(distance_before) and is_finite(distance_after) and distance_after > distance_before, "escape movement increases metric distance from threat source")
+	print("[SMOKE][THREAT_REDIRECT] terminal_frame=%d status=%d before_distance=%.3f after_distance=%.3f displacement=%.3f target=%s" % [
+		terminal_frame,
+		final_status,
+		distance_before,
+		distance_after,
+		redirect_displacement,
+		str(escape_target.global_position),
+	])
+	await _checkpoint(&"THREAT_REDIRECT", {
+		"instruction": "A committed defensive intention cancelled the original route and redirected Wilson to the escape target. Capture now; press Space to continue.",
+		"wilson": wilson.global_position,
+		"escape_target": escape_target.global_position,
+		"distance_before": distance_before,
+		"distance_after": distance_after,
+		"motion_status": final_status,
+	})
 
 
 func _prove_line_of_sight() -> void:
