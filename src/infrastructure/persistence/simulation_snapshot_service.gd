@@ -5,6 +5,7 @@ const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const EntityInstance = preload("res://src/domain/world/entity_instance.gd")
 const EntityStore = preload("res://src/domain/world/entity_store.gd")
 const WilsonWorldState = preload("res://src/domain/world/wilson_world_state.gd")
+const WilsonBodyState = preload("res://src/domain/world/wilson_body_state.gd")
 const WorldRelation = preload("res://src/domain/world/world_relation.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
 const EnvironmentState = preload("res://src/domain/world/environment_state.gd")
@@ -28,7 +29,7 @@ const RestoredSimulationState = preload("res://src/infrastructure/persistence/re
 const SimulationSnapshotBootstrapDecoder = preload("res://src/infrastructure/persistence/simulation_snapshot_bootstrap_decoder.gd")
 const SimulationOwnerBootstrapper = preload("res://src/application/bootstrap/simulation_owner_bootstrapper.gd")
 
-const SCHEMA_VERSION := 9
+const SCHEMA_VERSION := 10
 
 var _codec
 
@@ -51,7 +52,8 @@ func capture(
 	presence_relationship = null,
 	environment_state = null,
 	dynamic_process_store = null,
-	actor_state_store = null
+	actor_state_store = null,
+	wilson_body_state = null
 ) -> Dictionary:
 	assert(entity_store != null, "capture requires EntityStore")
 	assert(relation_store != null, "capture requires WorldRelationStore")
@@ -67,11 +69,13 @@ func capture(
 	var environment = environment_state if environment_state != null else EnvironmentState.new()
 	var dynamic_processes = dynamic_process_store if dynamic_process_store != null else DynamicProcessStore.new()
 	var actors = actor_state_store if actor_state_store != null else ActorStateStore.new()
+	var body = wilson_body_state if wilson_body_state != null else WilsonBodyState.new()
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"entities": _capture_entities(entity_store),
 		"relations": _capture_relations(relation_store),
 		"wilson_world": {"place_id": _codec.encode(wilson_world_state.place_id)},
+		"wilson_body": {"vitality": body.vitality},
 		"beliefs": _capture_beliefs(belief_store),
 		"current_intention": _capture_intention(intention_store),
 		"drives": _capture_drives(drives),
@@ -95,6 +99,7 @@ func restore(snapshot: Dictionary):
 	var entities = owners.entities
 	var relations = owners.relations
 	var wilson_world_state = owners.wilson_world_state
+	var wilson_body = owners.wilson_body
 	var beliefs = owners.beliefs
 	var intention_store = owners.current_intention
 
@@ -189,6 +194,7 @@ func restore(snapshot: Dictionary):
 		entities,
 		relations,
 		wilson_world_state,
+		wilson_body,
 		beliefs,
 		intention_store,
 		drives,
