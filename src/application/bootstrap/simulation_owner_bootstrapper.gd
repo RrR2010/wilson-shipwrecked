@@ -10,6 +10,10 @@ const WilsonBodyState = preload("res://src/domain/world/wilson_body_state.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
+const AssociationStore = preload("res://src/domain/cognition/association_store.gd")
+const HabitStore = preload("res://src/domain/cognition/habit_store.gd")
+const EpisodeStore = preload("res://src/domain/cognition/episode_store.gd")
+const PresenceRelationship = preload("res://src/domain/cognition/presence_relationship.gd")
 const ProjectInstance = preload("res://src/domain/projects/project_instance.gd")
 const ProjectStore = preload("res://src/domain/projects/project_store.gd")
 const SimulationOwnerSet = preload("res://src/application/bootstrap/simulation_owner_set.gd")
@@ -88,6 +92,47 @@ func bootstrap(definition):
 				["Duplicate project instance: %s" % seed.id.sort_key()]
 			)
 
+	var associations = AssociationStore.new()
+	for seed in definition.association_seeds:
+		associations.restore_entry(
+			seed.subject,
+			seed.valence,
+			seed.attachment,
+			seed.evidence_count,
+			seed.last_source_execution_id
+		)
+
+	var habits = HabitStore.new()
+	for seed in definition.habit_seeds:
+		habits.restore_entry(
+			seed.cue_id,
+			seed.intention_id,
+			seed.bindings,
+			seed.strength,
+			seed.evidence_count,
+			seed.last_source_execution_id
+		)
+
+	var episodes = EpisodeStore.new()
+	for seed in definition.episode_seeds:
+		episodes.restore_entry(
+			seed.claim,
+			seed.importance,
+			seed.source_execution_id,
+			seed.modality,
+			seed.sequence
+		)
+
+	var presence = PresenceRelationship.new()
+	if definition.presence_seed != null:
+		presence.restore(
+			definition.presence_seed.presence_belief,
+			definition.presence_seed.trust,
+			definition.presence_seed.dependency,
+			definition.presence_seed.evidence_count,
+			definition.presence_seed.last_source_execution_id
+		)
+
 	return SimulationBootstrapResult.success(SimulationOwnerSet.new(
 		entities,
 		relations,
@@ -96,5 +141,9 @@ func bootstrap(definition):
 		intentions,
 		WilsonBodyState.new(definition.wilson_body_vitality),
 		DriveState.new(definition.drive_values),
-		projects
+		projects,
+		associations,
+		habits,
+		episodes,
+		presence
 	))
