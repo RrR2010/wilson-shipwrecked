@@ -25,6 +25,8 @@ const ProjectStore = preload("res://src/domain/projects/project_store.gd")
 const EpistemicGraphProjection = preload("res://src/domain/cognition/epistemic_graph_projection.gd")
 const DomainValueCodec = preload("res://src/infrastructure/persistence/domain_value_codec.gd")
 const RestoredSimulationState = preload("res://src/infrastructure/persistence/restored_simulation_state.gd")
+const SimulationSnapshotBootstrapDecoder = preload("res://src/infrastructure/persistence/simulation_snapshot_bootstrap_decoder.gd")
+const SimulationOwnerBootstrapper = preload("res://src/application/bootstrap/simulation_owner_bootstrapper.gd")
 
 const SCHEMA_VERSION := 9
 
@@ -86,58 +88,15 @@ func capture(
 
 func restore(snapshot: Dictionary):
 	assert(int(snapshot.get("schema_version", -1)) == SCHEMA_VERSION, "Unsupported simulation snapshot schema")
-	var entities = EntityStore.new()
-	for record in snapshot.get("entities", []):
-		var entity = EntityInstance.new(
-			_codec.decode(record["id"]),
-			_codec.decode(record["type_id"]),
-			_codec.decode(record["place_id"]),
-			_codec.decode(record["state_overrides"]),
-			_codec.decode(record["quantity"])
-		)
-		entity.lifecycle = int(record["lifecycle"])
-		var add_result = entities.add_entity(entity)
-		assert(add_result.ok, "Failed to restore entity: %s" % str(add_result.diagnostics))
-
-	var relations = WorldRelationStore.new()
-	for record in snapshot.get("relations", []):
-		var relation = WorldRelation.new(
-			_codec.decode(record["relation_type"]),
-			_codec.decode(record["subject"]),
-			_codec.decode(record["object"]),
-			_codec.decode(record["qualifier"])
-		)
-		var relation_result = relations.add_relation(relation)
-		assert(relation_result.ok, "Failed to restore relation: %s" % str(relation_result.diagnostics))
-	relations.rebuild_indexes()
-	assert(relations.validate_indexes().ok, "Restored relation indexes invalid")
-
-	var wilson_record = snapshot.get("wilson_world")
-	assert(wilson_record is Dictionary and wilson_record.has("place_id"), "Snapshot missing Wilson world state")
-	var wilson_world_state = WilsonWorldState.new(_codec.decode(wilson_record["place_id"]))
-
-	var beliefs = BeliefStore.new()
-	for record in snapshot.get("beliefs", []):
-		var proposition = BeliefProposition.new(_codec.decode(record["claim"]))
-		var belief_result = beliefs.restore_entry(
-			proposition,
-			float(record["confidence"]),
-			int(record["evidence_count"]),
-			StringName(record.get("last_source_execution_id", "")),
-			StringName(record.get("last_modality", ""))
-		)
-		assert(belief_result.ok, "Failed to restore belief: %s" % str(belief_result.diagnostics))
-
-	var intention_store = CurrentIntentionStore.new()
-	var intention_record = snapshot.get("current_intention")
-	if intention_record != null:
-		var bindings = _decode_binding(intention_record["bindings"])
-		var intention_result = intention_store.select(
-			_codec.decode(intention_record["intention_id"]),
-			bindings,
-			StringName(intention_record["selected_step_id"])
-		)
-		assert(intention_result.ok, "Failed to restore current intention")
+	var definition = SimulationSnapshotBootstrapDecoder.new(_codec).decode(snapshot)
+	var owner_result = SimulationOwnerBootstrapper.new().bootstrap(definition)
+	assert(owner_result.ok, "Failed to restore core simulation owners: %s" % str(owner_result.diagnostics))
+	var owners = owner_result.owners
+	var entities = owners.entities
+	var relations = owners.relations
+	var wilson_world_state = owners.wilson_world_state
+	var beliefs = owners.beliefs
+	var intention_store = owners.current_intention
 
 	var drive_record = snapshot.get("drives")
 	assert(drive_record is Dictionary, "Snapshot missing Wilson drive state")
