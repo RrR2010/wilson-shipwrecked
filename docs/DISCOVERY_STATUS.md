@@ -13,11 +13,11 @@ Strict external runner: **Godot 4.7.1**.
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 55 PASS / 55 TOTAL
-PASS headless_suite (55 tests)
+RESULT: 58 PASS / 58 TOTAL
+PASS headless_suite (58 tests)
 ```
 
-The strict suite includes real-engine spatial/navigation/perception coverage, the integrated Gerald/falling-palm timing regression, deterministic runtime composition/bootstrap coverage, and snapshot/bootstrap equivalence coverage.
+The strict suite includes real-engine spatial/navigation/perception coverage, the integrated Gerald/falling-palm timing regression, deterministic runtime composition/bootstrap coverage, snapshot/bootstrap equivalence coverage, and automated engine-scenario harness coverage. The same representative spatial/navigation/perception scenario was also operator-validated in assisted mode with one `Space` continue per semantic checkpoint.
 
 Validated causal breadth includes:
 
@@ -42,6 +42,7 @@ structural World/runtime foundation
 → authoritative core owner state → deterministic runtime composition
 → deterministic scenario definition → common owner bootstrap → runtime composition
 → simulation snapshot v9 → common core owner bootstrap
+→ engine scenario → generic checkpoints/probes/trace → automated or assisted execution
 ```
 
 ---
@@ -79,7 +80,10 @@ Generic reconsideration gate / trigger coalescing PASS
 Core runtime composition                          PASS
 Deterministic scenario owner bootstrap             PASS
 Snapshot/core-bootstrap equivalence               PASS
-Strict headless suite                             PASS — 55 tests
+EngineScenarioHarness core                         PASS
+Engine scenario AUTOMATED adapter                  PASS
+Engine scenario ASSISTED checkpoint flow           PASS
+Strict headless suite                             PASS — 58 tests
 ```
 
 ---
@@ -161,6 +165,8 @@ GodotPassiveSpatialSensor
 PassiveSpatialPerceptionSource
 GodotPhysicalObservationBuffer
 GodotSimulationHost
+EngineScenarioHarness
+EngineScenarioSceneAdapter
 ```
 
 Validated semantics:
@@ -179,7 +185,8 @@ Validated semantics:
 - drives and dynamic processes share one scheduler while retaining independent due keys;
 - skipped heartbeat elapsed is conserved and released only when the owner is due;
 - gradual environment truth changes numerically without event spam; authored crossings produce deterministic coalesced semantic events;
-- the integrated timing regression proves long physical movement, semantic heartbeats, due-only gradual work, Gerald perception while MOVING, later falling-palm threat wake-up, and concrete escape redirection in one trace.
+- the integrated timing regression proves long physical movement, semantic heartbeats, due-only gradual work, Gerald perception while MOVING, later falling-palm threat wake-up, and concrete escape redirection in one trace;
+- engine scenarios can expose the same deterministic scenario logic through AUTOMATED strict execution or ASSISTED semantic checkpoints without placing gameplay semantics in the harness.
 
 Fine transforms, nav paths, passive candidate sets and physics observations remain infrastructure facts and are not persisted as domain truth.
 
@@ -217,6 +224,34 @@ snapshot v9 decode ──┘
 The common owner bootstrap currently covers `EntityStore`, `WorldRelationStore`, `WilsonWorldState`, `BeliefStore`, and `CurrentIntentionStore`. Snapshot restoration for the remaining persisted owners still stays in `SimulationSnapshotService`; full-run/new-run composition remains open.
 
 Validated properties include owner-state preservation, no composition side effects, insertion-order-independent semantic queries, equivalent recomposition from equivalent durable causes, non-empty cognition preservation, fresh-owner deterministic scenario rebootstrap, duplicate admission rejection, and snapshot/common-bootstrap semantic equivalence.
+
+---
+
+# Engine scenario harness baseline
+
+Validated test-support boundaries now include:
+
+```text
+EngineScenarioHarness
+EngineScenarioCheckpoint
+EngineScenarioBoundedWait
+EngineScenarioSceneAdapter
+```
+
+The harness owns only generic scenario observability/control:
+
+```text
+semantic checkpoints
+opaque probes
+structured trace / optional JSONL
+assisted pause/continue state
+explicit completion/failure
+bounded waits
+```
+
+It does not know Wilson, threat, movement, Gerald, perception, or other gameplay semantics. `EngineScenarioSceneAdapter` translates the existing signal-based scene contract into the harness while the scene remains responsible for its own deterministic behavior and input handling.
+
+The representative `spatial_navigation_perception` fixture has been validated through both modes. AUTOMATED mode is part of the strict headless suite. ASSISTED mode uses the same scene logic and pauses at `SCENE_READY`, `PASSIVE_WHILE_MOVING`, `ARRIVED`, `THREAT_REDIRECT`, `LOS_BLOCKED`, and `COMPLETE`, with one `Space` input releasing each checkpoint.
 
 ---
 
@@ -258,7 +293,7 @@ orientation/view-cone passive refresh
 negative/absence perceptual evidence on passive exit
 richer Gerald behavior/relationship semantics
 production falling-palm rigid-body authoring
-Godot-facing deterministic playable scenario harness/binding
+first deterministic playable/bootstrap 3D scenario driven end-to-end by shared bootstrap/runtime composition
 ```
 
 These are future product/runtime slices, not unresolved cadence/engine-domain architecture blockers.
@@ -267,10 +302,10 @@ These are future product/runtime slices, not unresolved cadence/engine-domain ar
 
 # Recommended next major verticals
 
-From the validated 55-test checkpoint:
+From the validated 58-test checkpoint:
 
 ```text
-1. Godot-facing deterministic playable scenario harness/binding
+1. first deterministic playable/bootstrap 3D scenario driven end-to-end by shared bootstrap/runtime composition
 2. Wilson body + full run-save/new-run composition
 3. richer representative gameplay semantics driven by scene catalog needs
    - Gerald behavior/relationships
