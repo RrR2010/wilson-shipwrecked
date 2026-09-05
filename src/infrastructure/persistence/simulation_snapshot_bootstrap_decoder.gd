@@ -11,6 +11,10 @@ const RelationBootstrapSeed = preload("res://src/application/bootstrap/relation_
 const BeliefBootstrapSeed = preload("res://src/application/bootstrap/belief_bootstrap_seed.gd")
 const IntentionBootstrapSeed = preload("res://src/application/bootstrap/intention_bootstrap_seed.gd")
 const ProjectBootstrapSeed = preload("res://src/application/bootstrap/project_bootstrap_seed.gd")
+const AssociationBootstrapSeed = preload("res://src/application/bootstrap/association_bootstrap_seed.gd")
+const HabitBootstrapSeed = preload("res://src/application/bootstrap/habit_bootstrap_seed.gd")
+const EpisodeBootstrapSeed = preload("res://src/application/bootstrap/episode_bootstrap_seed.gd")
+const PresenceBootstrapSeed = preload("res://src/application/bootstrap/presence_bootstrap_seed.gd")
 
 ## Persistence-facing decoder from schema DTOs into the application bootstrap
 ## contract. Snapshot schema/codec concerns stay here; owner construction stays in
@@ -30,6 +34,8 @@ func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 	assert(body_record is Dictionary and body_record.has("vitality"), "Snapshot missing Wilson body state")
 	var drive_record = snapshot.get("drives")
 	assert(drive_record is Dictionary, "Snapshot missing Wilson drive state")
+	var presence_record = snapshot.get("presence")
+	assert(presence_record is Dictionary, "Snapshot missing Presence relationship")
 
 	var entity_seeds: Array = []
 	for record in snapshot.get("entities", []):
@@ -80,6 +86,45 @@ func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 			int(record["contribution_count"])
 		))
 
+	var association_seeds: Array = []
+	for record in snapshot.get("associations", []):
+		association_seeds.append(AssociationBootstrapSeed.new(
+			_codec.decode(record["subject"]),
+			float(record["valence"]),
+			float(record["attachment"]),
+			int(record["evidence_count"]),
+			StringName(record.get("last_source_execution_id", ""))
+		))
+
+	var habit_seeds: Array = []
+	for record in snapshot.get("habits", []):
+		habit_seeds.append(HabitBootstrapSeed.new(
+			StringName(record["cue_id"]),
+			_codec.decode(record["intention_id"]),
+			_decode_binding(record["bindings"]),
+			float(record["strength"]),
+			int(record["evidence_count"]),
+			StringName(record.get("last_source_execution_id", ""))
+		))
+
+	var episode_seeds: Array = []
+	for record in snapshot.get("episodes", []):
+		episode_seeds.append(EpisodeBootstrapSeed.new(
+			_codec.decode(record["claim"]),
+			float(record["importance"]),
+			StringName(record["source_execution_id"]),
+			StringName(record["modality"]),
+			int(record["sequence"])
+		))
+
+	var presence_seed = PresenceBootstrapSeed.new(
+		float(presence_record["presence_belief"]),
+		float(presence_record["trust"]),
+		float(presence_record["dependency"]),
+		int(presence_record["evidence_count"]),
+		StringName(presence_record.get("last_source_execution_id", ""))
+	)
+
 	return SimulationBootstrapDefinition.new(
 		_codec.decode(wilson_record["place_id"]),
 		entity_seeds,
@@ -88,7 +133,11 @@ func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 		intention_seed,
 		float(body_record["vitality"]),
 		_decode_drives(drive_record),
-		project_seeds
+		project_seeds,
+		association_seeds,
+		habit_seeds,
+		episode_seeds,
+		presence_seed
 	)
 
 
