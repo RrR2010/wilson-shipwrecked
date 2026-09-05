@@ -7,6 +7,9 @@ const WorldRelation = preload("res://src/domain/world/world_relation.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
 const WilsonWorldState = preload("res://src/domain/world/wilson_world_state.gd")
 const WilsonBodyState = preload("res://src/domain/world/wilson_body_state.gd")
+const EnvironmentState = preload("res://src/domain/world/environment_state.gd")
+const DynamicProcessInstance = preload("res://src/domain/world/dynamic_process_instance.gd")
+const DynamicProcessStore = preload("res://src/domain/world/dynamic_process_store.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
@@ -133,6 +136,25 @@ func bootstrap(definition):
 			definition.presence_seed.last_source_execution_id
 		)
 
+	var environment = EnvironmentState.new(
+		definition.environment_weather,
+		definition.environment_daylight_phase
+	)
+	var dynamic_processes = DynamicProcessStore.new()
+	for seed in definition.dynamic_process_seeds:
+		var process = DynamicProcessInstance.new(
+			seed.id,
+			seed.definition_id,
+			seed.subject,
+			seed.lifecycle,
+			seed.elapsed
+		)
+		if not dynamic_processes.add(process):
+			return SimulationBootstrapResult.failure(
+				&"duplicate_dynamic_process",
+				["Duplicate dynamic process: %s" % String(seed.id)]
+			)
+
 	return SimulationBootstrapResult.success(SimulationOwnerSet.new(
 		entities,
 		relations,
@@ -145,5 +167,7 @@ func bootstrap(definition):
 		associations,
 		habits,
 		episodes,
-		presence
+		presence,
+		environment,
+		dynamic_processes
 	))
