@@ -131,7 +131,7 @@ func _run_slice() -> void:
 		GroundedDriveConsequenceService.new(accepted_drives, [definition]),
 		accepted_trace
 	)
-	accepted_orchestrator.advance(SimulationStepContext.new(&"accepted_consume", 0.1, 0.1))
+	accepted_orchestrator.advance(SimulationStepContext.new(&"accepted_consume", 0.1, 0.1, null, []))
 	_expect_float(accepted_drives.value(DriveState.HUNGER), 0.30, "accepted grounded outcome reduces hunger inside orchestrator ordering")
 	_expect_equal(accepted_trace.traces.size(), 1, "accepted grounded consequence remains traceable")
 	if accepted_trace.traces.size() == 1:
@@ -152,7 +152,7 @@ func _run_slice() -> void:
 		GroundedDriveConsequenceService.new(rejected_drives, [definition]),
 		rejected_trace
 	)
-	rejected_orchestrator.advance(SimulationStepContext.new(&"rejected_consume", 0.1, 0.1))
+	rejected_orchestrator.advance(SimulationStepContext.new(&"rejected_consume", 0.1, 0.1, null, []))
 	_expect_float(rejected_drives.value(DriveState.HUNGER), 0.65, "rejected World commit cannot reduce hunger through orchestrator")
 	_expect_equal(rejected_trace.traces.size(), 1, "rejected grounded consequence remains traceable")
 	if rejected_trace.traces.size() == 1 and rejected_trace.traces[0].stage_results.has(&"drive_consequence"):
