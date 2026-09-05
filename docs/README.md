@@ -153,6 +153,7 @@ Scenario/scale validation must not stop at one happy-path fixture. Use determini
 - [`asset-catalog/PROJECTS.md`](asset-catalog/PROJECTS.md) — composed projects/structures.
 - [`asset-catalog/LIVING_WORLD.md`](asset-catalog/LIVING_WORLD.md) — terrain/place, flora, fauna, habitats and environment/opportunity families.
 - [`asset-catalog/SCENE_COVERAGE.md`](asset-catalog/SCENE_COVERAGE.md) — representative-scene content regression evidence.
+- [`asset-catalog/DIFFICULTY_INDEX.md`](asset-catalog/DIFFICULTY_INDEX.md) — derived difficulty routing for 3D modeling effort.
 
 The catalog is the cross-cutting source of truth for modeled-content requirements/backlog. It references rather than supersedes product/domain/art contracts.
 
