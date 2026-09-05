@@ -24,6 +24,8 @@ func _init(codec = null) -> void:
 func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 	var wilson_record = snapshot.get("wilson_world")
 	assert(wilson_record is Dictionary and wilson_record.has("place_id"), "Snapshot missing Wilson world state")
+	var body_record = snapshot.get("wilson_body")
+	assert(body_record is Dictionary and body_record.has("vitality"), "Snapshot missing Wilson body state")
 
 	var entity_seeds: Array = []
 	for record in snapshot.get("entities", []):
@@ -69,7 +71,8 @@ func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 		entity_seeds,
 		relation_seeds,
 		belief_seeds,
-		intention_seed
+		intention_seed,
+		float(body_record["vitality"])
 	)
 
 
