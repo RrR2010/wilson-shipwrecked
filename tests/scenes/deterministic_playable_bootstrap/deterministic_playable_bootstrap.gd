@@ -16,7 +16,6 @@ const DeterministicScenarioBootstrapService = preload("res://src/application/boo
 const DirectTargetMotionExecutionCoordinator = preload("res://src/application/simulation/direct_target_motion_execution_coordinator.gd")
 const CurrentIntentionExecutionCoordinator = preload("res://src/application/simulation/current_intention_execution_coordinator.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
-const WorldAdvanceResult = preload("res://src/application/simulation/world_advance_result.gd")
 const PerceivedOpportunityService = preload("res://src/domain/cognition/perceived_opportunity_service.gd")
 const DecisionRouter = preload("res://src/domain/cognition/decision_router.gd")
 const DecisionCommitCoordinator = preload("res://src/application/simulation/decision_commit_coordinator.gd")
@@ -35,14 +34,16 @@ var _wilson_ref
 var _target_ref
 var _motion_frames := 0
 var _reported_moving := false
+var _observe_motion := false
 var _finished := false
 var _trace_sink := TraceSink.new()
 
 
 class EmptyWorldAdvance:
 	extends RefCounted
+	const ResultType = preload("res://src/application/simulation/world_advance_result.gd")
 	func advance(_elapsed: float, _step):
-		return WorldAdvanceResult.new()
+		return ResultType.new()
 
 
 class TraceSink:
@@ -57,7 +58,7 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	if _finished or _motion == null or _wilson_ref == null:
+	if _finished or not _observe_motion or _motion == null or _wilson_ref == null:
 		return
 	var status: int = _motion.get_status(_wilson_ref)
 	if status == GodotMotionAdapter.MotionStatus.MOVING:
@@ -166,6 +167,7 @@ func _bootstrap_and_start() -> void:
 		_fail("Authoritative current intention did not resume: %s" % String(resume.get("reason", &"unknown")))
 		return
 	checkpoint_reached.emit(&"INTENTION_RESUMED", _probes())
+	_observe_motion = true
 
 
 func _probes() -> Dictionary:
