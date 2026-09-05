@@ -49,7 +49,7 @@ func process(committed_events: Array):
 func _is_grounded_wilson_death(event) -> bool:
 	if event == null or event.event_type == null or not event.event_type.equals(_death_event_type):
 		return false
-	if event.bindings == null or not event.bindings.has_role(_subject_role):
+	if event.bindings == null or not event.bindings.has(_subject_role):
 		return false
 	var subject = event.bindings.get_subject(_subject_role)
 	return subject != null and subject.equals(_wilson_ref)
