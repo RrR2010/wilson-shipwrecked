@@ -137,7 +137,8 @@ func _run() -> void:
 	_expect_true(first.runtime.action_execution.get_state(&"rebootstrap_exec") != second.runtime.action_execution.get_state(&"rebootstrap_exec"), "action execution state ownership is fresh")
 
 	# Semantic equivalence: both reconstructions express the same durable causes.
-	_expect_equal(first.simulation.wilson_world_state.current_place.sort_key(), second.simulation.wilson_world_state.current_place.sort_key(), "Wilson location is deterministic")
+	_expect_equal(first.simulation.wilson_world_state.place_id.sort_key(), second.simulation.wilson_world_state.place_id.sort_key(), "Wilson location is deterministic")
+	_expect_equal(first.simulation.wilson_world_state.place_id.sort_key(), camp.sort_key(), "Wilson location reconstructs the durable place")
 	_expect_equal(first.simulation.entities.get_entity(crate_id).id.sort_key(), second.simulation.entities.get_entity(crate_id).id.sort_key(), "entity identity is deterministic")
 	_expect_equal(first.run_lifecycle.run_id, second.run_lifecycle.run_id, "run id is deterministic")
 	_expect_equal(first.run_lifecycle.lifecycle, second.run_lifecycle.lifecycle, "run lifecycle is deterministic")
