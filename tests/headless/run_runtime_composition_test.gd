@@ -33,6 +33,9 @@ func _init() -> void:
 func _run_tests() -> void:
 	_test_valid_runtime_composition()
 	_test_invalid_derived_policy_rejected_during_composition()
+	_test_composition_preserves_supplied_owner_state_without_side_effects()
+	_test_equivalent_input_order_produces_equivalent_semantic_queries()
+	_test_recomposition_from_equivalent_durable_causes_is_equivalent()
 	_completed = true
 
 
@@ -132,6 +135,126 @@ func _test_invalid_derived_policy_rejected_during_composition() -> void:
 	_expect_true(result.composition == null, "failed composition exposes no partial runtime")
 
 
+func _test_composition_preserves_supplied_owner_state_without_side_effects() -> void:
+	var loaded = ContentPackLoader.new().load_dictionary(_content_pack(&"min_numeric"))
+	_expect_true(loaded.ok, "owner preservation content loads")
+	if not loaded.ok:
+		return
+	var camp = DomainId.place(&"camp")
+	var crate_id = DomainId.entity(&"crate_preserved")
+	var crate = EntityInstance.new(
+		crate_id,
+		DomainId.entity_type(&"crate"),
+		camp,
+		{DomainId.property(&"structural_integrity").key(): 3}
+	)
+	var entities = EntityStore.new()
+	_expect_true(entities.add_entity(crate).ok, "preserved crate admitted")
+	var relations = WorldRelationStore.new()
+	var beliefs = BeliefStore.new()
+	var intentions = CurrentIntentionStore.new()
+	var entity_count_before = entities.entities().size()
+	var relation_count_before = relations.relations().size()
+	var belief_count_before = beliefs.entries().size()
+	var intention_present_before = intentions.has_current()
+
+	var result = RunRuntimeComposer.new().compose(
+		entities,
+		relations,
+		WilsonWorldState.new(camp),
+		beliefs,
+		intentions,
+		loaded.value
+	)
+	_expect_true(result.ok, "non-empty supplied owner state composes")
+	if not result.ok:
+		return
+	_expect_equal(entities.entities().size(), entity_count_before, "compose does not add/remove authoritative entities")
+	_expect_equal(relations.relations().size(), relation_count_before, "compose does not add/remove authoritative relations")
+	_expect_equal(beliefs.entries().size(), belief_count_before, "compose does not mutate authoritative beliefs")
+	_expect_equal(intentions.has_current(), intention_present_before, "compose does not mutate current intention owner")
+	_expect_equal(
+		result.composition.world_query.get_instance_property(RuntimeWorldRef.entity(crate_id), DomainId.property(&"structural_integrity")),
+		3,
+		"supplied authoritative override survives composition unchanged"
+	)
+	_expect_equal(
+		result.composition.effective_physical_profiles.resolve(RuntimeWorldRef.entity(crate_id)).get_property(DomainId.property(&"effective_resistance")),
+		3,
+		"derived state is rebuilt from supplied authoritative override"
+	)
+
+
+func _test_equivalent_input_order_produces_equivalent_semantic_queries() -> void:
+	var loaded = ContentPackLoader.new().load_dictionary(_content_pack(&"min_numeric"))
+	_expect_true(loaded.ok, "ordering content loads")
+	if not loaded.ok:
+		return
+	var first = _compose_population(loaded.value, [&"food_1", &"crate_1", &"shelter_1"])
+	var second = _compose_population(loaded.value, [&"shelter_1", &"crate_1", &"food_1"])
+	_expect_true(first.ok and second.ok, "both insertion orders compose")
+	if not first.ok or not second.ok:
+		return
+	var first_keys = _runtime_ref_keys(first.composition.world_query.query_nearby(RuntimeWorldRef.wilson(), {"limit": 16}))
+	var second_keys = _runtime_ref_keys(second.composition.world_query.query_nearby(RuntimeWorldRef.wilson(), {"limit": 16}))
+	_expect_equal(first_keys, second_keys, "semantic nearby query ordering is independent of owner insertion order")
+
+
+func _test_recomposition_from_equivalent_durable_causes_is_equivalent() -> void:
+	var loaded = ContentPackLoader.new().load_dictionary(_content_pack(&"min_numeric"))
+	_expect_true(loaded.ok, "recomposition content loads")
+	if not loaded.ok:
+		return
+	var first = _compose_population(loaded.value, [&"crate_1", &"food_1", &"shelter_1"])
+	var second = _compose_population(loaded.value, [&"crate_1", &"food_1", &"shelter_1"])
+	_expect_true(first.ok and second.ok, "equivalent durable causes compose twice")
+	if not first.ok or not second.ok:
+		return
+	var crate_ref = RuntimeWorldRef.entity(DomainId.entity(&"crate_1"))
+	var first_fingerprint = {
+		"nearby": _runtime_ref_keys(first.composition.world_query.query_nearby(RuntimeWorldRef.wilson(), {"limit": 16})),
+		"effective_resistance": first.composition.effective_physical_profiles.resolve(crate_ref).get_property(DomainId.property(&"effective_resistance")),
+		"active_execution": first.composition.activity_query.active_execution_id(),
+	}
+	var second_fingerprint = {
+		"nearby": _runtime_ref_keys(second.composition.world_query.query_nearby(RuntimeWorldRef.wilson(), {"limit": 16})),
+		"effective_resistance": second.composition.effective_physical_profiles.resolve(crate_ref).get_property(DomainId.property(&"effective_resistance")),
+		"active_execution": second.composition.activity_query.active_execution_id(),
+	}
+	_expect_equal(first_fingerprint, second_fingerprint, "fresh recomposition yields equivalent semantic runtime fingerprint")
+
+
+func _compose_population(content, ordered_ids: Array):
+	var camp = DomainId.place(&"camp")
+	var entities = EntityStore.new()
+	for raw_id in ordered_ids:
+		var id = StringName(raw_id)
+		var type_id: StringName = &"crate"
+		if String(id).begins_with("food"):
+			type_id = &"food"
+		elif String(id).begins_with("shelter"):
+			type_id = &"shelter"
+		_expect_true(
+			entities.add_entity(EntityInstance.new(DomainId.entity(id), DomainId.entity_type(type_id), camp)).ok,
+			"population entity %s admitted" % String(id)
+		)
+	return RunRuntimeComposer.new().compose(
+		entities,
+		WorldRelationStore.new(),
+		WilsonWorldState.new(camp),
+		BeliefStore.new(),
+		CurrentIntentionStore.new(),
+		content
+	)
+
+
+func _runtime_ref_keys(refs: Array) -> Array[String]:
+	var result: Array[String] = []
+	for ref in refs:
+		result.append(ref.sort_key())
+	return result
+
+
 func _content_pack(policy_id: StringName) -> Dictionary:
 	return {
 		"schema_version": 1,
@@ -145,6 +268,8 @@ func _content_pack(policy_id: StringName) -> Dictionary:
 		],
 		"entities": [
 			{"id": "crate", "base_properties": {"structural_integrity": 5, "hardness": 4}, "capabilities": ["receives_impact"]},
+			{"id": "food", "base_properties": {}, "capabilities": []},
+			{"id": "shelter", "base_properties": {}, "capabilities": []},
 		],
 		"property_derivations": [
 			{
