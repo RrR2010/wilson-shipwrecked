@@ -102,48 +102,10 @@ func restore(snapshot: Dictionary):
 	var intention_store = owners.current_intention
 	var drives = owners.drives
 	var projects = owners.projects
-
-	var associations = AssociationStore.new()
-	for record in snapshot.get("associations", []):
-		associations.restore_entry(
-			_codec.decode(record["subject"]),
-			float(record["valence"]),
-			float(record["attachment"]),
-			int(record["evidence_count"]),
-			StringName(record.get("last_source_execution_id", ""))
-		)
-
-	var habits = HabitStore.new()
-	for record in snapshot.get("habits", []):
-		habits.restore_entry(
-			StringName(record["cue_id"]),
-			_codec.decode(record["intention_id"]),
-			_decode_binding(record["bindings"]),
-			float(record["strength"]),
-			int(record["evidence_count"]),
-			StringName(record.get("last_source_execution_id", ""))
-		)
-
-	var episodes = EpisodeStore.new()
-	for record in snapshot.get("episodes", []):
-		episodes.restore_entry(
-			_codec.decode(record["claim"]),
-			float(record["importance"]),
-			StringName(record["source_execution_id"]),
-			StringName(record["modality"]),
-			int(record["sequence"])
-		)
-
-	var presence_record = snapshot.get("presence")
-	assert(presence_record is Dictionary, "Snapshot missing Presence relationship")
-	var presence = PresenceRelationship.new()
-	presence.restore(
-		float(presence_record["presence_belief"]),
-		float(presence_record["trust"]),
-		float(presence_record["dependency"]),
-		int(presence_record["evidence_count"]),
-		StringName(presence_record.get("last_source_execution_id", ""))
-	)
+	var associations = owners.associations
+	var habits = owners.habits
+	var episodes = owners.episodes
+	var presence = owners.presence
 
 	var environment_record = snapshot.get("environment")
 	assert(environment_record is Dictionary, "Snapshot missing environment state")
