@@ -2,55 +2,43 @@
 
 ## Purpose
 
-This file records the **currently implemented and locally validated runtime baseline** for Wilson Shipwrecked.
-
-Canonical semantics remain in the domain and architecture documents. This file answers only:
-
-- what is implemented now;
-- what has passed the strict Godot gate;
-- which persistence schemas are current;
-- which known limitations remain;
-- what vertical comes next.
+This file records the **currently implemented and locally validated runtime baseline** for Wilson Shipwrecked. Canonical semantics remain in the architecture/domain documents.
 
 ---
 
 # Current validated baseline
 
-The strict external runner is validated under **Godot 4.7.1**.
+Strict external runner: **Godot 4.7.1**.
 
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 50 PASS / 50 TOTAL
-PASS headless_suite (50 tests)
+RESULT: 51 PASS / 51 TOTAL
+PASS headless_suite (51 tests)
 ```
 
-The strict suite includes the real-engine `tests/scenes/spatial_navigation_perception/spatial_navigation_perception.tscn` fixture. Its validated coverage now includes ordinary movement/perception plus defensive motion redirection.
+The strict suite includes real-engine spatial/navigation/perception coverage and the integrated Gerald/falling-palm timing regression.
 
-Validated breadth now includes:
+Validated causal breadth includes:
 
 ```text
 structural World/runtime foundation
-→ Wilson drives + bounded drive candidates
-→ Projects runtime + project candidates
-→ Wilson learning state
-→ EnvironmentState + dynamic processes
-→ protection/exposure + hazard/immediate-threat boundaries
-→ shallow non-Wilson actor runtime behavior
-→ Director opportunity lifecycle
-→ PlayerRunState + bounded suggestions + physical intervention boundary
-→ current-run lifecycle + resurrection transaction boundary
-→ cross-run PlayerProfile / Legacy admission
-→ Godot/domain spatial-query, motion, physical-observation, and simulation-cadence boundary
-→ trigger-gated cognition with NONE as a normal steady state
-→ bounded passive spatial perception while MOVING
-→ perceived-threat evidence → same-chain THREAT reconsideration trigger
-→ authored physical-observation admission → authoritative semantic WorldEvent
-→ admitted impact → World-owned WilsonBodyState mutation → SemanticChangeSet → injury/death WorldEvent
-→ grounded Wilson death WorldEvent → RunLifecycleState ACTIVE→DEAD
-→ committed defensive intention → deterministic escape selection → MotionPort cancellation/redirection → concrete Godot escape movement
-→ shared SemanticDueScheduler → owner-local elapsed gates → due-only drive/dynamic-process progression
-→ gradual environment numeric transitions → authored threshold crossing → coalesced semantic WorldEvent
+→ Wilson drives/projects/learning
+→ environment dynamic processes
+→ shallow non-Wilson actors
+→ Director + PlayerRunState
+→ run lifecycle/resurrection/profile boundaries
+→ Godot spatial/query/motion/physics observation boundary
+→ trigger-gated cognition with NONE as steady state
+→ passive perception while MOVING
+→ perceived-threat evidence → THREAT reconsideration
+→ physical observation → authored WorldEvent
+→ admitted impact → WilsonBodyState → injury/death WorldEvent
+→ grounded Wilson death → RunLifecycleState DEAD
+→ defensive intention → deterministic escape → concrete Godot redirection
+→ shared SemanticDueScheduler → due-only gradual owner progression
+→ gradual environment transition → authored threshold → coalesced WorldEvent
+→ integrated long movement → Gerald ordinary perception → later falling-palm threat → defensive redirection
 ```
 
 ---
@@ -71,35 +59,33 @@ Perceived-threat same-chain wake-up               PASS
 Immediate-threat concrete motion redirection      PASS
 Shared due scheduling — drives/processes          PASS
 Gradual environment semantic thresholds           PASS
+Integrated Gerald/falling-palm timing scenario    PASS
 Shallow non-Wilson actors                         PASS
 Director opportunity lifecycle                    PASS
 Player suggestions / bounded insistence           PASS
 Physical player intervention boundary             PASS
-Run lifecycle                                     PASS
-Resurrection transaction boundary                 PASS
+Run lifecycle / resurrection                      PASS
 Grounded Wilson death lifecycle propagation       PASS
 PlayerProfile / cross-run Legacy admission        PASS
 Owner-local persistence for implemented owners    PASS
-Godot spatial / engine boundary                   PASS
-Godot motion / navmesh integration                PASS
+Godot spatial / navmesh / LOS integration         PASS
 Passive spatial perception while MOVING           PASS
-Real LOS / occlusion integration                  PASS
 Physical observation semantic admission           PASS
 Grounded Wilson body impact consequences          PASS
 Generic reconsideration gate / trigger coalescing PASS
-Strict headless suite                             PASS — 50 tests
+Strict headless suite                             PASS — 51 tests
 ```
 
 ---
 
-# Current authority map
+# Authority model
 
 ```text
 World
   physical truth
   environment / dynamic processes
   Wilson body truth
-  shallow non-Wilson actor runtime state
+  shallow actor runtime state
 
 WilsonCognition
   drives / beliefs / associations / habits / episodes
@@ -107,7 +93,7 @@ WilsonCognition
   current intention
 
 Projects
-  project lifecycle + bounded metadata
+  project lifecycle
 
 ActionExecution
   execution lifecycle / committed outcomes
@@ -116,21 +102,13 @@ Director
   directed-opportunity lifecycle
 
 PlayerRunState
-  God Power
-  run-local permissions
-  non-intervention progress
-  active suggestion
+  run-local player powers / suggestions / progress
 
 RunLifecycleState
-  current-run ACTIVE / DEAD / ENDED lifecycle metadata
-  death/resurrection counts
-  semantic death/end reasons
+  ACTIVE / DEAD / ENDED metadata
 
 PlayerProfile
-  Legacy knowledge
-  diary/archive
-  lifetime statistics
-  global unlocks
+  cross-run Legacy / diary / statistics / unlocks
 ```
 
 Core invariant:
@@ -146,60 +124,13 @@ World truth
 != presentation
 ```
 
-`WilsonBodyState` owns minimal physical body truth for Wilson: clamped `vitality ∈ [0,1]` plus `alive`. Authored impact consequences mutate that state before body `SemanticChangeSet` and injury/death semantics are emitted. Repeated damage while dead is rejected, so the `alive → dead` edge occurs once.
-
-`RunLifecycleState` does **not** replace Wilson body truth. `GroundedDeathLifecycleCoordinator` admits only an already-committed authored Wilson death event into lifecycle, preserving `World body death → WorldEvent → lifecycle DEAD`. Resurrection remains the inverse transaction: physical truth must be restored before lifecycle may return to `ACTIVE`.
-
-`PlayerProfile` remains outside active-run state. Cross-run admission is allow-listed through `RunProfileProjection`; Wilson episodes, habits, associations, Presence state and autobiographical causal history are not copied wholesale across runs.
+`WilsonBodyState` owns clamped vitality plus `alive`. Authored impact consequences mutate body truth before semantic injury/death facts. `RunLifecycleState` does not duplicate body truth; it admits an already-committed Wilson death event. Resurrection restores physical truth before lifecycle returns to ACTIVE.
 
 ---
 
-# Runtime decision and motion boundaries
+# Timing / engine boundary
 
-Current bounded candidate sources include:
-
-```text
-perceptual opportunities
-drives
-projects
-habits / additional composed sources
-Director opportunities
-active player suggestion
-immediate-threat defenses from PerceivedThreat
-```
-
-`ReconsiderationGate` coalesces semantic triggers and permits `NONE` as the normal steady state. Ordinary perception/learning therefore does not imply broad reconsideration.
-
-Accessible evidence matching an authored `ThreatInterpretationRule` derives `ReconsiderationGate.Trigger.THREAT` through `PerceivedThreatService`. The same interpreted threat feeds `ImmediateThreatCandidateSource`.
-
-PR #29 closes the next boundary after cognition selection:
-
-```text
-threat evidence
-→ PerceivedThreat
-→ THREAT trigger
-→ immediate-threat candidate routing
-→ committed defensive CurrentIntention
-→ DefensiveMotionExecutionCoordinator
-→ EscapeDestinationResolver
-→ cancel prior MotionPort move
-→ request escape move
-→ GodotMotionAdapter
-```
-
-`EscapeDestinationResolver` uses authored `RuntimeWorldRef` candidates and `SpatialQueryPort`, not scene-node names. It requires route availability and a minimum increase in distance from the threat. Among valid candidates it deterministically prefers:
-
-1. greater threat distance;
-2. lower route cost;
-3. stable reference key.
-
-The executor resolves a destination **before** cancelling the current move, so an unavailable escape route does not destroy valid ongoing movement. Non-defensive intentions are ignored by this boundary.
-
----
-
-# Godot spatial / engine boundary
-
-Implemented and locally validated:
+Implemented and validated primitives include:
 
 ```text
 SimulationCadenceClock
@@ -212,11 +143,8 @@ MotionPort
 EscapeDestinationResolver
 DefensiveMotionExecutionCoordinator
 PhysicalObservation / PhysicalObservationPort
-PhysicalObservationConsequenceRule
 PhysicalObservationConsequenceResolver
-PhysicalConsequenceResolution
 PhysicalConsequenceWorldAdvanceDecorator
-WilsonBodyImpactRule
 WilsonBodyImpactConsequenceResolver
 GradualSemanticBoundaryRule
 GradualSemanticEventProjector
@@ -229,72 +157,25 @@ GodotPhysicalObservationBuffer
 GodotSimulationHost
 ```
 
-Validated engine/domain semantics:
+Validated semantics:
 
-- render/physics cadence does not define semantic cognition cadence;
-- stable `RuntimeWorldRef` identity maps explicitly to live scene references;
-- navigation origin may remain at actor feet/navmesh plane while a separate spatial reference represents metric/LOS height;
-- metric distance, route availability/cost, LOS and interaction reachability remain behind `SpatialQueryPort`;
-- `GodotMotionAdapter` drives `CharacterBody3D` through real `NavigationAgent3D` paths;
-- real NavigationServer routing detours around obstacles and reports semantic motion status;
-- real raycasts distinguish clear and occluded LOS while excluding the observer collision root;
-- passive broadphase uses overlap events as a fast path plus bounded direct-shape reconciliation;
-- active candidates are revalidated while Wilson moves because range/LOS can change without membership edges;
-- unchanged positive passive access does not emit duplicate evidence every refresh;
-- passive evidence can occur while `MOVING` without forcing broad cognition;
-- authored threat evidence can wake immediate-threat routing while `MOVING` without an external pre-injected `THREAT` trigger;
-- a committed defensive intention can now change the live navigation target and physically redirect Wilson toward an authored escape point;
-- collision/overlap/grounding/fall observations remain engine facts until an authored semantic consequence admits them;
-- queued physical observations drain only at an explicit semantic boundary;
-- admitted impacts mutate World-owned body truth before semantic injury/death events;
-- drives and dynamic processes can share one `SemanticDueScheduler` while retaining independent due keys;
-- skipped 0.1 s semantic heartbeats conserve elapsed time and release it once at the owner due boundary instead of forcing 10 Hz progression;
-- missed due periods coalesce into one owner invocation, and drive cognition still wakes only on the existing urgency-band semantic crossing;
-- gradual environment property changes remain authoritative numeric World truth while only authored threshold crossings produce semantic events;
-- duplicate crossings of the same rule/subject within one semantic step coalesce into one deterministic non-action `WorldEvent`;
-- fine transforms, navigation paths, passive candidate sets and physics observations remain non-persisted infrastructure facts.
+- render/physics cadence does not define cognition cadence;
+- the ~0.1 s semantic bridge is **not** a universal subsystem update rate;
+- `RuntimeWorldRef` identity maps explicitly to live Godot references;
+- metric distance, route cost/availability, LOS and reachability stay behind `SpatialQueryPort`;
+- `GodotMotionAdapter` uses real `CharacterBody3D` + `NavigationAgent3D` motion;
+- passive broadphase can produce evidence while Wilson remains MOVING;
+- ordinary evidence does not automatically open broad reconsideration;
+- authored threat evidence wakes THREAT routing at the next semantic boundary;
+- committed defense can cancel the old route and redirect real Godot motion;
+- raw physical callbacks remain engine facts until authored consequence admission;
+- admitted Wilson impacts mutate body truth before semantic events;
+- drives and dynamic processes share one scheduler while retaining independent due keys;
+- skipped heartbeat elapsed is conserved and released only when the owner is due;
+- gradual environment truth changes numerically without event spam; authored crossings produce deterministic coalesced semantic events;
+- the integrated timing regression proves long physical movement, semantic heartbeats, due-only gradual work, Gerald perception while MOVING, later falling-palm threat wake-up, and concrete escape redirection in one trace.
 
-`SimulationCadenceClock` remains a physics→semantic bridge primitive. Its current ~`0.1 s` default is **not** a universal update rate for perception, cognition, drives, environment, projects, Director or maintenance.
-
-The passive sensor's moving/static refresh rates remain calibration defaults rather than domain-time contracts.
-
----
-
-# Run lifecycle / profile baseline
-
-Implemented runtime:
-
-```text
-WilsonBodyState
-RunLifecycleState
-GroundedDeathLifecycleCoordinator
-ResurrectionService
-RunProfileProjection
-EndRunService
-PlayerProfile
-RunProfileSnapshotService
-```
-
-Lifecycle/body relationship:
-
-```text
-WilsonBodyState alive
-→ lethal admitted body consequence
-→ WilsonBodyState dead
-→ authored wilson_died WorldEvent
-→ GroundedDeathLifecycleCoordinator
-→ RunLifecycleState DEAD
-
-RunLifecycleState DEAD
-→ ACTIVE via admitted resurrection transaction
-
-ACTIVE or DEAD
-→ ENDED via EndRun
-```
-
-Validated semantics include one-shot death admission, idempotent duplicate grounded-death handling, physical restoration before lifecycle revival, and explicit cross-run profile admission.
-
-Still intentionally absent are detailed injury anatomy, bleeding/infection/healing, resurrection presentation, full new-run bootstrap, Diary narrative generation and offline catch-up.
+Fine transforms, nav paths, passive candidate sets and physics observations remain infrastructure facts and are not persisted as domain truth.
 
 ---
 
@@ -310,22 +191,22 @@ ActionExecutionSnapshotService schema: v2
 ContentPackLoader schema:              v1
 ```
 
-Owner-local snapshots preserve authoritative/minimal causes for implemented owners. Generated candidates, live nav paths, passive candidate sets and reconstructible projections are excluded.
+Owner-local snapshots preserve authoritative/minimal causes. Generated candidates, live navigation paths and reconstructible projections are excluded.
 
-`WilsonBodyState` is not yet integrated into the save schema. Full run-save composition still needs to combine owner snapshots into one deterministic transaction without creating another authority store.
+`WilsonBodyState` is not yet integrated into the save schema. Full run-save composition remains open.
 
 ---
 
-# Known correctness/support limitations
+# Known limitations
 
 Still open:
 
 ```text
-collision/grounding/fall-specific consequence policies beyond impact damage
-physical gradual-value threshold policies beyond the validated environment path
-sparse maintenance/other gradual owners not yet wired through shared due scheduling
+collision/grounding/fall-specific policies beyond current impact damage
+physical gradual-value threshold policies when a representative owner requires them
+sparse maintenance/other gradual owners not yet wired through due scheduling
 drive hysteresis-band memory persistence
-richer Wilson-relative route/escape evaluation beyond deterministic objective safety
+richer Wilson-relative learned route/escape evaluation
 intervention causal windows
 automatic habit-disuse/context producers
 Presence causal-attribution production
@@ -334,38 +215,28 @@ full new-run bootstrap/reset
 Legacy-to-new-Wilson seeding policy
 orientation/view-cone passive refresh
 negative/absence perceptual evidence on passive exit
+richer Gerald behavior/relationship semantics
+production falling-palm rigid-body authoring
 ```
 
-Timing/decision-specific notes:
-
-1. drives and dynamic processes are now validated through one shared `SemanticDueScheduler`; maintenance and other sparse elapsed-time owners remain to be wired only when representative work requires them;
-2. passive perception works during `MOVING`, but orientation/view-cone refresh and negative/absence evidence remain open;
-3. authored perceived threats synthesize same-chain `THREAT`; other semantic trigger families still need representative producers rather than a generic “any perception changed” rule;
-4. environment gradual numeric transitions now support authored threshold events and same-step coalescing; equivalent physical gradual-value policies should be added only when a representative physical owner requires them;
-5. drive persistence stores values but not hysteresis-band memory;
-6. body injury/death and lifecycle propagation are grounded, but body persistence/full save composition remain open;
-7. immediate-threat motion execution is now concrete, but escape choice is still objective/configured rather than Wilson-relative learned route reasoning.
+These are future product/runtime slices, not unresolved cadence/engine-domain architecture blockers.
 
 ---
 
-# Remaining major verticals
+# Recommended next major verticals
 
-Recommended sequence from the validated 50-test checkpoint:
+From the validated 51-test checkpoint:
 
 ```text
 1. deterministic playable scenario/bootstrap tooling
-2. representative integrated timing/scenario suite
-   - longer movement trace
-   - Gerald ordinary perception
-   - falling-palm threat wake-up
-   - concrete escape execution
-   - admitted impact/death branch where appropriate
-3. Wilson body + full run-save/new-run composition
+2. Wilson body + full run-save/new-run composition
+3. richer representative gameplay semantics driven by scene catalog needs
+   - Gerald behavior/relationships
+   - physical accident authoring where needed
+   - learned route/escape reasoning
 ```
 
-The open design review at `docs/design-reviews/2026-09-01-simulation-cadence-engine-domain-integration.md` is partially consumed through PR #33. Representative due scheduling and gradual environment threshold/coalescing are now validated; the review remains OPEN only for the integrated 20 m / Gerald / falling-palm timing scenario.
-
-Cross-cutting correctness slices should continue to be pulled forward only when a representative scenario requires them.
+The design review at `docs/design-reviews/2026-09-01-simulation-cadence-engine-domain-integration.md` is now **COMPLETED** through PR #35. The integrated timing scenario closed its final substantive checklist item.
 
 ---
 
