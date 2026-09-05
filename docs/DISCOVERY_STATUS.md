@@ -13,11 +13,11 @@ Strict external runner: **Godot 4.7.1**.
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 51 PASS / 51 TOTAL
-PASS headless_suite (51 tests)
+RESULT: 55 PASS / 55 TOTAL
+PASS headless_suite (55 tests)
 ```
 
-The strict suite includes real-engine spatial/navigation/perception coverage and the integrated Gerald/falling-palm timing regression.
+The strict suite includes real-engine spatial/navigation/perception coverage, the integrated Gerald/falling-palm timing regression, deterministic runtime composition/bootstrap coverage, and snapshot/bootstrap equivalence coverage.
 
 Validated causal breadth includes:
 
@@ -39,6 +39,9 @@ structural World/runtime foundation
 → shared SemanticDueScheduler → due-only gradual owner progression
 → gradual environment transition → authored threshold → coalesced WorldEvent
 → integrated long movement → Gerald ordinary perception → later falling-palm threat → defensive redirection
+→ authoritative core owner state → deterministic runtime composition
+→ deterministic scenario definition → common owner bootstrap → runtime composition
+→ simulation snapshot v9 → common core owner bootstrap
 ```
 
 ---
@@ -73,7 +76,10 @@ Passive spatial perception while MOVING           PASS
 Physical observation semantic admission           PASS
 Grounded Wilson body impact consequences          PASS
 Generic reconsideration gate / trigger coalescing PASS
-Strict headless suite                             PASS — 51 tests
+Core runtime composition                          PASS
+Deterministic scenario owner bootstrap             PASS
+Snapshot/core-bootstrap equivalence               PASS
+Strict headless suite                             PASS — 55 tests
 ```
 
 ---
@@ -179,6 +185,41 @@ Fine transforms, nav paths, passive candidate sets and physics observations rema
 
 ---
 
+# Runtime composition / bootstrap baseline
+
+Validated application boundaries now include:
+
+```text
+SimulationBootstrapDefinition
+SimulationOwnerBootstrapper
+RunRuntimeComposer
+DeterministicScenarioDefinition
+DeterministicScenarioBootstrapService
+SimulationSnapshotBootstrapDecoder
+```
+
+The shared core path is:
+
+```text
+scenario definition ─┐
+                     ├→ SimulationBootstrapDefinition
+snapshot v9 decode ──┘
+                            ↓
+                 SimulationOwnerBootstrapper
+                            ↓
+                  authoritative core owners
+                            ↓
+                     RunRuntimeComposer
+                            ↓
+                  reconstructible runtime services
+```
+
+The common owner bootstrap currently covers `EntityStore`, `WorldRelationStore`, `WilsonWorldState`, `BeliefStore`, and `CurrentIntentionStore`. Snapshot restoration for the remaining persisted owners still stays in `SimulationSnapshotService`; full-run/new-run composition remains open.
+
+Validated properties include owner-state preservation, no composition side effects, insertion-order-independent semantic queries, equivalent recomposition from equivalent durable causes, non-empty cognition preservation, fresh-owner deterministic scenario rebootstrap, duplicate admission rejection, and snapshot/common-bootstrap semantic equivalence.
+
+---
+
 # Persistence baseline
 
 Current development schemas:
@@ -193,7 +234,7 @@ ContentPackLoader schema:              v1
 
 Owner-local snapshots preserve authoritative/minimal causes. Generated candidates, live navigation paths and reconstructible projections are excluded.
 
-`WilsonBodyState` is not yet integrated into the save schema. Full run-save composition remains open.
+`SimulationSnapshotService` now decodes its core owner state into the shared application bootstrap contract before reconstructing those owners. `WilsonBodyState` is not yet integrated into the save schema. Full run-save composition remains open.
 
 ---
 
@@ -211,12 +252,13 @@ intervention causal windows
 automatic habit-disuse/context producers
 Presence causal-attribution production
 Wilson body persistence/full run-save composition
-full new-run bootstrap/reset
+full new-run lifecycle/reset composition around the validated core bootstrap
 Legacy-to-new-Wilson seeding policy
 orientation/view-cone passive refresh
 negative/absence perceptual evidence on passive exit
 richer Gerald behavior/relationship semantics
 production falling-palm rigid-body authoring
+Godot-facing deterministic playable scenario harness/binding
 ```
 
 These are future product/runtime slices, not unresolved cadence/engine-domain architecture blockers.
@@ -225,10 +267,10 @@ These are future product/runtime slices, not unresolved cadence/engine-domain ar
 
 # Recommended next major verticals
 
-From the validated 51-test checkpoint:
+From the validated 55-test checkpoint:
 
 ```text
-1. deterministic playable scenario/bootstrap tooling
+1. Godot-facing deterministic playable scenario harness/binding
 2. Wilson body + full run-save/new-run composition
 3. richer representative gameplay semantics driven by scene catalog needs
    - Gerald behavior/relationships
