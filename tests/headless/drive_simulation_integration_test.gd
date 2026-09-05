@@ -9,6 +9,8 @@ const DriveCandidateDefinition = preload("res://src/domain/cognition/drive_candi
 const DriveCandidateSource = preload("res://src/domain/cognition/drive_candidate_source.gd")
 const DecisionRouter = preload("res://src/domain/cognition/decision_router.gd")
 const DecisionCommitCoordinator = preload("res://src/application/simulation/decision_commit_coordinator.gd")
+const DueElapsedGate = preload("res://src/application/simulation/due_elapsed_gate.gd")
+const SemanticDueScheduler = preload("res://src/application/simulation/semantic_due_scheduler.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
 const SimulationStepContext = preload("res://src/application/simulation/simulation_step_context.gd")
 const WorldAdvanceResult = preload("res://src/application/simulation/world_advance_result.gd")
@@ -93,6 +95,9 @@ func _run_slice() -> void:
 	var drive_source = DriveCandidateSource.new(drives, [DriveCandidateDefinition.new(DriveState.HUNGER, seek_food, 0.2)])
 	var intentions = CurrentIntentionStore.new()
 	var trace_sink = TraceSinkStub.new()
+	var scheduler = SemanticDueScheduler.new()
+	scheduler.register(&"drives", 1.0, 0.0)
+	var drive_due_gate = DueElapsedGate.new(scheduler, &"drives")
 	var orchestrator = SimulationOrchestrator.new(
 		WorldAdvanceStub.new(),
 		ActionExecutionStub.new(),
@@ -109,22 +114,42 @@ func _run_slice() -> void:
 		DecisionCommitCoordinator.new(intentions),
 		trace_sink,
 		progression,
-		drive_source
+		drive_source,
+		null,
+		null,
+		[],
+		null,
+		null,
+		null,
+		null,
+		null,
+		null,
+		drive_due_gate
 	)
 
-	var result = orchestrator.advance(SimulationStepContext.new(&"drive_step_1", 1.0, 1.0, null, []))
-	_expect_equal(drives.band(DriveState.HUNGER), DriveState.UrgencyBand.PRESSING, "orchestrator progresses drive state before candidate generation")
-	_expect_equal(result.candidates.size(), 1, "drive candidate joins decision competition")
+	for index in range(9):
+		var simulation_time: float = float(index + 1) * 0.1
+		var quiet = orchestrator.advance(SimulationStepContext.new(
+			StringName("drive_quiet_%02d" % index), 0.1, simulation_time, null, []
+		))
+		_expect_true(is_equal_approx(drives.value(DriveState.HUNGER), 0.54), "sub-second semantic heartbeat does not progress drives")
+		_expect_equal(quiet.candidates.size(), 0, "not-due drive step does not open decision competition")
+		_expect_true(quiet.decision == null, "not-due drive step keeps cognition quiet")
+
+	var result = orchestrator.advance(SimulationStepContext.new(&"drive_due_1", 0.1, 1.0, null, []))
+	_expect_true(is_equal_approx(drives.value(DriveState.HUNGER), 0.56), "due drive invocation conserves the full accumulated second")
+	_expect_equal(drives.band(DriveState.HUNGER), DriveState.UrgencyBand.PRESSING, "due progression crosses the existing urgency boundary")
+	_expect_equal(result.candidates.size(), 1, "due urgency crossing opens drive candidate competition")
 	if result.candidates.size() == 1:
 		_expect_equal(result.candidates[0].intention_id.key(), seek_food.key(), "drive candidate retains semantic intention")
-	_expect_true(result.decision.has_selection(), "drive-only competition selects candidate")
+	_expect_true(result.decision != null and result.decision.has_selection(), "drive-only competition selects candidate")
 	_expect_true(intentions.has_current(), "selected drive intention commits through cognition owner")
 	if intentions.has_current():
 		_expect_equal(intentions.current().intention_id.key(), seek_food.key(), "committed intention comes from drive candidate")
-	_expect_equal(trace_sink.traces.size(), 1, "drive-integrated step remains traceable")
-	if trace_sink.traces.size() == 1:
-		_expect_true(trace_sink.traces[0].stage_results.has(&"drive_progression"), "trace records drive progression")
-		_expect_true(trace_sink.traces[0].stage_results.has(&"decision_candidates"), "trace records combined candidate set")
+	_expect_equal(trace_sink.traces.size(), 10, "every semantic heartbeat remains traceable")
+	if trace_sink.traces.size() == 10:
+		_expect_true(is_equal_approx(float(trace_sink.traces[8].stage_results[&"drive_due_elapsed"]), 0.0), "trace exposes zero due elapsed before deadline")
+		_expect_true(is_equal_approx(float(trace_sink.traces[9].stage_results[&"drive_due_elapsed"]), 1.0), "trace exposes accumulated due elapsed at deadline")
 
 	_completed = true
 
