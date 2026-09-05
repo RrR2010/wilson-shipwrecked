@@ -39,7 +39,7 @@ func apply(intention_state) -> Dictionary:
 		return _result(false, false, null, &"no_intention")
 	if not _defensive_intention_keys.has(String(intention_state.intention_id.sort_key())):
 		return _result(false, false, null, &"not_defensive")
-	if intention_state.bindings == null or not intention_state.bindings.has(&"threat_source"):
+	if intention_state.bindings == null or not intention_state.bindings.has(_threat_role):
 		return _result(true, false, null, &"missing_threat_source")
 
 	var threat_ref = intention_state.bindings.get_subject(_threat_role)
