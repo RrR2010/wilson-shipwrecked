@@ -6,13 +6,14 @@ const EntityStore = preload("res://src/domain/world/entity_store.gd")
 const WorldRelation = preload("res://src/domain/world/world_relation.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
 const WilsonWorldState = preload("res://src/domain/world/wilson_world_state.gd")
+const WilsonBodyState = preload("res://src/domain/world/wilson_body_state.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
 const SimulationOwnerSet = preload("res://src/application/bootstrap/simulation_owner_set.gd")
 const SimulationBootstrapResult = preload("res://src/application/bootstrap/simulation_bootstrap_result.gd")
 
-## Common construction boundary for the core authoritative owners required by
-## runtime composition. Declarative seeds are copied into fresh owner instances;
+## Common construction boundary for authoritative owners required by runtime
+## composition/bootstrap. Declarative seeds are copied into fresh owner instances;
 ## callers cannot manufacture post-bootstrap state by retaining mutable owner refs.
 
 func bootstrap(definition):
@@ -74,5 +75,6 @@ func bootstrap(definition):
 		relations,
 		WilsonWorldState.new(definition.wilson_place_id),
 		beliefs,
-		intentions
+		intentions,
+		WilsonBodyState.new(definition.wilson_body_vitality)
 	))
