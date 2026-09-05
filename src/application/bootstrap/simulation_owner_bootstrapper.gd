@@ -10,6 +10,8 @@ const WilsonBodyState = preload("res://src/domain/world/wilson_body_state.gd")
 const EnvironmentState = preload("res://src/domain/world/environment_state.gd")
 const DynamicProcessInstance = preload("res://src/domain/world/dynamic_process_instance.gd")
 const DynamicProcessStore = preload("res://src/domain/world/dynamic_process_store.gd")
+const ActorRuntimeState = preload("res://src/domain/actors/actor_runtime_state.gd")
+const ActorStateStore = preload("res://src/domain/actors/actor_state_store.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
@@ -31,13 +33,7 @@ func bootstrap(definition):
 
 	var entities = EntityStore.new()
 	for seed in definition.entity_seeds:
-		var entity = EntityInstance.new(
-			seed.id,
-			seed.type_id,
-			seed.place_id,
-			seed.state_overrides,
-			seed.quantity
-		)
+		var entity = EntityInstance.new(seed.id, seed.type_id, seed.place_id, seed.state_overrides, seed.quantity)
 		entity.lifecycle = seed.lifecycle
 		var add_result = entities.add_entity(entity)
 		if not add_result.ok:
@@ -45,12 +41,7 @@ func bootstrap(definition):
 
 	var relations = WorldRelationStore.new()
 	for seed in definition.relation_seeds:
-		var relation_result = relations.add_relation(WorldRelation.new(
-			seed.relation_type,
-			seed.subject,
-			seed.object,
-			seed.qualifier
-		))
+		var relation_result = relations.add_relation(WorldRelation.new(seed.relation_type, seed.subject, seed.object, seed.qualifier))
 		if not relation_result.ok:
 			return SimulationBootstrapResult.failure(relation_result.code, relation_result.diagnostics)
 	relations.rebuild_indexes()
@@ -60,100 +51,51 @@ func bootstrap(definition):
 
 	var beliefs = BeliefStore.new()
 	for seed in definition.belief_seeds:
-		var belief_result = beliefs.restore_entry(
-			seed.proposition,
-			seed.confidence,
-			seed.evidence_count,
-			seed.last_source_execution_id,
-			seed.last_modality
-		)
+		var belief_result = beliefs.restore_entry(seed.proposition, seed.confidence, seed.evidence_count, seed.last_source_execution_id, seed.last_modality)
 		if not belief_result.ok:
 			return SimulationBootstrapResult.failure(belief_result.code, belief_result.diagnostics)
 
 	var intentions = CurrentIntentionStore.new()
 	if definition.intention_seed != null:
-		var intention_result = intentions.select(
-			definition.intention_seed.intention_id,
-			definition.intention_seed.bindings,
-			definition.intention_seed.selected_step_id
-		)
+		var intention_result = intentions.select(definition.intention_seed.intention_id, definition.intention_seed.bindings, definition.intention_seed.selected_step_id)
 		if not intention_result.ok:
 			return SimulationBootstrapResult.failure(intention_result.code, intention_result.diagnostics)
 
 	var projects = ProjectStore.new()
 	for seed in definition.project_seeds:
-		var project = ProjectInstance.new(
-			seed.id,
-			seed.definition_id,
-			seed.subject_bindings,
-			seed.lifecycle,
-			seed.contribution_count
-		)
+		var project = ProjectInstance.new(seed.id, seed.definition_id, seed.subject_bindings, seed.lifecycle, seed.contribution_count)
 		if not projects.add(project):
-			return SimulationBootstrapResult.failure(
-				&"duplicate_project_instance",
-				["Duplicate project instance: %s" % seed.id.sort_key()]
-			)
+			return SimulationBootstrapResult.failure(&"duplicate_project_instance", ["Duplicate project instance: %s" % seed.id.sort_key()])
 
 	var associations = AssociationStore.new()
 	for seed in definition.association_seeds:
-		associations.restore_entry(
-			seed.subject,
-			seed.valence,
-			seed.attachment,
-			seed.evidence_count,
-			seed.last_source_execution_id
-		)
+		associations.restore_entry(seed.subject, seed.valence, seed.attachment, seed.evidence_count, seed.last_source_execution_id)
 
 	var habits = HabitStore.new()
 	for seed in definition.habit_seeds:
-		habits.restore_entry(
-			seed.cue_id,
-			seed.intention_id,
-			seed.bindings,
-			seed.strength,
-			seed.evidence_count,
-			seed.last_source_execution_id
-		)
+		habits.restore_entry(seed.cue_id, seed.intention_id, seed.bindings, seed.strength, seed.evidence_count, seed.last_source_execution_id)
 
 	var episodes = EpisodeStore.new()
 	for seed in definition.episode_seeds:
-		episodes.restore_entry(
-			seed.claim,
-			seed.importance,
-			seed.source_execution_id,
-			seed.modality,
-			seed.sequence
-		)
+		episodes.restore_entry(seed.claim, seed.importance, seed.source_execution_id, seed.modality, seed.sequence)
 
 	var presence = PresenceRelationship.new()
 	if definition.presence_seed != null:
-		presence.restore(
-			definition.presence_seed.presence_belief,
-			definition.presence_seed.trust,
-			definition.presence_seed.dependency,
-			definition.presence_seed.evidence_count,
-			definition.presence_seed.last_source_execution_id
-		)
+		presence.restore(definition.presence_seed.presence_belief, definition.presence_seed.trust, definition.presence_seed.dependency, definition.presence_seed.evidence_count, definition.presence_seed.last_source_execution_id)
 
-	var environment = EnvironmentState.new(
-		definition.environment_weather,
-		definition.environment_daylight_phase
-	)
+	var environment = EnvironmentState.new(definition.environment_weather, definition.environment_daylight_phase)
+
 	var dynamic_processes = DynamicProcessStore.new()
 	for seed in definition.dynamic_process_seeds:
-		var process = DynamicProcessInstance.new(
-			seed.id,
-			seed.definition_id,
-			seed.subject,
-			seed.lifecycle,
-			seed.elapsed
-		)
+		var process = DynamicProcessInstance.new(seed.id, seed.definition_id, seed.subject, seed.lifecycle, seed.elapsed)
 		if not dynamic_processes.add(process):
-			return SimulationBootstrapResult.failure(
-				&"duplicate_dynamic_process",
-				["Duplicate dynamic process: %s" % String(seed.id)]
-			)
+			return SimulationBootstrapResult.failure(&"duplicate_dynamic_process", ["Duplicate dynamic process: %s" % String(seed.id)])
+
+	var actors = ActorStateStore.new()
+	for seed in definition.actor_state_seeds:
+		var actor_state = ActorRuntimeState.new(seed.actor, seed.profile_id, seed.mode, seed.decision_cooldown, seed.last_rule_id)
+		if not actors.add(actor_state):
+			return SimulationBootstrapResult.failure(&"duplicate_actor_state", ["Duplicate actor state: %s" % seed.actor.sort_key()])
 
 	return SimulationBootstrapResult.success(SimulationOwnerSet.new(
 		entities,
@@ -169,5 +111,6 @@ func bootstrap(definition):
 		episodes,
 		presence,
 		environment,
-		dynamic_processes
+		dynamic_processes,
+		actors
 	))
