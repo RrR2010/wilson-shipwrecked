@@ -71,9 +71,9 @@ func _test_valid_runtime_composition() -> void:
 
 	var runtime = result.composition
 	_expect_equal(
-		runtime.world_query.get_instance_property(crate_ref, DomainId.property(&"effective_resistance")),
+		runtime.effective_physical_profiles.resolve(crate_ref).get_property(DomainId.property(&"effective_resistance")),
 		4,
-		"derived physical query is rebuilt by composition"
+		"derived physical profile is rebuilt by composition"
 	)
 	_expect_equal(runtime.activity_query.active_execution_id(), &"", "fresh runtime has no active Wilson action")
 
