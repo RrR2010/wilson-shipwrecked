@@ -55,7 +55,14 @@ func capture(run_state, player_profile) -> Dictionary:
 
 
 func restore(snapshot: Dictionary):
-	assert(int(snapshot.get("schema_version", -1)) == SCHEMA_VERSION, "Unsupported run/profile snapshot schema")
+	return RestoredRunProfileState.new(
+		restore_run_state(snapshot),
+		restore_player_profile(snapshot)
+	)
+
+
+func restore_run_state(snapshot: Dictionary):
+	_validate_snapshot(snapshot)
 	var run_record = snapshot.get("run")
 	assert(run_record is Dictionary, "Snapshot missing run lifecycle")
 	var run_state = RunLifecycleState.new(
@@ -66,7 +73,11 @@ func restore(snapshot: Dictionary):
 	run_state.resurrection_count = int(run_record.get("resurrection_count", 0))
 	run_state.last_death_cause = StringName(run_record.get("last_death_cause", ""))
 	run_state.end_reason = StringName(run_record.get("end_reason", ""))
+	return run_state
 
+
+func restore_player_profile(snapshot: Dictionary):
+	_validate_snapshot(snapshot)
 	var profile_record = snapshot.get("profile")
 	assert(profile_record is Dictionary, "Snapshot missing player profile")
 	var profile = PlayerProfile.new()
@@ -83,4 +94,8 @@ func restore(snapshot: Dictionary):
 		profile.increment_stat(StringName(stat_id), int(profile_record["lifetime_statistics"][stat_id]))
 	for unlock_id in profile_record.get("global_unlocks", []):
 		profile.unlock(StringName(unlock_id))
-	return RestoredRunProfileState.new(run_state, profile)
+	return profile
+
+
+func _validate_snapshot(snapshot: Dictionary) -> void:
+	assert(int(snapshot.get("schema_version", -1)) == SCHEMA_VERSION, "Unsupported run/profile snapshot schema")

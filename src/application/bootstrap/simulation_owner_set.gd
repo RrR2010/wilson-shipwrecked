@@ -9,10 +9,46 @@ var relations
 var wilson_world_state
 var beliefs
 var current_intention
+var wilson_body_state
+var drives
+var projects
+var associations
+var habits
+var episodes
+var presence
+var environment
+var dynamic_processes
+var actors
 
-func _init(p_entities, p_relations, p_wilson_world_state, p_beliefs, p_current_intention) -> void:
+func _init(
+	p_entities,
+	p_relations,
+	p_wilson_world_state,
+	p_beliefs,
+	p_current_intention,
+	p_wilson_body_state,
+	p_drives,
+	p_projects,
+	p_associations,
+	p_habits,
+	p_episodes,
+	p_presence,
+	p_environment,
+	p_dynamic_processes,
+	p_actors
+) -> void:
 	entities = p_entities
 	relations = p_relations
 	wilson_world_state = p_wilson_world_state
 	beliefs = p_beliefs
 	current_intention = p_current_intention
+	wilson_body_state = p_wilson_body_state
+	drives = p_drives
+	projects = p_projects
+	associations = p_associations
+	habits = p_habits
+	episodes = p_episodes
+	presence = p_presence
+	environment = p_environment
+	dynamic_processes = p_dynamic_processes
+	actors = p_actors

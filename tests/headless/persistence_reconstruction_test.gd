@@ -7,6 +7,7 @@ const EntityDefinition = preload("res://src/domain/content/entity_definition.gd"
 const EntityInstance = preload("res://src/domain/world/entity_instance.gd")
 const EntityStore = preload("res://src/domain/world/entity_store.gd")
 const WilsonWorldState = preload("res://src/domain/world/wilson_world_state.gd")
+const WilsonBodyState = preload("res://src/domain/world/wilson_body_state.gd")
 const WorldRelation = preload("res://src/domain/world/world_relation.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
 const DefaultWorldQuery = preload("res://src/domain/world/default_world_query.gd")
@@ -76,6 +77,7 @@ func _run_slice() -> void:
 	_expect_true(entities.add_entity(EntityInstance.new(pouch_id, pouch_type, camp)).ok, "pouch added")
 	_expect_true(entities.set_property_override(crate_id, structural_integrity, 2).ok, "runtime override set")
 	var wilson_world = WilsonWorldState.new(beach)
+	var wilson_body = WilsonBodyState.new(0.37)
 
 	var relations = WorldRelationStore.new()
 	var inner_slot: StringName = &"inner"
@@ -148,9 +150,13 @@ func _run_slice() -> void:
 		episodes,
 		presence,
 		environment,
-		dynamic_processes
+		dynamic_processes,
+		null,
+		wilson_body
 	)
-	_expect_equal(snapshot.get("schema_version"), 9, "snapshot schema version")
+	_expect_equal(snapshot.get("schema_version"), 10, "snapshot schema version")
+	_expect_true(snapshot.has("wilson_body"), "Wilson body truth is persisted")
+	_expect_equal(snapshot["wilson_body"].get("vitality"), 0.37, "Wilson body vitality is captured")
 	_expect_true(snapshot.has("drives"), "durable Wilson drives are persisted")
 	_expect_true(snapshot.has("projects"), "durable project owner state is persisted")
 	_expect_true(snapshot.has("associations"), "durable associations are persisted")
@@ -183,6 +189,8 @@ func _run_slice() -> void:
 	_expect_equal(query_after.find_relations(inside, restored_pouch, restored_crate)[0].qualifier, inner_slot, "relation qualifier survives save/load")
 	_expect_true(restored.relations.validate_indexes().ok, "relation indexes rebuild valid")
 	_expect_equal(restored.wilson_world_state.place_id.key(), beach.key(), "Wilson coarse place survives save/load")
+	_expect_equal(restored.wilson_body.vitality, 0.37, "Wilson body vitality survives save/load")
+	_expect_true(restored.wilson_body.alive, "Wilson body life truth reconstructs from vitality")
 	_expect_true(query_after.are_co_located(RuntimeWorldRef.wilson(), restored_crate) == false, "restored spatial query uses Wilson location")
 
 	var restored_proposition = BeliefProposition.new(EpistemicClaim.event_claim(restored_crate, event_type, &"target"))

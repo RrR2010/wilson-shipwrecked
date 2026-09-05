@@ -7,6 +7,7 @@ extends RefCounted
 var entities
 var relations
 var wilson_world_state
+var wilson_body
 var beliefs
 var current_intention
 var drives
@@ -25,6 +26,7 @@ func _init(
 	p_entities,
 	p_relations,
 	p_wilson_world_state,
+	p_wilson_body,
 	p_beliefs,
 	p_current_intention,
 	p_drives,
@@ -41,6 +43,7 @@ func _init(
 	entities = p_entities
 	relations = p_relations
 	wilson_world_state = p_wilson_world_state
+	wilson_body = p_wilson_body
 	beliefs = p_beliefs
 	current_intention = p_current_intention
 	drives = p_drives

@@ -8,9 +8,7 @@ const WilsonWorldState = preload("res://src/domain/world/wilson_world_state.gd")
 const WorldRelation = preload("res://src/domain/world/world_relation.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
 const EnvironmentState = preload("res://src/domain/world/environment_state.gd")
-const DynamicProcessInstance = preload("res://src/domain/world/dynamic_process_instance.gd")
 const DynamicProcessStore = preload("res://src/domain/world/dynamic_process_store.gd")
-const ActorRuntimeState = preload("res://src/domain/actors/actor_runtime_state.gd")
 const ActorStateStore = preload("res://src/domain/actors/actor_state_store.gd")
 const BeliefProposition = preload("res://src/domain/cognition/belief_proposition.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
@@ -20,7 +18,6 @@ const AssociationStore = preload("res://src/domain/cognition/association_store.g
 const HabitStore = preload("res://src/domain/cognition/habit_store.gd")
 const EpisodeStore = preload("res://src/domain/cognition/episode_store.gd")
 const PresenceRelationship = preload("res://src/domain/cognition/presence_relationship.gd")
-const ProjectInstance = preload("res://src/domain/projects/project_instance.gd")
 const ProjectStore = preload("res://src/domain/projects/project_store.gd")
 const EpistemicGraphProjection = preload("res://src/domain/cognition/epistemic_graph_projection.gd")
 const DomainValueCodec = preload("res://src/infrastructure/persistence/domain_value_codec.gd")
@@ -28,7 +25,7 @@ const RestoredSimulationState = preload("res://src/infrastructure/persistence/re
 const SimulationSnapshotBootstrapDecoder = preload("res://src/infrastructure/persistence/simulation_snapshot_bootstrap_decoder.gd")
 const SimulationOwnerBootstrapper = preload("res://src/application/bootstrap/simulation_owner_bootstrapper.gd")
 
-const SCHEMA_VERSION := 9
+const SCHEMA_VERSION := 10
 
 var _codec
 
@@ -51,7 +48,8 @@ func capture(
 	presence_relationship = null,
 	environment_state = null,
 	dynamic_process_store = null,
-	actor_state_store = null
+	actor_state_store = null,
+	wilson_body_state = null
 ) -> Dictionary:
 	assert(entity_store != null, "capture requires EntityStore")
 	assert(relation_store != null, "capture requires WorldRelationStore")
@@ -67,11 +65,13 @@ func capture(
 	var environment = environment_state if environment_state != null else EnvironmentState.new()
 	var dynamic_processes = dynamic_process_store if dynamic_process_store != null else DynamicProcessStore.new()
 	var actors = actor_state_store if actor_state_store != null else ActorStateStore.new()
+	var body_vitality: float = 1.0 if wilson_body_state == null else float(wilson_body_state.vitality)
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"entities": _capture_entities(entity_store),
 		"relations": _capture_relations(relation_store),
 		"wilson_world": {"place_id": _codec.encode(wilson_world_state.place_id)},
+		"wilson_body": {"vitality": body_vitality},
 		"beliefs": _capture_beliefs(belief_store),
 		"current_intention": _capture_intention(intention_store),
 		"drives": _capture_drives(drives),
@@ -95,93 +95,18 @@ func restore(snapshot: Dictionary):
 	var entities = owners.entities
 	var relations = owners.relations
 	var wilson_world_state = owners.wilson_world_state
+	var wilson_body = owners.wilson_body_state
 	var beliefs = owners.beliefs
 	var intention_store = owners.current_intention
-
-	var drive_record = snapshot.get("drives")
-	assert(drive_record is Dictionary, "Snapshot missing Wilson drive state")
-	var drives = DriveState.new()
-	drives.restore_values(_decode_drives(drive_record))
-
-	var projects = ProjectStore.new()
-	for record in snapshot.get("projects", []):
-		var project = ProjectInstance.new(
-			_codec.decode(record["id"]),
-			_codec.decode(record["definition_id"]),
-			_decode_binding(record["subject_bindings"]),
-			int(record["lifecycle"]),
-			int(record["contribution_count"])
-		)
-		assert(projects.add(project), "Failed to restore duplicate project instance")
-
-	var associations = AssociationStore.new()
-	for record in snapshot.get("associations", []):
-		associations.restore_entry(
-			_codec.decode(record["subject"]),
-			float(record["valence"]),
-			float(record["attachment"]),
-			int(record["evidence_count"]),
-			StringName(record.get("last_source_execution_id", ""))
-		)
-
-	var habits = HabitStore.new()
-	for record in snapshot.get("habits", []):
-		habits.restore_entry(
-			StringName(record["cue_id"]),
-			_codec.decode(record["intention_id"]),
-			_decode_binding(record["bindings"]),
-			float(record["strength"]),
-			int(record["evidence_count"]),
-			StringName(record.get("last_source_execution_id", ""))
-		)
-
-	var episodes = EpisodeStore.new()
-	for record in snapshot.get("episodes", []):
-		episodes.restore_entry(
-			_codec.decode(record["claim"]),
-			float(record["importance"]),
-			StringName(record["source_execution_id"]),
-			StringName(record["modality"]),
-			int(record["sequence"])
-		)
-
-	var presence_record = snapshot.get("presence")
-	assert(presence_record is Dictionary, "Snapshot missing Presence relationship")
-	var presence = PresenceRelationship.new()
-	presence.restore(
-		float(presence_record["presence_belief"]),
-		float(presence_record["trust"]),
-		float(presence_record["dependency"]),
-		int(presence_record["evidence_count"]),
-		StringName(presence_record.get("last_source_execution_id", ""))
-	)
-
-	var environment_record = snapshot.get("environment")
-	assert(environment_record is Dictionary, "Snapshot missing environment state")
-	var environment = EnvironmentState.new(
-		StringName(environment_record["weather"]),
-		StringName(environment_record["daylight_phase"])
-	)
-
-	var dynamic_processes = DynamicProcessStore.new()
-	for record in snapshot.get("dynamic_processes", []):
-		assert(dynamic_processes.add(DynamicProcessInstance.new(
-			StringName(record["id"]),
-			StringName(record["definition_id"]),
-			_codec.decode(record["subject"]),
-			int(record["lifecycle"]),
-			float(record["elapsed"])
-		)), "Failed to restore duplicate dynamic process")
-
-	var actors = ActorStateStore.new()
-	for record in snapshot.get("actors", []):
-		assert(actors.add(ActorRuntimeState.new(
-			_codec.decode(record["actor"]),
-			StringName(record["profile_id"]),
-			StringName(record["mode"]),
-			float(record["decision_cooldown"]),
-			StringName(record.get("last_rule_id", ""))
-		)), "Failed to restore duplicate shallow actor state")
+	var drives = owners.drives
+	var projects = owners.projects
+	var associations = owners.associations
+	var habits = owners.habits
+	var episodes = owners.episodes
+	var presence = owners.presence
+	var environment = owners.environment
+	var dynamic_processes = owners.dynamic_processes
+	var actors = owners.actors
 
 	var epistemic_projection = EpistemicGraphProjection.new()
 	epistemic_projection.rebuild(beliefs)
@@ -189,6 +114,7 @@ func restore(snapshot: Dictionary):
 		entities,
 		relations,
 		wilson_world_state,
+		wilson_body,
 		beliefs,
 		intention_store,
 		drives,
@@ -258,15 +184,6 @@ func _capture_drives(drive_state) -> Dictionary:
 	var result: Dictionary = {}
 	for drive_id in DriveState.DRIVE_IDS:
 		result[String(drive_id)] = drive_state.value(drive_id)
-	return result
-
-
-func _decode_drives(record: Dictionary) -> Dictionary:
-	var result: Dictionary = {}
-	for drive_id in DriveState.DRIVE_IDS:
-		var key: String = String(drive_id)
-		assert(record.has(key), "Drive snapshot missing %s" % key)
-		result[drive_id] = float(record[key])
 	return result
 
 
