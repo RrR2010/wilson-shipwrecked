@@ -13,7 +13,7 @@ const ReconsiderationGate = preload("res://src/application/simulation/reconsider
 ## world progression -> derived invalidation -> action progression
 ## -> committed outcome application -> derived invalidation -> grounded project progression
 ## -> committed-event lifecycle propagation -> event + passive spatial perception
-## -> immediate Wilson learning -> drive progression
+## -> immediate Wilson learning -> due-gated drive progression
 ## -> perception/external trigger derivation -> reconsideration gating
 ## -> candidate generation/routing when admitted -> selected intention commit
 ## -> optional execution of the committed intention through composed application ports.
@@ -43,6 +43,7 @@ var _passive_perception_source
 var _perception_trigger_source
 var _lifecycle_event_coordinator
 var _selected_intention_executor
+var _drive_due_gate
 
 
 func _init(
@@ -70,7 +71,8 @@ func _init(
 	passive_perception_source = null,
 	perception_trigger_source = null,
 	lifecycle_event_coordinator = null,
-	selected_intention_executor = null
+	selected_intention_executor = null,
+	drive_due_gate = null
 ) -> void:
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
 	assert(action_execution != null, "SimulationOrchestrator requires action execution")
@@ -86,6 +88,7 @@ func _init(
 	assert(decision_commit != null, "SimulationOrchestrator requires decision commit coordinator")
 	assert(trace_sink != null, "SimulationOrchestrator requires trace sink")
 	assert((drive_progression == null) == (drive_candidate_source == null), "Drive progression and candidate source must be provided together")
+	assert(drive_due_gate == null or drive_progression != null, "Drive due gate requires drive progression")
 	assert((project_contribution == null) == (project_candidate_source == null), "Project contribution and candidate source must be provided together")
 	for source in additional_candidate_sources:
 		assert(source != null and source.has_method("generate"), "Additional candidate sources must implement generate()")
@@ -99,6 +102,8 @@ func _init(
 		assert(lifecycle_event_coordinator.has_method("process"), "Lifecycle event coordinator must implement process(committed_events)")
 	if selected_intention_executor != null:
 		assert(selected_intention_executor.has_method("apply"), "Selected intention executor must implement apply(current_intention)")
+	if drive_due_gate != null:
+		assert(drive_due_gate.has_method("elapsed_for_step"), "Drive due gate must implement elapsed_for_step()")
 	_world_advance = world_advance
 	_action_execution = action_execution
 	_world_commands = world_commands
@@ -124,6 +129,7 @@ func _init(
 	_perception_trigger_source = perception_trigger_source
 	_lifecycle_event_coordinator = lifecycle_event_coordinator
 	_selected_intention_executor = selected_intention_executor
+	_drive_due_gate = drive_due_gate
 
 
 func advance(step):
@@ -181,7 +187,11 @@ func advance(step):
 
 	var drive_progress = null
 	if _drive_progression != null:
-		drive_progress = _drive_progression.advance(step.elapsed)
+		var drive_elapsed: float = step.elapsed
+		if _drive_due_gate != null:
+			drive_elapsed = _drive_due_gate.elapsed_for_step(step.elapsed, step.simulation_time)
+		trace.record_result(&"drive_due_elapsed", drive_elapsed)
+		drive_progress = _drive_progression.advance(drive_elapsed)
 		trace.record_result(&"drive_progression", drive_progress)
 
 	var raw_triggers: Array = [] if step.trigger_set == null else Array(step.trigger_set).duplicate()
