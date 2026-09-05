@@ -3,6 +3,7 @@ extends RefCounted
 
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const BeliefProposition = preload("res://src/domain/cognition/belief_proposition.gd")
+const DriveState = preload("res://src/domain/cognition/drive_state.gd")
 const DomainValueCodec = preload("res://src/infrastructure/persistence/domain_value_codec.gd")
 const SimulationBootstrapDefinition = preload("res://src/application/bootstrap/simulation_bootstrap_definition.gd")
 const EntityBootstrapSeed = preload("res://src/application/bootstrap/entity_bootstrap_seed.gd")
@@ -26,6 +27,8 @@ func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 	assert(wilson_record is Dictionary and wilson_record.has("place_id"), "Snapshot missing Wilson world state")
 	var body_record = snapshot.get("wilson_body")
 	assert(body_record is Dictionary and body_record.has("vitality"), "Snapshot missing Wilson body state")
+	var drive_record = snapshot.get("drives")
+	assert(drive_record is Dictionary, "Snapshot missing Wilson drive state")
 
 	var entity_seeds: Array = []
 	for record in snapshot.get("entities", []):
@@ -72,8 +75,18 @@ func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 		relation_seeds,
 		belief_seeds,
 		intention_seed,
-		float(body_record["vitality"])
+		float(body_record["vitality"]),
+		_decode_drives(drive_record)
 	)
+
+
+func _decode_drives(record: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for drive_id in DriveState.DRIVE_IDS:
+		var key: String = String(drive_id)
+		assert(record.has(key), "Drive snapshot missing %s" % key)
+		result[drive_id] = float(record[key])
+	return result
 
 
 func _decode_binding(records: Array):
