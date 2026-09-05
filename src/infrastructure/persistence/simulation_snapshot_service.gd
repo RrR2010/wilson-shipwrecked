@@ -101,11 +101,7 @@ func restore(snapshot: Dictionary):
 	var wilson_body = owners.wilson_body_state
 	var beliefs = owners.beliefs
 	var intention_store = owners.current_intention
-
-	var drive_record = snapshot.get("drives")
-	assert(drive_record is Dictionary, "Snapshot missing Wilson drive state")
-	var drives = DriveState.new()
-	drives.restore_values(_decode_drives(drive_record))
+	var drives = owners.drives
 
 	var projects = ProjectStore.new()
 	for record in snapshot.get("projects", []):
@@ -263,15 +259,6 @@ func _capture_drives(drive_state) -> Dictionary:
 	var result: Dictionary = {}
 	for drive_id in DriveState.DRIVE_IDS:
 		result[String(drive_id)] = drive_state.value(drive_id)
-	return result
-
-
-func _decode_drives(record: Dictionary) -> Dictionary:
-	var result: Dictionary = {}
-	for drive_id in DriveState.DRIVE_IDS:
-		var key: String = String(drive_id)
-		assert(record.has(key), "Drive snapshot missing %s" % key)
-		result[drive_id] = float(record[key])
 	return result
 
 
