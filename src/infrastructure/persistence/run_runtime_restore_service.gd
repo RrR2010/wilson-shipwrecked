@@ -55,15 +55,9 @@ func restore(
 				["Action execution restore returned null result"]
 			)
 		if not restore_result.ok:
-			var diagnostics: Array[String] = []
-			if restore_result.get("diagnostics") is Array:
-				for diagnostic in restore_result.diagnostics:
-					diagnostics.append(String(diagnostic))
-			if diagnostics.is_empty():
-				diagnostics.append("Action execution restore was rejected")
 			return RunRuntimeRestoreResult.failure(
-				&"action_execution_restore_failed",
-				diagnostics
+				restore_result.code,
+				restore_result.diagnostics
 			)
 
 	return RunRuntimeRestoreResult.success(
