@@ -1,0 +1,116 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://tests/scenes/deterministic_playable_bootstrap/deterministic_playable_bootstrap.gd" id="1_script"]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_playable"]
+vertices = PackedVector3Array(-8, 0, -5, 8, 0, -5, 8, 0, 5, -8, 0, 5)
+polygons = [PackedInt32Array(0, 1, 2), PackedInt32Array(0, 2, 3)]
+cell_size = 0.25
+cell_height = 0.1
+agent_height = 1.8
+agent_radius = 0.3
+agent_max_climb = 0.3
+agent_max_slope = 45.0
+
+[sub_resource type="BoxShape3D" id="GroundShape"]
+size = Vector3(18, 0.2, 12)
+
+[sub_resource type="CapsuleShape3D" id="WilsonShape"]
+radius = 0.3
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="GroundMaterial"]
+albedo_color = Color(0.28, 0.4, 0.24, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="WilsonMaterial"]
+albedo_color = Color(0.2, 0.42, 0.9, 1)
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="TargetMaterial"]
+albedo_color = Color(0.95, 0.72, 0.12, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="GroundMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(18, 0.2, 12)
+
+[sub_resource type="CapsuleMesh" id="WilsonMesh"]
+material = SubResource("WilsonMaterial")
+radius = 0.3
+height = 1.8
+
+[sub_resource type="CylinderMesh" id="TargetMesh"]
+material = SubResource("TargetMaterial")
+top_radius = 0.4
+bottom_radius = 0.4
+height = 0.2
+
+[sub_resource type="Environment" id="Environment_playable"]
+background_mode = 1
+background_color = Color(0.08, 0.13, 0.18, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.7, 0.74, 0.8, 1)
+ambient_light_energy = 0.75
+
+[node name="DeterministicPlayableBootstrap" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_playable")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, -30, 0)
+light_energy = 1.2
+shadow_enabled = true
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("NavigationMesh_playable")
+
+[node name="Ground" type="StaticBody3D" parent="."]
+collision_layer = 1
+collision_mask = 1
+
+[node name="Visual" type="MeshInstance3D" parent="Ground"]
+position = Vector3(0, -0.1, 0)
+mesh = SubResource("GroundMesh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+position = Vector3(0, -0.1, 0)
+shape = SubResource("GroundShape")
+
+[node name="Wilson" type="CharacterBody3D" parent="."]
+position = Vector3(-6, 0, 0)
+collision_layer = 1
+collision_mask = 1
+floor_snap_length = 0.2
+
+[node name="Visual" type="MeshInstance3D" parent="Wilson"]
+position = Vector3(0, 0.9, 0)
+mesh = SubResource("WilsonMesh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Wilson"]
+position = Vector3(0, 0.9, 0)
+shape = SubResource("WilsonShape")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="Wilson"]
+path_desired_distance = 0.3
+target_desired_distance = 0.5
+path_max_distance = 2.0
+radius = 0.3
+height = 1.8
+max_speed = 3.0
+
+[node name="Target" type="Node3D" parent="."]
+position = Vector3(6, 0, 0)
+
+[node name="Visual" type="MeshInstance3D" parent="Target"]
+position = Vector3(0, 0.1, 0)
+mesh = SubResource("TargetMesh")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 15, 11)
+rotation_degrees = Vector3(-53, 0, 0)
+projection = 1
+size = 17.0
+current = true
