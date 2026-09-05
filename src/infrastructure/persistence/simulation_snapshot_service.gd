@@ -9,7 +9,6 @@ const WorldRelation = preload("res://src/domain/world/world_relation.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
 const EnvironmentState = preload("res://src/domain/world/environment_state.gd")
 const DynamicProcessStore = preload("res://src/domain/world/dynamic_process_store.gd")
-const ActorRuntimeState = preload("res://src/domain/actors/actor_runtime_state.gd")
 const ActorStateStore = preload("res://src/domain/actors/actor_state_store.gd")
 const BeliefProposition = preload("res://src/domain/cognition/belief_proposition.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
@@ -107,16 +106,7 @@ func restore(snapshot: Dictionary):
 	var presence = owners.presence
 	var environment = owners.environment
 	var dynamic_processes = owners.dynamic_processes
-
-	var actors = ActorStateStore.new()
-	for record in snapshot.get("actors", []):
-		assert(actors.add(ActorRuntimeState.new(
-			_codec.decode(record["actor"]),
-			StringName(record["profile_id"]),
-			StringName(record["mode"]),
-			float(record["decision_cooldown"]),
-			StringName(record.get("last_rule_id", ""))
-		)), "Failed to restore duplicate shallow actor state")
+	var actors = owners.actors
 
 	var epistemic_projection = EpistemicGraphProjection.new()
 	epistemic_projection.rebuild(beliefs)
