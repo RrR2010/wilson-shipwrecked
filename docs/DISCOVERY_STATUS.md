@@ -21,8 +21,8 @@ The strict external runner is validated under **Godot 4.7.1**.
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 48 PASS / 48 TOTAL
-PASS headless_suite (48 tests)
+RESULT: 49 PASS / 49 TOTAL
+PASS headless_suite (49 tests)
 ```
 
 The strict suite includes the real-engine `tests/scenes/spatial_navigation_perception/spatial_navigation_perception.tscn` fixture. Its validated coverage now includes ordinary movement/perception plus defensive motion redirection.
@@ -49,6 +49,7 @@ structural World/runtime foundation
 → admitted impact → World-owned WilsonBodyState mutation → SemanticChangeSet → injury/death WorldEvent
 → grounded Wilson death WorldEvent → RunLifecycleState ACTIVE→DEAD
 → committed defensive intention → deterministic escape selection → MotionPort cancellation/redirection → concrete Godot escape movement
+→ shared SemanticDueScheduler → owner-local elapsed gates → due-only drive/dynamic-process progression
 ```
 
 ---
@@ -67,6 +68,7 @@ Hazard projection / perceived threat              PASS
 Immediate-threat routing                          PASS
 Perceived-threat same-chain wake-up               PASS
 Immediate-threat concrete motion redirection      PASS
+Shared due scheduling — drives/processes          PASS
 Shallow non-Wilson actors                         PASS
 Director opportunity lifecycle                    PASS
 Player suggestions / bounded insistence           PASS
@@ -83,7 +85,7 @@ Real LOS / occlusion integration                  PASS
 Physical observation semantic admission           PASS
 Grounded Wilson body impact consequences          PASS
 Generic reconsideration gate / trigger coalescing PASS
-Strict headless suite                             PASS — 48 tests
+Strict headless suite                             PASS — 49 tests
 ```
 
 ---
@@ -200,6 +202,7 @@ Implemented and locally validated:
 ```text
 SimulationCadenceClock
 SemanticDueScheduler
+DueElapsedGate
 ReconsiderationGate
 PerceivedThreatTriggerSource
 SpatialQueryPort
@@ -240,6 +243,9 @@ Validated engine/domain semantics:
 - collision/overlap/grounding/fall observations remain engine facts until an authored semantic consequence admits them;
 - queued physical observations drain only at an explicit semantic boundary;
 - admitted impacts mutate World-owned body truth before semantic injury/death events;
+- drives and dynamic processes can share one `SemanticDueScheduler` while retaining independent due keys;
+- skipped 0.1 s semantic heartbeats conserve elapsed time and release it once at the owner due boundary instead of forcing 10 Hz progression;
+- missed due periods coalesce into one owner invocation, and drive cognition still wakes only on the existing urgency-band semantic crossing;
 - fine transforms, navigation paths, passive candidate sets and physics observations remain non-persisted infrastructure facts.
 
 `SimulationCadenceClock` remains a physics→semantic bridge primitive. Its current ~`0.1 s` default is **not** a universal update rate for perception, cognition, drives, environment, projects, Director or maintenance.
@@ -311,7 +317,7 @@ Still open:
 ```text
 collision/grounding/fall-specific consequence policies beyond impact damage
 semantic threshold/coalescing for gradual physical/environmental changes
-owner/service due scheduling fully wired across drives/processes/maintenance
+sparse maintenance/other gradual owners not yet wired through shared due scheduling
 drive hysteresis-band memory persistence
 richer Wilson-relative route/escape evaluation beyond deterministic objective safety
 intervention causal windows
@@ -326,7 +332,7 @@ negative/absence perceptual evidence on passive exit
 
 Timing/decision-specific notes:
 
-1. `SemanticDueScheduler` exists, but elapsed-time owners are not yet broadly wired through one due policy;
+1. drives and dynamic processes are now validated through one shared `SemanticDueScheduler`; maintenance and other sparse elapsed-time owners remain to be wired only when representative work requires them;
 2. passive perception works during `MOVING`, but orientation/view-cone refresh and negative/absence evidence remain open;
 3. authored perceived threats synthesize same-chain `THREAT`; other semantic trigger families still need representative producers rather than a generic “any perception changed” rule;
 4. discrete physical observations can be threshold-admitted, but continuously changing physical/environment values still need semantic coalescing;
@@ -338,22 +344,21 @@ Timing/decision-specific notes:
 
 # Remaining major verticals
 
-Recommended sequence from the validated 48-test checkpoint:
+Recommended sequence from the validated 49-test checkpoint:
 
 ```text
 1. semantic threshold/coalescing for gradual physical/environmental changes
-2. owner/service due scheduling wired across gradual systems
-3. deterministic playable scenario/bootstrap tooling
-4. representative integrated timing/scenario suite
+2. deterministic playable scenario/bootstrap tooling
+3. representative integrated timing/scenario suite
    - longer movement trace
    - Gerald ordinary perception
    - falling-palm threat wake-up
    - concrete escape execution
    - admitted impact/death branch where appropriate
-5. Wilson body + full run-save/new-run composition
+4. Wilson body + full run-save/new-run composition
 ```
 
-The open design review at `docs/design-reviews/2026-09-01-simulation-cadence-engine-domain-integration.md` is partially consumed through PR #29. Concrete motion interruption/redirection is now validated; the review remains OPEN for general due scheduling, gradual threshold/coalescing and the integrated 20 m / Gerald / falling-palm timing scenario.
+The open design review at `docs/design-reviews/2026-09-01-simulation-cadence-engine-domain-integration.md` is partially consumed through PR #31. Representative drive and dynamic-process due scheduling is now validated; the review remains OPEN for gradual threshold/coalescing and the integrated 20 m / Gerald / falling-palm timing scenario.
 
 Cross-cutting correctness slices should continue to be pulled forward only when a representative scenario requires them.
 

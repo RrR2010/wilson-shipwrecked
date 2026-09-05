@@ -27,24 +27,32 @@ func is_registered(key: StringName) -> bool:
 	return _interval_by_key.has(key)
 
 
+func consume_if_due(key: StringName, simulation_time: float) -> bool:
+	assert(is_finite(simulation_time), "simulation_time must be finite")
+	if not _interval_by_key.has(key):
+		return false
+	var next_due: float = float(_next_due_by_key[key])
+	if simulation_time + 1.0e-9 < next_due:
+		return false
+	var interval: float = float(_interval_by_key[key])
+	var periods: int = int(floor(((simulation_time - next_due) + 1.0e-9) / interval)) + 1
+	_next_due_by_key[key] = next_due + float(periods) * interval
+	return true
+
+
 func collect_due(simulation_time: float) -> Array[StringName]:
 	assert(is_finite(simulation_time), "simulation_time must be finite")
 	var due: Array[StringName] = []
 	var keys: Array = _interval_by_key.keys()
 	keys.sort_custom(func(a, b): return String(a) < String(b))
 	for raw_key in keys:
-		var key := StringName(raw_key)
-		var next_due: float = _next_due_by_key[key]
-		if simulation_time + 1.0e-9 < next_due:
-			continue
-		due.append(key)
-		var interval: float = _interval_by_key[key]
-		var periods := int(floor(((simulation_time - next_due) + 1.0e-9) / interval)) + 1
-		_next_due_by_key[key] = next_due + float(periods) * interval
+		var key: StringName = StringName(raw_key)
+		if consume_if_due(key, simulation_time):
+			due.append(key)
 	return due
 
 
 func next_due_time(key: StringName) -> float:
 	if not _next_due_by_key.has(key):
 		return INF
-	return _next_due_by_key[key]
+	return float(_next_due_by_key[key])

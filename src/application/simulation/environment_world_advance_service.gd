@@ -6,18 +6,30 @@ const WorldAdvanceResult = preload("res://src/application/simulation/world_advan
 var _dynamic_process_advance
 var _actor_advance
 var _actor_stimulus_provider
+var _dynamic_process_due_gate
 
 
-func _init(dynamic_process_advance, actor_advance = null, actor_stimulus_provider = null) -> void:
+func _init(
+	dynamic_process_advance,
+	actor_advance = null,
+	actor_stimulus_provider = null,
+	dynamic_process_due_gate = null
+) -> void:
 	assert(dynamic_process_advance != null, "EnvironmentWorldAdvanceService requires dynamic process advance service")
 	assert(actor_advance != null or actor_stimulus_provider == null, "Actor stimulus provider requires actor advance service")
+	if dynamic_process_due_gate != null:
+		assert(dynamic_process_due_gate.has_method("elapsed_for_step"), "Dynamic-process due gate must implement elapsed_for_step()")
 	_dynamic_process_advance = dynamic_process_advance
 	_actor_advance = actor_advance
 	_actor_stimulus_provider = actor_stimulus_provider
+	_dynamic_process_due_gate = dynamic_process_due_gate
 
 
 func advance(elapsed: float, step):
-	var process_result: Dictionary = _dynamic_process_advance.advance(elapsed)
+	var process_elapsed: float = elapsed
+	if _dynamic_process_due_gate != null:
+		process_elapsed = _dynamic_process_due_gate.elapsed_for_step(elapsed, step.simulation_time)
+	var process_result: Dictionary = _dynamic_process_advance.advance(process_elapsed)
 	var diagnostics: Array[String] = []
 	for diagnostic in process_result["diagnostics"]:
 		diagnostics.append(String(diagnostic))
