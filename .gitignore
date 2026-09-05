@@ -1,6 +1,10 @@
 # Godot generated/import cache
 .godot/
 
+# Blender backup/editor noise
+*.blend1
+*.blend2
+
 # Local AI/editor tooling
 .opencode/
 opencode.json
