@@ -7,22 +7,27 @@ var _dynamic_process_advance
 var _actor_advance
 var _actor_stimulus_provider
 var _dynamic_process_due_gate
+var _semantic_event_projector
 
 
 func _init(
 	dynamic_process_advance,
 	actor_advance = null,
 	actor_stimulus_provider = null,
-	dynamic_process_due_gate = null
+	dynamic_process_due_gate = null,
+	semantic_event_projector = null
 ) -> void:
 	assert(dynamic_process_advance != null, "EnvironmentWorldAdvanceService requires dynamic process advance service")
 	assert(actor_advance != null or actor_stimulus_provider == null, "Actor stimulus provider requires actor advance service")
 	if dynamic_process_due_gate != null:
 		assert(dynamic_process_due_gate.has_method("elapsed_for_step"), "Dynamic-process due gate must implement elapsed_for_step()")
+	if semantic_event_projector != null:
+		assert(semantic_event_projector.has_method("project"), "Gradual semantic event projector must implement project(transitions, step_id)")
 	_dynamic_process_advance = dynamic_process_advance
 	_actor_advance = actor_advance
 	_actor_stimulus_provider = actor_stimulus_provider
 	_dynamic_process_due_gate = dynamic_process_due_gate
+	_semantic_event_projector = semantic_event_projector
 
 
 func advance(elapsed: float, step):
@@ -33,6 +38,10 @@ func advance(elapsed: float, step):
 	var diagnostics: Array[String] = []
 	for diagnostic in process_result["diagnostics"]:
 		diagnostics.append(String(diagnostic))
+	var events: Array = []
+	if _semantic_event_projector != null:
+		var transitions: Array = Array(process_result.get("transitions", []))
+		events = _semantic_event_projector.project(transitions, step.step_id)
 	if _actor_advance != null:
 		var stimuli: Dictionary = {}
 		if _actor_stimulus_provider != null:
@@ -40,4 +49,4 @@ func advance(elapsed: float, step):
 		var actor_result: Dictionary = _actor_advance.advance(elapsed, stimuli)
 		for diagnostic in actor_result["diagnostics"]:
 			diagnostics.append(String(diagnostic))
-	return WorldAdvanceResult.new([], diagnostics, process_result["change_set"])
+	return WorldAdvanceResult.new(events, diagnostics, process_result["change_set"])

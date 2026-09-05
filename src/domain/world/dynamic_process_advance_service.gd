@@ -30,8 +30,9 @@ func advance(elapsed: float) -> Dictionary:
 	var progressed: Array[StringName] = []
 	var completed: Array[StringName] = []
 	var diagnostics: Array[String] = []
+	var transitions: Array = []
 	if elapsed <= 0.0:
-		return _result(change_set, progressed, completed, diagnostics)
+		return _result(change_set, progressed, completed, diagnostics, transitions)
 	for instance in _store.instances():
 		if not instance.is_active():
 			continue
@@ -58,17 +59,31 @@ func advance(elapsed: float) -> Dictionary:
 				continue
 			change_set.add(SemanticChange.property_change(instance.subject, definition.target_property))
 			progressed.append(instance.id)
+			transitions.append({
+				"subject": instance.subject,
+				"property": definition.target_property,
+				"previous": current,
+				"current": next_value,
+				"process_id": instance.id,
+			})
 		instance.elapsed += elapsed
 		if is_equal_approx(next_value, definition.terminal_value()):
 			_store.set_lifecycle(instance.id, DynamicProcessInstance.Lifecycle.COMPLETED)
 			completed.append(instance.id)
-	return _result(change_set, progressed, completed, diagnostics)
+	return _result(change_set, progressed, completed, diagnostics, transitions)
 
 
-func _result(change_set, progressed: Array[StringName], completed: Array[StringName], diagnostics: Array[String]) -> Dictionary:
+func _result(
+	change_set,
+	progressed: Array[StringName],
+	completed: Array[StringName],
+	diagnostics: Array[String],
+	transitions: Array
+) -> Dictionary:
 	return {
 		"change_set": change_set,
 		"progressed": progressed,
 		"completed": completed,
 		"diagnostics": diagnostics,
+		"transitions": transitions,
 	}
