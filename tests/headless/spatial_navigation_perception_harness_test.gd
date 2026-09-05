@@ -26,16 +26,12 @@ func _run() -> void:
 	adapter.configure(fixture, harness)
 	root.add_child(fixture)
 
-	var finished := false
-	fixture.smoke_finished.connect(func(_success: bool, _report: Dictionary) -> void:
-		finished = true
-	)
 	for _frame in range(1800):
-		if finished:
+		if fixture.is_completed():
 			break
 		await process_frame
 
-	_expect_true(finished, "engine scenario finishes within bounded test frames")
+	_expect_true(fixture.is_completed(), "engine scenario finishes within bounded test frames")
 	_expect_true(harness.completed(), "successful engine scenario completes harness")
 	_expect_true(not harness.failed(), "successful engine scenario does not fail harness")
 
