@@ -27,3 +27,7 @@ func cancel_move(_actor_ref: RuntimeWorldRef) -> void:
 func get_status(_actor_ref: RuntimeWorldRef) -> int:
 	push_error("MotionPort.get_status() is abstract")
 	return MotionStatus.IDLE
+
+func get_target(_actor_ref: RuntimeWorldRef) -> RuntimeWorldRef:
+	push_error("MotionPort.get_target() is abstract")
+	return null
