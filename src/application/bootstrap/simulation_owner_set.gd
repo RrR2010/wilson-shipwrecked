@@ -16,6 +16,8 @@ var associations
 var habits
 var episodes
 var presence
+var environment
+var dynamic_processes
 
 func _init(
 	p_entities,
@@ -29,7 +31,9 @@ func _init(
 	p_associations,
 	p_habits,
 	p_episodes,
-	p_presence
+	p_presence,
+	p_environment,
+	p_dynamic_processes
 ) -> void:
 	entities = p_entities
 	relations = p_relations
@@ -43,3 +47,5 @@ func _init(
 	habits = p_habits
 	episodes = p_episodes
 	presence = p_presence
+	environment = p_environment
+	dynamic_processes = p_dynamic_processes
