@@ -11,7 +11,7 @@ const ReconsiderationGate = preload("res://src/application/simulation/reconsider
 ##
 ## Authoritative ordering:
 ## world progression -> derived invalidation -> action progression
-## -> committed outcome application -> derived invalidation -> grounded project progression
+## -> committed outcome application -> derived invalidation -> grounded drive/project progression
 ## -> committed-event lifecycle propagation -> event + passive spatial perception
 ## -> immediate Wilson learning -> due-gated drive progression
 ## -> perception/external trigger derivation -> reconsideration gating
@@ -44,6 +44,7 @@ var _perception_trigger_source
 var _lifecycle_event_coordinator
 var _selected_intention_executor
 var _drive_due_gate
+var _grounded_drive_consequence
 
 
 func _init(
@@ -72,7 +73,8 @@ func _init(
 	perception_trigger_source = null,
 	lifecycle_event_coordinator = null,
 	selected_intention_executor = null,
-	drive_due_gate = null
+	drive_due_gate = null,
+	grounded_drive_consequence = null
 ) -> void:
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
 	assert(action_execution != null, "SimulationOrchestrator requires action execution")
@@ -104,6 +106,8 @@ func _init(
 		assert(selected_intention_executor.has_method("apply"), "Selected intention executor must implement apply(current_intention)")
 	if drive_due_gate != null:
 		assert(drive_due_gate.has_method("elapsed_for_step"), "Drive due gate must implement elapsed_for_step()")
+	if grounded_drive_consequence != null:
+		assert(grounded_drive_consequence.has_method("apply_grounded"), "Grounded drive consequence must implement apply_grounded(outcome, world_commit_result)")
 	_world_advance = world_advance
 	_action_execution = action_execution
 	_world_commands = world_commands
@@ -130,6 +134,7 @@ func _init(
 	_lifecycle_event_coordinator = lifecycle_event_coordinator
 	_selected_intention_executor = selected_intention_executor
 	_drive_due_gate = drive_due_gate
+	_grounded_drive_consequence = grounded_drive_consequence
 
 
 func advance(step):
@@ -147,6 +152,7 @@ func advance(step):
 
 	var action_progress = null
 	var commit_result = null
+	var drive_consequence_result = null
 	var project_progress = null
 	var execution_id: StringName = _activity_query.active_execution_id()
 	if execution_id != &"":
@@ -158,6 +164,9 @@ func advance(step):
 			if commit_result.ok:
 				var invalidation_result = _derived_invalidator.apply(commit_result.change_set)
 				trace.record_result(&"derived_invalidation", invalidation_result)
+			if _grounded_drive_consequence != null:
+				drive_consequence_result = _grounded_drive_consequence.apply_grounded(action_progress.new_outcome, commit_result)
+				trace.record_result(&"drive_consequence", drive_consequence_result)
 			if _project_contribution != null:
 				project_progress = _project_contribution.apply_grounded(action_progress.new_outcome, commit_result)
 				trace.record_result(&"project_progression", project_progress)
