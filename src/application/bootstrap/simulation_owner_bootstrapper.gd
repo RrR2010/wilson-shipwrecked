@@ -9,6 +9,7 @@ const WilsonWorldState = preload("res://src/domain/world/wilson_world_state.gd")
 const WilsonBodyState = preload("res://src/domain/world/wilson_body_state.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
+const DriveState = preload("res://src/domain/cognition/drive_state.gd")
 const SimulationOwnerSet = preload("res://src/application/bootstrap/simulation_owner_set.gd")
 const SimulationBootstrapResult = preload("res://src/application/bootstrap/simulation_bootstrap_result.gd")
 
@@ -76,5 +77,6 @@ func bootstrap(definition):
 		WilsonWorldState.new(definition.wilson_place_id),
 		beliefs,
 		intentions,
-		WilsonBodyState.new(definition.wilson_body_vitality)
+		WilsonBodyState.new(definition.wilson_body_vitality),
+		DriveState.new(definition.drive_values)
 	))
