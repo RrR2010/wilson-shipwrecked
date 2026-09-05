@@ -5,80 +5,110 @@
 Make 3D content production repeatable enough that humans and coding/Blender agents can create compatible assets without relying on hidden artistic assumptions.
 
 ```text
-Visual Guide + Asset Spec
-          |
-          v
- concept / reference
-          |
-          v
- Blender source or bpy generator
-          |
-          v
- structural validation
-          |
-          v
- gameplay-camera preview
-          |
-          v
- visual critique / iteration
-          |
-          v
- GLB export
-          |
-          v
- Godot import + interaction test
+Asset Catalog + Visual Guide + Asset Spec
+                 |
+                 v
+         Blender source / bpy generator
+                 |
+                 v
+        structural + artistic validation
+                 |
+                 v
+           canonical previews
+                 |
+                 v
+            GLB export
+                 |
+                 v
+        Godot import verification
+                 |
+                 v
+      optional Godot .tscn wrapper
 ```
+
+## Canonical format ownership
+
+Use the following project contract:
+
+```text
+.blend = editable/manual Blender source
+.py    = reproducible bpy generator source
+.glb   = canonical 3D interchange/runtime model imported by Godot
+.tscn  = optional Godot integration wrapper for engine-specific composition
+```
+
+Godot can import `.blend` files directly by invoking an installed Blender and converting the scene through Blender's glTF exporter. This is useful for local experimentation, but it is not the project runtime contract because it adds an external Blender dependency to every importing machine and is unavailable in Godot web/Android editors.
+
+For production assets, export and commit `.glb` files under `assets/models/`.
 
 ## Blender as an asset compiler
 
 For repeatable low-poly families, prefer procedural `bpy` generators over one-off manual mesh editing. Manual Blender work remains appropriate for Wilson, rigs, key animations and hero assets.
 
-A generator is source code. Generated meshes are build outputs unless there is a clear reason to version them as source.
+A generator is source code. Generated meshes are build outputs unless there is a clear reason to version an intermediate as authored source.
 
 ## Agent workflow
 
 An autonomous 3D agent should use this loop:
 
-1. read `VISUAL_GUIDE.md`, `ASSET_SPEC.md` and the relevant task;
-2. inspect existing toolkit/generators before creating helpers;
-3. define the asset family and required semantic anchors;
-4. generate/model the simplest valid version;
-5. run structural checks;
-6. render from the canonical gameplay camera plus an optional diagnostic view;
-7. inspect the render, identify concrete visual defects and iterate;
-8. export GLB;
-9. verify Godot import and anchor discovery when tooling exists;
-10. report compromises or unresolved visual uncertainty.
+1. start from the normalized row in `docs/asset-catalog/`;
+2. read `VISUAL_GUIDE.md`, `ASSET_SPEC.md`, relevant `docs/art/` references and `docs/art/AGENT_ART_PRODUCTION.md`;
+3. inspect existing toolkit/generators before creating helpers;
+4. define the simplest valid asset/family and required semantic anchors/sockets;
+5. generate/model a blockout that already reads from the gameplay camera;
+6. run structural checks;
+7. render the canonical artistic preview package;
+8. self-review, iterate within the documented guard, and run independent artistic review;
+9. triangulate/apply transforms where needed for deterministic export;
+10. export GLB to the deterministic `assets/models/` destination;
+11. verify Godot import, hierarchy, anchors/sockets, scale, materials and required animation/skin data;
+12. create a `.tscn` wrapper only when Godot-specific nodes/resources are required;
+13. update catalog production status/notes.
 
-Do not perform endless autonomous aesthetic iteration. Use a bounded iteration count and escalate uncertain art-direction choices for review.
+The pipeline is not complete merely because Blender reported a successful export.
 
-## Proposed repository layout
+## Repository layout
+
+The repository layout is now a contract, not a proposal:
 
 ```text
 assets/
+├── README.md
 ├── source/
-│   ├── characters/
-│   ├── environment/
-│   ├── structures/
-│   └── props/
+│   └── .gdignore
 ├── generators/
-│   ├── toolkit/
-│   ├── vegetation/
-│   ├── terrain/
-│   ├── structures/
-│   └── props/
+│   └── .gdignore
+├── generated/
+│   └── .gdignore
 ├── previews/
-└── dist/
+│   └── .gdignore
+└── models/
+    └── README.md
 
 tools/
 └── blender/
-    ├── validate.py
-    ├── export.py
-    ├── preview.py
-    └── build_assets.py
+    ├── validate.py        # when implemented
+    ├── export.py          # when implemented
+    ├── preview.py         # when implemented
+    └── build_assets.py    # when implemented
 ```
 
-Do not create this full tree until implementation needs it; it is the intended shape, not empty-folder ceremony.
+Create semantic category subfolders only when needed, typically:
+
+```text
+characters/
+environment/
+props/
+structures/
+```
+
+Do not create empty folder taxonomies merely for ceremony.
+
+### Godot import boundary
+
+The repository root is the Godot project root (`res://`). Only assets intended for Godot import should live under `assets/models/`.
+
+The `.gdignore` files under `source/`, `generators/`, `generated/` and `previews/` ensure those authoring/intermediate directories are hidden from Godot's FileSystem dock, not imported, and not exported with the game.
 
 ## Shared Blender toolkit
 
@@ -99,13 +129,13 @@ render_preview
 export_glb
 ```
 
-Helpers should expose semantic parameters and deterministic seeds. They should not assume active selection or undocumented scene state.
+Helpers should expose semantic parameters and deterministic seeds. They must not assume active selection or undocumented scene state.
 
 ## Visual references and AI image generation
 
-Image models are best used for **concept/reference sheets**, not as the authoritative source of animation frames.
+Image models are best used for concept/reference sheets, not as authoritative 3D truth.
 
-A concept request should specify:
+A concept/reference request should specify:
 
 - invariant project style from `VISUAL_GUIDE.md`;
 - gameplay camera;
@@ -113,9 +143,9 @@ A concept request should specify:
 - required variants/states;
 - modular decomposition;
 - interaction anchors/sockets that must remain plausible;
-- request for clear form/construction rather than polished illustration effects.
+- clear form/construction rather than polished illustration effects.
 
-Concept art can inspire geometry; it does not override the Asset Spec.
+AI-generated visual sheets communicate shape intent. Textual contracts and catalog/domain semantics remain authoritative when an image contains accidental artifacts.
 
 ## Character pipeline
 
@@ -123,15 +153,16 @@ Wilson receives a stricter pipeline:
 
 ```text
 approved concept
- -> base model
- -> topology review
- -> skeleton/rig
- -> attachment anchors
- -> reusable animation library
- -> Godot animation integration
+→ base model
+→ topology review
+→ skeleton/rig
+→ attachment anchors
+→ reusable animation library
+→ GLB import validation
+→ Godot animation integration
 ```
 
-Do not procedurally regenerate Wilson's identity for normal variations. Clothing/accessories can be modular later.
+Do not procedurally regenerate Wilson's identity for normal variations. Clothing/accessories may become modular later.
 
 ## Animation reuse
 
@@ -141,33 +172,89 @@ Example:
 
 ```text
 CUT target
- -> navigate to ANCHOR_CHOP
- -> orient to anchor
- -> attach tool to hand
- -> play swing/chop animation
- -> trigger authoritative action timing/effect
- -> play target feedback
+→ navigate to ANCHOR_CHOP
+→ orient to anchor
+→ attach tool to hand
+→ play swing/chop animation
+→ trigger authoritative action timing/effect
+→ play target feedback
 ```
 
-Do not create `chop_palm`, `chop_crate`, `chop_vine` animations unless a specific object genuinely needs unique staging.
+Do not create `chop_palm`, `chop_crate`, `chop_vine` animations unless an object genuinely needs unique staging.
 
-## Preview scene
+## Canonical preview scene
 
 Create a canonical Blender or Godot preview setup early with:
 
 - gameplay orthographic camera;
 - standard neutral ground;
 - project-standard lighting;
-- Wilson scale reference or mannequin;
+- Wilson scale reference/mannequin;
 - known reference props.
 
-All asset-family reviews should include this view. Turntables are diagnostic only; gameplay view determines readability.
+Use the full preview/review contract in `docs/art/AGENT_ART_PRODUCTION.md`. Turntables and close-ups are diagnostic only; gameplay view determines readability.
 
-## Export
+## Blender -> glTF/GLB compatibility rules
 
-Target GLB/glTF 2.0. Preserve semantic nodes. Keep export settings centralized in tooling rather than relying on each agent remembering Blender UI settings.
+Godot 4.x recommends glTF 2.0 for 3D scene interchange. `.blend` direct import is itself a Blender-to-glTF conversion before Godot imports the result.
 
-After export, validate by re-importing or inspecting the GLB when practical. The pipeline is not complete merely because Blender reported a successful export.
+Production rules:
+
+- export `.glb` / glTF 2.0;
+- preserve semantic hierarchy/nodes used as anchors and sockets;
+- apply/normalize transforms where appropriate before export;
+- use deterministic triangulation for assets whose planar/faceted appearance depends on face splits;
+- keep the rig in its proper rest/export pose;
+- use glTF-compatible material features only when expecting Blender material data to transfer;
+- prefer Godot-authored runtime lighting and special shaders rather than relying on Blender-specific shading setups;
+- enable backface culling for normally opaque solid materials where appropriate, while deliberately keeping double-sided rendering only for families such as leaves/cloth when required;
+- treat Blender modifiers/Geometry Nodes as authoring/generation tools: the evaluated/exported geometry is authoritative, not preservation of the procedural graph in Godot.
+
+For complex animation/character exports, validate actual imported animation clips, skeletons, skin weights and blend shapes rather than assuming Blender preview behavior transferred exactly.
+
+## Materials and shaders
+
+The project art direction intentionally favors simple shared flat-color materials, which aligns well with glTF/Godot interchange.
+
+Use Blender materials primarily as a portable preview approximation for:
+
+- base color;
+- roughness;
+- metallic response where relevant;
+- simple compatible texture inputs when explicitly allowed.
+
+Do not make asset correctness depend on Blender-only procedural node graphs, generated surface micro-detail, or cinematic lighting.
+
+Runtime-specific water, wetness, wind, fire, environmental response and other special effects should normally be implemented/assigned on the Godot side using the imported semantic mesh/material structure.
+
+## Godot integration wrapper
+
+Imported `.glb` is the canonical raw runtime model. Use a `.tscn` wrapper when the asset needs Godot-specific composition such as:
+
+- collision/navigation nodes;
+- presentation adapter scripts;
+- runtime material overrides;
+- particles/effects;
+- engine-only animation setup;
+- higher-level scene composition.
+
+Do not edit or rely on generated imported resources inside `.godot/`. Keep authored Godot integration in normal `.tscn`/`.tres` files.
+
+## Godot import metadata and version control
+
+Godot creates `<asset>.import` files beside imported source assets. These files contain per-asset import configuration and **must be committed**.
+
+The generated `.godot/` directory remains ignored and must not be committed.
+
+Therefore the project policy is:
+
+```text
+commit:   assets/models/**/*.glb
+commit:   assets/models/**/*.glb.import (after Godot imports them)
+ignore:   .godot/
+```
+
+When import parameters matter, verify the committed `.import` metadata reflects the approved settings.
 
 ## Blender MCP / CLI strategy
 
@@ -175,11 +262,11 @@ Prefer scripted, reproducible operations:
 
 ```text
 LLM/agent
- -> edit generator/tool code
- -> execute in Blender through MCP or CLI
- -> render preview
- -> inspect result
- -> revise code
+→ edit generator/tool code
+→ execute in Blender through MCP or CLI
+→ render preview
+→ inspect result
+→ revise code
 ```
 
 Avoid long sequences of fragile UI-level operations or vertex-by-vertex tool calls. MCP is an execution/inspection bridge; `bpy` code should carry most repeatable construction logic.
@@ -189,13 +276,16 @@ Avoid long sequences of fragile UI-level operations or vertex-by-vertex tool cal
 Commit:
 
 - generator source;
-- intentional `.blend` source for manually authored assets;
-- configuration/manifests;
+- intentional `.blend` sources for manually authored assets;
+- configurations/manifests;
 - approved small reference previews when useful;
-- runtime assets required to build/run the project unless build automation reliably regenerates them.
+- runtime `.glb` assets required by the project;
+- Godot `<asset>.import` metadata for imported runtime assets;
+- authored `.tscn`/`.tres` integration wrappers.
 
 Avoid committing:
 
+- `.godot/` generated cache;
 - temporary renders;
 - Blender backup/autosave files;
 - duplicated intermediate exports;
@@ -214,6 +304,6 @@ Before producing a large library, build one coherent tropical diorama containing
 - simple shelter;
 - placeholder character.
 
-At least one family (preferably palm trees or rocks) must be procedurally generated with several seed variants. At least two assets must expose semantic anchors and be exercised from Godot.
+At least one family (preferably palms or rocks) should be procedurally generated with several seed variants. At least two assets must expose semantic anchors and be exercised after Godot import.
 
-The experiment is successful if a second agent can read the documentation, generate a new compatible prop/family, and integrate it without inventing a new pipeline.
+The experiment succeeds when a second agent can read the catalog/contracts, create a compatible new prop/family, export it, import it into Godot and validate it without inventing a second pipeline.
