@@ -10,6 +10,7 @@ const WorldRelation = preload("res://src/domain/world/world_relation.gd")
 const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
+const DriveState = preload("res://src/domain/cognition/drive_state.gd")
 const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 const BeliefProposition = preload("res://src/domain/cognition/belief_proposition.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
@@ -75,6 +76,12 @@ func _run_test() -> void:
 	var intention_id = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"inspect_food")
 	_expect_true(intentions.select(intention_id, bindings, &"step_17").ok, "intention selected")
 	var body = WilsonBodyState.new(0.42)
+	var drives = DriveState.new({
+		DriveState.HUNGER: 0.81,
+		DriveState.ENERGY: 0.34,
+		DriveState.COMFORT: 0.57,
+		DriveState.STIMULATION: 0.12,
+	})
 
 	var snapshot_service = SimulationSnapshotService.new()
 	var snapshot = snapshot_service.capture(
@@ -83,7 +90,7 @@ func _run_test() -> void:
 		WilsonWorldState.new(camp),
 		beliefs,
 		intentions,
-		null,
+		drives,
 		null,
 		null,
 		null,
@@ -112,11 +119,14 @@ func _run_test() -> void:
 	_expect_true(is_equal_approx(common.wilson_body_state.vitality, legacy.wilson_body.vitality), "common bootstrap matches restored Wilson body vitality")
 	_expect_equal(common.wilson_body_state.alive, legacy.wilson_body.alive, "common bootstrap matches restored Wilson body life truth")
 	_expect_true(is_equal_approx(legacy.wilson_body.vitality, 0.42), "snapshot round-trip preserves Wilson body vitality")
+	_expect_equal(common.drives.snapshot_values(), legacy.drives.snapshot_values(), "common bootstrap matches restored DriveState")
+	_expect_equal(common.drives.snapshot_values(), drives.snapshot_values(), "shared bootstrap preserves durable drive values")
 	_expect_equal(_belief_fingerprint(common.beliefs), _belief_fingerprint(legacy.beliefs), "common bootstrap matches legacy restored beliefs")
 	_expect_equal(_intention_fingerprint(common.current_intention), _intention_fingerprint(legacy.current_intention), "common bootstrap matches legacy restored intention")
 	_expect_true(common.entities != legacy.entities, "common path reconstructs fresh EntityStore")
 	_expect_true(common.beliefs != legacy.beliefs, "common path reconstructs fresh BeliefStore")
 	_expect_true(common.wilson_body_state != legacy.wilson_body, "common path reconstructs fresh WilsonBodyState")
+	_expect_true(common.drives != legacy.drives, "common path reconstructs fresh DriveState")
 
 	_completed = true
 
