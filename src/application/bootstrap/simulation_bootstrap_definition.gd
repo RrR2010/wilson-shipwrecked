@@ -13,6 +13,9 @@ var association_seeds: Array
 var habit_seeds: Array
 var episode_seeds: Array
 var presence_seed
+var environment_weather: StringName
+var environment_daylight_phase: StringName
+var dynamic_process_seeds: Array
 
 func _init(
 	p_wilson_place_id,
@@ -26,10 +29,15 @@ func _init(
 	p_association_seeds: Array = [],
 	p_habit_seeds: Array = [],
 	p_episode_seeds: Array = [],
-	p_presence_seed = null
+	p_presence_seed = null,
+	p_environment_weather: StringName = &"clear",
+	p_environment_daylight_phase: StringName = &"day",
+	p_dynamic_process_seeds: Array = []
 ) -> void:
 	assert(p_wilson_place_id != null, "SimulationBootstrapDefinition requires Wilson place id")
 	assert(is_finite(p_wilson_body_vitality) and p_wilson_body_vitality >= 0.0 and p_wilson_body_vitality <= 1.0, "Wilson body vitality must be within [0,1]")
+	assert(p_environment_weather != &"", "SimulationBootstrapDefinition requires environment weather")
+	assert(p_environment_daylight_phase != &"", "SimulationBootstrapDefinition requires daylight phase")
 	wilson_place_id = p_wilson_place_id
 	entity_seeds = p_entity_seeds.duplicate()
 	relation_seeds = p_relation_seeds.duplicate()
@@ -42,3 +50,6 @@ func _init(
 	habit_seeds = p_habit_seeds.duplicate()
 	episode_seeds = p_episode_seeds.duplicate()
 	presence_seed = p_presence_seed
+	environment_weather = p_environment_weather
+	environment_daylight_phase = p_environment_daylight_phase
+	dynamic_process_seeds = p_dynamic_process_seeds.duplicate()
