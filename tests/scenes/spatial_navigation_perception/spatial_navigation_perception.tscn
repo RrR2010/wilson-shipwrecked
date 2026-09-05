@@ -202,6 +202,13 @@ position = Vector3(7, 0, 2)
 position = Vector3(0, 0.1, 0)
 mesh = SubResource("TargetMesh")
 
+[node name="EscapeTarget" type="Node3D" parent="."]
+position = Vector3(-7, 0, 5.5)
+
+[node name="Visual" type="MeshInstance3D" parent="EscapeTarget"]
+position = Vector3(0, 0.1, 0)
+mesh = SubResource("TargetMesh")
+
 [node name="Perceptible" type="StaticBody3D" parent="."]
 position = Vector3(-1.5, 0, 2.2)
 collision_layer = 4
