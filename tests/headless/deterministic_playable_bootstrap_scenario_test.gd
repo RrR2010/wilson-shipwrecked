@@ -20,7 +20,11 @@ func _run() -> void:
 
 	var scene = packed.instantiate()
 	var harness = EngineScenarioHarness.new(EngineScenarioHarness.Mode.AUTOMATED)
-	EngineScenarioSceneAdapter.new().configure(scene, harness)
+	# Keep a strong reference for the full scenario lifetime. The adapter is RefCounted;
+	# creating it inline can release it immediately after configure(), disconnecting the
+	# signal bridge before the deferred scenario bootstrap emits its first checkpoint.
+	var adapter = EngineScenarioSceneAdapter.new()
+	adapter.configure(scene, harness)
 	root.add_child(scene)
 
 	for _frame in range(900):
@@ -57,6 +61,9 @@ func _run() -> void:
 		var final_position: Array = Array(arrived.probes.get("position", []))
 		_expect_true(final_position.size() == 3 and float(final_position[0]) > 5.0, "Wilson physically reaches the target side of the 3D scene")
 
+	# Referencing adapter through this scope intentionally keeps the signal bridge alive
+	# until after all checkpoint assertions have completed.
+	assert(adapter != null)
 	scene.queue_free()
 	_finish()
 
