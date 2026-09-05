@@ -38,11 +38,22 @@ const CoarsePerceptionAccessResolver = preload("res://src/application/simulation
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
 const SimulationStepContext = preload("res://src/application/simulation/simulation_step_context.gd")
 const ReconsiderationGate = preload("res://src/application/simulation/reconsideration_gate.gd")
+const MutationResult = preload("res://src/domain/core/mutation_result.gd")
 const StaticWorldAdvance = preload("res://tests/headless/fixtures/static_world_advance.gd")
 const InMemoryTraceSink = preload("res://tests/headless/fixtures/in_memory_trace_sink.gd")
 
 var _failures: Array[String] = []
 var _completed := false
+
+
+class RecordingLifecycleCoordinator:
+	extends RefCounted
+	var batches: Array = []
+
+	func process(events: Array):
+		batches.append(events.duplicate())
+		return MutationResult.success(&"recorded_lifecycle_batch")
+
 
 func _init() -> void:
 	_run_slice()
@@ -56,6 +67,7 @@ func _init() -> void:
 		push_error(failure)
 	print("FAIL simulation_micro_loop_test: %d failure(s)" % _failures.size())
 	quit(1)
+
 
 func _run_slice() -> void:
 	var crate_type = DomainId.entity_type(&"crate")
@@ -114,10 +126,12 @@ func _run_slice() -> void:
 	var decision_commit = DecisionCommitCoordinator.new(intention_store)
 	var activity = DefaultSimulationActivityQuery.new(execution, intention_store)
 	var trace_sink = InMemoryTraceSink.new()
+	var lifecycle_coordinator = RecordingLifecycleCoordinator.new()
 	var orchestrator = SimulationOrchestrator.new(
 		StaticWorldAdvance.new(), execution, world_commands, derived_invalidator,
 		activity, access_resolver, perception, learning, opportunity_service,
-		belief_store, opportunity_definitions, router, decision_commit, trace_sink
+		belief_store, opportunity_definitions, router, decision_commit, trace_sink,
+		null, null, null, null, [], null, null, null, null, lifecycle_coordinator
 	)
 
 	var result = orchestrator.advance(SimulationStepContext.new(
@@ -136,6 +150,9 @@ func _run_slice() -> void:
 	_expect_equal(world_query.get_instance_property(crate, integrity), 2, "World mutation is visible after commit")
 	_expect_equal(result.world_commit.events.size(), 1, "World commit emits one event")
 	_expect_equal(result.world_commit.change_set.changes.size(), 1, "World commit reports one semantic change")
+	_expect_equal(lifecycle_coordinator.batches.size(), 1, "lifecycle coordinator runs once after committed events are assembled")
+	if lifecycle_coordinator.batches.size() == 1:
+		_expect_equal(lifecycle_coordinator.batches[0].size(), 1, "lifecycle coordinator receives committed event batch")
 	_expect_equal(result.perception.observed_events.size(), 1, "committed event becomes observed event")
 	_expect_equal(result.perception.evidence.size(), 1, "coarse spatial access produces one authored-role evidence")
 	_expect_equal(result.perception.evidence[0].claim.kind, EpistemicClaim.Kind.EVENT, "perception carries typed event claim")
@@ -156,6 +173,9 @@ func _run_slice() -> void:
 		_expect_equal(quiet_step.candidates.size(), 0, "quiet semantic step skips candidate generation")
 		_expect_true(quiet_step.decision == null, "quiet semantic step skips decision routing")
 		_expect_true(quiet_step.intention_commit == null, "quiet semantic step does not rewrite intention")
+	_expect_equal(lifecycle_coordinator.batches.size(), 2, "lifecycle coordinator runs at each committed-event boundary")
+	if lifecycle_coordinator.batches.size() == 2:
+		_expect_equal(lifecycle_coordinator.batches[1].size(), 0, "quiet semantic step forwards an empty committed-event batch")
 	_expect_equal(intention_store.current().intention_id.key(), investigate.key(), "quiet semantic step preserves current intention")
 
 	_expect_equal(trace_sink.traces.size(), 2, "both semantic steps are traced")
@@ -163,6 +183,7 @@ func _run_slice() -> void:
 		var trace = trace_sink.traces[0]
 		_expect_true(trace.stage_results.has(&"world_commit"), "trace records World commit")
 		_expect_true(trace.stage_results.has(&"derived_invalidation"), "trace records derived invalidation")
+		_expect_true(trace.stage_results.has(&"lifecycle_events"), "trace records committed-event lifecycle propagation")
 		_expect_true(trace.stage_results.has(&"perception"), "trace records perception")
 		_expect_true(trace.stage_results.has(&"immediate_learning"), "trace records learning")
 		_expect_true(trace.stage_results.has(&"reconsideration_triggers"), "trace records reconsideration triggers")
@@ -176,9 +197,11 @@ func _run_slice() -> void:
 
 	_completed = true
 
+
 func _expect_true(actual: bool, label: String) -> void:
 	if not actual:
 		_failures.append("Expected true: %s" % label)
+
 
 func _expect_equal(actual: Variant, expected: Variant, label: String) -> void:
 	if actual != expected:

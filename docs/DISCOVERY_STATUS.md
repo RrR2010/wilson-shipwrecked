@@ -21,8 +21,8 @@ The strict external runner is validated under **Godot 4.7.1**.
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 46 PASS / 46 TOTAL
-PASS headless_suite (46 tests)
+RESULT: 47 PASS / 47 TOTAL
+PASS headless_suite (47 tests)
 ```
 
 Manual real-engine validation also passed for `tests/scenes/spatial_navigation_perception/spatial_navigation_perception.tscn` with:
@@ -52,6 +52,7 @@ structural World/runtime foundation
 → real CharacterBody3D / NavigationAgent3D / navmesh / Area3D / raycast integration fixture
 → authored physical-observation admission → authoritative semantic WorldEvent → ordinary perception/evidence
 → admitted physical impact → World-owned WilsonBodyState mutation → SemanticChangeSet → injury/death WorldEvent
+→ grounded Wilson death WorldEvent → RunLifecycleState ACTIVE→DEAD
 ```
 
 ---
@@ -75,6 +76,7 @@ Player suggestions / bounded insistence           PASS
 Physical player intervention boundary             PASS
 Run lifecycle                                     PASS
 Resurrection transaction boundary                 PASS
+Grounded Wilson death lifecycle propagation       PASS
 PlayerProfile / cross-run Legacy admission        PASS
 Owner-local persistence for implemented owners    PASS
 Godot spatial / engine boundary                    PASS
@@ -84,7 +86,7 @@ Real LOS / occlusion integration                   PASS
 Physical observation semantic admission           PASS
 Grounded Wilson body impact consequences           PASS
 Generic reconsideration gate / trigger coalescing PASS
-Strict headless suite                              PASS — 46 tests
+Strict headless suite                              PASS — 47 tests
 ```
 
 ---
@@ -143,7 +145,7 @@ World truth
 
 `WilsonBodyState` now owns minimal physical body truth for Wilson: clamped `vitality ∈ [0,1]` plus `alive`. Authored physical consequence resolution mutates that World-owned state before emitting injury/death semantics. Repeated damage while dead is rejected, so the `alive → dead` edge occurs once.
 
-`RunLifecycleState` does **not** replace Wilson body truth. Physical death/injury remains World-owned. Resurrection is a lifecycle transaction that first requires the World/body owner to restore physical truth; only then may the run lifecycle return from `DEAD` to `ACTIVE`.
+`RunLifecycleState` does **not** replace Wilson body truth. Physical death/injury remains World-owned. `GroundedDeathLifecycleCoordinator` admits only an already-committed authored Wilson death event into lifecycle, preserving the causal order `World body death → WorldEvent → lifecycle DEAD`. Resurrection remains the inverse transaction boundary: the World/body owner must first restore physical truth before lifecycle can return from `DEAD` to `ACTIVE`.
 
 `PlayerProfile` is outside active Run state. Cross-run admission is deliberately allow-listed through `RunProfileProjection`; the projection does not contain Wilson episodes, habits, associations, Presence state, autobiographical causal history or death memories.
 
@@ -256,6 +258,7 @@ Implemented runtime:
 ```text
 WilsonBodyState
 RunLifecycleState
+GroundedDeathLifecycleCoordinator
 ResurrectionService
 RunProfileProjection
 EndRunService
@@ -269,9 +272,11 @@ Lifecycle/body relationship:
 WilsonBodyState alive
 → lethal admitted body consequence
 → WilsonBodyState dead
+→ authored wilson_died WorldEvent
+→ GroundedDeathLifecycleCoordinator
+→ RunLifecycleState DEAD
 
-RunLifecycleState ACTIVE
-→ DEAD                (automatic propagation still open)
+RunLifecycleState DEAD
 → ACTIVE              via admitted resurrection transaction
 
 ACTIVE or DEAD
@@ -280,8 +285,12 @@ ACTIVE or DEAD
 
 Validated semantics:
 
-- physical impact admission can now produce grounded nonlethal/lethal Wilson body truth;
+- physical impact admission can produce grounded nonlethal/lethal Wilson body truth;
 - successful body mutation precedes injury/death event emission;
+- only an authored Wilson death event bound to Wilson's `RuntimeWorldRef` propagates lifecycle `ACTIVE → DEAD`;
+- ordinary injury and death events for other subjects do not kill the run;
+- duplicate grounded death admission while already `DEAD` is idempotent and does not increment `death_count` again;
+- semantic death cause is recorded at the lifecycle boundary without reading body vitality or Godot callbacks;
 - physical resurrection restores `WilsonBodyState` before lifecycle revival;
 - resurrection cannot revive lifecycle when the World/body port rejects restoration;
 - EndRun ends the current run before admitting cross-run profile data;
@@ -292,7 +301,6 @@ Validated semantics:
 
 This vertical intentionally does **not** yet implement:
 
-- automatic `WilsonBodyState dead → RunLifecycleState.DEAD` propagation;
 - detailed injury locations, pain, bleeding, infection or healing;
 - Wilson body persistence/schema composition;
 - resurrection visuals/presentation;
@@ -328,7 +336,6 @@ A future full run-save boundary still needs to compose these owner snapshots int
 Still open:
 
 ```text
-Wilson body death → RunLifecycleState.DEAD cross-owner propagation
 collision/grounding/fall-specific consequence policies beyond impact damage
 semantic threshold/coalescing for gradual physical/environmental changes
 owner/service due scheduling fully wired across drives/processes/maintenance
@@ -352,28 +359,27 @@ Timing/decision-specific known issues:
 3. authored perceived threats synthesize the same-chain `THREAT` reconsideration trigger; other semantic trigger families still need representative producers rather than a generic "any perception changed" rule;
 4. discrete physical observations can be threshold-admitted into semantic consequences, but continuously changing physical/environment values still need coalescing/threshold policy to avoid semantic spam;
 5. drive persistence stores numeric values but not hysteresis-band memory, so deadband state can reconstruct differently after save/load;
-6. Wilson body injury/death truth is now grounded, but run-lifecycle death propagation and body persistence remain open;
+6. Wilson body injury/death truth and lifecycle propagation are now grounded, but Wilson body persistence/full save composition remain open;
 7. the immediate-threat slice commits a defensive intention but does not yet cancel/redirect concrete Godot motion or execute an escape route.
 
 ---
 
 # Remaining major verticals
 
-Recommended sequence from the validated 46-test checkpoint:
+Recommended sequence from the validated 47-test checkpoint:
 
 ```text
-1. grounded body death → run-lifecycle death transaction
-2. representative immediate-threat interruption scenario
+1. representative immediate-threat interruption scenario
    - physical hazard observation/consequence
    - perceived threat wake-up
    - concrete motion cancellation/redirection/escape
-3. semantic threshold/coalescing for gradual physical/environmental changes
-4. deterministic playable scenario/bootstrap tooling
-5. representative multi-system timing/scenario suites
+2. semantic threshold/coalescing for gradual physical/environmental changes
+3. deterministic playable scenario/bootstrap tooling
+4. representative multi-system timing/scenario suites
    - longer movement traces
    - accident / immediate-threat routing
    - seed-population tests
-6. Wilson body + full run-save/new-run composition
+5. Wilson body + full run-save/new-run composition
 ```
 
 The open design review at `docs/design-reviews/2026-09-01-simulation-cadence-engine-domain-integration.md` is partially consumed by the validated motion/perception/trigger/physical-admission/body-consequence work from PRs #17, #18, #19, #21, #23 and #25. It remains OPEN for due-scheduling, gradual-threshold/coalescing and the representative accident/timing scenario.
