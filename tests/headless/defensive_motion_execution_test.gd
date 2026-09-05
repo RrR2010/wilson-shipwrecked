@@ -29,13 +29,13 @@ func _init() -> void:
 
 
 func _run_slice() -> void:
-	var wilson := RuntimeWorldRef.wilson()
-	var threat := RuntimeWorldRef.entity(DomainId.entity(&"falling_palm"))
-	var original_target := RuntimeWorldRef.entity(DomainId.entity(&"foraging_target"))
-	var escape_a := RuntimeWorldRef.entity(DomainId.entity(&"escape_a"))
-	var escape_b := RuntimeWorldRef.entity(DomainId.entity(&"escape_b"))
-	var blocked_far := RuntimeWorldRef.entity(DomainId.entity(&"blocked_far"))
-	var insufficient_gain := RuntimeWorldRef.entity(DomainId.entity(&"insufficient_gain"))
+	var wilson: RuntimeWorldRef = RuntimeWorldRef.wilson()
+	var threat: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"falling_palm"))
+	var original_target: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"foraging_target"))
+	var escape_a: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"escape_a"))
+	var escape_b: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"escape_b"))
+	var blocked_far: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"blocked_far"))
+	var insufficient_gain: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"insufficient_gain"))
 	var dodge = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"dodge_threat")
 	var forage = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"forage")
 
