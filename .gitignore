@@ -1,6 +1,5 @@
-# Godot generated/import state
+# Godot generated/import cache
 .godot/
-*.import
 
 # Local AI/editor tooling
 .opencode/
