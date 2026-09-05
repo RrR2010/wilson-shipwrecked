@@ -3,6 +3,7 @@ extends RefCounted
 
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const DecisionCandidate = preload("res://src/domain/cognition/decision_candidate.gd")
+const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 
 ## Reifies target-bound decision candidates from Wilson's durable beliefs.
 ##
@@ -31,7 +32,7 @@ func generate() -> Array:
 			if definition == null or not definition.matches(claim):
 				continue
 			var binding = RoleBinding.new()
-			binding.bind(definition.target_role, claim.subject)
+			binding.bind(definition.target_role, _opportunity_target(claim))
 			result.append(DecisionCandidate.new(
 				definition.intention_id,
 				binding,
@@ -50,3 +51,9 @@ func generate() -> Array:
 			))
 	result.sort_custom(func(a, b): return a.stable_key() < b.stable_key())
 	return result
+
+
+func _opportunity_target(claim):
+	if claim.kind == EpistemicClaim.Kind.RELATION:
+		return claim.object
+	return claim.subject
