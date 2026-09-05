@@ -1,9 +1,9 @@
 class_name RunRuntimeRestoreResult
 extends RefCounted
 
-## Result carrier for restoring authoritative simulation owners and the
-## content-dependent reconstructible runtime that consumes them.
-## It owns no gameplay truth.
+## Result carrier for restoring authoritative current-run state and the
+## reconstructible runtime that consumes it. PlayerProfile remains cross-run
+## state and is intentionally not carried here.
 
 var ok: bool
 var code: StringName
@@ -11,6 +11,9 @@ var diagnostics: Array[String]
 var simulation
 var runtime
 var action_restore_results: Array
+var run_lifecycle
+var director
+var player
 
 
 func _init(
@@ -19,7 +22,10 @@ func _init(
 	p_diagnostics: Array[String] = [],
 	p_simulation = null,
 	p_runtime = null,
-	p_action_restore_results: Array = []
+	p_action_restore_results: Array = [],
+	p_run_lifecycle = null,
+	p_director = null,
+	p_player = null
 ) -> void:
 	ok = p_ok
 	code = p_code
@@ -27,9 +33,19 @@ func _init(
 	simulation = p_simulation
 	runtime = p_runtime
 	action_restore_results = p_action_restore_results.duplicate()
+	run_lifecycle = p_run_lifecycle
+	director = p_director
+	player = p_player
 
 
-static func success(p_simulation, p_runtime, p_action_restore_results: Array):
+static func success(
+	p_simulation,
+	p_runtime,
+	p_action_restore_results: Array,
+	p_run_lifecycle = null,
+	p_director = null,
+	p_player = null
+):
 	assert(p_simulation != null, "Successful runtime restore requires simulation state")
 	assert(p_runtime != null, "Successful runtime restore requires runtime composition")
 	return new(
@@ -38,7 +54,10 @@ static func success(p_simulation, p_runtime, p_action_restore_results: Array):
 		[],
 		p_simulation,
 		p_runtime,
-		p_action_restore_results
+		p_action_restore_results,
+		p_run_lifecycle,
+		p_director,
+		p_player
 	)
 
 
