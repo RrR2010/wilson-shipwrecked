@@ -8,6 +8,7 @@ var belief_seeds: Array
 var intention_seed
 var wilson_body_vitality: float
 var drive_values: Dictionary
+var project_seeds: Array
 
 func _init(
 	p_wilson_place_id,
@@ -16,7 +17,8 @@ func _init(
 	p_belief_seeds: Array = [],
 	p_intention_seed = null,
 	p_wilson_body_vitality: float = 1.0,
-	p_drive_values: Dictionary = {}
+	p_drive_values: Dictionary = {},
+	p_project_seeds: Array = []
 ) -> void:
 	assert(p_wilson_place_id != null, "SimulationBootstrapDefinition requires Wilson place id")
 	assert(is_finite(p_wilson_body_vitality) and p_wilson_body_vitality >= 0.0 and p_wilson_body_vitality <= 1.0, "Wilson body vitality must be within [0,1]")
@@ -27,3 +29,4 @@ func _init(
 	intention_seed = p_intention_seed
 	wilson_body_vitality = p_wilson_body_vitality
 	drive_values = p_drive_values.duplicate(true)
+	project_seeds = p_project_seeds.duplicate()
