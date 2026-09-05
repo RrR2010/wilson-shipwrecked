@@ -11,6 +11,7 @@ var beliefs
 var current_intention
 var wilson_body_state
 var drives
+var projects
 
 func _init(
 	p_entities,
@@ -19,7 +20,8 @@ func _init(
 	p_beliefs,
 	p_current_intention,
 	p_wilson_body_state,
-	p_drives
+	p_drives,
+	p_projects
 ) -> void:
 	entities = p_entities
 	relations = p_relations
@@ -28,3 +30,4 @@ func _init(
 	current_intention = p_current_intention
 	wilson_body_state = p_wilson_body_state
 	drives = p_drives
+	projects = p_projects
