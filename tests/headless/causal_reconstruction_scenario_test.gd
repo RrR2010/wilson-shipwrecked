@@ -100,7 +100,9 @@ func _run_scenario() -> void:
 	var restored_runtime = restored_composition.composition
 	var restore_results = action_persistence.restore(action_pre, restored_runtime.action_execution, content)
 	_expect_equal(restore_results.size(), 1, "one active action restores")
-	_expect_true(restore_results[0].ok, "pre-commit action restore valid")
+	_expect_true(not restore_results.is_empty() and restore_results[0].ok, "pre-commit action restore valid")
+	if restore_results.is_empty() or not restore_results[0].ok:
+		return
 	_expect_equal(restored_runtime.effective_physical_profiles.resolve(crate).get_property(DomainId.property(&"effective_resistance")), 4, "derived query matches after pre-commit restore")
 
 	var crossing = restored_runtime.action_execution.advance(&"exec_causal", 0.25)
@@ -158,7 +160,9 @@ func _run_scenario() -> void:
 	_expect_equal(restored_again.epistemic_projection.query_by_semantic_id(DomainId.event_definition(&"impact_committed")).size(), 1, "typed epistemic index rebuilds after second restore")
 
 	var second_restore = action_persistence.restore(action_post, second_runtime.action_execution, content)
-	_expect_true(second_restore[0].ok, "completed action reconstructs")
+	_expect_true(not second_restore.is_empty() and second_restore[0].ok, "completed action reconstructs")
+	if second_restore.is_empty() or not second_restore[0].ok:
+		return
 	var terminal_progress = second_runtime.action_execution.advance(&"exec_causal", 1.0)
 	_expect_true(terminal_progress.completed, "completed action remains terminal after second restore")
 	_expect_true(terminal_progress.new_outcome == null, "terminal reconstruction cannot duplicate outcome")
