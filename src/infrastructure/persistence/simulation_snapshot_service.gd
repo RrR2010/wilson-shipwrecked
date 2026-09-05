@@ -20,7 +20,6 @@ const AssociationStore = preload("res://src/domain/cognition/association_store.g
 const HabitStore = preload("res://src/domain/cognition/habit_store.gd")
 const EpisodeStore = preload("res://src/domain/cognition/episode_store.gd")
 const PresenceRelationship = preload("res://src/domain/cognition/presence_relationship.gd")
-const ProjectInstance = preload("res://src/domain/projects/project_instance.gd")
 const ProjectStore = preload("res://src/domain/projects/project_store.gd")
 const EpistemicGraphProjection = preload("res://src/domain/cognition/epistemic_graph_projection.gd")
 const DomainValueCodec = preload("res://src/infrastructure/persistence/domain_value_codec.gd")
@@ -102,17 +101,7 @@ func restore(snapshot: Dictionary):
 	var beliefs = owners.beliefs
 	var intention_store = owners.current_intention
 	var drives = owners.drives
-
-	var projects = ProjectStore.new()
-	for record in snapshot.get("projects", []):
-		var project = ProjectInstance.new(
-			_codec.decode(record["id"]),
-			_codec.decode(record["definition_id"]),
-			_decode_binding(record["subject_bindings"]),
-			int(record["lifecycle"]),
-			int(record["contribution_count"])
-		)
-		assert(projects.add(project), "Failed to restore duplicate project instance")
+	var projects = owners.projects
 
 	var associations = AssociationStore.new()
 	for record in snapshot.get("associations", []):
