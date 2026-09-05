@@ -134,6 +134,59 @@ Automated and assisted modes should exercise the same scenario logic where pract
 
 ---
 
+# EngineScenarioHarness
+
+The reusable harness is implemented under:
+
+```text
+tests/support/engine_scenario/
+```
+
+Its boundary is intentionally infrastructure-only. It supports:
+
+```text
+AUTOMATED / ASSISTED mode
+semantic checkpoints
+opaque probe dictionaries
+structured trace/log records
+optional JSONL console output
+explicit assisted continue
+completion/failure state
+bounded waits
+```
+
+It does not interpret gameplay semantics and must not gain knowledge of Wilson, Gerald, threats, hunger, motion targets or particular intentions.
+
+For an existing scene that already emits checkpoint and completion signals, prefer an adapter rather than embedding harness behavior into gameplay logic. `EngineScenarioSceneAdapter` translates the generic scene protocol:
+
+```text
+checkpoint_reached(name, details)
+continue_requested()
+smoke_finished(success, report)
+```
+
+into the harness contract.
+
+The spatial/navigation/perception fixture is the reference consumer:
+
+```text
+Automated:
+tests/headless/spatial_navigation_perception_harness_test.gd
+
+Assisted:
+tests/scenes/spatial_navigation_perception/spatial_navigation_perception_harness_assisted.tscn
+```
+
+Run the assisted reference scenario with:
+
+```powershell
+godot --path . tests/scenes/spatial_navigation_perception/spatial_navigation_perception_harness_assisted.tscn
+```
+
+At each semantic checkpoint, inspect the visible scene if useful and press `Space` once to continue. Both modes execute the same underlying `spatial_navigation_perception.gd` scenario logic.
+
+---
+
 # Semantic checkpoints
 
 ## Checkpoint names describe causal state, not frame numbers
@@ -685,15 +738,15 @@ If a failure merely reports `Expected true`, improve the assertion label and/or 
 
 # Recommended reusable harness boundary
 
-A small future harness may centralize infrastructure such as:
+The reusable harness centralizes infrastructure such as:
 
 ```text
 checkpoint(name, probes)
 pause/resume assisted mode
-structured one-line logging
+structured logging
 trace record collection
-optional JSONL export
-scenario completion/failure accumulation
+optional JSONL output
+scenario completion/failure state
 bounded wait helpers
 ```
 
@@ -709,7 +762,7 @@ probe
 trace
 failure
 complete
-wait physics frames
+bounded wait
 assisted/automated mode
 ```
 
