@@ -13,11 +13,11 @@ Strict external runner: **Godot 4.7.1**.
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 58 PASS / 58 TOTAL
-PASS headless_suite (58 tests)
+RESULT: 60 PASS / 60 TOTAL
+PASS headless_suite (60 tests)
 ```
 
-The strict suite includes real-engine spatial/navigation/perception coverage, the integrated Gerald/falling-palm timing regression, deterministic runtime composition/bootstrap coverage, snapshot/bootstrap equivalence coverage, and automated engine-scenario harness coverage. The same representative spatial/navigation/perception scenario was also operator-validated in assisted mode with one `Space` continue per semantic checkpoint.
+The strict suite includes real-engine spatial/navigation/perception coverage, the integrated Gerald/falling-palm timing regression, deterministic runtime composition/bootstrap coverage, snapshot/bootstrap equivalence coverage, automated engine-scenario harness coverage, current-intention motion-resume coverage, and the first deterministic playable/bootstrap 3D scenario driven end-to-end by the shared bootstrap/runtime path. The representative spatial/navigation/perception scenario was also operator-validated in assisted mode with one `Space` continue per semantic checkpoint.
 
 Validated causal breadth includes:
 
@@ -43,6 +43,8 @@ structural World/runtime foundation
 → deterministic scenario definition → common owner bootstrap → runtime composition
 → simulation snapshot v9 → common core owner bootstrap
 → engine scenario → generic checkpoints/probes/trace → automated or assisted execution
+→ deterministic scenario definition → authoritative current intention → shared bootstrap/runtime composition
+  → intention resume → real Godot motion → GodotSimulationHost progression → observable ARRIVED
 ```
 
 ---
@@ -83,7 +85,9 @@ Snapshot/core-bootstrap equivalence               PASS
 EngineScenarioHarness core                         PASS
 Engine scenario AUTOMATED adapter                  PASS
 Engine scenario ASSISTED checkpoint flow           PASS
-Strict headless suite                             PASS — 58 tests
+Current-intention motion resume                    PASS
+Deterministic playable/bootstrap 3D scenario       PASS
+Strict headless suite                             PASS — 60 tests
 ```
 
 ---
@@ -152,6 +156,8 @@ SpatialQueryPort
 MotionPort
 EscapeDestinationResolver
 DefensiveMotionExecutionCoordinator
+DirectTargetMotionExecutionCoordinator
+CurrentIntentionExecutionCoordinator
 PhysicalObservation / PhysicalObservationPort
 PhysicalObservationConsequenceResolver
 PhysicalConsequenceWorldAdvanceDecorator
@@ -186,7 +192,9 @@ Validated semantics:
 - skipped heartbeat elapsed is conserved and released only when the owner is due;
 - gradual environment truth changes numerically without event spam; authored crossings produce deterministic coalesced semantic events;
 - the integrated timing regression proves long physical movement, semantic heartbeats, due-only gradual work, Gerald perception while MOVING, later falling-palm threat wake-up, and concrete escape redirection in one trace;
-- engine scenarios can expose the same deterministic scenario logic through AUTOMATED strict execution or ASSISTED semantic checkpoints without placing gameplay semantics in the harness.
+- engine scenarios can expose the same deterministic scenario logic through AUTOMATED strict execution or ASSISTED semantic checkpoints without placing gameplay semantics in the harness;
+- an already-authoritative current intention can be re-applied after bootstrap/restore through a narrow application coordinator without re-selecting cognition or making the scene call `MotionPort` directly;
+- the deterministic playable/bootstrap fixture proves that reconstructed current intention can drive real Godot navigation under `GodotSimulationHost` through observable `BOOTSTRAPPED → INTENTION_RESUMED → MOVING → ARRIVED → COMPLETE` checkpoints.
 
 Fine transforms, nav paths, passive candidate sets and physics observations remain infrastructure facts and are not persisted as domain truth.
 
@@ -203,6 +211,8 @@ RunRuntimeComposer
 DeterministicScenarioDefinition
 DeterministicScenarioBootstrapService
 SimulationSnapshotBootstrapDecoder
+CurrentIntentionExecutionCoordinator
+DirectTargetMotionExecutionCoordinator
 ```
 
 The shared core path is:
@@ -223,7 +233,9 @@ snapshot v9 decode ──┘
 
 The common owner bootstrap currently covers `EntityStore`, `WorldRelationStore`, `WilsonWorldState`, `BeliefStore`, and `CurrentIntentionStore`. Snapshot restoration for the remaining persisted owners still stays in `SimulationSnapshotService`; full-run/new-run composition remains open.
 
-Validated properties include owner-state preservation, no composition side effects, insertion-order-independent semantic queries, equivalent recomposition from equivalent durable causes, non-empty cognition preservation, fresh-owner deterministic scenario rebootstrap, duplicate admission rejection, and snapshot/common-bootstrap semantic equivalence.
+Validated properties include owner-state preservation, no composition side effects, insertion-order-independent semantic queries, equivalent recomposition from equivalent durable causes, non-empty cognition preservation, fresh-owner deterministic scenario rebootstrap, duplicate admission rejection, snapshot/common-bootstrap semantic equivalence, idempotent current-intention motion resume, and real-engine bootstrap-to-arrival execution.
+
+The first playable/bootstrap 3D fixture deliberately starts with a selected `CurrentIntention` as an authoritative durable cause. It therefore validates resume/reification after reconstruction rather than drive-based intention selection. This avoids creating an unshared scenario-only `DriveState` bootstrap path while the full owner bootstrap remains incomplete.
 
 ---
 
@@ -252,6 +264,8 @@ bounded waits
 It does not know Wilson, threat, movement, Gerald, perception, or other gameplay semantics. `EngineScenarioSceneAdapter` translates the existing signal-based scene contract into the harness while the scene remains responsible for its own deterministic behavior and input handling.
 
 The representative `spatial_navigation_perception` fixture has been validated through both modes. AUTOMATED mode is part of the strict headless suite. ASSISTED mode uses the same scene logic and pauses at `SCENE_READY`, `PASSIVE_WHILE_MOVING`, `ARRIVED`, `THREAT_REDIRECT`, `LOS_BLOCKED`, and `COMPLETE`, with one `Space` input releasing each checkpoint.
+
+The deterministic playable/bootstrap 3D fixture is now also part of the AUTOMATED strict suite and uses the harness to expose causal runtime checkpoints rather than frame-perfect assertions.
 
 ---
 
@@ -288,12 +302,12 @@ automatic habit-disuse/context producers
 Presence causal-attribution production
 Wilson body persistence/full run-save composition
 full new-run lifecycle/reset composition around the validated core bootstrap
+shared bootstrap coverage for remaining authoritative owners, including drives where appropriate
 Legacy-to-new-Wilson seeding policy
 orientation/view-cone passive refresh
 negative/absence perceptual evidence on passive exit
 richer Gerald behavior/relationship semantics
 production falling-palm rigid-body authoring
-first deterministic playable/bootstrap 3D scenario driven end-to-end by shared bootstrap/runtime composition
 ```
 
 These are future product/runtime slices, not unresolved cadence/engine-domain architecture blockers.
@@ -302,15 +316,18 @@ These are future product/runtime slices, not unresolved cadence/engine-domain ar
 
 # Recommended next major verticals
 
-From the validated 58-test checkpoint:
+From the validated 60-test checkpoint:
 
 ```text
-1. first deterministic playable/bootstrap 3D scenario driven end-to-end by shared bootstrap/runtime composition
-2. Wilson body + full run-save/new-run composition
-3. richer representative gameplay semantics driven by scene catalog needs
+1. Wilson body + full run-save/new-run composition
+   - extend shared reconstruction beyond the current core owners
+   - integrate action-execution lifecycle restoration with runtime composition
+   - define reset/rebootstrap semantics without parallel authority paths
+2. richer representative gameplay semantics driven by scene catalog needs
    - Gerald behavior/relationships
    - physical accident authoring where needed
    - learned route/escape reasoning
+3. drive-backed autonomous new-run behavior once drive ownership/bootstrap participates in the common path
 ```
 
 The design review at `docs/design-reviews/2026-09-01-simulation-cadence-engine-domain-integration.md` is now **COMPLETED** through PR #35. The integrated timing scenario closed its final substantive checklist item.
