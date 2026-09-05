@@ -7,5 +7,5 @@
 script = ExtResource("1_runner")
 
 [node name="SpatialNavigationPerception" parent="." instance=ExtResource("2_fixture")]
-auto_start = false
+auto_start = true
 pause_at_checkpoints = true
