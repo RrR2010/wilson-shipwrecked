@@ -15,6 +15,7 @@ const AssociationBootstrapSeed = preload("res://src/application/bootstrap/associ
 const HabitBootstrapSeed = preload("res://src/application/bootstrap/habit_bootstrap_seed.gd")
 const EpisodeBootstrapSeed = preload("res://src/application/bootstrap/episode_bootstrap_seed.gd")
 const PresenceBootstrapSeed = preload("res://src/application/bootstrap/presence_bootstrap_seed.gd")
+const DynamicProcessBootstrapSeed = preload("res://src/application/bootstrap/dynamic_process_bootstrap_seed.gd")
 
 ## Persistence-facing decoder from schema DTOs into the application bootstrap
 ## contract. Snapshot schema/codec concerns stay here; owner construction stays in
@@ -36,6 +37,8 @@ func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 	assert(drive_record is Dictionary, "Snapshot missing Wilson drive state")
 	var presence_record = snapshot.get("presence")
 	assert(presence_record is Dictionary, "Snapshot missing Presence relationship")
+	var environment_record = snapshot.get("environment")
+	assert(environment_record is Dictionary, "Snapshot missing environment state")
 
 	var entity_seeds: Array = []
 	for record in snapshot.get("entities", []):
@@ -125,6 +128,16 @@ func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 		StringName(presence_record.get("last_source_execution_id", ""))
 	)
 
+	var dynamic_process_seeds: Array = []
+	for record in snapshot.get("dynamic_processes", []):
+		dynamic_process_seeds.append(DynamicProcessBootstrapSeed.new(
+			StringName(record["id"]),
+			StringName(record["definition_id"]),
+			_codec.decode(record["subject"]),
+			int(record["lifecycle"]),
+			float(record["elapsed"])
+		))
+
 	return SimulationBootstrapDefinition.new(
 		_codec.decode(wilson_record["place_id"]),
 		entity_seeds,
@@ -137,7 +150,10 @@ func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 		association_seeds,
 		habit_seeds,
 		episode_seeds,
-		presence_seed
+		presence_seed,
+		StringName(environment_record["weather"]),
+		StringName(environment_record["daylight_phase"]),
+		dynamic_process_seeds
 	)
 
 
