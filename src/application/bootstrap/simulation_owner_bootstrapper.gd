@@ -83,7 +83,10 @@ func bootstrap(definition):
 			seed.contribution_count
 		)
 		if not projects.add(project):
-			return SimulationBootstrapResult.failure(&"duplicate_project_instance", {"project_id": seed.id.sort_key()})
+			return SimulationBootstrapResult.failure(
+				&"duplicate_project_instance",
+				["Duplicate project instance: %s" % seed.id.sort_key()]
+			)
 
 	return SimulationBootstrapResult.success(SimulationOwnerSet.new(
 		entities,
