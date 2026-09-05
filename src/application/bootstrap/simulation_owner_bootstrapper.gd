@@ -10,6 +10,8 @@ const WilsonBodyState = preload("res://src/domain/world/wilson_body_state.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
+const ProjectInstance = preload("res://src/domain/projects/project_instance.gd")
+const ProjectStore = preload("res://src/domain/projects/project_store.gd")
 const SimulationOwnerSet = preload("res://src/application/bootstrap/simulation_owner_set.gd")
 const SimulationBootstrapResult = preload("res://src/application/bootstrap/simulation_bootstrap_result.gd")
 
@@ -71,6 +73,18 @@ func bootstrap(definition):
 		if not intention_result.ok:
 			return SimulationBootstrapResult.failure(intention_result.code, intention_result.diagnostics)
 
+	var projects = ProjectStore.new()
+	for seed in definition.project_seeds:
+		var project = ProjectInstance.new(
+			seed.id,
+			seed.definition_id,
+			seed.subject_bindings,
+			seed.lifecycle,
+			seed.contribution_count
+		)
+		if not projects.add(project):
+			return SimulationBootstrapResult.failure(&"duplicate_project_instance", {"project_id": seed.id.sort_key()})
+
 	return SimulationBootstrapResult.success(SimulationOwnerSet.new(
 		entities,
 		relations,
@@ -78,5 +92,6 @@ func bootstrap(definition):
 		beliefs,
 		intentions,
 		WilsonBodyState.new(definition.wilson_body_vitality),
-		DriveState.new(definition.drive_values)
+		DriveState.new(definition.drive_values),
+		projects
 	))
