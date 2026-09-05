@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://tests/scenes/spatial_navigation_perception/spatial_navigation_perception_harness_assisted.gd" id="1_runner"]
+[ext_resource type="PackedScene" path="res://tests/scenes/spatial_navigation_perception/spatial_navigation_perception.tscn" id="2_fixture"]
+
+[node name="SpatialNavigationPerceptionHarnessAssisted" type="Node"]
+script = ExtResource("1_runner")
+
+[node name="SpatialNavigationPerception" parent="." instance=ExtResource("2_fixture")]
+auto_start = false
+pause_at_checkpoints = true
