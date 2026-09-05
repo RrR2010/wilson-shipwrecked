@@ -16,6 +16,7 @@ var presence_seed
 var environment_weather: StringName
 var environment_daylight_phase: StringName
 var dynamic_process_seeds: Array
+var actor_state_seeds: Array
 
 func _init(
 	p_wilson_place_id,
@@ -32,7 +33,8 @@ func _init(
 	p_presence_seed = null,
 	p_environment_weather: StringName = &"clear",
 	p_environment_daylight_phase: StringName = &"day",
-	p_dynamic_process_seeds: Array = []
+	p_dynamic_process_seeds: Array = [],
+	p_actor_state_seeds: Array = []
 ) -> void:
 	assert(p_wilson_place_id != null, "SimulationBootstrapDefinition requires Wilson place id")
 	assert(is_finite(p_wilson_body_vitality) and p_wilson_body_vitality >= 0.0 and p_wilson_body_vitality <= 1.0, "Wilson body vitality must be within [0,1]")
@@ -53,3 +55,4 @@ func _init(
 	environment_weather = p_environment_weather
 	environment_daylight_phase = p_environment_daylight_phase
 	dynamic_process_seeds = p_dynamic_process_seeds.duplicate()
+	actor_state_seeds = p_actor_state_seeds.duplicate()
