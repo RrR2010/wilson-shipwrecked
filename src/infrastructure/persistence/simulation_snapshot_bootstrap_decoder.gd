@@ -16,6 +16,7 @@ const HabitBootstrapSeed = preload("res://src/application/bootstrap/habit_bootst
 const EpisodeBootstrapSeed = preload("res://src/application/bootstrap/episode_bootstrap_seed.gd")
 const PresenceBootstrapSeed = preload("res://src/application/bootstrap/presence_bootstrap_seed.gd")
 const DynamicProcessBootstrapSeed = preload("res://src/application/bootstrap/dynamic_process_bootstrap_seed.gd")
+const ActorStateBootstrapSeed = preload("res://src/application/bootstrap/actor_state_bootstrap_seed.gd")
 
 ## Persistence-facing decoder from schema DTOs into the application bootstrap
 ## contract. Snapshot schema/codec concerns stay here; owner construction stays in
@@ -23,10 +24,8 @@ const DynamicProcessBootstrapSeed = preload("res://src/application/bootstrap/dyn
 
 var _codec
 
-
 func _init(codec = null) -> void:
 	_codec = codec if codec != null else DomainValueCodec.new()
-
 
 func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 	var wilson_record = snapshot.get("wilson_world")
@@ -42,120 +41,59 @@ func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 
 	var entity_seeds: Array = []
 	for record in snapshot.get("entities", []):
-		entity_seeds.append(EntityBootstrapSeed.new(
-			_codec.decode(record["id"]),
-			_codec.decode(record["type_id"]),
-			_codec.decode(record["place_id"]),
-			int(record["lifecycle"]),
-			_codec.decode(record["state_overrides"]),
-			_codec.decode(record["quantity"])
-		))
+		entity_seeds.append(EntityBootstrapSeed.new(_codec.decode(record["id"]), _codec.decode(record["type_id"]), _codec.decode(record["place_id"]), int(record["lifecycle"]), _codec.decode(record["state_overrides"]), _codec.decode(record["quantity"])))
 
 	var relation_seeds: Array = []
 	for record in snapshot.get("relations", []):
-		relation_seeds.append(RelationBootstrapSeed.new(
-			_codec.decode(record["relation_type"]),
-			_codec.decode(record["subject"]),
-			_codec.decode(record["object"]),
-			_codec.decode(record["qualifier"])
-		))
+		relation_seeds.append(RelationBootstrapSeed.new(_codec.decode(record["relation_type"]), _codec.decode(record["subject"]), _codec.decode(record["object"]), _codec.decode(record["qualifier"])))
 
 	var belief_seeds: Array = []
 	for record in snapshot.get("beliefs", []):
-		belief_seeds.append(BeliefBootstrapSeed.new(
-			BeliefProposition.new(_codec.decode(record["claim"])),
-			float(record["confidence"]),
-			int(record["evidence_count"]),
-			StringName(record.get("last_source_execution_id", "")),
-			StringName(record.get("last_modality", ""))
-		))
+		belief_seeds.append(BeliefBootstrapSeed.new(BeliefProposition.new(_codec.decode(record["claim"])), float(record["confidence"]), int(record["evidence_count"]), StringName(record.get("last_source_execution_id", "")), StringName(record.get("last_modality", ""))))
 
 	var intention_seed = null
 	var intention_record = snapshot.get("current_intention")
 	if intention_record != null:
-		intention_seed = IntentionBootstrapSeed.new(
-			_codec.decode(intention_record["intention_id"]),
-			_decode_binding(intention_record["bindings"]),
-			StringName(intention_record["selected_step_id"])
-		)
+		intention_seed = IntentionBootstrapSeed.new(_codec.decode(intention_record["intention_id"]), _decode_binding(intention_record["bindings"]), StringName(intention_record["selected_step_id"]))
 
 	var project_seeds: Array = []
 	for record in snapshot.get("projects", []):
-		project_seeds.append(ProjectBootstrapSeed.new(
-			_codec.decode(record["id"]),
-			_codec.decode(record["definition_id"]),
-			_decode_binding(record["subject_bindings"]),
-			int(record["lifecycle"]),
-			int(record["contribution_count"])
-		))
+		project_seeds.append(ProjectBootstrapSeed.new(_codec.decode(record["id"]), _codec.decode(record["definition_id"]), _decode_binding(record["subject_bindings"]), int(record["lifecycle"]), int(record["contribution_count"])))
 
 	var association_seeds: Array = []
 	for record in snapshot.get("associations", []):
-		association_seeds.append(AssociationBootstrapSeed.new(
-			_codec.decode(record["subject"]),
-			float(record["valence"]),
-			float(record["attachment"]),
-			int(record["evidence_count"]),
-			StringName(record.get("last_source_execution_id", ""))
-		))
+		association_seeds.append(AssociationBootstrapSeed.new(_codec.decode(record["subject"]), float(record["valence"]), float(record["attachment"]), int(record["evidence_count"]), StringName(record.get("last_source_execution_id", ""))))
 
 	var habit_seeds: Array = []
 	for record in snapshot.get("habits", []):
-		habit_seeds.append(HabitBootstrapSeed.new(
-			StringName(record["cue_id"]),
-			_codec.decode(record["intention_id"]),
-			_decode_binding(record["bindings"]),
-			float(record["strength"]),
-			int(record["evidence_count"]),
-			StringName(record.get("last_source_execution_id", ""))
-		))
+		habit_seeds.append(HabitBootstrapSeed.new(StringName(record["cue_id"]), _codec.decode(record["intention_id"]), _decode_binding(record["bindings"]), float(record["strength"]), int(record["evidence_count"]), StringName(record.get("last_source_execution_id", ""))))
 
 	var episode_seeds: Array = []
 	for record in snapshot.get("episodes", []):
-		episode_seeds.append(EpisodeBootstrapSeed.new(
-			_codec.decode(record["claim"]),
-			float(record["importance"]),
-			StringName(record["source_execution_id"]),
-			StringName(record["modality"]),
-			int(record["sequence"])
-		))
+		episode_seeds.append(EpisodeBootstrapSeed.new(_codec.decode(record["claim"]), float(record["importance"]), StringName(record["source_execution_id"]), StringName(record["modality"]), int(record["sequence"])))
 
-	var presence_seed = PresenceBootstrapSeed.new(
-		float(presence_record["presence_belief"]),
-		float(presence_record["trust"]),
-		float(presence_record["dependency"]),
-		int(presence_record["evidence_count"]),
-		StringName(presence_record.get("last_source_execution_id", ""))
-	)
+	var presence_seed = PresenceBootstrapSeed.new(float(presence_record["presence_belief"]), float(presence_record["trust"]), float(presence_record["dependency"]), int(presence_record["evidence_count"]), StringName(presence_record.get("last_source_execution_id", "")))
 
 	var dynamic_process_seeds: Array = []
 	for record in snapshot.get("dynamic_processes", []):
-		dynamic_process_seeds.append(DynamicProcessBootstrapSeed.new(
-			StringName(record["id"]),
-			StringName(record["definition_id"]),
-			_codec.decode(record["subject"]),
-			int(record["lifecycle"]),
-			float(record["elapsed"])
+		dynamic_process_seeds.append(DynamicProcessBootstrapSeed.new(StringName(record["id"]), StringName(record["definition_id"]), _codec.decode(record["subject"]), int(record["lifecycle"]), float(record["elapsed"])))
+
+	var actor_state_seeds: Array = []
+	for record in snapshot.get("actors", []):
+		actor_state_seeds.append(ActorStateBootstrapSeed.new(
+			_codec.decode(record["actor"]),
+			StringName(record["profile_id"]),
+			StringName(record["mode"]),
+			float(record["decision_cooldown"]),
+			StringName(record.get("last_rule_id", ""))
 		))
 
 	return SimulationBootstrapDefinition.new(
-		_codec.decode(wilson_record["place_id"]),
-		entity_seeds,
-		relation_seeds,
-		belief_seeds,
-		intention_seed,
-		float(body_record["vitality"]),
-		_decode_drives(drive_record),
-		project_seeds,
-		association_seeds,
-		habit_seeds,
-		episode_seeds,
-		presence_seed,
-		StringName(environment_record["weather"]),
-		StringName(environment_record["daylight_phase"]),
-		dynamic_process_seeds
+		_codec.decode(wilson_record["place_id"]), entity_seeds, relation_seeds, belief_seeds, intention_seed,
+		float(body_record["vitality"]), _decode_drives(drive_record), project_seeds, association_seeds,
+		habit_seeds, episode_seeds, presence_seed, StringName(environment_record["weather"]),
+		StringName(environment_record["daylight_phase"]), dynamic_process_seeds, actor_state_seeds
 	)
-
 
 func _decode_drives(record: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
@@ -164,7 +102,6 @@ func _decode_drives(record: Dictionary) -> Dictionary:
 		assert(record.has(key), "Drive snapshot missing %s" % key)
 		result[drive_id] = float(record[key])
 	return result
-
 
 func _decode_binding(records: Array):
 	var binding = RoleBinding.new()
