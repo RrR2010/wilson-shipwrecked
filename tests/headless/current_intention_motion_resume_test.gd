@@ -14,7 +14,7 @@ var _failures: Array[String] = []
 
 class NoActionExecution:
 	extends RefCounted
-	func active_execution_ids() -> Array[StringName]:
+	func active_states() -> Array:
 		return []
 
 
