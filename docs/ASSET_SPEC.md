@@ -1,27 +1,56 @@
 # 3D Asset Specification
 
-This is the machine-facing contract for production assets crossing Blender → GLB → Godot. Agents must satisfy it even when a visually attractive shortcut would be easier.
+This is the machine-facing contract for production assets crossing Blender → GLB → Godot.
 
-## 1. Coordinate / transform contract
+Read this as a set of invariants, not as the normal creative workflow. The short modeling loop lives in `art/AGENT_ART_PRODUCTION.md`; exact script usage lives in `../tools/blender/README.md`.
+
+---
+
+# 1. Coordinate, scale and pose
+
+All production assets use:
 
 ```text
-units:      metric
-scale:      1 Blender unit = 1 meter
-up:         +Z
-front:      +Y
-right:      +X
+units:  metric
+scale:  1 Blender unit = 1 meter
+front:  +Y
+right:  +X
+up:     +Z
 ```
 
-- Placeable assets normally use a meaningful ground-contact pivot.
-- Normalize required transforms **in authored/generated source**, not as a hidden export repair.
-- Production root transform is identity; see AssetScope below.
-- Avoid negative scale.
-- If visible faceting depends on face splits, triangulation must be deterministic before/finalized during export.
-- Verify imported orientation in Godot; never hide an import mistake behind unexplained wrapper rotations.
+This local frame is global across the project. Do not let different asset families redefine forward.
 
-## 2. Stable asset identity
+A runtime instance may rotate freely in the world. The rule above defines the **authored local coordinate system**.
 
-Use stable semantic IDs:
+For assets without a meaningful semantic front, keep a stable family orientation anyway. Symmetry is not permission to switch axes between variants.
+
+## Canonical physical pose
+
+The authored/review pose should be physically meaningful for the normal loose or installed state represented by the asset.
+
+Examples:
+
+```text
+loose branch/log     → lying naturally
+rock                 → resting on a plausible support face
+crate/table/stool    → on intended base/feet
+rooted palm          → upright
+fallen vegetation    → gravity-consistent fallen pose
+installed wall/panel → installed pose
+floating/hanging     → appropriate non-grounded pose/profile
+```
+
+Do not stand a loose object vertically only for easier modeling or framing.
+
+Placeable assets normally use a meaningful ground-contact pivot. Normalize transforms in authored/generated source; export does not silently repair them.
+
+Avoid negative scale. If visible faceting depends on face splits, triangulation must be deterministic.
+
+---
+
+# 2. Stable identity
+
+Use semantic IDs:
 
 ```text
 palm_coconut_01
@@ -36,72 +65,53 @@ Pattern:
 <family>_<variant>[_<index>]
 ```
 
-Do not encode mutable runtime condition into permanent identity when ordinary state/configuration already represents it.
+Do not encode ordinary mutable runtime condition into permanent identity when state/configuration already represents it.
 
-## 3. Repository / format ownership
+---
+
+# 3. Repository and source ownership
 
 ```text
-assets/source/       manual or family .blend authoring sources
+assets/source/       manual/family .blend source
 assets/generators/   bpy/config procedural source
 assets/generated/    reproducible intermediates when useful
-assets/previews/     review artifacts when deliberately retained
+assets/previews/     intentionally retained review artifacts
 assets/models/       runtime .glb consumed by Godot
 ```
 
 ```text
-.blend = editable Blender source when Blender owns the authored asset/family
+.blend = editable source when Blender owns an authored asset/family
 .py    = generator/toolkit source
-.glb   = canonical 3D interchange/runtime model
+.glb   = canonical runtime/interchange model
 .tscn  = optional authored Godot integration wrapper
 ```
 
-Direct `.blend` import may be used for experiments. Approved runtime content must have a validated `.glb` under `assets/models/`.
-
-## 4. Source ownership mode
-
-Source ownership is independent from export count.
-
-### `asset`
-
-Default for an independently edited manual asset:
+Choose source ownership according to editing lifecycle:
 
 ```text
-one independent asset → one .blend
+independent manual asset
+→ source-mode=asset
+→ normally one .blend per asset
+
+authored siblings share real editing context
+→ source-mode=family
+→ one family .blend + multiple AssetScopes/GLBs
+
+reproducible procedural family
+→ source-mode=generator
+→ generator/config + explicit seed are source
+→ optional one workbench .blend, not one .blend per generated variant
 ```
 
-This is preferred when file isolation simplifies pivot, review and export with no real benefit from sharing authored context.
+Use one `.blend` per ordinary manual asset because it isolates pivot/review/export. Do not preserve that rule when it would duplicate a shared rig/base or materialize procedural output unnecessarily.
 
-### `family`
+---
 
-Use one `.blend` for several outputs only when they genuinely share an editing lifecycle, such as:
+# 4. AssetScope and canonical root
 
-- common rig/topology;
-- modular kit;
-- lifecycle/stage construction;
-- authored base mesh;
-- deliberately coordinated variants.
+A `.blend` is an authoring container. Review/export operate on an explicit **AssetScope**.
 
-Each exported asset still has its own AssetScope and GLB.
-
-### `generator`
-
-Use generator/configuration as source of truth for reproducible bounded variants.
-
-```text
-generator + explicit parameters/config + stable seed
-→ generated AssetScope
-→ GLB
-```
-
-Do not version one `.blend` per procedural variant. One optional family/workbench `.blend` may exist for tuning, comparison or debugging.
-
-See `assets/README.md` and `tools/blender/README.md` for examples.
-
-## 5. AssetScope and canonical root
-
-The `.blend` is only an authoring container. Review/export operate on an explicit **AssetScope**.
-
-Supported forms:
+Supported scope forms:
 
 ```text
 object
@@ -109,20 +119,18 @@ hierarchy
 collection
 ```
 
-Preferred collection convention for composites/family/generated content:
+Preferred convention for composite/family/generated content:
 
 ```text
-ASSET_<asset_id>
+Collection: ASSET_<asset_id>
 ```
 
 The scope includes every runtime member that must cross glTF:
 
 - render meshes;
 - armature when applicable;
-- semantic empties/nodes;
+- semantic `ANCHOR_*` / `SOCKET_*` nodes;
 - required runtime children.
-
-### Single-root invariant
 
 Every production AssetScope has **exactly one top-level root**.
 
@@ -132,38 +140,49 @@ simple single-object prop
 
 composite static asset
 → one root Empty at canonical pivot
-→ meshes / ANCHOR_* / SOCKET_* below it
+→ geometry + semantic nodes below it
 
 rigged asset
-→ armature may be root, or one explicit identity root above the authored rig
-→ still exactly one top-level root
+→ armature may be root, or one identity root above the rig
 ```
 
 Root world transform:
 
 ```text
-location = (0, 0, 0)
+location = (0,0,0)
 rotation = identity
-scale    = (1, 1, 1)
+scale    = (1,1,1)
 ```
 
-Collection controls **membership**; root controls **pivot/transform**. A family `.blend` may contain several `ASSET_*` collections without making their working placement part of runtime transforms.
+Collection defines membership; root defines pivot/transform.
 
-Production export must not depend on active selection. `scope-kind=object` is valid only when no required children/anchors would be omitted.
+Production export must not depend on accidental active selection.
 
-## 6. Semantic nodes
+---
 
-Interaction points and assembly sockets are named Blender nodes/empties that survive GLB import with stable transforms.
+# 5. Relative scale
 
-### Interaction anchors
+Do not maintain an art-only hardcoded dimension for every prop.
 
-Prefix:
+Resolve scale using, in order:
 
-```text
-ANCHOR_
-```
+1. explicit catalog/domain physical requirement when one exists;
+2. Wilson mannequin/adult reference;
+3. intended interaction;
+4. approved family siblings;
+5. familiar neighboring world objects.
 
-Examples:
+Concept images are references for visual language, not authoritative measurement drawings.
+
+Controlled exaggeration is allowed for gameplay readability while preserving believable physical relationships.
+
+Use the canonical `scale` review render when size is not obvious.
+
+---
+
+# 6. Semantic nodes
+
+Interaction points and assembly sockets are named nodes/empties that survive GLB import with stable transforms.
 
 ```text
 ANCHOR_APPROACH
@@ -172,20 +191,9 @@ ANCHOR_CLIMB
 ANCHOR_COOK
 ANCHOR_PICKUP
 ANCHOR_INSPECT
-ANCHOR_FRUIT_01
-```
+ANCHOR_HAND_R
+ANCHOR_HAND_L
 
-### Assembly sockets
-
-Prefix:
-
-```text
-SOCKET_
-```
-
-Examples:
-
-```text
 SOCKET_WALL_N
 SOCKET_WALL_E
 SOCKET_ROOF
@@ -193,32 +201,18 @@ SOCKET_DOOR
 SOCKET_ATTACHMENT_01
 ```
 
-### Character attachments
-
-Examples:
-
-```text
-ANCHOR_HAND_R
-ANCHOR_HAND_L
-ANCHOR_BACK
-ANCHOR_CARRY
-ANCHOR_HEAD
-```
-
-Prefer bone attachments when a transform follows a skeleton.
-
 Rules:
 
 - anchors are metadata, not visible geometry;
-- names are semantic/stable across compatible variants;
-- orientation matters when an actor should face a direction;
-- `APPROACH` requires usable actor clearance;
-- animation aligns to semantic transforms rather than per-instance offsets;
-- do not invent object-specific anchor names when a reusable role fits;
-- Blender duplicate suffixes such as `ANCHOR_X.001` must not silently create competing semantics;
-- validate names/positions/orientations after GLB/Godot import, not only in Blender.
+- names stay semantic and stable across compatible variants;
+- orientation matters when interaction direction matters;
+- do not invent object-specific names when a reusable role exists;
+- Blender duplicate suffixes such as `.001` must not silently create competing semantics;
+- verify semantic transforms after GLB/Godot import.
 
-## 7. Footprint / collision / clearance
+---
+
+# 7. Collision, footprint and clearance
 
 Keep separate:
 
@@ -231,270 +225,156 @@ placement footprint
 
 Do not use detailed render geometry as gameplay collision by default.
 
-Typical collision approximation:
+Engine-specific collision/navigation normally belongs in an authored `.tscn` wrapper rather than portable model geometry.
 
-- trunk → cylinder/capsule-like;
-- rock → simple convex;
-- crate → box;
-- shelter → small composition of boxes/convex shapes.
+---
 
-Engine-specific collision/navigation normally belongs in an authored `.tscn` wrapper rather than portable GLB geometry unless explicitly required otherwise.
+# 8. Materials and procedural Blender features
 
-## 8. Material contract
+Materials:
 
 - minimize material slots;
-- reuse shared semantic material families (`mat_wood`, `mat_leaf`, etc.);
+- reuse shared semantic material families;
 - avoid unique texture dependencies for ordinary low-poly assets;
-- palette variants should not require duplicate geometry;
-- rely only on glTF-compatible material properties when expecting transfer;
-- Blender procedural shaders are authoring previews, not runtime contracts;
+- use glTF-compatible properties when transfer matters;
+- Blender procedural shaders are preview tools, not runtime contracts;
 - runtime water/wetness/wind/fire/special effects normally belong in Godot;
-- use backface culling for normally opaque solids when appropriate;
-- keep double-sided rendering only where required, such as selected leaves/cloth.
+- use backface culling for opaque solids where appropriate;
+- use double-sided rendering only where the family needs it, e.g. selected leaves/cloth.
 
-## 9. Procedural Blender features
+Modifiers/Geometry Nodes may author content, but Godot consumes evaluated/exported geometry, not Blender procedural graphs.
 
-Modifiers and Geometry Nodes may author/generate content, but Godot consumes evaluated/exported glTF output.
+A procedural generator must:
 
-Runtime correctness must not depend on preserving:
-
-- modifier stacks;
-- Geometry Nodes graphs;
-- Blender-only shader nodes;
-- Blender lighting.
-
-A production generator must:
-
-1. accept bounded semantic parameters;
+1. use bounded semantic parameters;
 2. use an explicit deterministic seed;
-3. own/clean only its objects/collections;
+3. own/clean only its output;
 4. create stable names;
-5. create one AssetScope per exported output;
-6. create required anchors/sockets;
-7. reuse shared material/toolkit functions;
-8. validate output;
-9. be reproducible from committed generator/configuration inputs.
+5. create one AssetScope per export;
+6. create required semantic nodes;
+7. reuse shared helpers/materials;
+8. be reproducible from committed generator/config inputs.
 
-Typical parameters:
+---
 
-```text
-height
-width/radius
-lean
-part_variant
-cluster_count
-wear/state
-palette_variant
-seed
-```
+# 9. Review and export profiles
 
-For export provenance, `source-mode=generator` records generator source, optional committed config, explicit seed and resulting GLB SHA-256.
-
-## 10. Review profiles
-
-Artistic acceptance rules live in `docs/art/AGENT_ART_PRODUCTION.md`. The deterministic implementation lives in `tools/blender/`.
-
-Profiles:
+Review profiles:
 
 ```text
-grounded   props/tools/rocks/palms/normal structures
-character  Wilson/rigged animals
-isolated   hanging/floating/exploded diagnostics
+grounded   ordinary props/tools/rocks/palms/structures
+character  Wilson and rigged animals
+isolated   floating/hanging/exploded diagnostics
 terrain    terrain/island/ground patches
 ```
 
-Canonical review is non-destructive and normally produces:
+Export profiles:
 
 ```text
-gameplay
-silhouette
-scale
-front
-side
-top
-review_sheet
+static
+  modifiers: evaluated/applied
+  animations: no
+  skins: no
+  morphs: forbidden
+  armature: forbidden
+
+deformable
+  modifiers: not force-applied
+  animations: yes
+  skins: no
+  morphs: yes
+  armature: forbidden
+
+rigged
+  modifiers: not force-applied
+  animations: yes
+  skins: yes
+  morphs: yes
+  exactly one armature required
 ```
 
-## 11. Export profiles
+Do not reuse static export flags for characters or shape-key assets.
 
-Use the smallest correct profile.
+---
 
-### `static`
-
-For ordinary props, terrain, structures and evaluated procedural outputs.
-
-```text
-apply modifiers: yes
-animations: no
-skins: no
-morph targets: forbidden
-armature: forbidden
-```
-
-A shape-key mesh must fail rather than lose morph data.
-
-### `deformable`
-
-For non-armature content intentionally carrying morph targets/shape-key animation.
-
-```text
-apply modifiers: not force-applied
-animations: yes
-skins: no
-morph targets: yes
-armature: forbidden
-```
-
-### `rigged`
-
-For Wilson and rigged animals.
-
-```text
-apply modifiers: not force-applied
-animations: yes
-skins: yes
-morph targets: yes
-armature: required
-```
-
-The profiles differ because Blender glTF `Apply Modifiers` cannot safely preserve shape keys.
-
-## 12. Rigged asset checks
-
-For rigged assets:
-
-- keep armature inside AssetScope;
-- export from intended rest/reference state;
-- verify skeleton hierarchy after Godot import;
-- verify actual skin deformation;
-- verify clip names/ranges/playback;
-- verify morph targets when used;
-- do not assume Blender interpolation/material behavior transferred identically.
-
-## 13. States / variants
-
-When geometry must change with state, prefer coherent variants/modular pieces rather than unrelated replacement art.
-
-```text
-palm healthy
-palm damaged
-palm stump
-```
-
-One catalog family may map to several GLBs. Do not create a new semantic catalog identity merely because a presentation band needs new geometry.
-
-Authored variants sharing real editing context may live in a family `.blend`; procedural variants should regenerate from source + seed.
-
-## 14. Validation
+# 10. Validation and non-destructive export
 
 `tools/blender/validate_asset.py` is the pre-export mechanical gate.
 
-Current checks include:
+It should reject rather than repair:
 
-- supported Blender series;
-- AssetScope resolution;
-- renderable geometry exists;
-- exactly one canonical root;
-- root location/rotation/scale identity;
-- export-profile compatibility;
-- armature/shape-key mismatch;
-- accidental camera/light/speaker in runtime scope;
-- review helpers leaking into scope;
+- unresolved AssetScope;
+- zero renderable geometry;
+- multiple/no canonical roots;
+- non-identity root transform;
+- profile/armature/shape-key mismatch;
+- accidental camera/light/speaker inside runtime scope;
+- leaked review helpers;
 - negative scale;
 - suspicious duplicate semantic nodes;
-- basic scene-unit expectations.
+- unsupported Blender series unless explicitly overridden.
 
-Additional Godot/integration validation should cover:
-
-- material/triangle guardrails when established;
-- external texture paths;
-- catalog-required anchors/sockets;
-- imported hierarchy and semantic transforms;
-- required collision/wrapper setup;
-- animation/skin/morph integrity.
-
-Validation must **fail** when source needs repair; it must not mutate the model to force success.
-
-## 15. Non-destructive export
-
-`tools/blender/export_asset.py` may:
-
-- temporarily select scope members;
-- save a `.blend` copy for `asset`/`family` modes;
-- export GLB;
-- write temporary provenance metadata.
-
-It must not:
+`tools/blender/export_asset.py` may temporarily select scope members and save a source copy, but it must not:
 
 - purge unrelated scene objects;
 - delete family siblings;
-- move geometry to fix origin;
-- zero transforms to pass validation;
+- move geometry to repair origin;
+- normalize transforms to force success;
 - remove anchors/sockets;
-- silently omit scope members excluded from the active View Layer.
+- silently omit excluded scope members.
 
-The generated export manifest stores repository-relative provenance and resulting GLB SHA-256 under `temp/`.
+Procedural export provenance records generator source/config/seed and resulting GLB SHA-256.
 
-## 16. Godot metadata / wrapper
+---
 
-Commit:
+# 11. Godot boundary
+
+Production runtime model:
 
 ```text
 assets/models/**/*.glb
+```
+
+Commit the corresponding Godot import metadata:
+
+```text
 assets/models/**/*.glb.import
 ```
 
-Ignore:
+Ignore generated `.godot/` cache.
 
-```text
-.godot/
-```
-
-Use an authored `.tscn` wrapper when Godot-specific composition is needed, such as:
+Use authored `.tscn` wrappers for Godot-specific composition such as:
 
 - collision/navigation;
-- presentation adapter scripts;
-- shader/material overrides;
+- presentation adapters;
+- runtime shader/material overrides;
 - particles/effects;
 - engine-only animation composition;
 - placement/runtime helpers.
 
-Keep raw GLB reusable.
+Verify actual imported scale, hierarchy, orientation and semantic nodes. For rigged assets also verify skeleton, skin deformation, clips and morphs in Godot.
 
-## 17. Domain / presentation boundary
+---
 
-Gameplay capabilities live in domain/content definitions, not filenames or Blender custom properties alone.
+# 12. Definition of done
 
-Example presentation manifest concept:
+A production asset is done when:
 
-```json
-{
-  "archetype": "coconut_tree",
-  "visual_family": "palm_coconut",
-  "required_anchors": ["APPROACH", "CHOP", "CLIMB"],
-  "optional_anchor_prefixes": ["FRUIT_"]
-}
+```text
+[ ] catalog requirement is aligned
+[ ] source ownership is explicit
+[ ] source/generator lives in canonical path
+[ ] one stable AssetScope exists
+[ ] local +Y/+X/+Z convention is respected
+[ ] physical rest/installed pose is plausible
+[ ] relative scale is visually/functionally coherent
+[ ] visual review against references passes
+[ ] structural validation passes
+[ ] correct export profile is used
+[ ] GLB export succeeds non-destructively
+[ ] Godot import is inspected
+[ ] anchors/sockets survive when required
+[ ] rig/animation/morph data survives when applicable
+[ ] required .import/.tscn resources are committed
+[ ] catalog production status is updated
 ```
-
-`cuttable` is simulation/content semantics. `ANCHOR_CHOP` is presentation compatibility. Validate them together at integration boundaries without collapsing the concepts.
-
-## 18. Definition of done
-
-A production 3D asset is done only when:
-
-1. catalog spec is sufficiently aligned;
-2. source ownership (`asset`, `family`, `generator`) is explicit;
-3. canonical source/generator inputs are saved in expected paths;
-4. runtime members live in a stable AssetScope with one canonical root;
-5. visual style matches `VISUAL_GUIDE.md` + relevant references;
-6. semantic nodes satisfy this contract;
-7. canonical artistic review passes;
-8. structural validation passes;
-9. correct export profile is used;
-10. GLB export is non-destructive and provenance is recorded;
-11. Godot import scale/orientation/hierarchy/materials are inspected;
-12. anchors/sockets are verified after import;
-13. rig/animation/morph data is verified where applicable;
-14. relevant interactions work without hardcoded per-instance offsets;
-15. `.import` metadata and required `.tscn` wrappers are committed;
-16. asset-catalog production status is updated.
