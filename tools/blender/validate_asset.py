@@ -21,6 +21,7 @@ from _workflow_common import (
     validate_basic_scene_contract,
 )
 from _workflow_profiles import EXPORT_PROFILES
+from _workflow_validation import validate_root_contract
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -64,6 +65,7 @@ def main() -> dict:
     )
 
     result = validate_basic_scene_contract(scope, args.profile)
+    result = validate_root_contract(scope, result)
     payload = {
         "asset_id": asset_id,
         "category": category,
