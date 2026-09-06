@@ -409,12 +409,16 @@ Updated in the handoff-closing docs PR:
 README.md
 AGENTS.md
 docs/README.md
+docs/ARCHITECTURE.md
+docs/SIMULATION_ORCHESTRATION.md
 this handoff
 ```
 
 `docs/DISCOVERY_STATUS.md` had already been updated by PR #47 to the current 79-test baseline and production fresh-run/autonomous-action capabilities.
 
-The canonical language-neutral architecture/domain documents were checked for authority/semantic conflicts with the implementation. No new owner or domain-contract contradiction was found that requires redefining those contracts. Concrete class names, schema versions, exact test counts and implementation progress remain intentionally centralized in `DISCOVERY_STATUS.md` and source/tests rather than copied through every canonical document.
+The canonical architecture/orchestration docs were aligned where their active ordering/bootstrap/phase prose had fallen behind the implementation. The remaining language-neutral product/domain documents were checked for authority/semantic conflicts with the implementation; no new owner or domain-contract contradiction was found that requires redefining them. Concrete class names, schema versions, exact test counts and implementation progress remain intentionally centralized in `DISCOVERY_STATUS.md` and source/tests rather than copied through every canonical document.
+
+`docs/ENGINE_SCENARIO_TESTING.md` remains coherent with the implemented harness and current engine-facing regression workflow, so it did not require a contract change in this pass.
 
 Historical handoffs remain historical evidence. `docs/README.md` now identifies this file as the active transition handoff so older handoffs are not mistaken for current sequencing.
 
