@@ -5,40 +5,122 @@ This directory separates editable authoring sources from Godot runtime-imported 
 ## Canonical format ownership
 
 ```text
-.blend = editable/manual Blender source
-.py    = reproducible bpy generator source
+.blend = editable/manual Blender source when Blender file is the canonical authoring unit
+.py    = reproducible bpy generator/toolkit source
 .glb   = canonical 3D interchange/runtime model imported by Godot
 .tscn  = optional Godot integration wrapper when engine-specific nodes/resources are needed
 ```
 
-Direct `.blend` import in Godot is allowed for local experimentation, but it is not the project runtime contract. Runtime model assets should be committed as `.glb` under `assets/models/`.
+Direct `.blend` import in Godot is allowed for local experimentation, but it is not the project runtime contract. Runtime model assets are committed as `.glb` under `assets/models/`.
 
-## Source organization
+---
 
-Default source layout is **one `.blend` per asset**.
+# Source ownership
 
-Use semantic paths that mirror the runtime asset ID and family, for example:
+Do **not** interpret "one `.blend` per asset" as a universal rule.
+
+Choose the source unit according to the asset's editing lifecycle.
+
+## Independent manually authored asset
+
+Default:
 
 ```text
-assets/source/props/stone_small_01.blend
-assets/source/props/branch_small_01.blend
-assets/source/props/flat_rock_01.blend
+one asset
+→ one .blend
 ```
 
-This makes it obvious which asset lives in which source file and keeps review/export scripts token-efficient. Shared multi-asset `.blend` files should be the exception, not the default.
+Use when the model is edited independently and isolation makes origin/review/export safer.
 
-## Directory contract
+Example:
+
+```text
+assets/source/props/containers/crate_wood_01.blend
+assets/models/props/containers/crate_wood_01.glb
+```
+
+## Tightly related authored variants/family
+
+Use one family `.blend` when multiple exported assets genuinely share:
+
+- rig/topology;
+- modular pieces;
+- lifecycle stages;
+- common authored base geometry;
+- coordinated editing.
+
+Example:
+
+```text
+assets/source/characters/crabs/crab_family.blend
+
+collections:
+  ASSET_crab_generic
+  ASSET_crab_recurring
+
+exports:
+  assets/models/characters/crabs/crab_generic.glb
+  assets/models/characters/crabs/crab_recurring.glb
+```
+
+Do not collect unrelated assets in a family `.blend` merely to reduce file count.
+
+## Procedural family
+
+For procedural content, generator/configuration is the canonical source:
+
+```text
+assets/generators/<category>/...
++ deterministic seed/parameters
+→ generated asset
+→ GLB
+```
+
+Do not commit one generated `.blend` for every procedural variant.
+
+A single optional family/workbench `.blend` is useful when it helps:
+
+- compare variants;
+- tune parameters/materials;
+- debug generator output;
+- inspect family scale/style together.
+
+Example:
+
+```text
+assets/generators/environment/rocks/generate_rocks.py
+assets/source/environment/rocks/rocks_workbench.blend   # optional
+assets/models/environment/rocks/rock_medium_01.glb
+assets/models/environment/rocks/rock_medium_02.glb
+```
+
+Rule of thumb:
+
+```text
+independent manual identity
+→ one blend per asset
+
+authored siblings share real editing context
+→ one blend per family
+
+reproducible from code + bounded parameters
+→ generator is source; optional one family workbench blend
+```
+
+---
+
+# Directory contract
 
 ```text
 assets/
-├── source/       editable manual .blend sources; ignored by Godot via .gdignore
-├── generators/   bpy generators/toolkit; ignored by Godot via .gdignore
-├── generated/    reproducible intermediates when needed; ignored by Godot via .gdignore
-├── previews/     review renders; ignored by Godot via .gdignore
+├── source/       manual/family .blend authoring sources; .gdignore
+├── generators/   bpy generators/toolkit; .gdignore
+├── generated/    reproducible intermediates when needed; .gdignore
+├── previews/     non-authoritative review renders; .gdignore
 └── models/       runtime-ready .glb assets imported by Godot
 ```
 
-Use semantic subfolders as production requires them, normally:
+Use semantic subfolders as production requires them. The top-level production categories are:
 
 ```text
 characters/
@@ -47,26 +129,78 @@ props/
 structures/
 ```
 
-Do not create empty taxonomy folders merely for ceremony; create them when the first asset in that category exists.
+Nested categories are encouraged when useful:
 
-## Godot boundary
+```text
+props/containers/
+props/tools/
+environment/rocks/
+environment/vegetation/
+structures/shelter/
+characters/crabs/
+```
+
+Do not create folder synonyms such as:
+
+```text
+items/
+objects/
+misc/
+game_props/
+```
+
+when an existing category already expresses the asset.
+
+---
+
+# Asset scope convention
+
+A `.blend` may contain one asset or several family variants, so file isolation is not the export boundary.
+
+The explicit export/review boundary is the **asset scope**.
+
+Preferred for composites, family files and generator outputs:
+
+```text
+Collection: ASSET_<asset_id>
+```
+
+That collection should contain every runtime member of the exported asset, including required `ANCHOR_*` / `SOCKET_*` nodes.
+
+A trivial single-object asset may use a named object/hierarchy directly.
+
+See `tools/blender/README.md` for scope resolution and profiles.
+
+---
+
+# Godot boundary
 
 Only files intended for Godot import should live under `assets/models/`.
 
-The `.gdignore` files in authoring/intermediate directories prevent Godot from importing, showing, or exporting those directories as `res://` resources.
+The `.gdignore` files in authoring/intermediate directories prevent Godot from importing/showing/exporting those directories as `res://` resources.
 
 Godot-generated `.import` metadata beside runtime assets is version-controlled. The generated `.godot/` cache remains ignored.
 
-## Typical asset flow
+---
+
+# Typical asset flow
 
 ```text
 catalog row
-→ Blender source or bpy generator
-→ canonical artistic previews/review
+→ choose source ownership: asset | family | generator
+→ model/generate named AssetScope
+→ canonical artistic review
+→ structural validation
 → deterministic GLB export
 → Godot import verification
 → optional .tscn integration wrapper
 → catalog status update
 ```
 
-See `docs/ASSET_SPEC.md`, `docs/ASSET_PIPELINE.md`, `docs/art/AGENT_ART_PRODUCTION.md`, and `docs/asset-catalog/` for the full contracts.
+See:
+
+- `docs/ASSET_SPEC.md`
+- `docs/ASSET_PIPELINE.md`
+- `docs/art/AGENT_ART_PRODUCTION.md`
+- `docs/asset-catalog/`
+- `tools/blender/README.md`
