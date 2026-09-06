@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -26,6 +27,7 @@ from _workflow_common import (
     write_json,
 )
 from _workflow_profiles import EXPORT_PROFILES
+from _workflow_validation import validate_root_contract
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -65,6 +67,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--generator-source",
         default="",
         help="Repository-relative generator path for source-mode=generator.",
+    )
+    parser.add_argument(
+        "--generator-config",
+        default="",
+        help="Optional repository-relative deterministic generator/config/parameter file.",
+    )
+    parser.add_argument(
+        "--generator-seed",
+        default="",
+        help="Required for source-mode=generator. Pass an explicit stable seed, including 0 when randomness is intentionally disabled.",
     )
     parser.add_argument(
         "--save-source",
@@ -130,6 +142,27 @@ def ensure_scope_in_active_view_layer(scope) -> None:
         )
 
 
+def resolve_repo_file(repo_root: Path, relative_path: str, label: str) -> Path:
+    if not relative_path:
+        raise RuntimeError(f"{label} path must not be empty.")
+    candidate = (repo_root / relative_path).resolve()
+    try:
+        candidate.relative_to(repo_root.resolve())
+    except ValueError as exc:
+        raise RuntimeError(f"{label} must live inside the repository: {relative_path}") from exc
+    if not candidate.is_file():
+        raise RuntimeError(f"{label} does not exist: {relative_path}")
+    return candidate
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def export_glb(*, glb_path: Path, scope, profile) -> None:
     glb_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -186,15 +219,21 @@ def main() -> dict:
     repo_root = find_repo_root()
 
     generator_path = None
+    generator_config_path = None
+    generator_seed = ""
     if args.source_mode == "generator":
-        if not args.generator_source:
-            raise RuntimeError(
-                "--generator-source is required for source-mode=generator so the canonical source is traceable."
+        generator_path = resolve_repo_file(
+            repo_root, args.generator_source, "Generator source"
+        )
+        if args.generator_config:
+            generator_config_path = resolve_repo_file(
+                repo_root, args.generator_config, "Generator config"
             )
-        generator_path = (repo_root / args.generator_source).resolve()
-        if not generator_path.is_file():
+        generator_seed = str(args.generator_seed).strip()
+        if generator_seed == "":
             raise RuntimeError(
-                f"Declared generator source does not exist: {args.generator_source}"
+                "--generator-seed is required for source-mode=generator. "
+                "Use an explicit stable seed, including 0 when randomness is disabled."
             )
 
     scope = resolve_scope(
@@ -207,6 +246,7 @@ def main() -> dict:
 
     ensure_scope_in_active_view_layer(scope)
     validation = validate_basic_scene_contract(scope, profile.name)
+    validation = validate_root_contract(scope, validation)
     if args.skip_validation != "true" and not validation.ok:
         raise RuntimeError(
             "Asset validation failed before export:\n"
@@ -236,9 +276,15 @@ def main() -> dict:
             raise RuntimeError(f"Failed to save Blender source copy: {source_path}")
 
     export_glb(glb_path=glb_path, scope=scope, profile=profile)
+    glb_sha256 = sha256_file(glb_path)
 
     generator_ref = (
         repo_relative(generator_path, repo_root) if generator_path is not None else ""
+    )
+    generator_config_ref = (
+        repo_relative(generator_config_path, repo_root)
+        if generator_config_path is not None
+        else ""
     )
 
     manifest_root = (
@@ -255,7 +301,10 @@ def main() -> dict:
         "source_mode": args.source_mode,
         "source_blend": repo_relative(source_path, repo_root) if source_path else "",
         "generator_source": generator_ref,
+        "generator_config": generator_config_ref,
+        "generator_seed": generator_seed,
         "runtime_glb": repo_relative(glb_path, repo_root),
+        "runtime_glb_sha256": glb_sha256,
         "export_profile": profile.name,
         "scope": {
             "kind": scope.kind,
