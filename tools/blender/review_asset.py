@@ -110,6 +110,32 @@ def raw_object_bounds(obj: bpy.types.Object) -> dict:
     }
 
 
+def cleanup_review_orphans() -> None:
+    orphan_data = []
+    for obj in list(bpy.data.objects):
+        if not obj.name.startswith("__review_"):
+            continue
+        if len(obj.users_collection) != 0:
+            continue
+        orphan_data.append(getattr(obj, "data", None))
+        bpy.data.objects.remove(obj, do_unlink=True)
+
+    for datablock in orphan_data:
+        if datablock is None or getattr(datablock, "users", 0) != 0:
+            continue
+        for group in (bpy.data.meshes, bpy.data.cameras, bpy.data.lights):
+            try:
+                if datablock.name in group:
+                    group.remove(datablock)
+                    break
+            except Exception:
+                continue
+
+    for material in list(bpy.data.materials):
+        if material.name.startswith("__review_") and material.users == 0:
+            bpy.data.materials.remove(material)
+
+
 def render_normal_views(
     *,
     scene: bpy.types.Scene,
@@ -352,6 +378,7 @@ def main() -> dict:
 
     finally:
         remove_review_scene(review_scene)
+        cleanup_review_orphans()
 
     manifest_path = output_dir / f"{asset_id}_review_manifest.json"
     write_json(manifest_path, manifest)
