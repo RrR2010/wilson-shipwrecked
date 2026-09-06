@@ -83,6 +83,33 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def raw_object_bounds(obj: bpy.types.Object) -> dict:
+    points = [obj.matrix_world @ mathutils.Vector(corner) for corner in obj.bound_box]
+    min_v = mathutils.Vector(
+        (
+            min(p.x for p in points),
+            min(p.y for p in points),
+            min(p.z for p in points),
+        )
+    )
+    max_v = mathutils.Vector(
+        (
+            max(p.x for p in points),
+            max(p.y for p in points),
+            max(p.z for p in points),
+        )
+    )
+    size = max_v - min_v
+    center = (min_v + max_v) / 2.0
+    return {
+        "min": [float(min_v.x), float(min_v.y), float(min_v.z)],
+        "max": [float(max_v.x), float(max_v.y), float(max_v.z)],
+        "center": [float(center.x), float(center.y), float(center.z)],
+        "size": [float(size.x), float(size.y), float(size.z)],
+        "radius": float(max(size.length / 2.0, 0.001)),
+    }
+
+
 def render_normal_views(
     *,
     scene: bpy.types.Scene,
@@ -175,10 +202,12 @@ def render_scale_view(
     mannequin = create_scale_mannequin(
         scene,
         name=f"__review_mannequin_{asset_id}",
-        location=mathutils.Vector((max_v.x + gap + 0.22, min_v.y, min_v.z)),
+        location=mathutils.Vector(
+            (max_v.x + gap + 0.22, float(base_bounds["center"][1]), min_v.z)
+        ),
     )
 
-    mannequin_bounds = world_bounds([mannequin])
+    mannequin_bounds = raw_object_bounds(mannequin)
     combined = {
         "min": [
             min(base_bounds["min"][i], mannequin_bounds["min"][i])
@@ -242,6 +271,9 @@ def main() -> dict:
         profile=profile,
         bounds=bounds,
     )
+    if temp["ground"] is not None:
+        temp["ground"].location.x = float(bounds["center"][0])
+        temp["ground"].location.y = float(bounds["center"][1])
 
     manifest: dict = {
         "asset_id": asset_id,
