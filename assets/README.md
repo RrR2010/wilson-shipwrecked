@@ -58,6 +58,21 @@ ASSET_crab_recurring
 
 Do not collect unrelated assets in a family file merely to reduce file count.
 
+Because every exported AssetScope keeps its canonical root at the origin, do **not** move production roots merely to lay variants side-by-side. For family comparison use either:
+
+```text
+separate canonical asset scenes inside the same .blend
+```
+
+or:
+
+```text
+one non-export WORKBENCH scene
++ linked/instanced display copies placed side-by-side
+```
+
+The workbench is presentation/debug layout only. Export scopes keep canonical transforms.
+
 ## Procedural family
 
 For procedural content, canonical source is:
