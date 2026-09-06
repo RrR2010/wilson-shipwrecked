@@ -13,11 +13,11 @@ Strict external runner: **Godot 4.7.1**.
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 79 PASS / 79 TOTAL
-PASS headless_suite (79 tests)
+RESULT: 80 PASS / 80 TOTAL
+PASS headless_suite (80 tests)
 ```
 
-The strict suite now covers the engine/runtime foundation, deterministic scenario tooling, shared bootstrap for all authoritative owners persisted by `SimulationSnapshotService`, content-dependent action-execution reconstruction, full current-run restore composition, reset/rebootstrap determinism, autonomous drive-backed and perception-learned behavior, grounded action consequences, and production-facing fresh-run bootstrap through a real Godot-hosted scenario.
+The strict suite now covers the engine/runtime foundation, deterministic scenario tooling, shared bootstrap for all authoritative owners persisted by `SimulationSnapshotService`, content-dependent action-execution reconstruction, full current-run restore composition, reset/rebootstrap determinism, autonomous drive-backed and perception-learned behavior, grounded action consequences, production-facing fresh-run bootstrap through a real Godot-hosted scenario, and product-level deterministic world/run generation feeding the ordinary fresh-run boundary.
 
 Validated causal breadth includes:
 
@@ -54,6 +54,8 @@ structural World/runtime foundation
 → authored ActionExecution start → World-accepted outcome/event
 → grounded drive consequence → hunger reduction
 → action reconstruction without duplicate outcome emission
+→ product run parameters + authored generation profile + explicit gameplay seed
+→ deterministic bounded entity/relation/environment/bootstrap causes
 → NewRunDefinition → NewRunBootstrapService
 → fresh RunLifecycleState + DirectorStateStore + PlayerRunState
 → production new-run result feeds real Godot bindings and GodotSimulationHost
@@ -117,7 +119,8 @@ Grounded autonomous consume sequence              PASS
 Targeted action reconstruction/idempotency        PASS
 Production-facing fresh-run bootstrap             PASS
 Production new-run → Godot host autonomous flow   PASS
-Strict headless suite                             PASS — 79 tests
+Product-level deterministic new-run generation    PASS
+Strict headless suite                             PASS — 80 tests
 ```
 
 ---
@@ -182,6 +185,12 @@ SimulationOwnerBootstrapper
 SimulationOwnerSet
 DeterministicScenarioDefinition
 DeterministicScenarioBootstrapService
+ProductNewRunParameters
+ProductEntityGenerationRule
+ProductRelationGenerationRule
+ProductWorldGenerationProfile
+ProductNewRunGenerator
+ProductNewRunGenerationResult
 NewRunDefinition
 NewRunBootstrapService
 NewRunBootstrapResult
@@ -198,13 +207,15 @@ GroundedDriveConsequenceService
 The shared simulation-owner path is:
 
 ```text
-deterministic scenario ─┐
-production new run ─────┼→ SimulationBootstrapDefinition
-simulation snapshot ────┘
-                               ↓
-                    SimulationOwnerBootstrapper
-                               ↓
-                    authoritative owner set
+product parameters + authored generation profile + gameplay seed
+  → ProductNewRunGenerator
+  → NewRunDefinition ─────┐
+deterministic scenario ───┼→ SimulationBootstrapDefinition
+simulation snapshot ──────┘
+                                 ↓
+                      SimulationOwnerBootstrapper
+                                 ↓
+                      authoritative owner set
 ```
 
 The common owner bootstrap reconstructs:
@@ -240,7 +251,9 @@ authoritative simulation owners
 Fresh production-facing runs use:
 
 ```text
-NewRunDefinition
+ProductNewRunParameters + ProductWorldGenerationProfile + sealed ContentRegistry
+→ ProductNewRunGenerator
+→ NewRunDefinition
 → SimulationOwnerBootstrapper
 → RunRuntimeComposer
 → fresh RunLifecycleState(ACTIVE)
@@ -249,13 +262,15 @@ NewRunDefinition
 → NewRunBootstrapResult
 ```
 
-`NewRunDefinition` is bootstrap input metadata, not an authority store. `NewRunBootstrapService` owns no gameplay truth and deliberately converges on the same owner/bootstrap and runtime-composition boundaries used by deterministic scenarios and restore.
+`ProductNewRunParameters`, generation profiles/rules and `NewRunDefinition` are bootstrap inputs/content, not authority stores. `ProductNewRunGenerator` and `NewRunBootstrapService` own no gameplay truth and deliberately converge on the same owner/bootstrap and runtime-composition boundaries used by deterministic scenarios and restore.
+
+Product generation validates against sealed authored content, applies stable semantic ordering before seeded selection, produces bounded entity populations and unique semantic relations, and fails explicitly when authored constraints cannot be satisfied. Godot nodes/transforms/navigation state are absent from generation authority.
 
 `ActionExecution` deliberately remains outside `SimulationOwnerBootstrapper`: restoring execution state requires authored `ActionDefinition` and `ActionResolutionDefinition`, so it belongs after runtime/content composition rather than inside the content-independent owner bootstrap boundary.
 
 `PlayerProfile` deliberately remains outside current-run bootstrap/restore results because it is cross-run state.
 
-Validated properties include fresh ownership, no bootstrap aliasing, semantic equivalence from equivalent durable causes, duplicate-admission rejection, insertion-order-independent runtime composition, current-intention resume, content-dependent action lifecycle reconstruction without outcome duplication, deterministic targeted-action execution identity, and independent fresh-run constructions from identical durable causes.
+Validated properties include fresh ownership, no bootstrap aliasing, semantic equivalence from equivalent durable causes, duplicate-admission rejection, insertion-order-independent runtime composition, deterministic generation under equivalent authored set ordering, bounded variation across deterministic seed populations, current-intention resume, content-dependent action lifecycle reconstruction without outcome duplication, deterministic targeted-action execution identity, and independent fresh-run constructions from identical durable causes.
 
 ---
 
@@ -338,7 +353,6 @@ capture API cleanup: SimulationSnapshotService.capture currently has a long posi
 bootstrap definition cleanup: SimulationBootstrapDefinition has grown a long positional constructor; grouped owner-specific definitions may be preferable if the contract expands again
 drive hysteresis-band memory persistence
 Legacy-to-new-Wilson seeding policy
-production content/world-generation layer that constructs NewRunDefinition from product-level run parameters
 reusable production scene-binding/host composition only after a second real use proves the abstraction shape
 collision/grounding/fall-specific policies beyond current impact damage
 richer Wilson-relative learned route/escape evaluation
@@ -355,27 +369,28 @@ The long positional APIs remain documented debt rather than blockers. Refactor t
 
 A dedicated engine composition abstraction remains intentionally deferred. One production-facing scenario now proves the required seams, but extracting a generalized scene-binding/host composer before a second real use would risk encoding fixture-specific assumptions as production architecture.
 
+The product-generation profile intentionally does not mirror every `SimulationBootstrapDefinition` seed family. Add another generated cause family only when a product-visible run configuration requires it; do not expand generation for structural completeness alone.
+
 ---
 
 # Recommended next major verticals
 
-From the validated 79-test checkpoint:
+From the validated 80-test checkpoint:
 
 ```text
-1. product-level new-run definition/world-generation input
-   - derive durable bootstrap causes from actual product run parameters
-   - keep world generation/content authoring upstream of NewRunBootstrapService
-   - avoid scene nodes/transforms becoming bootstrap authority
+1. richer representative gameplay semantics driven by scene-catalog needs
+   - prefer one non-food autonomous slice exposing a real missing reusable primitive
+   - leading candidates: Gerald behavior/relationships, learned route/escape reasoning, or physical accident authoring when required by the chosen scene
 
-2. richer representative gameplay semantics driven by scene-catalog needs
-   - Gerald behavior/relationships
-   - physical accident authoring where needed
-   - learned route/escape reasoning
-
-3. persistence evolution when product requirements require it
+2. persistence evolution when product requirements require it
    - decide v9 compatibility policy
    - introduce grouped capture/bootstrap request objects only when schemas expand again
+
+3. production scene-binding/host composition only after a second real use
+   - extract shared engine composition only when another production-facing scenario proves the common shape
 ```
+
+Active transition context: `docs/handoffs/world-generation-to-representative-gameplay-semantics.md`.
 
 ---
 

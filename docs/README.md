@@ -23,12 +23,12 @@ For substantial work:
 
 1. [`../README.md`](../README.md) — project thesis;
 2. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current implementation/test/schema baseline and remaining work;
-3. [`handoffs/production-new-run-autonomy-baseline.md`](handoffs/production-new-run-autonomy-baseline.md) — **active runtime stage-transition handoff from the validated production new-run/autonomy baseline**;
+3. [`handoffs/world-generation-to-representative-gameplay-semantics.md`](handoffs/world-generation-to-representative-gameplay-semantics.md) — **active runtime stage-transition handoff from validated product-level generation into richer representative gameplay semantics**;
 4. then use the relevant canonical bundle below.
 
-**Current phase:** the structural runtime foundation, full current-run restore/rebootstrap, deterministic engine-scenario tooling, real Godot spatial/navigation/perception adapters, autonomous target selection, authored action commit, grounded drive consequence and production-facing fresh-run bootstrap are implemented and locally validated.
+**Current phase:** the structural runtime foundation, full current-run restore/rebootstrap, deterministic engine-scenario tooling, real Godot spatial/navigation/perception adapters, grounded autonomous action, production-facing fresh-run bootstrap and deterministic product-level world/run generation are implemented and locally validated.
 
-The next runtime vertical should be chosen from the current gaps in `DISCOVERY_STATUS.md`, with product-level new-run/world-generation input and richer representative gameplay semantics as the leading candidates. A generalized production scene-binding/host composer remains deferred until a second real use proves its shape.
+The leading runtime vertical is now richer representative gameplay semantics driven by validated scene needs. Prefer one non-food autonomous slice that exposes a genuinely missing reusable primitive. Persistence evolution remains requirement-driven, and a generalized production scene-binding/host composer remains deferred until a second real use proves its shape.
 
 Cross-cutting correctness items listed in `DISCOVERY_STATUS.md` should be pulled forward when representative scenarios require them. New work should preserve established owner boundaries rather than reopen foundation architecture by default.
 
