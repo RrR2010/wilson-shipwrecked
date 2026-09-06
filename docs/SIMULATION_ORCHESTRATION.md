@@ -108,32 +108,39 @@ Not every phase performs work every iteration, but relative causal ordering is:
 ```text
 A. advance authoritative time
 B. advance due World/body/environment/dynamic processes
-C. advance active ActionExecution
-D. if commit crossed: World owner validates/applies ActionOutcome effects
-E. consume SemanticChangeSet and invalidate/rebuild affected derived state
-F. collect ordered authoritative WorldEvents/outcomes
-G. derive perception access and PerceptionResult
-H. derive/apply immediate relevant learning from accessible evidence
-I. derive immediate threat + reconsideration triggers
-J. route IMMEDIATE_THREAT / TACTICAL / INTENTIONAL / NONE
-K. generate/evaluate/select within the routed regime
-L. owner commits intentional transition when selection changes it
-M. validate/start/continue next action when required
-N. apply grounded project/director/player consequence processing in declared owner order
-O. run due maintenance
-P. emit presentation/debug projection
+C. invalidate affected derived state when World progression changed authority
+D. advance active ActionExecution
+E. if commit crossed: World owner validates/applies ActionOutcome effects
+F. consume SemanticChangeSet and invalidate/rebuild affected derived state
+G. apply explicit grounded cross-owner consequences from accepted outcomes
+H. progress already-committed current-intention execution when applicable
+I. propagate committed lifecycle events
+J. derive event-driven + passive spatial PerceptionResult
+K. derive/apply immediate relevant learning from accessible evidence
+L. advance due gradual cognition such as drives
+M. derive/coalesce immediate-threat and other reconsideration triggers
+N. route IMMEDIATE_THREAT / TACTICAL / INTENTIONAL / NONE
+O. generate/evaluate/select only within an admitted routed regime
+P. owner commits intentional transition when selection changes it
+Q. optionally start/redirect execution for the newly committed intention
+R. run due maintenance
+S. emit presentation/debug projection
 ```
 
 Critical invariants:
 
 ```text
-commit before WorldEvent
+commit before grounded consequence
+World acceptance before cross-owner consequence
 World mutation before derived invalidation consumers re-query
+current committed intention may continue without broad reconsideration
 perception after authoritative consequence
 same-chain learning before next tactical choice when relevant
 selection before intentional-state mutation
 presentation after domain meaning is established
 ```
+
+The concrete implementation may split a conceptual phase into more than one recorded stage, but it must preserve these causal boundaries.
 
 ---
 
@@ -189,9 +196,11 @@ If future behavior needs semantic safe checkpoints distinct from commit, add exp
 
 ActionExecution does not mutate World. At commit it produces `ActionOutcome`; the World owner separately validates/applies the supported effect batch.
 
+Deterministic reconstruction must preserve whether an outcome was already emitted. A restored committed execution may continue its tail but must never emit the same committed outcome again.
+
 ---
 
-# 6. World commit and derived maintenance
+# 6. World commit, derived maintenance and grounded cross-owner consequence
 
 The World command boundary validates the prospective ordered effect batch before mutation.
 
@@ -214,6 +223,19 @@ component binding_integrity changes
 ```
 
 This maintenance completes before downstream logic relies on affected derived physical queries.
+
+A World-accepted outcome may also ground an explicit consequence in another owner, for example a cognition drive or a project contribution. That consequence must be applied through an application-level service after the World acceptance result, not smuggled into World effects merely because it is causally downstream of the action.
+
+Conceptual shape:
+
+```text
+ActionOutcome
+→ WorldCommitResult.ok
+→ explicit consequence policy
+→ owning aggregate validates/applies its mutation
+```
+
+Cross-owner consequence services must be deterministic and idempotent where the same committed execution can be observed again after reconstruction.
 
 ---
 
@@ -386,15 +408,28 @@ Suspended intentions remain bounded/selective.
 
 ---
 
-# 12. Start/continue next action
+# 12. Current-intention execution and newly selected action start
 
-After an intention/tactic is selected:
+A committed intention may require continuous semantic execution progression even when no new reconsideration occurs. For example, a target-bearing intention may request movement, wait while `MOVING`, and only start its authored action after a matching semantic `ARRIVED` state.
+
+Conceptual shape:
 
 ```text
-derive concrete action/binding
-→ authoritative attemptability/validation
-→ start execution or emit explicit failure/reconsideration trigger
+current intention
+→ execution coordinator progress
+→ continue existing movement/action OR
+→ admit grounded transition such as matching ARRIVED → ActionExecution start
 ```
+
+After a newly selected intention/tactic is committed:
+
+```text
+derive concrete action/binding or movement target
+→ authoritative attemptability/validation where relevant
+→ start/redirect execution or emit explicit failure/reconsideration trigger
+```
+
+Execution coordinators do not own durable gameplay truth. They derive requests/transitions from the current intention and explicit ports/authoritative action state.
 
 The orchestrator must not spin indefinitely inside one macrocycle trying candidate after candidate. Retry/reconsideration is bounded and traceable.
 
@@ -538,6 +573,8 @@ simulation step
 → authoritative progression
 → action commit/outcome
 → World commit/change set/event
+→ grounded cross-owner consequences
+→ current-intention execution progression
 → perception access/observation
 → learning proposals/mutations
 → reconsideration trigger/regime
@@ -551,19 +588,19 @@ Trace is diagnostic evidence, not gameplay authority.
 
 ---
 
-# 21. Deterministic fixture/debug bootstrap ordering
+# 21. Fresh-run / deterministic fixture bootstrap ordering
 
-Representative development scenarios must use the same reconstruction semantics as normal runtime restore rather than direct post-bootstrap store mutation.
+Production fresh runs and representative development scenarios must converge on the same owner construction/runtime composition semantics used by normal restore rather than direct post-bootstrap store mutation.
 
 Canonical shape:
 
 ```text
-real save -------------------┐
-deterministic fixture -------┼→ common restore/bootstrap boundary → authoritative owners
-named debug scenario --------┘                                → rebuild derived state
+production new run ----------┐
+real save -------------------┼→ shared owner/bootstrap + runtime composition → authoritative owners
+valid deterministic fixture -┘                                               → rebuilt derived state
 ```
 
-A fixture/debug scenario may provide a declarative snapshot of durable causes plus explicit deterministic seed state. It may intentionally place the run in an artificial but valid state such as:
+A fresh-run or fixture/debug definition may provide durable causes plus explicit deterministic seed/input metadata. It may intentionally place a run in an artificial but valid state such as:
 
 ```text
 hungry_wilson_near_food
@@ -571,15 +608,16 @@ wilson_mid_shelter_project
 storm_with_bad_roof
 ```
 
-It must not need to simulate all earlier gameplay that would normally lead there.
+Those input definitions are not runtime authority and do not need to simulate all earlier gameplay that would normally lead there.
 
 Admission order follows the same principles as save/load:
 
 ```text
 load compatible authored content
-→ parse scenario/fixture input
+→ parse/generate fresh-run or scenario input
 → validate IDs, bounds, owner invariants and causal lifecycle state
-→ construct/restore owner state through the common bootstrap services
+→ construct/restore owner state through the shared bootstrap services
+→ compose reconstructible runtime services
 → rebuild indexes/projections/caches
 → execute post-bootstrap semantic assertions/queries
 → only then begin simulation or presentation
@@ -591,10 +629,10 @@ Forbidden shortcuts:
 set private owner fields after bootstrap to force a scene
 serialize EffectivePhysicalProfile/HazardProjection/routes as scenario truth
 skip action/process causal validation because the fixture is test-only
-use Godot node transforms as the authoritative fixture state
+use Godot node transforms as authoritative fresh-run/fixture state
 allow debug commands to write arbitrary stores directly
 ```
 
-A development scenario launcher and future debug console are adapters over this same boundary and normal commands. They do not constitute a separate debug simulation architecture.
+A development scenario launcher, production world-generation layer and future debug console are adapters around these same boundaries and normal commands. They do not constitute separate simulation architectures.
 
-For scenario validation, deterministic reproducibility must coexist with **intentional variability**. Run fixed seed populations and vary boundary conditions/data density so results are not accidentally correct for one handcrafted ordering or tiny dataset.
+For scenario/generation validation, deterministic reproducibility must coexist with **intentional variability**. Run fixed seed populations and vary boundary conditions/data density so results are not accidentally correct for one handcrafted ordering or tiny dataset.
