@@ -2,6 +2,7 @@ extends SceneTree
 
 const DomainId = preload("res://src/domain/core/domain_id.gd")
 const ContentRegistry = preload("res://src/domain/content/content_registry.gd")
+const EntityDefinition = preload("res://src/domain/content/entity_definition.gd")
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
 const ProductNewRunParameters = preload("res://src/application/bootstrap/product_new_run_parameters.gd")
 const ProductEntityGenerationRule = preload("res://src/application/bootstrap/product_entity_generation_rule.gd")
@@ -31,16 +32,18 @@ func _run_slice() -> void:
 	var beach_a = DomainId.place(&"beach_a")
 	var beach_b = DomainId.place(&"beach_b")
 	var grove = DomainId.place(&"grove")
+	var coconut_type = DomainId.entity_type(&"coconut")
+	var stone_type = DomainId.entity_type(&"stone")
 	var food_rule = ProductEntityGenerationRule.new(
 		&"food",
-		DomainId.entity_type(&"coconut"),
+		coconut_type,
 		[beach_a, beach_b, grove],
 		2,
 		4
 	)
 	var stone_rule = ProductEntityGenerationRule.new(
 		&"stone",
-		DomainId.entity_type(&"stone"),
+		stone_type,
 		[beach_a, beach_b],
 		1,
 		3
@@ -60,9 +63,14 @@ func _run_slice() -> void:
 		2.5,
 		[&"move_small_object"]
 	)
+	var content = ContentRegistry.new()
+	_expect_true(content.register_entity_definition(EntityDefinition.new(coconut_type)).ok, "coconut authored content registers")
+	_expect_true(content.register_entity_definition(EntityDefinition.new(stone_type)).ok, "stone authored content registers")
+	_expect_true(content.seal().ok, "authored runtime content seals")
+
 	var generator = ProductNewRunGenerator.new()
-	var first = generator.generate(parameters, profile)
-	var second = generator.generate(parameters, profile)
+	var first = generator.generate(parameters, profile, content)
+	var second = generator.generate(parameters, profile, content)
 
 	_expect_true(first.ok, "first product generation succeeds")
 	_expect_true(second.ok, "equivalent product generation succeeds")
@@ -89,11 +97,31 @@ func _run_slice() -> void:
 		"generated entity count remains within authored bounds"
 	)
 
+	var reordered_profile = ProductWorldGenerationProfile.new(
+		&"tropical_baseline",
+		[beach_b, beach_a],
+		[
+			ProductEntityGenerationRule.new(&"stone", stone_type, [beach_b, beach_a], 1, 3),
+			ProductEntityGenerationRule.new(&"food", coconut_type, [grove, beach_b, beach_a], 2, 4),
+		],
+		{DriveState.HUNGER: 0.4},
+		&"clear",
+		&"day"
+	)
+	var reordered = generator.generate(parameters, reordered_profile, content)
+	_expect_true(reordered.ok, "semantically equivalent reordered profile generates")
+	if reordered.ok:
+		_expect_equal(
+			_definition_signature(reordered.definition),
+			_definition_signature(first.definition),
+			"semantic set ordering does not perturb seeded generation"
+		)
+
 	var variation_seen := false
 	var baseline_signature = _definition_signature(first.definition)
 	for seed in [48151624, 48151625, 48151626, 48151627, 48151628, 48151629, 48151630, 48151631]:
 		var variant_parameters = ProductNewRunParameters.new(&"run_variant", seed, &"tropical_baseline")
-		var variant = generator.generate(variant_parameters, profile)
+		var variant = generator.generate(variant_parameters, profile, content)
 		_expect_true(variant.ok, "seed population generates valid definition for seed %d" % seed)
 		if not variant.ok:
 			continue
@@ -103,8 +131,6 @@ func _run_slice() -> void:
 			variation_seen = true
 	_expect_true(variation_seen, "nearby deterministic seeds produce bounded semantic variation")
 
-	var content = ContentRegistry.new()
-	_expect_true(content.seal().ok, "empty authored runtime content seals")
 	var bootstrap = NewRunBootstrapService.new().bootstrap(first.definition, content)
 	_expect_true(bootstrap.ok, "generated NewRunDefinition passes ordinary new-run bootstrap")
 	if bootstrap.ok:
@@ -112,9 +138,22 @@ func _run_slice() -> void:
 		_expect_equal(bootstrap.owners.entities.entities().size(), first.definition.simulation.entity_seeds.size(), "bootstrap admits every generated entity cause")
 		_expect_equal(bootstrap.owners.drives.value(DriveState.HUNGER), 0.4, "generated drive causes reach cognition owner")
 
+	var unsealed_content = ContentRegistry.new()
+	var unsealed = generator.generate(parameters, profile, unsealed_content)
+	_expect_true(not unsealed.ok, "unsealed authored content fails explicitly")
+	_expect_equal(unsealed.code, &"generation_content_not_sealed", "unsealed content reports stable code")
+
+	var incomplete_content = ContentRegistry.new()
+	_expect_true(incomplete_content.register_entity_definition(EntityDefinition.new(coconut_type)).ok, "partial authored content registers")
+	_expect_true(incomplete_content.seal().ok, "partial authored content seals")
+	var missing_type = generator.generate(parameters, profile, incomplete_content)
+	_expect_true(not missing_type.ok, "generation rule with missing authored entity type fails explicitly")
+	_expect_equal(missing_type.code, &"generation_missing_entity_definition", "missing authored type reports stable code")
+
 	var mismatched = generator.generate(
 		ProductNewRunParameters.new(&"run_bad_profile", 1, &"other_profile"),
-		profile
+		profile,
+		content
 	)
 	_expect_true(not mismatched.ok, "profile mismatch fails explicitly")
 	_expect_equal(mismatched.code, &"generation_profile_mismatch", "profile mismatch reports stable code")
@@ -123,13 +162,14 @@ func _run_slice() -> void:
 		&"duplicate_ids",
 		[beach_a],
 		[
-			ProductEntityGenerationRule.new(&"same", DomainId.entity_type(&"coconut"), [beach_a], 1, 1),
-			ProductEntityGenerationRule.new(&"same", DomainId.entity_type(&"stone"), [beach_a], 1, 1),
+			ProductEntityGenerationRule.new(&"same", coconut_type, [beach_a], 1, 1),
+			ProductEntityGenerationRule.new(&"same", stone_type, [beach_a], 1, 1),
 		]
 	)
 	var duplicate = generator.generate(
 		ProductNewRunParameters.new(&"run_duplicate", 12, &"duplicate_ids"),
-		duplicate_profile
+		duplicate_profile,
+		content
 	)
 	_expect_true(not duplicate.ok, "invalid generated duplicate identity fails explicitly")
 	_expect_equal(duplicate.code, &"duplicate_generated_entity_id", "duplicate generation reports stable code")
