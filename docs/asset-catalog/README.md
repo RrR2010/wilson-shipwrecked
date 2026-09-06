@@ -31,6 +31,7 @@ Historical breadth lives in `brainstorming/functional-asset-catalog/`. Do not us
 - [`PROJECTS.md`](PROJECTS.md) — persistent project goals and composed structures/configurations.
 - [`LIVING_WORLD.md`](LIVING_WORLD.md) — places/terrain, flora, fauna, habitats and cross-family environmental presentation requirements.
 - [`SCENE_COVERAGE.md`](SCENE_COVERAGE.md) — regression of the normalized catalog/domain against the 40 representative historical scenes, including accepted reshapes and localized content follow-ups.
+- [`DIFFICULTY_INDEX.md`](DIFFICULTY_INDEX.md) — derived modeling-difficulty index for routing assets to the right 3D model quality.
 
 ---
 
