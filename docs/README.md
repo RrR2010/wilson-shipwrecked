@@ -23,16 +23,12 @@ For substantial work:
 
 1. [`../README.md`](../README.md) — project thesis;
 2. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current implementation/test/schema baseline and remaining work;
-3. [`handoffs/system-breadth-to-spatial-scenarios.md`](handoffs/system-breadth-to-spatial-scenarios.md) — **active stage-transition handoff for the remaining spatial/scenario/integrated-validation phase**;
+3. [`handoffs/production-new-run-autonomy-baseline.md`](handoffs/production-new-run-autonomy-baseline.md) — **active runtime stage-transition handoff from the validated production new-run/autonomy baseline**;
 4. then use the relevant canonical bundle below.
 
-**Current phase:** the structural runtime foundation and the planned system-breadth owners through run lifecycle / PlayerProfile are implemented and locally validated. The remaining implementation sequence is now primarily:
+**Current phase:** the structural runtime foundation, full current-run restore/rebootstrap, deterministic engine-scenario tooling, real Godot spatial/navigation/perception adapters, autonomous target selection, authored action commit, grounded drive consequence and production-facing fresh-run bootstrap are implemented and locally validated.
 
-```text
-fine spatial/nav/occlusion + Godot presentation adapters
-→ deterministic restore/bootstrap scenario tooling
-→ representative multi-system scenarios + seed-population validation
-```
+The next runtime vertical should be chosen from the current gaps in `DISCOVERY_STATUS.md`, with product-level new-run/world-generation input and richer representative gameplay semantics as the leading candidates. A generalized production scene-binding/host composer remains deferred until a second real use proves its shape.
 
 Cross-cutting correctness items listed in `DISCOVERY_STATUS.md` should be pulled forward when representative scenarios require them. New work should preserve established owner boundaries rather than reopen foundation architecture by default.
 
@@ -60,7 +56,7 @@ Cross-cutting correctness items listed in `DISCOVERY_STATUS.md` should be pulled
 
 ## Canonical
 
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — **state owners, derived services, module layout, dependency direction, Godot/persistence boundaries and the common restore/bootstrap boundary used by saves, deterministic fixtures and debug scenarios**.
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — **state owners, derived services, module layout, dependency direction, Godot/persistence boundaries and the common restore/bootstrap boundary used by saves, fresh runs, deterministic fixtures and debug scenarios**.
 - [`SIMULATION_CONTRACTS.md`](SIMULATION_CONTRACTS.md) — semantic cross-system contracts.
 - [`SIMULATION_ORCHESTRATION.md`](SIMULATION_ORCHESTRATION.md) — clocks, update ordering, commit/perception/learning/reconsideration/offline orchestration and deterministic fixture/bootstrap ordering.
 - [`MUTATION_AUTHORITY.md`](MUTATION_AUTHORITY.md) — read/propose/mutate ownership matrix.
@@ -204,7 +200,7 @@ Prototype source/exports may support executable fixtures, but Godot scene compos
 
 - `brainstorming/functional-asset-catalog/` — historical breadth exploration.
 - `brainstorming/representative-scene-catalog.md` — original scene exploration.
-- `handoffs/` — transition context, never durable design authority.
+- `handoffs/` — transition context, never durable design authority. Only the handoff explicitly identified in **Start here** should be treated as the active transition context.
 
 Use these for intent/recall, not precedence over canonical contracts.
 
