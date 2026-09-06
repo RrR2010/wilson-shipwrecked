@@ -27,7 +27,10 @@ from _workflow_common import (
     write_json,
 )
 from _workflow_profiles import EXPORT_PROFILES
-from _workflow_validation import validate_root_contract
+from _workflow_validation import (
+    validate_profile_source_state,
+    validate_root_contract,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -247,6 +250,7 @@ def main() -> dict:
     ensure_scope_in_active_view_layer(scope)
     validation = validate_basic_scene_contract(scope, profile.name)
     validation = validate_root_contract(scope, validation)
+    validation = validate_profile_source_state(scope, profile.name, validation)
     if args.skip_validation != "true" and not validation.ok:
         raise RuntimeError(
             "Asset validation failed before export:\n"
