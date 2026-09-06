@@ -96,7 +96,7 @@ func generate(parameters, profile, content):
 				]
 			]
 			return ProductNewRunGenerationResult.failure(
-				&"insufficient_generated_relation_candidates",
+				&"generation_relation_insufficient_candidates",
 				diagnostics
 			)
 		for _index in range(relation_count):
