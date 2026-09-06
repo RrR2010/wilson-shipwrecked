@@ -13,11 +13,11 @@ Strict external runner: **Godot 4.7.1**.
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 69 PASS / 69 TOTAL
-PASS headless_suite (69 tests)
+RESULT: 79 PASS / 79 TOTAL
+PASS headless_suite (79 tests)
 ```
 
-The strict suite now covers the engine/runtime foundation, deterministic scenario tooling, shared bootstrap for all authoritative owners persisted by `SimulationSnapshotService`, content-dependent action-execution reconstruction, full current-run restore composition, and reset/rebootstrap determinism.
+The strict suite now covers the engine/runtime foundation, deterministic scenario tooling, shared bootstrap for all authoritative owners persisted by `SimulationSnapshotService`, content-dependent action-execution reconstruction, full current-run restore composition, reset/rebootstrap determinism, autonomous drive-backed and perception-learned behavior, grounded action consequences, and production-facing fresh-run bootstrap through a real Godot-hosted scenario.
 
 Validated causal breadth includes:
 
@@ -48,6 +48,16 @@ structural World/runtime foundation
 → ActionExecutionSnapshotService restore against sealed authored content
 → RunLifecycleState + DirectorStateStore + PlayerRunState restore
 → equivalent full-run rebootstrap from identical durable causes
+→ drive-backed autonomous target selection
+→ passive perception → durable learned opportunity belief
+→ target intention → Godot motion → matching ARRIVED
+→ authored ActionExecution start → World-accepted outcome/event
+→ grounded drive consequence → hunger reduction
+→ action reconstruction without duplicate outcome emission
+→ NewRunDefinition → NewRunBootstrapService
+→ fresh RunLifecycleState + DirectorStateStore + PlayerRunState
+→ production new-run result feeds real Godot bindings and GodotSimulationHost
+→ autonomous perception/decision/motion/consume behavior from the production-facing new-run boundary
 ```
 
 ---
@@ -83,23 +93,31 @@ Physical observation semantic admission           PASS
 Grounded Wilson body impact consequences          PASS
 Generic reconsideration gate / trigger coalescing PASS
 Core runtime composition                          PASS
-Deterministic scenario owner bootstrap             PASS
+Deterministic scenario owner bootstrap            PASS
 Snapshot/bootstrap equivalence                    PASS
-EngineScenarioHarness core                         PASS
-Engine scenario AUTOMATED adapter                  PASS
-Engine scenario ASSISTED checkpoint flow           PASS
-Current-intention motion resume                    PASS
-Deterministic playable/bootstrap 3D scenario       PASS
-WilsonBodyState shared bootstrap/persistence       PASS
-DriveState shared bootstrap                        PASS
-ProjectStore shared bootstrap                      PASS
-Learning owners shared bootstrap                   PASS
+EngineScenarioHarness core                        PASS
+Engine scenario AUTOMATED adapter                 PASS
+Engine scenario ASSISTED checkpoint flow          PASS
+Current-intention motion resume                   PASS
+Deterministic playable/bootstrap 3D scenario      PASS
+WilsonBodyState shared bootstrap/persistence      PASS
+DriveState shared bootstrap                       PASS
+ProjectStore shared bootstrap                     PASS
+Learning owners shared bootstrap                  PASS
 Environment / dynamic-process shared bootstrap    PASS
-ActorStateStore shared bootstrap                   PASS
-Content-dependent ActionExecution restore          PASS
-Full current-run restore composition               PASS
-Full-run reset/rebootstrap determinism              PASS
-Strict headless suite                             PASS — 69 tests
+ActorStateStore shared bootstrap                  PASS
+Content-dependent ActionExecution restore         PASS
+Full current-run restore composition              PASS
+Full-run reset/rebootstrap determinism            PASS
+Drive-backed new-run autonomy                     PASS
+Perception-learned new-run autonomy               PASS
+Grounded drive consequences                       PASS
+Targeted action execution after arrival           PASS
+Grounded autonomous consume sequence              PASS
+Targeted action reconstruction/idempotency        PASS
+Production-facing fresh-run bootstrap             PASS
+Production new-run → Godot host autonomous flow   PASS
+Strict headless suite                             PASS — 79 tests
 ```
 
 ---
@@ -164,19 +182,24 @@ SimulationOwnerBootstrapper
 SimulationOwnerSet
 DeterministicScenarioDefinition
 DeterministicScenarioBootstrapService
+NewRunDefinition
+NewRunBootstrapService
+NewRunBootstrapResult
 SimulationSnapshotBootstrapDecoder
 RunRuntimeComposer
 RunRuntimeRestoreService
 RunRuntimeRestoreResult
 CurrentIntentionExecutionCoordinator
 DirectTargetMotionExecutionCoordinator
+TargetedActionExecutionCoordinator
+GroundedDriveConsequenceService
 ```
 
 The shared simulation-owner path is:
 
 ```text
 deterministic scenario ─┐
-                        ├→ SimulationBootstrapDefinition
+production new run ─────┼→ SimulationBootstrapDefinition
 simulation snapshot ────┘
                                ↓
                     SimulationOwnerBootstrapper
@@ -184,7 +207,7 @@ simulation snapshot ────┘
                     authoritative owner set
 ```
 
-The common owner bootstrap now reconstructs:
+The common owner bootstrap reconstructs:
 
 ```text
 EntityStore
@@ -210,15 +233,53 @@ Runtime reconstruction then proceeds in dependency order:
 authoritative simulation owners
 → RunRuntimeComposer + sealed ContentRegistry
 → fresh reconstructible runtime services
-→ ActionExecutionSnapshotService restores active executions against authored definitions
-→ RunLifecycleState / DirectorStateStore / PlayerRunState restored for a full current run
+→ ActionExecutionSnapshotService restores active executions against authored definitions when restoring
+→ RunLifecycleState / DirectorStateStore / PlayerRunState restored for an existing current run
 ```
+
+Fresh production-facing runs use:
+
+```text
+NewRunDefinition
+→ SimulationOwnerBootstrapper
+→ RunRuntimeComposer
+→ fresh RunLifecycleState(ACTIVE)
+→ fresh DirectorStateStore
+→ fresh PlayerRunState
+→ NewRunBootstrapResult
+```
+
+`NewRunDefinition` is bootstrap input metadata, not an authority store. `NewRunBootstrapService` owns no gameplay truth and deliberately converges on the same owner/bootstrap and runtime-composition boundaries used by deterministic scenarios and restore.
 
 `ActionExecution` deliberately remains outside `SimulationOwnerBootstrapper`: restoring execution state requires authored `ActionDefinition` and `ActionResolutionDefinition`, so it belongs after runtime/content composition rather than inside the content-independent owner bootstrap boundary.
 
-`PlayerProfile` deliberately remains outside `RunRuntimeRestoreResult` because it is cross-run state.
+`PlayerProfile` deliberately remains outside current-run bootstrap/restore results because it is cross-run state.
 
-Validated properties include fresh ownership, no bootstrap aliasing, semantic equivalence from equivalent durable causes, duplicate-admission rejection, insertion-order-independent runtime composition, current-intention resume, content-dependent action lifecycle reconstruction without outcome duplication, and two independent full-run reconstructions from the same serialized durable causes.
+Validated properties include fresh ownership, no bootstrap aliasing, semantic equivalence from equivalent durable causes, duplicate-admission rejection, insertion-order-independent runtime composition, current-intention resume, content-dependent action lifecycle reconstruction without outcome duplication, deterministic targeted-action execution identity, and independent fresh-run constructions from identical durable causes.
+
+---
+
+# Autonomous action baseline
+
+A validated representative causal slice now reaches an actual grounded consequence:
+
+```text
+passive Godot perception
+→ Wilson learns durable target relation
+→ hunger crosses PRESSING
+→ seek_food intention selected
+→ TargetedActionExecutionCoordinator requests Godot motion
+→ matching target ARRIVED
+→ authored consume_food ActionExecution starts
+→ execution crosses commit checkpoint
+→ ActionOutcome applied through World command boundary
+→ food_consumed WorldEvent accepted
+→ GroundedDriveConsequenceService reduces DriveState.HUNGER
+```
+
+The fixture does not detect `ARRIVED` and directly mutate World or hunger. Godot remains an outer adapter; action progress remains `ActionExecution` authority; drive mutation occurs only after an accepted World commit.
+
+Targeted action execution uses a deterministic execution identity derived from the committed intention selection step plus authored action id. Snapshot/restore regression proves that a post-commit execution does not restart or emit its outcome a second time when the same intention remains arrived at the same target.
 
 ---
 
@@ -246,17 +307,24 @@ Snapshot v10 is currently strict; v9 compatibility/migration is not implemented.
 
 `EngineScenarioHarness` remains generic test support only. It owns semantic checkpoints, opaque probes, structured trace, assisted pause/continue state, bounded waits, and explicit completion/failure. It does not own gameplay semantics.
 
-The deterministic playable/bootstrap fixture validates:
+The representative perception-learned fresh-run fixture now validates:
 
 ```text
 BOOTSTRAPPED
-→ INTENTION_RESUMED
+→ PERCEPTION_LEARNED
+→ DRIVE_PRESSING
+→ INTENTION_SELECTED
 → MOVING
 → ARRIVED
+→ ACTION_STARTED
+→ ACTION_COMMITTED
+→ HUNGER_REDUCED
 → COMPLETE
 ```
 
 through real Godot navigation under `GodotSimulationHost`.
+
+The same engine-facing scenario now boots through `NewRunBootstrapService`, proving that the production-facing fresh-run boundary can feed explicit runtime-ref scene bindings, Godot adapters and the semantic host without using scene identity as domain identity.
 
 ---
 
@@ -270,7 +338,8 @@ capture API cleanup: SimulationSnapshotService.capture currently has a long posi
 bootstrap definition cleanup: SimulationBootstrapDefinition has grown a long positional constructor; grouped owner-specific definitions may be preferable if the contract expands again
 drive hysteresis-band memory persistence
 Legacy-to-new-Wilson seeding policy
-production new-run orchestration above the validated deterministic bootstrap primitives
+production content/world-generation layer that constructs NewRunDefinition from product-level run parameters
+reusable production scene-binding/host composition only after a second real use proves the abstraction shape
 collision/grounding/fall-specific policies beyond current impact damage
 richer Wilson-relative learned route/escape evaluation
 intervention causal windows
@@ -282,19 +351,21 @@ richer Gerald behavior/relationship semantics
 production falling-palm rigid-body authoring
 ```
 
-The long positional APIs are now documented debt rather than blockers. They should be refactored when another owner/schema expansion creates pressure, not merely for cosmetic churn after the validated 69-test convergence.
+The long positional APIs remain documented debt rather than blockers. Refactor them when another owner/schema expansion creates real pressure, not for cosmetic churn.
+
+A dedicated engine composition abstraction remains intentionally deferred. One production-facing scenario now proves the required seams, but extracting a generalized scene-binding/host composer before a second real use would risk encoding fixture-specific assumptions as production architecture.
 
 ---
 
 # Recommended next major verticals
 
-From the validated 69-test checkpoint:
+From the validated 79-test checkpoint:
 
 ```text
-1. production new-run orchestration
-   - instantiate current-run lifecycle + deterministic/bootstrap causes
-   - compose runtime through the same validated boundaries
-   - bind Godot scene adapters and start the simulation host
+1. product-level new-run definition/world-generation input
+   - derive durable bootstrap causes from actual product run parameters
+   - keep world generation/content authoring upstream of NewRunBootstrapService
+   - avoid scene nodes/transforms becoming bootstrap authority
 
 2. richer representative gameplay semantics driven by scene-catalog needs
    - Gerald behavior/relationships
@@ -303,7 +374,7 @@ From the validated 69-test checkpoint:
 
 3. persistence evolution when product requirements require it
    - decide v9 compatibility policy
-   - introduce grouped capture/bootstrap request objects only when the schemas expand again
+   - introduce grouped capture/bootstrap request objects only when schemas expand again
 ```
 
 ---
