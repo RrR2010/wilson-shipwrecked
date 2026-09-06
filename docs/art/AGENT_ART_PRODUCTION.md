@@ -255,6 +255,22 @@ Before export, inspect the latest canonical renders and confirm:
 
 If one of the first six items clearly fails, revise before export.
 
+## Catalog status mapping
+
+The catalog's review statuses describe **what actually happened**, not a mandatory reviewer topology.
+
+```text
+SELF_REVIEW
+= the active modeling agent inspected the canonical renders itself
+
+INDEPENDENT_REVIEW
+= a separate reviewer was actually used, including the `vs` fallback
+```
+
+When the active model has vision and its required final visual check passes, `INDEPENDENT_REVIEW` is not an artificial mandatory stop. The asset may move from `SELF_REVIEW` to the next production gate/approval according to the batch policy.
+
+Use `INDEPENDENT_REVIEW` when a separate visual opinion is deliberately required or when the active model cannot inspect images and delegates to `vs`.
+
 ---
 
 # 8. Stateful, modular and family assets
