@@ -44,6 +44,7 @@ Key entry points:
 | Area | Entry point |
 | --- | --- |
 | Current phase | [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md) |
+| Active runtime handoff | [`docs/handoffs/production-new-run-autonomy-baseline.md`](docs/handoffs/production-new-run-autonomy-baseline.md) |
 | Product / player experience | [`docs/PRODUCT.md`](docs/PRODUCT.md) |
 | Architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | Functional domain | [`docs/DOMAIN_MODEL.md`](docs/DOMAIN_MODEL.md) |
@@ -76,4 +77,6 @@ Do not optimize for photorealism, a large map, multiplayer, a large handcrafted 
 
 ## Status
 
-Product/behavior discovery, architecture contracts and the language-neutral functional-domain stabilization have passed their current gates. Work can proceed to package/module dependency layout and concrete domain types while the cross-cutting asset catalog is independently enriched with missing functional/content requirements.
+The structural runtime foundation, shared bootstrap/restore composition, Godot spatial/navigation/perception bridge, deterministic scenario harness, production-facing fresh-run bootstrap, and a representative autonomous perception → decision → motion → consume → grounded-consequence slice are implemented and locally validated.
+
+The next runtime work should build on that baseline rather than reopen foundation ownership. Current implementation status, strict test count, schema versions, known limitations and recommended verticals are maintained in [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md).
