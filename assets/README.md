@@ -58,18 +58,7 @@ ASSET_crab_recurring
 
 Do not collect unrelated assets in a family file merely to reduce file count.
 
-Because every exported AssetScope keeps its canonical root at the origin, do **not** move production roots merely to lay variants side-by-side. For family comparison use either:
-
-```text
-separate canonical asset scenes inside the same .blend
-```
-
-or:
-
-```text
-one non-export WORKBENCH scene
-+ linked/instanced display copies placed side-by-side
-```
+Because every exported AssetScope keeps its canonical root at the origin, do **not** move production roots merely to lay variants side-by-side. For family comparison use either separate canonical asset scenes inside the same `.blend`, or one non-export `WORKBENCH` scene with linked/instanced display copies.
 
 The workbench is presentation/debug layout only. Export scopes keep canonical transforms.
 
@@ -146,6 +135,24 @@ characters/crabs/
 ```
 
 Do not create synonyms such as `items/`, `objects/`, `misc/` or `game_props/` when an existing category already expresses the asset.
+
+---
+
+# Authored orientation and pose
+
+Every family uses the same local frame:
+
+```text
++Y = forward/front
++X = right
++Z = up
+```
+
+Do not let one asset family use `+X` as forward and another use `+Y`. Runtime instances may rotate freely in the world; this rule only defines the local authored coordinate system.
+
+Assets with weak or symmetric front semantics still use a stable family orientation.
+
+The canonical source/review pose must also represent a physically plausible loose or installed state. A loose branch/log normally lies down; a rooted palm stands; an installed panel is reviewed installed. Do not choose an implausible pose merely to make Blender framing easier.
 
 ---
 
