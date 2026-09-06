@@ -2,18 +2,28 @@
 
 This is the machine-facing contract for Blender and Godot assets. Agents generating 3D content must satisfy this document even when a visually attractive alternative would be easier.
 
-## Coordinate and scale conventions
+---
+
+# 1. Coordinate and scale conventions
 
 - Units: metric.
 - Scale: 1 unit = 1 meter.
-- Up axis: follow the Blender/Godot glTF-compatible workflow and verify imported orientation; do not compensate with unexplained root rotations.
-- Object origin for placeable world assets: ground-contact reference, centered sensibly within the footprint unless the asset class requires otherwise.
-- Apply/normalize transforms before final export where appropriate.
+- Up axis: use the Blender/glTF/Godot-compatible workflow and verify imported orientation.
+- Visual orientation convention: `+Y = nominal front`, `+X = nominal right`, `+Z = up`.
+- Placeable world assets normally use a sensible ground-contact reference.
+- Apply/normalize transforms **in source** where the asset class requires it.
+- Do not rely on the export script to move geometry or repair transforms.
 - If visible faceting depends on face splits, ensure triangulation is deterministic before/finalized during export.
 
-## Asset identity
+Do not compensate for import mistakes with unexplained root rotations.
 
-Use stable semantic IDs, not descriptive prose.
+---
+
+# 2. Asset identity
+
+Use stable semantic IDs.
+
+Examples:
 
 ```text
 palm_coconut_01
@@ -30,40 +40,94 @@ Naming pattern:
 
 Do not encode mutable world state into the permanent entity ID.
 
-## Source, generated and runtime ownership
+---
 
-Canonical file ownership is:
+# 3. Source ownership
+
+Canonical repository areas:
 
 ```text
-assets/source/       editable manual .blend sources
-assets/generators/   bpy procedural generator/toolkit source
+assets/source/       manual/family .blend authoring sources
+assets/generators/   bpy procedural generator/config source
 assets/generated/    reproducible intermediates when needed
-assets/previews/     canonical/diagnostic review renders
-assets/models/       runtime-ready .glb outputs imported by Godot
+assets/previews/     non-authoritative review output
+assets/models/       runtime-ready .glb imported by Godot
 ```
 
-The authoring/intermediate directories contain `.gdignore` and are not part of the Godot runtime import surface.
+The authoring/intermediate directories contain `.gdignore`.
 
 Format contract:
 
 ```text
-.blend = editable Blender source
+.blend = Blender authoring source when a Blender file owns the asset/family
 .py    = procedural generator source
-.glb   = canonical interchange/runtime 3D model
+.glb   = canonical runtime/interchange 3D model
 .tscn  = optional authored Godot integration wrapper
 ```
 
-Direct `.blend` import may be used for local experiments, but approved runtime assets must have a validated `.glb` representation under `assets/models/`.
+Choose source ownership deliberately:
 
-Generated assets must be reproducible from committed generators/configuration whenever practical.
+```text
+independent manually authored asset
+→ source-mode=asset
+→ normally one .blend per asset
 
-## Semantic nodes
+several tightly related authored variants/stages/rig siblings
+→ source-mode=family
+→ one family .blend, multiple named AssetScopes
 
-Interaction points and assembly sockets are represented as named empty/nodes in the Blender source and must survive GLB import with stable names and transforms.
+procedural/bounded generated family
+→ source-mode=generator
+→ generator + deterministic parameters are canonical source
+→ optional one family/workbench .blend, not one .blend per generated variant
+```
 
-### Interaction anchors
+See `assets/README.md` and `tools/blender/README.md`.
 
-Prefix: `ANCHOR_`
+---
+
+# 4. AssetScope
+
+The export/review boundary is the **AssetScope**, not the `.blend` file and not an accidental selection.
+
+Supported production scope forms:
+
+```text
+object
+hierarchy
+collection
+```
+
+Recommended for composites, family files and generator outputs:
+
+```text
+Collection: ASSET_<asset_id>
+```
+
+The scope must include every runtime object that is expected to survive GLB export:
+
+- render meshes;
+- armature when applicable;
+- semantic empties/nodes;
+- required child nodes.
+
+A trivial single-object asset may use object scope only when it has no required children/anchors omitted by that choice.
+
+Agents must not depend on active selection for final production export.
+
+---
+
+# 5. Semantic nodes
+
+Interaction points and assembly sockets are represented as named empty/nodes and must survive GLB import with stable names/transforms.
+
+## Interaction anchors
+
+Prefix:
+
+```text
+ANCHOR_
+```
 
 Examples:
 
@@ -77,11 +141,15 @@ ANCHOR_INSPECT
 ANCHOR_FRUIT_01
 ```
 
-An interaction anchor defines a semantic transform. Orientation matters when the actor should face a direction.
+Orientation matters when an actor should face a direction.
 
-### Assembly sockets
+## Assembly sockets
 
-Prefix: `SOCKET_`
+Prefix:
+
+```text
+SOCKET_
+```
 
 Examples:
 
@@ -93,9 +161,9 @@ SOCKET_DOOR
 SOCKET_ATTACHMENT_01
 ```
 
-Sockets connect modular geometry. Socket transforms must be stable across variants claiming compatibility.
+Socket transforms must be stable across variants claiming compatibility.
 
-### Character attachment anchors
+## Character attachment anchors
 
 Examples:
 
@@ -107,23 +175,26 @@ ANCHOR_CARRY
 ANCHOR_HEAD
 ```
 
-Prefer bone attachments when the anchor follows a skeleton; expose a stable semantic mapping to gameplay code.
+Prefer bone attachments when the transform follows a skeleton and expose a stable semantic mapping to gameplay.
 
 ## Anchor rules
 
 - Anchors are metadata, not visible geometry.
-- Names are semantic and stable across visual variants.
-- Do not add object-specific anchor names when an existing semantic role fits.
-- An `APPROACH` anchor must provide enough clearance for the intended actor.
-- Interaction animation should align to the anchor, not rely on hardcoded world offsets.
-- Variants in one family must expose the same required anchor contract unless explicitly documented.
-- Anchor/socket validation happens on the imported GLB/Godot scene, not only in the Blender source.
+- Names are semantic and stable.
+- Do not invent object-specific anchor names when a reusable role fits.
+- `APPROACH` anchors must provide enough physical clearance.
+- Interaction animation aligns to anchors rather than hardcoded world offsets.
+- Family variants expose the same required anchor contract unless explicitly documented.
+- Validate names, positions and orientations **after GLB/Godot import**, not only in Blender.
+- Do not allow Blender duplicate suffixes (`ANCHOR_X.001`) to silently create competing semantic transforms.
 
-## Footprints and clearance
+---
 
-Every placeable gameplay object needs a logical footprint independent from decorative overhang. Runtime representation may use collision/navigation geometry or generated metadata.
+# 6. Footprints, collision and clearance
 
-Separate concepts where needed:
+Every placeable gameplay object needs a logical footprint independent from decorative overhang.
+
+Keep separate:
 
 - physical collision;
 - navigation obstacle;
@@ -132,91 +203,58 @@ Separate concepts where needed:
 
 Do not use detailed render meshes as gameplay collision by default.
 
-## Collision
-
-Use simple primitives or deliberately simplified collision meshes. Collision complexity should correspond to gameplay need, not visual geometry.
-
 Examples:
 
 - tree trunk: cylinder/capsule-like collision;
 - rock: simple convex shape;
 - crate: box;
-- complex shelter: small composition of boxes/convex pieces.
+- shelter: a small composition of boxes/convex pieces.
 
-Collision/navigation composition may live in an authored Godot `.tscn` wrapper when it is engine-specific rather than portable model data.
+Godot-specific collision/navigation composition may live in an authored `.tscn` wrapper.
 
-## Materials
+---
+
+# 7. Materials
 
 - keep material slots minimal;
 - prefer reusable/shared material concepts;
-- avoid external texture dependencies for simple low-poly props;
-- material names should describe semantic surface (`mat_wood`, `mat_leaf`) rather than generated color values;
+- avoid unique texture dependencies for common low-poly assets;
+- name materials semantically (`mat_wood`, `mat_leaf`);
 - runtime palette variants should not require duplicate geometry;
-- expect only glTF-compatible material properties to transfer reliably from Blender;
+- expect only glTF-compatible material features to transfer reliably;
 - Blender-only procedural shaders are authoring previews, not runtime contracts;
-- special runtime shaders/effects should normally be assigned in Godot.
+- special runtime shaders/effects normally belong in Godot.
 
 For normally opaque solid assets, use backface culling where appropriate. Keep double-sided rendering only when the family genuinely requires it, such as selected leaf/cloth constructions.
 
-## Blender procedural features
+---
 
-Modifiers and Geometry Nodes may be used to author/generate assets, but Godot consumes the evaluated/exported glTF geometry rather than the Blender procedural graph itself.
+# 8. Blender procedural features
+
+Modifiers and Geometry Nodes may be used to author/generate assets, but Godot consumes evaluated/exported glTF geometry.
 
 Do not make runtime correctness depend on preserving:
 
-- Blender modifier stacks;
+- modifier stacks;
 - Geometry Nodes graphs;
-- Blender-only shader-node behavior;
+- Blender-only shader behavior;
 - Blender scene lighting.
 
-## Animation and character export
+Procedural generators are canonical source when using `source-mode=generator`.
 
-For rigged assets:
+A generator must:
 
-- export from the intended rest/reference pose;
-- verify skeleton hierarchy after Godot import;
-- verify skin weights/deformation in Godot;
-- verify animation clip names/ranges and actual playback after import;
-- verify blend shapes/morph targets when used;
-- do not assume Blender interpolation/material behavior transfers identically without inspection.
-
-## LOD
-
-Do not create LODs prematurely for tiny props. Establish profiling evidence first. Asset generators should nevertheless keep geometry simple enough that future LOD generation is possible.
-
-## Asset states
-
-When state changes require different geometry, prefer explicit state pieces/variants:
-
-```text
-palm healthy
-palm damaged
-palm stump
-```
-
-Where feasible, represent state through modular parts rather than entirely unrelated models so transitions remain visually coherent.
-
-One catalog family may therefore map to several GLBs or modular state pieces. Do not create a new semantic catalog identity merely because a visual state requires different geometry.
-
-## Procedural generator contract
-
-A generator should:
-
-1. accept explicit typed/configurable parameters;
-2. accept or derive a deterministic seed;
-3. clean up only objects/collections it owns;
+1. accept explicit bounded parameters;
+2. use/derive a deterministic seed;
+3. own and clean only its objects/collections;
 4. create stable names;
-5. generate required anchors/sockets;
-6. apply materials through shared helpers;
-7. validate its output;
-8. optionally render the canonical preview package;
-9. export GLB to a deterministic destination under `assets/models/`.
+5. create one named AssetScope for every exported output;
+6. generate required anchors/sockets;
+7. reuse shared material helpers;
+8. validate output;
+9. be reproducible from committed source/configuration.
 
-Avoid scripts that depend on whatever object happens to be selected in an interactive Blender session.
-
-## Recommended generator parameters
-
-Prefer bounded semantic parameters:
+Recommended semantic parameters:
 
 ```text
 height
@@ -229,30 +267,185 @@ palette_variant
 seed
 ```
 
-Avoid exposing dozens of vertex-level knobs unless they are reusable infrastructure.
+Avoid exposing vertex-level noise knobs as the primary family API.
 
-## Validation
+---
 
-Automated validation should eventually check:
+# 9. Review profiles
 
-- expected root/collection exists;
-- naming conventions;
-- unit scale/transforms;
-- required anchors/sockets;
-- duplicate semantic anchors;
-- material count;
-- triangle count guardrail;
+Artistic requirements live in `docs/art/AGENT_ART_PRODUCTION.md`; deterministic implementation lives under `tools/blender/`.
+
+Approved generic review profiles:
+
+```text
+grounded   normal props/tools/rocks/palms/structures
+character  Wilson/rigged animals
+isolated   hanging/floating/exploded diagnostics
+terrain    terrain/island/ground patches
+```
+
+Canonical review must not mutate the source asset.
+
+Normal review output includes:
+
+```text
+gameplay
+silhouette
+scale
+front
+side
+top
+review_sheet
+```
+
+Gameplay review uses the canonical orthographic 3/4 convention.
+
+---
+
+# 10. Export profiles
+
+Use the smallest correct profile.
+
+## `static`
+
+For ordinary props, structures, terrain and evaluated procedural output.
+
+```text
+apply modifiers: yes
+animations: no
+skins: no
+morph targets: forbidden
+armature: forbidden
+```
+
+A static export with shape keys is an error, not an invitation to silently drop them.
+
+## `deformable`
+
+For non-armature assets that intentionally carry shape keys/morph animation.
+
+```text
+apply modifiers: no forced application
+animations: yes
+skins: no
+morph targets: yes
+armature: forbidden
+```
+
+## `rigged`
+
+For Wilson and rigged animals.
+
+```text
+apply modifiers: no forced application
+animations: yes
+skins: yes
+morph targets: yes
+armature: required
+```
+
+Blender's glTF `Apply Modifiers` option prevents safe shape-key export, which is why static/deformable/rigged are not the same profile.
+
+---
+
+# 11. Rigged/animated assets
+
+For rigged assets:
+
+- export from the intended rest/reference state;
+- keep armature within the AssetScope;
+- verify skeleton hierarchy in Godot;
+- verify actual skin deformation in Godot;
+- verify clip names/ranges/playback;
+- verify blend shapes/morph targets;
+- do not assume Blender interpolation/material behavior transferred identically.
+
+Wilson and recurring rigged animals must use the `rigged` profile unless a later explicit contract supersedes it.
+
+---
+
+# 12. Asset states and variants
+
+When state changes require different geometry, prefer coherent state pieces/variants rather than unrelated models.
+
+Examples:
+
+```text
+palm healthy
+palm damaged
+palm stump
+```
+
+One catalog family may map to several GLBs or modular pieces.
+
+Do not create a new semantic catalog identity merely because a presentation band needs different geometry.
+
+For authored variants that share a true editing lifecycle, a family `.blend` with separate AssetScopes is preferred over duplicated independent `.blend` files.
+
+For procedural variants, regenerate from code/seed instead of versioning one `.blend` per variant.
+
+---
+
+# 13. Validation
+
+Production validation should check mechanically provable invariants before export.
+
+Current `tools/blender/validate_asset.py` covers:
+
+- supported Blender series;
+- resolvable AssetScope;
+- renderable geometry exists;
+- export-profile compatibility;
+- armature/shape-key mismatch;
+- camera/light/speaker accidentally inside runtime scope;
+- leaked review objects;
+- negative scales;
+- normalized top-level scale;
+- suspicious duplicate semantic-node suffixes;
+- basic scene-unit expectations.
+
+Future/engine-side validation should additionally cover:
+
+- material count guardrails;
+- triangle count guardrails;
 - invalid external texture paths;
-- collision presence when required by the integration contract;
-- deterministic/export-safe triangulation where visually relevant;
-- export success;
-- GLB re-import/Godot import sanity;
-- imported hierarchy and semantic-node names/transforms;
-- rig/animation/blend-shape integrity for animated assets.
+- required anchors/sockets from catalog/integration manifest;
+- imported GLB hierarchy;
+- imported semantic transforms;
+- required collision/integration wrapper;
+- rig/animation/morph integrity.
 
-## Godot import metadata
+Validation **fails** when source must be fixed. It must not mutate geometry to force success.
 
-Godot creates `<asset>.import` files beside imported runtime assets. These contain per-asset import configuration and are part of the project source-control contract.
+---
+
+# 14. Non-destructive export
+
+`tools/blender/export_asset.py` must preserve the live authored session.
+
+It may:
+
+- temporarily select scope objects;
+- write a `.blend` copy for `asset`/`family` source modes;
+- export GLB;
+- write a temporary manifest.
+
+It must not:
+
+- delete unrelated scene objects;
+- delete family siblings;
+- move geometry to bottom-center;
+- zero rotations/locations to make validation pass;
+- apply source transforms as a hidden repair step;
+- remove anchors/sockets.
+
+If the source contract is wrong, fix the source explicitly and re-run.
+
+---
+
+# 15. Godot import metadata
+
+Godot creates `<asset>.import` metadata beside imported runtime assets.
 
 Commit:
 
@@ -261,24 +454,34 @@ assets/models/**/*.glb
 assets/models/**/*.glb.import
 ```
 
-Do not commit the generated `.godot/` cache.
+Do not commit:
 
-## Godot integration wrapper
+```text
+.godot/
+```
 
-Use a `.tscn` wrapper only when engine-specific composition is needed, for example:
+---
 
-- collision/navigation nodes;
-- presentation adapters/scripts;
-- runtime shader/material overrides;
+# 16. Godot integration wrapper
+
+Use an authored `.tscn` wrapper when engine-specific composition is needed:
+
+- collision/navigation;
+- adapter scripts;
+- runtime material/shader overrides;
 - particles/effects;
-- Godot-only animation composition;
+- engine-only animation composition;
 - placement/runtime helpers.
 
-Keep the raw imported GLB reusable; avoid burying portable model semantics in object-specific Godot workarounds.
+Keep raw GLB reusable.
 
-## Asset manifest
+---
 
-Gameplay capabilities should live in domain/data definitions, not be inferred solely from filenames. A manifest may map an archetype to visual assets and required anchors:
+# 17. Asset manifest boundary
+
+Gameplay capabilities live in domain/content definitions, not in filenames or Blender custom properties alone.
+
+A manifest may map content to presentation requirements:
 
 ```json
 {
@@ -289,21 +492,31 @@ Gameplay capabilities should live in domain/data definitions, not be inferred so
 }
 ```
 
-`cuttable` belongs to the simulation definition. `ANCHOR_CHOP` belongs to presentation compatibility. Both should be validated together at integration boundaries.
+`cuttable` belongs to simulation/content semantics.
 
-## Definition of done for a 3D asset
+`ANCHOR_CHOP` belongs to presentation compatibility.
 
-An asset is done only when:
+Both should be validated at integration boundaries without collapsing them into one concept.
 
-1. source/generator is saved in the canonical `assets/` location;
-2. its catalog row requirements are satisfied;
-3. visual style matches `VISUAL_GUIDE.md` and relevant art references;
-4. semantic nodes satisfy this spec;
-5. artistic preview/review in `docs/art/AGENT_ART_PRODUCTION.md` passes;
-6. automated structural validation passes when tooling exists;
-7. GLB exports and imports into Godot correctly;
-8. imported scale/orientation/hierarchy/materials/anchors are inspected;
-9. relevant rig/animation data is validated for animated assets;
-10. relevant interactions are tested without hardcoded per-instance offsets;
-11. Godot `.import` metadata and any required authored `.tscn` wrapper are committed;
-12. the cross-cutting asset catalog production status is updated.
+---
+
+# 18. Definition of done
+
+A 3D asset is done only when:
+
+1. its catalog row/spec is sufficiently aligned;
+2. source ownership (`asset`, `family`, or `generator`) is explicit;
+3. canonical source/generator is saved in the expected location;
+4. runtime members are contained in a stable AssetScope;
+5. visual style matches `VISUAL_GUIDE.md` and relevant art references;
+6. semantic nodes satisfy this spec;
+7. canonical artistic review passes;
+8. structural validation passes;
+9. the correct export profile is used;
+10. GLB exports without mutating the source asset;
+11. Godot imports scale/orientation/hierarchy/materials correctly;
+12. anchors/sockets are verified after import;
+13. rig/animation/morph data is verified when applicable;
+14. relevant interactions work without hardcoded per-instance offsets;
+15. Godot `.import` metadata and required `.tscn` wrapper are committed;
+16. the cross-cutting asset-catalog production status is updated.
