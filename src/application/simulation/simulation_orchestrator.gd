@@ -12,11 +12,11 @@ const ReconsiderationGate = preload("res://src/application/simulation/reconsider
 ## Authoritative ordering:
 ## world progression -> derived invalidation -> action progression
 ## -> committed outcome application -> derived invalidation -> grounded drive/project progression
-## -> committed-event lifecycle propagation -> event + passive spatial perception
-## -> immediate Wilson learning -> due-gated drive progression
-## -> perception/external trigger derivation -> reconsideration gating
-## -> candidate generation/routing when admitted -> selected intention commit
-## -> optional execution of the committed intention through composed application ports.
+## -> current intention execution progression -> committed-event lifecycle propagation
+## -> event + passive spatial perception -> immediate Wilson learning
+## -> due-gated drive progression -> perception/external trigger derivation
+## -> reconsideration gating -> candidate generation/routing when admitted
+## -> selected intention commit -> optional execution through composed application ports.
 
 var _world_advance
 var _action_execution
@@ -170,6 +170,11 @@ func advance(step):
 			if _project_contribution != null:
 				project_progress = _project_contribution.apply_grounded(action_progress.new_outcome, commit_result)
 				trace.record_result(&"project_progression", project_progress)
+
+	var intention_execution_progress = null
+	if _selected_intention_executor != null and _selected_intention_executor.has_method("advance"):
+		intention_execution_progress = _selected_intention_executor.advance(_activity_query.current_intention())
+	trace.record_result(&"intention_execution_progression", intention_execution_progress)
 
 	var committed_events: Array = world_advance_result.events.duplicate()
 	if commit_result != null and commit_result.ok:
