@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-import math
+import json
 import sys
 from pathlib import Path
 
@@ -14,111 +14,332 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from _workflow_common import (
     argv_after_double_dash,
-    create_camera,
-    create_light,
-    create_plane,
+    camera_direction,
+    create_contact_sheet,
+    create_material,
+    create_review_scene,
+    create_scale_mannequin,
     default_asset_id,
+    ensure_supported_blender,
     find_repo_root,
-    get_target_object,
-    preserved_scene_state,
-    remove_temp_datablocks,
-    remove_temp_objects,
+    make_view_camera,
+    next_iteration_directory,
+    remove_review_scene,
+    render_scene_still,
+    repo_relative,
+    resolve_scope,
+    validate_asset_id,
     world_bounds,
     write_json,
 )
-
-
-def render_view(scene: bpy.types.Scene, camera: bpy.types.Object, output_path: Path) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    scene.camera = camera
-    scene.render.filepath = str(output_path)
-    bpy.ops.render.render(write_still=True)
+from _workflow_profiles import REVIEW_PROFILES
+from build_review_index import build_index
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Render canonical review views for the active Blender asset.")
-    parser.add_argument("--asset-id", default="", help="Asset identifier; defaults to the current blend file stem or active object name.")
-    parser.add_argument("--object-name", default="", help="Object name to review; defaults to active/selected object.")
-    parser.add_argument("--output-root", default="", help="Override output root; defaults to repo temp/blender-review.")
+    parser = argparse.ArgumentParser(
+        description="Render deterministic canonical review views for a Blender asset scope."
+    )
+    parser.add_argument(
+        "--asset-id",
+        default="",
+        help="Stable asset identifier. Defaults to active object/file stem only for interactive convenience.",
+    )
+    parser.add_argument(
+        "--scope-kind",
+        choices=("auto", "object", "hierarchy", "collection"),
+        default="auto",
+    )
+    parser.add_argument(
+        "--scope-name",
+        default="",
+        help="Explicit object/root/collection name. Prefer ASSET_<asset_id> collections for composites.",
+    )
+    parser.add_argument(
+        "--object-name",
+        default="",
+        help="Backward-compatible alias for a hierarchy root.",
+    )
+    parser.add_argument(
+        "--profile",
+        choices=tuple(REVIEW_PROFILES.keys()),
+        default="grounded",
+    )
+    parser.add_argument("--output-root", default="")
+    parser.add_argument("--iteration", type=int, default=0)
     parser.add_argument("--resolution-x", type=int, default=1280)
     parser.add_argument("--resolution-y", type=int, default=720)
+    parser.add_argument(
+        "--include-scale",
+        choices=("true", "false"),
+        default="true",
+        help="Render a gameplay-angle scale comparison with a neutral 1.72 m mannequin.",
+    )
+    parser.add_argument(
+        "--allow-unsupported-blender",
+        choices=("true", "false"),
+        default="false",
+    )
     return parser
 
 
+def render_normal_views(
+    *,
+    scene: bpy.types.Scene,
+    bounds: dict,
+    profile,
+    output_dir: Path,
+    asset_id: str,
+    resolution_x: int,
+    resolution_y: int,
+) -> tuple[dict[str, Path], bpy.types.Object]:
+    scene.render.resolution_x = resolution_x
+    scene.render.resolution_y = resolution_y
+    scene.render.resolution_percentage = 100
+    aspect = resolution_x / max(resolution_y, 1)
+
+    views = {
+        "gameplay": camera_direction(45.0, 35.0),
+        "front": mathutils.Vector((0.0, 1.0, 0.0)),
+        "side": mathutils.Vector((1.0, 0.0, 0.0)),
+        "top": mathutils.Vector((0.0, 0.0, 1.0)),
+    }
+
+    paths: dict[str, Path] = {}
+    gameplay_camera = None
+    for name, direction in views.items():
+        camera = make_view_camera(
+            scene=scene,
+            name=f"__review_cam_{asset_id}_{name}",
+            bounds=bounds,
+            direction=direction,
+            aspect=aspect,
+            margin=profile.camera_margin,
+        )
+        path = output_dir / f"{asset_id}_{name}.png"
+        render_scene_still(scene, camera, path)
+        paths[name] = path
+        if name == "gameplay":
+            gameplay_camera = camera
+
+    if gameplay_camera is None:
+        raise RuntimeError("Gameplay camera was not created.")
+    return paths, gameplay_camera
+
+
+def render_silhouette(
+    *,
+    scene: bpy.types.Scene,
+    gameplay_camera: bpy.types.Object,
+    output_dir: Path,
+    asset_id: str,
+    ground: bpy.types.Object | None,
+) -> Path:
+    material = create_material(
+        f"__review_silhouette_mat_{asset_id}",
+        (0.01, 0.01, 0.01, 1.0),
+        roughness=1.0,
+    )
+    view_layer = scene.view_layers[0]
+    previous_override = view_layer.material_override
+    ground_hidden = ground.hide_render if ground else None
+
+    try:
+        view_layer.material_override = material
+        if ground:
+            ground.hide_render = True
+        output_path = output_dir / f"{asset_id}_silhouette.png"
+        render_scene_still(scene, gameplay_camera, output_path)
+        return output_path
+    finally:
+        view_layer.material_override = previous_override
+        if ground is not None and ground_hidden is not None:
+            ground.hide_render = ground_hidden
+
+
+def render_scale_view(
+    *,
+    scene: bpy.types.Scene,
+    base_bounds: dict,
+    profile,
+    output_dir: Path,
+    asset_id: str,
+    resolution_x: int,
+    resolution_y: int,
+) -> Path:
+    min_v = mathutils.Vector(base_bounds["min"])
+    max_v = mathutils.Vector(base_bounds["max"])
+    size = mathutils.Vector(base_bounds["size"])
+    gap = max(size.x * 0.20, 0.30)
+
+    mannequin = create_scale_mannequin(
+        scene,
+        name=f"__review_mannequin_{asset_id}",
+        location=mathutils.Vector((max_v.x + gap + 0.22, min_v.y, min_v.z)),
+    )
+
+    mannequin_bounds = world_bounds([mannequin])
+    combined = {
+        "min": [
+            min(base_bounds["min"][i], mannequin_bounds["min"][i])
+            for i in range(3)
+        ],
+        "max": [
+            max(base_bounds["max"][i], mannequin_bounds["max"][i])
+            for i in range(3)
+        ],
+    }
+    combined["center"] = [
+        (combined["min"][i] + combined["max"][i]) / 2.0 for i in range(3)
+    ]
+    combined["size"] = [
+        combined["max"][i] - combined["min"][i] for i in range(3)
+    ]
+    combined["radius"] = mathutils.Vector(combined["size"]).length / 2.0
+
+    aspect = resolution_x / max(resolution_y, 1)
+    camera = make_view_camera(
+        scene=scene,
+        name=f"__review_cam_{asset_id}_scale",
+        bounds=combined,
+        direction=camera_direction(45.0, 35.0),
+        aspect=aspect,
+        margin=max(profile.camera_margin, 1.12),
+    )
+    output_path = output_dir / f"{asset_id}_scale.png"
+    render_scene_still(scene, camera, output_path)
+    return output_path
+
+
 def main() -> dict:
-    parser = build_parser()
-    args = parser.parse_args(argv_after_double_dash())
+    args = build_parser().parse_args(argv_after_double_dash())
+    ensure_supported_blender(args.allow_unsupported_blender == "true")
 
-    scene = bpy.context.scene
-    obj = get_target_object(args.object_name or None)
-    bounds = world_bounds([obj])
-    center = mathutils.Vector(bounds["center"])
-    size = mathutils.Vector(bounds["size"])
-    max_dim = max(size.x, size.y, size.z, 0.001)
+    asset_id = validate_asset_id(args.asset_id or default_asset_id())
+    scope = resolve_scope(
+        asset_id=asset_id,
+        scope_kind=args.scope_kind,
+        scope_name=args.scope_name,
+        object_name=args.object_name,
+        allow_active_fallback=True,
+    )
+    profile = REVIEW_PROFILES[args.profile]
 
-    asset_id = args.asset_id or default_asset_id()
     repo_root = find_repo_root()
-    output_root = Path(args.output_root) if args.output_root else repo_root / "temp" / "blender-review" / asset_id
-    output_root.mkdir(parents=True, exist_ok=True)
+    review_root = (
+        Path(args.output_root).resolve()
+        if args.output_root
+        else repo_root / "temp" / "blender-review"
+    )
+    asset_root = review_root / asset_id
+    iteration, output_dir = next_iteration_directory(asset_root, args.iteration)
 
-    with preserved_scene_state(scene):
-        scene.render.engine = "BLENDER_EEVEE"
-        scene.render.resolution_x = args.resolution_x
-        scene.render.resolution_y = args.resolution_y
-        scene.render.film_transparent = False
-        scene.render.image_settings.file_format = "PNG"
+    source_scene = bpy.context.scene
+    bounds = world_bounds(scope.objects)
+    review_scene, temp = create_review_scene(
+        source_scene=source_scene,
+        scope=scope,
+        profile=profile,
+        bounds=bounds,
+    )
 
-        if scene.world is None:
-            world = bpy.data.worlds.new(f"__review_world_{asset_id}")
-            world.use_nodes = True
-            scene.world = world
+    manifest: dict = {
+        "asset_id": asset_id,
+        "blender_version": bpy.app.version_string,
+        "iteration": iteration,
+        "review_profile": profile.name,
+        "scope": {
+            "kind": scope.kind,
+            "name": scope.name,
+            "objects": scope.object_names,
+        },
+        "bounds": bounds,
+        "renders": {},
+        "canonical_view_order": [
+            "gameplay",
+            "silhouette",
+            "scale",
+            "front",
+            "side",
+            "top",
+        ],
+    }
 
-        if scene.world and scene.world.use_nodes:
-            bg = scene.world.node_tree.nodes.get("Background")
-            if bg:
-                bg.inputs[0].default_value = (0.80, 0.82, 0.84, 1.0)
-                bg.inputs[1].default_value = 0.8
+    try:
+        normal_paths, gameplay_camera = render_normal_views(
+            scene=review_scene,
+            bounds=bounds,
+            profile=profile,
+            output_dir=output_dir,
+            asset_id=asset_id,
+            resolution_x=args.resolution_x,
+            resolution_y=args.resolution_y,
+        )
 
-        ground = create_plane(scene, "__review_ground", size=max_dim * 10.0, location=(center.x, center.y, bounds["min"][2]))
-        ground_mat = bpy.data.materials.new(name="__review_ground_mat")
-        ground_mat.use_nodes = True
-        bsdf = ground_mat.node_tree.nodes.get("Principled BSDF")
-        if bsdf:
-            bsdf.inputs["Base Color"].default_value = (0.66, 0.62, 0.54, 1.0)
-            bsdf.inputs["Roughness"].default_value = 1.0
-        ground.data.materials.append(ground_mat)
+        silhouette_path = render_silhouette(
+            scene=review_scene,
+            gameplay_camera=gameplay_camera,
+            output_dir=output_dir,
+            asset_id=asset_id,
+            ground=temp["ground"],
+        )
 
-        create_light(scene, "__review_sun", "SUN", (center.x + 4.0, center.y - 4.0, center.z + 6.0), 2.5)
-        create_light(scene, "__review_fill", "AREA", (center.x - 4.0, center.y + 4.0, center.z + 4.0), 40.0, size=max_dim * 5.0)
-
-        dist = max_dim * 4.0 + 1.0
-        camera_specs = [
-            ("gameplay", center + mathutils.Vector((dist, -dist, dist * 0.8)), max_dim * 2.4),
-            ("front", center + mathutils.Vector((0.0, -dist, dist * 0.05)), max(size.x, size.z) * 2.2 + 0.25),
-            ("side", center + mathutils.Vector((dist, 0.0, dist * 0.05)), max(size.y, size.z) * 2.2 + 0.25),
-            ("top", center + mathutils.Vector((0.0, 0.0, dist)), max(size.x, size.y) * 2.2 + 0.25),
-        ]
-
-        manifest = {
-            "asset_id": asset_id,
-            "object_name": obj.name,
-            "bounds": bounds,
-            "renders": [],
+        render_paths = {
+            "gameplay": normal_paths["gameplay"],
+            "silhouette": silhouette_path,
+            "front": normal_paths["front"],
+            "side": normal_paths["side"],
+            "top": normal_paths["top"],
         }
 
-        for suffix, location, ortho_scale in camera_specs:
-            camera = create_camera(scene, f"__review_cam_{suffix}", location, center, ortho_scale)
-            output_path = output_root / f"{asset_id}_{suffix}.png"
-            render_view(scene, camera, output_path)
-            manifest["renders"].append({"view": suffix, "path": str(output_path)})
+        if args.include_scale == "true":
+            render_paths["scale"] = render_scale_view(
+                scene=review_scene,
+                base_bounds=bounds,
+                profile=profile,
+                output_dir=output_dir,
+                asset_id=asset_id,
+                resolution_x=args.resolution_x,
+                resolution_y=args.resolution_y,
+            )
 
-        write_json(output_root / f"{asset_id}_review_manifest.json", manifest)
+        contact_order = [
+            key for key in manifest["canonical_view_order"] if key in render_paths
+        ]
+        contact_paths = [render_paths[key] for key in contact_order]
+        contact_sheet = output_dir / f"{asset_id}_review_sheet.png"
+        if create_contact_sheet(
+            contact_paths, contact_sheet, columns=3, tile_scale=0.5
+        ):
+            manifest["review_sheet"] = repo_relative(contact_sheet, repo_root)
 
-    remove_temp_objects("__review_")
-    remove_temp_datablocks("__review_")
+        manifest["renders"] = {
+            key: repo_relative(path, repo_root)
+            for key, path in render_paths.items()
+        }
+
+    finally:
+        remove_review_scene(review_scene)
+
+    manifest_path = output_dir / f"{asset_id}_review_manifest.json"
+    write_json(manifest_path, manifest)
+    write_json(
+        asset_root / "latest.json",
+        {
+            "asset_id": asset_id,
+            "latest_iteration": iteration,
+            "manifest": repo_relative(manifest_path, repo_root),
+            "review_sheet": manifest.get("review_sheet", ""),
+        },
+    )
+
+    try:
+        build_index(review_root, repo_root=repo_root)
+    except Exception as exc:
+        print(f"[WARN] Review index generation failed: {exc}")
+
     return manifest
 
 
 if __name__ == "__main__":
-    result = main()
-    print(result)
+    print(json.dumps(main(), indent=2, sort_keys=True))
