@@ -4,17 +4,15 @@
 
 This area documents **prototype asset production only**. Prototype assets support executable engine and gameplay tests before production art exists.
 
-Runtime scene composition, assertions and visual checkpoints do not live here. They live under `tests/scenes/` so executable test code is the integration truth.
-
-Prototype content may simplify production objects while preserving dimensions, pivots and semantic readability required by a test. It does not redefine production asset requirements.
+Runtime scene composition, assertions and visual checkpoints live under `tests/scenes/`. Prototype content may simplify production objects while preserving dimensions, pivots and semantic readability required by a test. It does not redefine production asset requirements.
 
 Prototype documents do not replace:
 
 - `ASSET_SPEC.md` / `ASSET_PIPELINE.md` for production asset contracts;
 - `VISUAL_GUIDE.md` / `art/` for final visual direction;
-- `asset-catalog/` for the durable object/content backlog;
+- `asset-catalog/` for the durable content backlog;
 - `tools/blender/README.md` for production Blender review/validation/export automation;
-- `tests/scenes/` and `tests/headless/` for executable runtime truth.
+- `tests/scenes/` / `tests/headless/` for executable runtime truth.
 
 ## Structure
 
@@ -23,24 +21,21 @@ docs/prototyping/
 ├── README.md
 └── blender/
     ├── BLENDER_PROTOTYPING_GUIDE.md
-    ├── MCP_AGENT_WORKFLOW.md
-    └── REVIEW_EXPORT_WORKFLOW.md   # compatibility pointer only
+    └── MCP_AGENT_WORKFLOW.md
 ```
 
-The Blender prototyping documents are reusable instructions for local smoke-test modeling. Keep that agent constrained to visible geometry/source/export work; Godot interpretation and runtime semantics stay in repository-owned scenes/scripts.
+The Blender documents here are for local smoke-test modeling. Production modeling agents should use the asset catalog + production contracts instead.
 
 ## Repository shape for prototype assets
 
 ```text
 prototypes/
 └── <fixture-name>/
-    ├── source/       # intentional modeling source such as .blend
-    └── exports/      # GLB assets consumed by executable scenes
+    ├── source/
+    └── exports/
 ```
 
-Production assets do **not** inherit a universal "one blend per exported asset" rule from prototypes.
-
-Production source ownership is chosen explicitly:
+Production source ownership is different and chosen explicitly:
 
 ```text
 independent manual asset
@@ -55,19 +50,9 @@ procedural family
 
 See `../ASSET_PIPELINE.md`, `../ASSET_SPEC.md`, `../../assets/README.md` and `../../tools/blender/README.md`.
 
-Executable scenes belong in:
+Executable scenes belong in `tests/scenes/<fixture-name>/`; stable automated wrappers may live in `tests/headless/`.
 
-```text
-tests/scenes/<fixture-name>/
-```
-
-A stable automated wrapper may additionally live in:
-
-```text
-tests/headless/<fixture-name>_scene_test.gd
-```
-
-Do not create a parallel `godot/` subtree under each prototype. This avoids splitting scene authority between prototype work orders and the test suite.
+Do not create a parallel `godot/` subtree under each prototype.
 
 ## Prototype authority
 
@@ -82,8 +67,8 @@ A local **prototype** modeling agent should receive:
 1. this README;
 2. `blender/BLENDER_PROTOTYPING_GUIDE.md`;
 3. `blender/MCP_AGENT_WORKFLOW.md` when MCP is used;
-4. a compact object manifest supplied by the human/implementing agent.
+4. a compact object manifest supplied by the implementing agent.
 
 A production modeling agent should instead start from the asset catalog and production contracts, then use `tools/blender/README.md`.
 
-The prototype modeling agent should return source geometry plus exports. It should not author navigation, collision semantics, runtime identity, perception logic or test assertions.
+The prototype modeling agent returns source geometry plus exports. It does not author navigation, collision semantics, runtime identity, perception logic or test assertions.
