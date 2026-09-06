@@ -23,12 +23,12 @@ func generate(parameters, profile, content):
 	if not content.is_sealed():
 		return ProductNewRunGenerationResult.failure(
 			&"generation_content_not_sealed",
-			["Product new-run generation requires sealed authored content"]
+			["Product new-run generation requires sealed authored content"] as Array[String]
 		)
 	if parameters.generation_profile_id != profile.id:
 		return ProductNewRunGenerationResult.failure(
 			&"generation_profile_mismatch",
-			["Requested profile '%s' but received '%s'" % [String(parameters.generation_profile_id), String(profile.id)]]
+			["Requested profile '%s' but received '%s'" % [String(parameters.generation_profile_id), String(profile.id)]] as Array[String]
 		)
 
 	var rules: Array = profile.entity_rules.duplicate()
@@ -37,7 +37,7 @@ func generate(parameters, profile, content):
 		if not content.has_entity_definition(rule.type_id):
 			return ProductNewRunGenerationResult.failure(
 				&"generation_missing_entity_definition",
-				["Generation rule '%s' references missing authored type %s" % [String(rule.id_prefix), rule.type_id.sort_key()]]
+				["Generation rule '%s' references missing authored type %s" % [String(rule.id_prefix), rule.type_id.sort_key()]] as Array[String]
 			)
 
 	var rng := RandomNumberGenerator.new()
@@ -51,16 +51,15 @@ func generate(parameters, profile, content):
 	for rule in rules:
 		var count: int = rng.randi_range(rule.min_count, rule.max_count)
 		var candidate_places := _sorted_places(rule.candidate_places)
-		var generated_ids: Array = []
+		var generated_for_rule: Array = []
 		for index in range(count):
 			var entity_id = DomainId.entity(StringName("%s_%03d" % [String(rule.id_prefix), index + 1]))
 			if entity_keys.has(entity_id.key()):
 				return ProductNewRunGenerationResult.failure(
 					&"duplicate_generated_entity_id",
-					["Generated duplicate entity id: %s" % entity_id.sort_key()]
+					["Generated duplicate entity id: %s" % entity_id.sort_key()] as Array[String]
 				)
 			entity_keys[entity_id.key()] = true
-			generated_ids.append(entity_id)
 			var place_id = candidate_places[rng.randi_range(0, candidate_places.size() - 1)]
 			entity_seeds.append(EntityBootstrapSeed.new(
 				entity_id,
@@ -70,16 +69,51 @@ func generate(parameters, profile, content):
 				rule.state_overrides,
 				rule.quantity
 			))
-		generated_by_prefix[rule.id_prefix] = generated_ids
+			generated_for_rule.append(entity_id)
+		generated_by_prefix[rule.id_prefix] = generated_for_rule
 
-	var relation_result := _generate_relations(profile.relation_rules, generated_by_prefix, rng)
-	if not relation_result.ok:
-		return ProductNewRunGenerationResult.failure(relation_result.code, relation_result.diagnostics)
+	var relation_seeds: Array = []
+	var relation_rules: Array = profile.relation_rules.duplicate()
+	relation_rules.sort_custom(func(a, b): return String(a.id) < String(b.id))
+	for relation_rule in relation_rules:
+		var subjects: Array = generated_by_prefix.get(relation_rule.subject_entity_prefix, []).duplicate()
+		var objects: Array = generated_by_prefix.get(relation_rule.object_entity_prefix, []).duplicate()
+		subjects.sort_custom(func(a, b): return a.sort_key() < b.sort_key())
+		objects.sort_custom(func(a, b): return a.sort_key() < b.sort_key())
+		var candidates: Array = []
+		for subject_id in subjects:
+			for object_id in objects:
+				if subject_id.equals(object_id):
+					continue
+				candidates.append([subject_id, object_id])
+		var relation_count: int = rng.randi_range(relation_rule.min_count, relation_rule.max_count)
+		if relation_count > candidates.size():
+			var diagnostics: Array[String] = [
+				"Relation rule '%s' requests %d unique relation(s) but only %d candidate pair(s) exist" % [
+					String(relation_rule.id),
+					relation_count,
+					candidates.size(),
+				]
+			]
+			return ProductNewRunGenerationResult.failure(
+				&"insufficient_generated_relation_candidates",
+				diagnostics
+			)
+		for _index in range(relation_count):
+			var selected_index: int = rng.randi_range(0, candidates.size() - 1)
+			var selected: Array = candidates[selected_index]
+			candidates.remove_at(selected_index)
+			relation_seeds.append(RelationBootstrapSeed.new(
+				relation_rule.relation_type,
+				RuntimeWorldRef.entity(selected[0]),
+				RuntimeWorldRef.entity(selected[1]),
+				relation_rule.qualifier
+			))
 
 	var simulation = SimulationBootstrapDefinition.new(
 		wilson_place,
 		entity_seeds,
-		relation_result.seeds,
+		relation_seeds,
 		[],
 		null,
 		1.0,
@@ -99,55 +133,6 @@ func generate(parameters, profile, content):
 		parameters.initial_god_power,
 		parameters.initial_permissions
 	))
-
-
-func _generate_relations(source_rules: Array, generated_by_prefix: Dictionary, rng: RandomNumberGenerator) -> Dictionary:
-	var rules := source_rules.duplicate()
-	rules.sort_custom(func(a, b): return a.sort_key() < b.sort_key())
-	var seeds: Array = []
-	for rule in rules:
-		if not generated_by_prefix.has(rule.subject_prefix) or not generated_by_prefix.has(rule.object_prefix):
-			return _relation_failure(
-				&"generation_relation_unknown_entity_family",
-				["Relation rule '%s' references an unknown generated entity family" % String(rule.id)]
-			)
-		var subjects: Array = generated_by_prefix[rule.subject_prefix]
-		var objects: Array = generated_by_prefix[rule.object_prefix]
-		var pairs: Array = []
-		for subject_id in subjects:
-			for object_id in objects:
-				if subject_id.equals(object_id):
-					continue
-				pairs.append([subject_id, object_id])
-		pairs.sort_custom(func(a, b): return "%s|%s" % [a[0].sort_key(), a[1].sort_key()] < "%s|%s" % [b[0].sort_key(), b[1].sort_key()])
-		if rule.max_count > pairs.size():
-			return _relation_failure(
-				&"generation_relation_insufficient_candidates",
-				["Relation rule '%s' allows %d relations but only %d unique pairs exist" % [String(rule.id), rule.max_count, pairs.size()]]
-			)
-		var count := rng.randi_range(rule.min_count, rule.max_count)
-		_shuffle(pairs, rng)
-		for index in range(count):
-			var pair: Array = pairs[index]
-			seeds.append(RelationBootstrapSeed.new(
-				rule.relation_type,
-				RuntimeWorldRef.entity(pair[0]),
-				RuntimeWorldRef.entity(pair[1]),
-				rule.qualifier
-			))
-	return {"ok": true, "code": &"generated_relations_valid", "diagnostics": [], "seeds": seeds}
-
-
-func _relation_failure(code: StringName, diagnostics: Array) -> Dictionary:
-	return {"ok": false, "code": code, "diagnostics": diagnostics, "seeds": []}
-
-
-func _shuffle(values: Array, rng: RandomNumberGenerator) -> void:
-	for index in range(values.size() - 1, 0, -1):
-		var swap_index := rng.randi_range(0, index)
-		var value = values[index]
-		values[index] = values[swap_index]
-		values[swap_index] = value
 
 
 func _sorted_places(source: Array) -> Array:
