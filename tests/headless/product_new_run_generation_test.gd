@@ -6,6 +6,7 @@ const EntityDefinition = preload("res://src/domain/content/entity_definition.gd"
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
 const ProductNewRunParameters = preload("res://src/application/bootstrap/product_new_run_parameters.gd")
 const ProductEntityGenerationRule = preload("res://src/application/bootstrap/product_entity_generation_rule.gd")
+const ProductRelationGenerationRule = preload("res://src/application/bootstrap/product_relation_generation_rule.gd")
 const ProductWorldGenerationProfile = preload("res://src/application/bootstrap/product_world_generation_profile.gd")
 const ProductNewRunGenerator = preload("res://src/application/bootstrap/product_new_run_generator.gd")
 const NewRunBootstrapService = preload("res://src/application/bootstrap/new_run_bootstrap_service.gd")
@@ -34,6 +35,7 @@ func _run_slice() -> void:
 	var grove = DomainId.place(&"grove")
 	var coconut_type = DomainId.entity_type(&"coconut")
 	var stone_type = DomainId.entity_type(&"stone")
+	var nearby = DomainId.relation_type(&"nearby")
 	var food_rule = ProductEntityGenerationRule.new(
 		&"food",
 		coconut_type,
@@ -48,13 +50,22 @@ func _run_slice() -> void:
 		1,
 		3
 	)
+	var nearby_rule = ProductRelationGenerationRule.new(
+		&"food_near_stone",
+		nearby,
+		&"food",
+		&"stone",
+		1,
+		2
+	)
 	var profile = ProductWorldGenerationProfile.new(
 		&"tropical_baseline",
 		[beach_a, beach_b],
 		[food_rule, stone_rule],
 		{DriveState.HUNGER: 0.4},
 		&"clear",
-		&"day"
+		&"day",
+		[nearby_rule]
 	)
 	var parameters = ProductNewRunParameters.new(
 		&"run_product_001",
@@ -92,9 +103,18 @@ func _run_slice() -> void:
 		_entity_signature(second.definition.simulation.entity_seeds),
 		"same inputs and seed reproduce generated entity causes"
 	)
+	_expect_equal(
+		_relation_signature(first.definition.simulation.relation_seeds),
+		_relation_signature(second.definition.simulation.relation_seeds),
+		"same inputs and seed reproduce generated relation causes"
+	)
 	_expect_true(
 		first.definition.simulation.entity_seeds.size() >= 3 and first.definition.simulation.entity_seeds.size() <= 7,
 		"generated entity count remains within authored bounds"
+	)
+	_expect_true(
+		first.definition.simulation.relation_seeds.size() >= 1 and first.definition.simulation.relation_seeds.size() <= 2,
+		"generated relation count remains within authored bounds"
 	)
 
 	var reordered_profile = ProductWorldGenerationProfile.new(
@@ -106,7 +126,8 @@ func _run_slice() -> void:
 		],
 		{DriveState.HUNGER: 0.4},
 		&"clear",
-		&"day"
+		&"day",
+		[ProductRelationGenerationRule.new(&"food_near_stone", nearby, &"food", &"stone", 1, 2)]
 	)
 	var reordered = generator.generate(parameters, reordered_profile, content)
 	_expect_true(reordered.ok, "semantically equivalent reordered profile generates")
@@ -126,7 +147,9 @@ func _run_slice() -> void:
 		if not variant.ok:
 			continue
 		var count = variant.definition.simulation.entity_seeds.size()
+		var relation_count = variant.definition.simulation.relation_seeds.size()
 		_expect_true(count >= 3 and count <= 7, "seed %d respects entity-count bounds" % seed)
+		_expect_true(relation_count >= 1 and relation_count <= 2, "seed %d respects relation-count bounds" % seed)
 		if _definition_signature(variant.definition) != baseline_signature:
 			variation_seen = true
 	_expect_true(variation_seen, "nearby deterministic seeds produce bounded semantic variation")
@@ -136,6 +159,7 @@ func _run_slice() -> void:
 	if bootstrap.ok:
 		_expect_equal(bootstrap.run_id, &"run_product_001", "bootstrap preserves generated run identity")
 		_expect_equal(bootstrap.owners.entities.entities().size(), first.definition.simulation.entity_seeds.size(), "bootstrap admits every generated entity cause")
+		_expect_equal(bootstrap.owners.relations.relation_count(), first.definition.simulation.relation_seeds.size(), "bootstrap admits every generated relation cause")
 		_expect_equal(bootstrap.owners.drives.value(DriveState.HUNGER), 0.4, "generated drive causes reach cognition owner")
 
 	var unsealed_content = ContentRegistry.new()
@@ -174,6 +198,23 @@ func _run_slice() -> void:
 	_expect_true(not duplicate.ok, "invalid generated duplicate identity fails explicitly")
 	_expect_equal(duplicate.code, &"duplicate_generated_entity_id", "duplicate generation reports stable code")
 
+	var impossible_relation_profile = ProductWorldGenerationProfile.new(
+		&"impossible_relation",
+		[beach_a],
+		[ProductEntityGenerationRule.new(&"single", coconut_type, [beach_a], 1, 1)],
+		{},
+		&"clear",
+		&"day",
+		[ProductRelationGenerationRule.new(&"self_pair", nearby, &"single", &"single", 1, 1)]
+	)
+	var impossible_relation = generator.generate(
+		ProductNewRunParameters.new(&"run_impossible_relation", 7, &"impossible_relation"),
+		impossible_relation_profile,
+		content
+	)
+	_expect_true(not impossible_relation.ok, "relation rule without enough unique pairs fails explicitly")
+	_expect_equal(impossible_relation.code, &"generation_relation_insufficient_candidates", "insufficient relation candidates report stable code")
+
 	_completed = true
 
 
@@ -184,8 +225,19 @@ func _entity_signature(seeds: Array) -> Array[String]:
 	return signature
 
 
+func _relation_signature(seeds: Array) -> Array[String]:
+	var signature: Array[String] = []
+	for seed in seeds:
+		signature.append("%s|%s|%s|%s" % [seed.relation_type.sort_key(), seed.subject.sort_key(), seed.object.sort_key(), str(seed.qualifier)])
+	return signature
+
+
 func _definition_signature(definition) -> String:
-	return "%s::%s" % [definition.simulation.wilson_place_id.sort_key(), str(_entity_signature(definition.simulation.entity_seeds))]
+	return "%s::%s::%s" % [
+		definition.simulation.wilson_place_id.sort_key(),
+		str(_entity_signature(definition.simulation.entity_seeds)),
+		str(_relation_signature(definition.simulation.relation_seeds)),
+	]
 
 
 func _expect_true(actual: bool, label: String) -> void:
