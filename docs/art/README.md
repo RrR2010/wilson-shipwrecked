@@ -1,34 +1,48 @@
 # Visual Production Support Pack
 
-This directory turns the project visual direction into operational guidance for humans and autonomous 3D agents.
+This directory turns the project visual direction into focused production guidance for humans and 3D agents.
 
-It supplements, but does not replace:
+Canonical owners:
 
-- `../VISUAL_GUIDE.md` — visual source of truth;
-- `../ASSET_SPEC.md` — runtime asset contract;
-- `../ASSET_PIPELINE.md` — technical asset workflow;
-- `../asset-catalog/` — cross-cutting source of truth for what modeled assets exist and what they must support.
+```text
+../VISUAL_GUIDE.md                  global visual source of truth
+../asset-catalog/                   what modeled content must exist/support
+../ASSET_SPEC.md                    technical asset invariants
+../ASSET_PIPELINE.md                production sequence
+AGENT_ART_PRODUCTION.md             short artistic modeling/review loop
+reference/ + reference/visual/      family-specific written/visual references
+```
+
+`art/` must not maintain a second asset backlog.
 
 ## Locked baseline
 
-> A colorful tropical miniature diorama with an orthographic 3/4 gameplay camera, intentionally aggressive low-poly environment geometry, broad readable silhouettes, restrained surface detail, and a softer caricatured Wilson who remains visually distinct from the more faceted world.
+A colorful tropical miniature diorama with an orthographic 3/4 gameplay camera, intentionally aggressive low-poly environment geometry, broad readable silhouettes, restrained surface detail, and a softer caricatured Wilson.
 
 Common assets default to shared flat-color materials with no unique texture maps. Complexity should come from form, composition, state, lighting and persistent history rather than surface detail.
 
-## Document authority map
+Global authored orientation is:
 
-### 1. Core visual direction
+```text
++Y = forward/front
++X = right
++Z = up
+```
 
-- [`ART_DIRECTION.md`](ART_DIRECTION.md) — target, mood, complexity hierarchy and persistent-state philosophy.
-- [`SHAPE_LANGUAGE.md`](SHAPE_LANGUAGE.md) — geometry, silhouette and faceting grammar.
-- [`PALETTE_AND_MATERIALS.md`](PALETTE_AND_MATERIALS.md) — flat-material, palette and texture policy.
-- [`SCALE_CAMERA_AND_READABILITY.md`](SCALE_CAMERA_AND_READABILITY.md) — scale, camera and gameplay-readability rules.
+Runtime instances may rotate in the world; asset families do not redefine their local forward axis.
 
-These are visual appendices to `../VISUAL_GUIDE.md`, not competing asset catalogs or domain sources.
+## Core visual appendices
 
-### 2. Family reference pack
+Open only when relevant:
 
-Text specs live in [`reference/`](reference/) and approved visual sheets in `reference/visual/`.
+- [`ART_DIRECTION.md`](ART_DIRECTION.md) — visual identity/mood/hierarchy.
+- [`SHAPE_LANGUAGE.md`](SHAPE_LANGUAGE.md) — silhouette/faceting grammar.
+- [`PALETTE_AND_MATERIALS.md`](PALETTE_AND_MATERIALS.md) — flat-material/texture policy.
+- [`SCALE_CAMERA_AND_READABILITY.md`](SCALE_CAMERA_AND_READABILITY.md) — relative scale, orientation, physical pose, camera/readability.
+
+## Reference pack
+
+Text references live under [`reference/`](reference/) and approved visual sheets under `reference/visual/`.
 
 Current sequence:
 
@@ -45,57 +59,46 @@ Current sequence:
 11. Workstations & Utilities
 12. Transport, Raft & Dock
 
-Use only the references relevant to the current task. Visual sheets communicate shape intent; textual specs remain authoritative when an AI-generated sheet contains accidental artifacts or ambiguous details.
+Use only the references relevant to the current asset. Visual sheets communicate shape intent; textual contracts win when generated imagery contains accidental details.
 
-### 3. Asset selection and requirements
-
-Use [`../asset-catalog/`](../asset-catalog/) to decide what model/family is required and to read its cross-cutting functional + artistic requirements.
-
-`docs/art/` must not maintain a second object list.
-
-### 4. Agent artistic execution
-
-- [`AGENT_ART_PRODUCTION.md`](AGENT_ART_PRODUCTION.md) — artistic modeling loop, canonical previews, self-review, independent review and acceptance.
-- [`ASSET_BRIEF_TEMPLATE.md`](ASSET_BRIEF_TEMPLATE.md) — optional compact family/asset-specific art brief when the catalog row + references are not sufficient.
-
-`AGENT_ART_PRODUCTION.md` is the single operational source for artistic preview/review behavior.
-
-## Agent minimum art reading path
-
-For normal modeling work:
+## Normal modeling-agent reading path
 
 ```text
-asset-catalog row
-→ VISUAL_GUIDE.md
-→ relevant core art docs
-→ relevant REFERENCE_*.md + approved visual sheet
-→ optional family/asset brief
+matching asset-catalog row
+→ ../VISUAL_GUIDE.md
+→ relevant REFERENCE_*.md + visual sheet
 → AGENT_ART_PRODUCTION.md
 ```
 
-Do not use Rounds 1–10 as the default modeling prompt. They remain upstream historical/design evidence in `../brainstorming/functional-asset-catalog/`.
+Open a core appendix or optional art brief only if the current task needs it.
+
+Do not read brainstorming rounds by default.
+
+## Agent loop
+
+`AGENT_ART_PRODUCTION.md` owns the execution loop:
+
+```text
+choose asset
+→ inspect written + visual references
+→ model/generate
+→ render canonical previews
+→ inspect images
+→ refine/iterate
+→ final visual check
+→ validate/export
+```
+
+If the active model has vision, it reviews the images itself. If it cannot inspect images, it delegates the visual check to the `vs` subagent using the prompt defined there.
 
 ## Brief strategy
 
-- **grammar-only task** when catalog + approved reference fully define a trivial variant;
-- **family brief** when a family needs additional visual variation/construction constraints;
-- **asset-specific brief** only for visually high-risk or unusually authored assets.
+Use no separate brief when catalog + reference already define the asset.
 
-Functional requirements belong in the cross-cutting asset catalog or canonical domain docs, not in an art-only brief.
+Use a family/asset art brief only for unresolved visual decisions. Functional requirements belong in the cross-cutting asset catalog/domain contracts, not in an art-only brief.
 
 ## Production principle
 
-Aim for **maximum systemic variety inside a narrow visual grammar**.
+Prefer the simplest asset that is coherent in style, relative scale, physical pose and gameplay readability.
 
-The gameplay camera is authoritative. A close-up render cannot rescue an asset that is unreadable in normal play.
-
-## Remaining art-block work
-
-The direction layer is substantially closed. Remaining work is calibration and production:
-
-1. keep the approved reference PNG set complete;
-2. calibrate exact palette/material values in a real preview scene;
-3. calibrate final gameplay camera values;
-4. create art briefs only when catalog + references are insufficient;
-5. validate the agent loop on a representative pilot batch;
-6. build the golden scene from approved production assets.
+A close-up render cannot rescue an asset that fails from the gameplay camera.
