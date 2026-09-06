@@ -17,3 +17,5 @@ Thumbs.db
 # Local scratch / renders
 temp/
 assets/previews/
+assets/generated/**
+!assets/generated/.gdignore
