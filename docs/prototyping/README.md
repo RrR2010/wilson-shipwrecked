@@ -13,6 +13,7 @@ Prototype documents do not replace:
 - `ASSET_SPEC.md` / `ASSET_PIPELINE.md` for production asset contracts;
 - `VISUAL_GUIDE.md` / `art/` for final visual direction;
 - `asset-catalog/` for the durable object/content backlog;
+- `tools/blender/README.md` for production Blender review/validation/export automation;
 - `tests/scenes/` and `tests/headless/` for executable runtime truth.
 
 ## Structure
@@ -22,10 +23,11 @@ docs/prototyping/
 ├── README.md
 └── blender/
     ├── BLENDER_PROTOTYPING_GUIDE.md
-    └── MCP_AGENT_WORKFLOW.md
+    ├── MCP_AGENT_WORKFLOW.md
+    └── REVIEW_EXPORT_WORKFLOW.md   # compatibility pointer only
 ```
 
-The Blender documents are reusable instructions for a local modeling agent. Keep that agent constrained to visible geometry/source/export work; Godot interpretation and runtime semantics stay in repository-owned scenes/scripts.
+The Blender prototyping documents are reusable instructions for local smoke-test modeling. Keep that agent constrained to visible geometry/source/export work; Godot interpretation and runtime semantics stay in repository-owned scenes/scripts.
 
 ## Repository shape for prototype assets
 
@@ -36,7 +38,22 @@ prototypes/
     └── exports/      # GLB assets consumed by executable scenes
 ```
 
-For production asset batches, the same principle applies inside `assets/source/` and `assets/models/`: the default editable unit is one `.blend` per asset, while runtime exports remain `.glb`.
+Production assets do **not** inherit a universal "one blend per exported asset" rule from prototypes.
+
+Production source ownership is chosen explicitly:
+
+```text
+independent manual asset
+→ one .blend per asset
+
+shared authored family/rig/stages
+→ one family .blend + multiple AssetScopes
+
+procedural family
+→ generator/config is source; optional one workbench .blend
+```
+
+See `../ASSET_PIPELINE.md`, `../ASSET_SPEC.md`, `../../assets/README.md` and `../../tools/blender/README.md`.
 
 Executable scenes belong in:
 
@@ -60,12 +77,13 @@ Prefer explicit, inspectable geometry over visual realism. Every added modeling 
 
 ## Modeling handoff
 
-A local modeling agent should receive:
+A local **prototype** modeling agent should receive:
 
 1. this README;
 2. `blender/BLENDER_PROTOTYPING_GUIDE.md`;
 3. `blender/MCP_AGENT_WORKFLOW.md` when MCP is used;
-4. `blender/REVIEW_EXPORT_WORKFLOW.md` when a scripted review/export loop is available;
-5. a compact object manifest supplied by the human/implementing agent.
+4. a compact object manifest supplied by the human/implementing agent.
 
-The modeling agent should return source geometry plus exports. It should not author navigation, collision semantics, runtime identity, perception logic or test assertions.
+A production modeling agent should instead start from the asset catalog and production contracts, then use `tools/blender/README.md`.
+
+The prototype modeling agent should return source geometry plus exports. It should not author navigation, collision semantics, runtime identity, perception logic or test assertions.
