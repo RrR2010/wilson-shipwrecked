@@ -76,8 +76,8 @@ func generate(parameters, profile, content):
 	var relation_rules: Array = profile.relation_rules.duplicate()
 	relation_rules.sort_custom(func(a, b): return String(a.id) < String(b.id))
 	for relation_rule in relation_rules:
-		var subjects: Array = generated_by_prefix.get(relation_rule.subject_entity_prefix, []).duplicate()
-		var objects: Array = generated_by_prefix.get(relation_rule.object_entity_prefix, []).duplicate()
+		var subjects: Array = generated_by_prefix.get(relation_rule.subject_prefix, []).duplicate()
+		var objects: Array = generated_by_prefix.get(relation_rule.object_prefix, []).duplicate()
 		subjects.sort_custom(func(a, b): return a.sort_key() < b.sort_key())
 		objects.sort_custom(func(a, b): return a.sort_key() < b.sort_key())
 		var candidates: Array = []
