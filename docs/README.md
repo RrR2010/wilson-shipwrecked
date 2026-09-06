@@ -183,7 +183,6 @@ README.md / PRODUCT.md
 - [`ASSET_SPEC.md`](ASSET_SPEC.md)
 - [`ASSET_PIPELINE.md`](ASSET_PIPELINE.md)
 - [`art/AGENT_ART_PRODUCTION.md`](art/AGENT_ART_PRODUCTION.md)
-- [`../tools/blender/README.md`](../tools/blender/README.md) — deterministic operational review/validation/export workflow, AssetScope and source-ownership rules.
 
 `art/` must not maintain a second object catalog. Asset identity/backlog lives in `asset-catalog/`.
 
@@ -217,7 +216,7 @@ When documents appear to disagree:
 4. **Operations:** `DOMAIN_OPERATIONS.md` is the single canonical public operation surface.
 5. **Concrete implementation checkpoint:** `DISCOVERY_STATUS.md` + source/tests; it does not redefine language-neutral product/domain meaning.
 6. **Asset/content requirements:** `asset-catalog/` owns required modeled families/cross-cutting content requirements.
-7. **Art:** `VISUAL_GUIDE.md` + `art/`; technical production in `ASSET_SPEC.md`/`ASSET_PIPELINE.md`; Blender execution mechanics in `tools/blender/`.
+7. **Art:** `VISUAL_GUIDE.md` + `art/`; technical production in `ASSET_SPEC.md`/`ASSET_PIPELINE.md`.
 8. **Prototype assets:** `prototyping/` may simplify geometry for a test but does not override production asset/domain/art contracts.
 9. **Fixtures/regressions:** `tests/scenes/`, `tests/headless/` and other validation artifacts are evidence only.
 10. **Brainstorming/handoffs:** historical/operational evidence only.
@@ -235,7 +234,6 @@ To prevent renewed fragmentation:
 - do not create permanent `*_REFINEMENTS`, `*_NOTES`, `*_V2` or edge-case override chains;
 - keep executable engine-validation fixtures in `tests/scenes/` and stable strict-runner wrappers in `tests/headless/`;
 - keep prototype modeling guidance in `prototyping/` and prototype source/exports under `prototypes/`;
-- keep production Blender execution mechanics in `tools/blender/`;
 - keep scenario evidence in fixtures/regressions;
 - keep cross-cutting content requirements in `asset-catalog/`;
 - keep exploratory breadth in `brainstorming/`;
