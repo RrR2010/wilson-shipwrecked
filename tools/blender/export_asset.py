@@ -119,6 +119,17 @@ def should_save_source(source_mode: str, save_source: str) -> bool:
     return source_mode != "generator"
 
 
+def ensure_scope_in_active_view_layer(scope) -> None:
+    available = {obj.name for obj in bpy.context.view_layer.objects}
+    missing = [obj.name for obj in scope.objects if obj.name not in available]
+    if missing:
+        raise RuntimeError(
+            "Asset scope contains objects outside/excluded from the active View Layer: "
+            + ", ".join(missing)
+            + ". Export is aborted rather than silently omitting them."
+        )
+
+
 def export_glb(*, glb_path: Path, scope, profile) -> None:
     glb_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -174,6 +185,18 @@ def main() -> dict:
     profile = EXPORT_PROFILES[args.profile]
     repo_root = find_repo_root()
 
+    generator_path = None
+    if args.source_mode == "generator":
+        if not args.generator_source:
+            raise RuntimeError(
+                "--generator-source is required for source-mode=generator so the canonical source is traceable."
+            )
+        generator_path = (repo_root / args.generator_source).resolve()
+        if not generator_path.is_file():
+            raise RuntimeError(
+                f"Declared generator source does not exist: {args.generator_source}"
+            )
+
     scope = resolve_scope(
         asset_id=asset_id,
         scope_kind=args.scope_kind,
@@ -182,16 +205,12 @@ def main() -> dict:
         allow_active_fallback=True,
     )
 
+    ensure_scope_in_active_view_layer(scope)
     validation = validate_basic_scene_contract(scope, profile.name)
     if args.skip_validation != "true" and not validation.ok:
         raise RuntimeError(
             "Asset validation failed before export:\n"
             + json.dumps(validation.as_dict(), indent=2, sort_keys=True)
-        )
-
-    if args.source_mode == "generator" and not args.generator_source:
-        raise RuntimeError(
-            "--generator-source is required for source-mode=generator so the canonical source is traceable."
         )
 
     source_path = resolve_source_output(
@@ -218,14 +237,9 @@ def main() -> dict:
 
     export_glb(glb_path=glb_path, scope=scope, profile=profile)
 
-    generator_ref = ""
-    if args.generator_source:
-        generator_path = (repo_root / args.generator_source).resolve()
-        if not generator_path.is_file():
-            raise RuntimeError(
-                f"Declared generator source does not exist: {args.generator_source}"
-            )
-        generator_ref = repo_relative(generator_path, repo_root)
+    generator_ref = (
+        repo_relative(generator_path, repo_root) if generator_path is not None else ""
+    )
 
     manifest_root = (
         Path(args.manifest_root).resolve()
