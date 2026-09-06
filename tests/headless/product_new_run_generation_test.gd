@@ -109,7 +109,7 @@ func _run_slice() -> void:
 	_expect_true(bootstrap.ok, "generated NewRunDefinition passes ordinary new-run bootstrap")
 	if bootstrap.ok:
 		_expect_equal(bootstrap.run_id, &"run_product_001", "bootstrap preserves generated run identity")
-		_expect_equal(bootstrap.owners.entities.all_entities().size(), first.definition.simulation.entity_seeds.size(), "bootstrap admits every generated entity cause")
+		_expect_equal(bootstrap.owners.entities.entities().size(), first.definition.simulation.entity_seeds.size(), "bootstrap admits every generated entity cause")
 		_expect_equal(bootstrap.owners.drives.value(DriveState.HUNGER), 0.4, "generated drive causes reach cognition owner")
 
 	var mismatched = generator.generate(
@@ -145,7 +145,7 @@ func _entity_signature(seeds: Array) -> Array[String]:
 
 
 func _definition_signature(definition) -> String:
-	return "%s::%s" % [definition.simulation.wilson_place_id.sort_key(), ",".join(_entity_signature(definition.simulation.entity_seeds))]
+	return "%s::%s" % [definition.simulation.wilson_place_id.sort_key(), str(_entity_signature(definition.simulation.entity_seeds))]
 
 
 func _expect_true(actual: bool, label: String) -> void:
