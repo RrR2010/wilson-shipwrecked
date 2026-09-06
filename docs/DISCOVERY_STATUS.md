@@ -13,11 +13,11 @@ Strict external runner: **Godot 4.7.1**.
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 80 PASS / 80 TOTAL
-PASS headless_suite (80 tests)
+RESULT: 83 PASS / 83 TOTAL
+PASS headless_suite (83 tests)
 ```
 
-The strict suite now covers the engine/runtime foundation, deterministic scenario tooling, shared bootstrap for all authoritative owners persisted by `SimulationSnapshotService`, content-dependent action-execution reconstruction, full current-run restore composition, reset/rebootstrap determinism, autonomous drive-backed and perception-learned behavior, grounded action consequences, production-facing fresh-run bootstrap through a real Godot-hosted scenario, and product-level deterministic world/run generation feeding the ordinary fresh-run boundary.
+The strict suite now covers the engine/runtime foundation, deterministic scenario tooling, shared bootstrap for all authoritative owners persisted by `SimulationSnapshotService`, content-dependent action-execution reconstruction, full current-run restore composition, reset/rebootstrap determinism, autonomous drive-backed and perception-learned behavior, grounded action consequences, production-facing fresh-run bootstrap through a real Godot-hosted scenario, product-level deterministic world/run generation, and a Wilson-relative remembered-route preference slice whose choice is executed through real Godot navigation.
 
 Validated causal breadth includes:
 
@@ -60,6 +60,11 @@ structural World/runtime foundation
 → fresh RunLifecycleState + DirectorStateStore + PlayerRunState
 → production new-run result feeds real Godot bindings and GodotSimulationHost
 → autonomous perception/decision/motion/consume behavior from the production-facing new-run boundary
+→ physical route viability/cost from SpatialQueryPort
+→ Wilson-relative remembered valence from AssociationStore
+→ derived remembered-route preference without changing navigation truth
+→ preferred multi-waypoint route requested through MotionPort
+→ real Godot navigation visibly takes the longer route to the same goal
 ```
 
 ---
@@ -120,7 +125,10 @@ Targeted action reconstruction/idempotency        PASS
 Production-facing fresh-run bootstrap             PASS
 Production new-run → Godot host autonomous flow   PASS
 Product-level deterministic new-run generation    PASS
-Strict headless suite                             PASS — 80 tests
+Remembered route preference                       PASS
+Remembered multi-waypoint motion progression      PASS
+Long Way Around real-Godot scenario               PASS
+Strict headless suite                             PASS — 83 tests
 ```
 
 ---
@@ -202,6 +210,9 @@ CurrentIntentionExecutionCoordinator
 DirectTargetMotionExecutionCoordinator
 TargetedActionExecutionCoordinator
 GroundedDriveConsequenceService
+RememberedRouteOption
+RememberedRoutePreferenceService
+RememberedRouteMotionCoordinator
 ```
 
 The shared simulation-owner path is:
@@ -270,7 +281,7 @@ Product generation validates against sealed authored content, applies stable sem
 
 `PlayerProfile` deliberately remains outside current-run bootstrap/restore results because it is cross-run state.
 
-Validated properties include fresh ownership, no bootstrap aliasing, semantic equivalence from equivalent durable causes, duplicate-admission rejection, insertion-order-independent runtime composition, deterministic generation under equivalent authored set ordering, bounded variation across deterministic seed populations, current-intention resume, content-dependent action lifecycle reconstruction without outcome duplication, deterministic targeted-action execution identity, and independent fresh-run constructions from identical durable causes.
+Validated properties include fresh ownership, no bootstrap aliasing, semantic equivalence from equivalent durable causes, duplicate-admission rejection, insertion-order-independent runtime composition, deterministic generation under equivalent authored set ordering, bounded variation across deterministic seed populations, current-intention resume, content-dependent action lifecycle reconstruction without outcome duplication, deterministic targeted-action execution identity, independent fresh-run constructions from identical durable causes, and route preference reconstruction from ordinary spatial truth plus cognition-owned associations without a parallel route-progress authority store.
 
 ---
 
@@ -298,6 +309,30 @@ Targeted action execution uses a deterministic execution identity derived from t
 
 ---
 
+# Wilson-relative route preference baseline
+
+The validated `Long Way Around` slice preserves the distinction between physical possibility and remembered desirability:
+
+```text
+GodotSpatialQueryAdapter / SpatialQueryPort
+→ physical route viability + route cost
+
+AssociationStore
+→ Wilson-relative remembered valence toward semantic route subjects
+
+RememberedRoutePreferenceService
+→ stateless adjusted route comparison
+
+RememberedRouteMotionCoordinator
+→ ordinary MotionPort requests over the selected waypoint sequence
+```
+
+A negative association never makes a physically valid shortcut disappear. Instead, remembered aversion raises its Wilson-relative adjusted cost enough that a longer viable route can become preferable. `RememberedRouteMotionCoordinator` persists no waypoint index; it infers progression from the current `MotionPort` status/target and the selected route definition.
+
+The real Godot fixture proves that the direct shortcut remains physically cheaper while Wilson visibly leaves the direct corridor, traverses the longer semantic route and reaches the same goal.
+
+---
+
 # Persistence baseline
 
 Current development schemas:
@@ -322,7 +357,7 @@ Snapshot v10 is currently strict; v9 compatibility/migration is not implemented.
 
 `EngineScenarioHarness` remains generic test support only. It owns semantic checkpoints, opaque probes, structured trace, assisted pause/continue state, bounded waits, and explicit completion/failure. It does not own gameplay semantics.
 
-The representative perception-learned fresh-run fixture now validates:
+The representative perception-learned fresh-run fixture validates:
 
 ```text
 BOOTSTRAPPED
@@ -337,9 +372,18 @@ BOOTSTRAPPED
 → COMPLETE
 ```
 
-through real Godot navigation under `GodotSimulationHost`.
+The `Long Way Around` fixture validates:
 
-The same engine-facing scenario now boots through `NewRunBootstrapService`, proving that the production-facing fresh-run boundary can feed explicit runtime-ref scene bindings, Godot adapters and the semantic host without using scene identity as domain identity.
+```text
+BOOTSTRAPPED
+→ LONG_ROUTE_SELECTED
+→ DETOUR_ENTERED
+→ DETOUR_CROSSED
+→ ARRIVED
+→ COMPLETE
+```
+
+through the same Godot navigation boundary used by ordinary motion. The scenario verifies that raw navigation still reports the shortcut as cheaper while cognition-derived aversion changes which route is executed.
 
 ---
 
@@ -353,9 +397,9 @@ capture API cleanup: SimulationSnapshotService.capture currently has a long posi
 bootstrap definition cleanup: SimulationBootstrapDefinition has grown a long positional constructor; grouped owner-specific definitions may be preferable if the contract expands again
 drive hysteresis-band memory persistence
 Legacy-to-new-Wilson seeding policy
-reusable production scene-binding/host composition only after a second real use proves the abstraction shape
+reusable production scene-binding/host composition only after another production use proves the abstraction shape
 collision/grounding/fall-specific policies beyond current impact damage
-richer Wilson-relative learned route/escape evaluation
+route-memory acquisition/decay/generalization beyond current association-backed evaluation
 intervention causal windows
 automatic habit-disuse/context producers
 Presence causal-attribution production
@@ -367,30 +411,31 @@ production falling-palm rigid-body authoring
 
 The long positional APIs remain documented debt rather than blockers. Refactor them when another owner/schema expansion creates real pressure, not for cosmetic churn.
 
-A dedicated engine composition abstraction remains intentionally deferred. One production-facing scenario now proves the required seams, but extracting a generalized scene-binding/host composer before a second real use would risk encoding fixture-specific assumptions as production architecture.
+A dedicated engine composition abstraction remains intentionally deferred. Production-facing and representative engine scenarios now prove multiple seams, but extraction should still wait until a genuine production composition use—not test-fixture reuse—forces a stable host/binding API.
 
 The product-generation profile intentionally does not mirror every `SimulationBootstrapDefinition` seed family. Add another generated cause family only when a product-visible run configuration requires it; do not expand generation for structural completeness alone.
+
+The remembered-route slice deliberately does not yet define how route aversion is learned, decays, generalizes between places, or competes with urgency. Those are future product-pressure questions; the validated primitive is the separation and execution of physical route truth vs Wilson-relative remembered desirability.
 
 ---
 
 # Recommended next major verticals
 
-From the validated 80-test checkpoint:
+From the validated 83-test checkpoint:
 
 ```text
-1. richer representative gameplay semantics driven by scene-catalog needs
-   - prefer one non-food autonomous slice exposing a real missing reusable primitive
-   - leading candidates: Gerald behavior/relationships, learned route/escape reasoning, or physical accident authoring when required by the chosen scene
+1. next representative gameplay primitive from a distinct scene need
+   - prefer a slice that exercises a new owner/interaction rather than another route variant
+   - leading candidates: richer Gerald relationship/behavior semantics or physical accident authoring
 
 2. persistence evolution when product requirements require it
    - decide v9 compatibility policy
    - introduce grouped capture/bootstrap request objects only when schemas expand again
 
-3. production scene-binding/host composition only after a second real use
-   - extract shared engine composition only when another production-facing scenario proves the common shape
+3. production scene-binding/host composition only when a real production use proves the common shape
 ```
 
-Active transition context: `docs/handoffs/world-generation-to-representative-gameplay-semantics.md`.
+Active transition context: `docs/handoffs/long-way-around-to-next-representative-gameplay.md`.
 
 ---
 
