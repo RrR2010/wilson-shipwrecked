@@ -35,21 +35,17 @@ var _reported_detour_b := false
 var _motion_frames := 0
 var _finished := false
 
-
 func _ready() -> void:
 	call_deferred("_bootstrap_and_start")
-
 
 func _physics_process(delta: float) -> void:
 	if _finished or not _route_started or _motion == null:
 		return
-
 	_motion.physics_tick(delta)
 	_motion_frames += 1
 	if _motion_frames > MAX_MOTION_FRAMES:
 		_fail("Wilson did not complete remembered route within bounded physics frames")
 		return
-
 	var status: int = _motion.get_status(_wilson_ref)
 	if status == GodotMotionAdapter.MotionStatus.ROUTE_INVALID:
 		_fail("Remembered route became invalid")
@@ -57,10 +53,8 @@ func _physics_process(delta: float) -> void:
 	if status == GodotMotionAdapter.MotionStatus.BLOCKED:
 		_fail("Remembered route became blocked")
 		return
-
 	if status != GodotMotionAdapter.MotionStatus.ARRIVED:
 		return
-
 	var current_target = _motion.get_target(_wilson_ref)
 	if current_target != null and current_target.equals(_detour_a_ref) and not _reported_detour_a:
 		_reported_detour_a = true
@@ -68,7 +62,6 @@ func _physics_process(delta: float) -> void:
 	elif current_target != null and current_target.equals(_detour_b_ref) and not _reported_detour_b:
 		_reported_detour_b = true
 		checkpoint_reached.emit(&"DETOUR_CROSSED", _probes())
-
 	var progression = _coordinator.apply([_short_route, _long_route])
 	if not bool(progression.get("ok", false)):
 		_fail("Remembered route coordinator failed: %s" % String(progression.get("reason", &"unknown")))
@@ -77,50 +70,29 @@ func _physics_process(delta: float) -> void:
 		checkpoint_reached.emit(&"ARRIVED", _probes())
 		_complete()
 
-
 func _bootstrap_and_start() -> void:
 	var island = DomainId.place(&"route_memory_island")
 	_danger_subject = DomainId.place(&"rocky_pass")
 	var definition = SimulationBootstrapDefinition.new(
-		island,
-		[],
-		[],
-		[],
-		null,
-		1.0,
-		{},
-		[],
+		island, [], [], [], null, 1.0, {}, [],
 		[AssociationBootstrapSeed.new(_danger_subject, -0.95, 0.0, 3, &"past_route_accident")]
 	)
 	var boot = SimulationOwnerBootstrapper.new().bootstrap(definition)
 	if not boot.ok:
 		_fail("Owner bootstrap failed: %s %s" % [String(boot.code), str(boot.diagnostics)])
 		return
-
 	_wilson_ref = RuntimeWorldRef.wilson()
 	_goal_ref = RuntimeWorldRef.place(DomainId.place(&"goal"))
 	_detour_a_ref = RuntimeWorldRef.place(DomainId.place(&"detour_a"))
 	_detour_b_ref = RuntimeWorldRef.place(DomainId.place(&"detour_b"))
-
 	var registry = GodotSceneSpatialRegistry.new()
-	if not registry.bind(_wilson_ref, $Wilson):
-		_fail("Failed to bind Wilson runtime ref")
+	if not registry.bind(_wilson_ref, $Wilson) or not registry.bind(_goal_ref, $Goal) or not registry.bind(_detour_a_ref, $DetourA) or not registry.bind(_detour_b_ref, $DetourB):
+		_fail("Failed to bind Long Way Around runtime refs")
 		return
-	if not registry.bind(_goal_ref, $Goal):
-		_fail("Failed to bind goal runtime ref")
-		return
-	if not registry.bind(_detour_a_ref, $DetourA):
-		_fail("Failed to bind first detour runtime ref")
-		return
-	if not registry.bind(_detour_b_ref, $DetourB):
-		_fail("Failed to bind second detour runtime ref")
-		return
-
 	_motion = GodotMotionAdapter.new(registry)
 	if not _motion.bind_actor(_wilson_ref, $Wilson, $Wilson/NavigationAgent3D, 3.0):
 		_fail("Godot motion adapter rejected Wilson binding")
 		return
-
 	var spatial = GodotSpatialQueryAdapter.new(registry)
 	var navigation_ready := false
 	for _frame in range(MAX_NAVIGATION_SYNC_FRAMES):
@@ -133,7 +105,6 @@ func _bootstrap_and_start() -> void:
 	if not navigation_ready:
 		_fail("Navigation map did not synchronize within bounded physics frames")
 		return
-
 	_short_route = RememberedRouteOption.new(&"short", [_goal_ref], [_danger_subject])
 	_long_route = RememberedRouteOption.new(&"long", [_detour_a_ref, _detour_b_ref, _goal_ref])
 	var preference = RememberedRoutePreferenceService.new(spatial, boot.owners.associations, 1.0)
@@ -141,18 +112,17 @@ func _bootstrap_and_start() -> void:
 	var detour_eval = preference.evaluate(_wilson_ref, _long_route)
 	var selected = preference.choose(_wilson_ref, [_short_route, _long_route])
 	if selected == null:
-		_fail("No viable route was selected")
+		_fail("No viable route was selected | direct=%s | detour=%s | segments=%s" % [str(direct_eval), str(detour_eval), str(_segment_diagnostics(spatial))])
 		return
 	if selected.id != &"long":
-		_fail("Remembered aversion did not select the long route")
+		_fail("Remembered aversion did not select the long route | direct=%s | detour=%s" % [str(direct_eval), str(detour_eval)])
 		return
 	if not bool(direct_eval.get("viable", false)):
-		_fail("Short route must remain physically viable")
+		_fail("Short route must remain physically viable | direct=%s | segments=%s" % [str(direct_eval), str(_segment_diagnostics(spatial))])
 		return
 	if float(direct_eval.get("physical_cost", INF)) >= float(detour_eval.get("physical_cost", INF)):
-		_fail("Short route must be physically cheaper than detour")
+		_fail("Short route must be physically cheaper than detour | direct=%s | detour=%s" % [str(direct_eval), str(detour_eval)])
 		return
-
 	checkpoint_reached.emit(&"BOOTSTRAPPED", {
 		"scenario": String(SCENARIO_NAME),
 		"remembered_valence": float(boot.owners.associations.get_association(_danger_subject).get("valence", 0.0)),
@@ -164,7 +134,6 @@ func _bootstrap_and_start() -> void:
 		"short_adjusted_cost": float(direct_eval.get("adjusted_cost", INF)),
 		"long_adjusted_cost": float(detour_eval.get("adjusted_cost", INF)),
 	})
-
 	_coordinator = RememberedRouteMotionCoordinator.new(_motion, preference, _wilson_ref)
 	var start = _coordinator.apply([_short_route, _long_route])
 	if not bool(start.get("ok", false)) or start.get("reason") != &"move_requested":
@@ -172,6 +141,21 @@ func _bootstrap_and_start() -> void:
 		return
 	_route_started = true
 
+func _segment_diagnostics(spatial) -> Dictionary:
+	return {
+		"wilson_goal": _segment(spatial, _wilson_ref, _goal_ref),
+		"wilson_detour_a": _segment(spatial, _wilson_ref, _detour_a_ref),
+		"detour_a_detour_b": _segment(spatial, _detour_a_ref, _detour_b_ref),
+		"detour_b_goal": _segment(spatial, _detour_b_ref, _goal_ref),
+	}
+
+func _segment(spatial, from_ref, to_ref) -> Dictionary:
+	return {
+		"from": String(from_ref.key()),
+		"to": String(to_ref.key()),
+		"has_route": spatial.has_route(from_ref, to_ref),
+		"cost": spatial.route_cost(from_ref, to_ref),
+	}
 
 func _probes() -> Dictionary:
 	var body: CharacterBody3D = $Wilson
@@ -182,17 +166,12 @@ func _probes() -> Dictionary:
 		"motion_target": "" if target == null else String(target.key()),
 	}
 
-
 func _complete() -> void:
 	if _finished:
 		return
 	_finished = true
 	checkpoint_reached.emit(&"COMPLETE", _probes())
-	smoke_finished.emit(true, {
-		"scenario": String(SCENARIO_NAME),
-		"final_position": _probes().get("position"),
-	})
-
+	smoke_finished.emit(true, {"scenario": String(SCENARIO_NAME), "final_position": _probes().get("position")})
 
 func _fail(message: String) -> void:
 	if _finished:
