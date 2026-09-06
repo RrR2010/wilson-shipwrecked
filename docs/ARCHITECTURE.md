@@ -359,23 +359,27 @@ Canonical active semantic order:
 
 ```text
 advance due World/body/environment/process state
+→ invalidate affected derived projections when World progression changed authority
 → advance active ActionExecution
-→ cross commit boundary if due
-→ World owner validates/applies ActionOutcome effects
-→ collect WorldEvent + SemanticChangeSet
+→ if commit crossed: World owner validates/applies ActionOutcome effects
 → invalidate/rebuild affected derived projections
-→ derive perception access
-→ Perceive / PerceptualEvidence
-→ immediate relevant learning when required
-→ immediate-threat / tactical / intentional routing
+→ apply explicit grounded cross-owner consequences from accepted outcomes
+→ progress already-committed current-intention execution when applicable
+→ propagate committed lifecycle events
+→ derive event-driven + passive spatial perception
+→ apply immediate relevant Wilson learning
+→ advance due gradual cognition such as drives
+→ derive/coalesce reconsideration triggers
+→ route and generate candidates only when admitted
 → commit selected intention
-→ validate/start next action when required
-→ grounded project/director consequences
+→ optionally start/redirect execution for the newly committed intention
 → maintenance
 → presentation/debug projection
 ```
 
-Rendering FPS is never the authoritative clock.
+Not every phase performs work on every semantic step. Rendering FPS is never the authoritative clock.
+
+Grounded cross-owner consequence processing must remain explicit: a cognition/project mutation may follow a World-accepted outcome, but it does not become part of World mutation merely for convenience.
 
 ## SemanticChangeSet
 
@@ -563,29 +567,33 @@ Persistence schema versions are implementation contracts and may evolve during d
 
 ## One authoritative bootstrap path
 
-Development scenarios, tests and debugging must not gain a privileged mutation architecture. The intended shape is:
+Fresh runs, restore, development scenarios, tests and debugging must not gain competing mutation architectures. The intended shape is:
 
 ```text
-normal authoritative owner state
-            ↑
-common restore/bootstrap boundary
-            ↑
-real save | deterministic test fixture | debug scenario
+production new run --------┐
+real save -----------------┼→ shared owner/bootstrap + runtime-composition boundaries
+valid deterministic fixture┘
+                                  ↓
+                         authoritative owner state
+                                  ↓
+                         reconstructible runtime
 ```
 
-A declarative fixture/debug scenario may describe durable owner causes and an explicit gameplay seed, but must enter through the same validation, owner construction and derived-state reconstruction rules used by normal restore/bootstrap.
+A fresh-run definition or declarative fixture/debug scenario may describe durable owner causes and explicit gameplay seed/input metadata, but those inputs are not runtime authority. They must enter through the same owner validation/construction and runtime-composition rules used by normal bootstrap/restore where applicable.
 
 Required invariants:
 
+- fresh-run/scenario input objects are bootstrap metadata, not new authority stores;
 - fixtures do not write private stores after bootstrap merely to manufacture a desired result;
-- invalid fixture state fails admission rather than bypassing owner validation;
+- invalid fixture/generated state fails admission rather than bypassing owner validation;
 - reconstructible projections/caches are rebuilt, not serialized as fixture truth;
 - active causal state such as committed actions/processes is restored through its real lifecycle representation;
 - a debug console or scenario launcher is an adapter over the same commands/bootstrap services, never an authority-bypassing mutation API;
+- Godot nodes/transforms do not become authoritative bootstrap/world-generation state;
 - scenario names are development identifiers, not gameplay/domain identity;
 - deterministic seeds and any intentionally varied seed population are explicit and reproducible.
 
-This boundary exists so any subsystem can be tested in a representative state without simulating all gameplay that would normally lead there.
+This boundary exists so production fresh runs and representative tests share the same authority semantics rather than diverging into separate construction paths.
 
 ---
 
@@ -686,13 +694,17 @@ fixture/debug direct-store mutation
 
 # 20. Phase boundary
 
-The structural runtime foundation and the planned system-breadth owners through **run lifecycle / PlayerProfile** are implemented and locally validated. Current implementation work is now transitioning from owner/system breadth into:
+The structural runtime foundation, planned system-breadth owners, full current-run restore/rebootstrap, deterministic scenario harness, Godot spatial/navigation/perception bridge, grounded autonomous target-action slice and production-facing fresh-run bootstrap are implemented and locally validated.
+
+Current runtime work has moved beyond foundation/bootstrap construction. Leading next verticals are:
 
 ```text
-fine spatial/nav/occlusion + Godot presentation adapters
-→ deterministic scenario/bootstrap tooling
-→ representative multi-system scenario + seed-population validation
+product-level new-run/world-generation input above the validated NewRun boundary
+→ richer representative gameplay semantics driven by scene needs
+→ persistence evolution only when product requirements create pressure
 ```
+
+A generalized production scene-binding/host composer is intentionally deferred until a second real use proves stable repeated responsibilities.
 
 Cross-cutting correctness items should be pulled forward when representative scenarios require them rather than hidden behind bespoke scenario logic.
 
