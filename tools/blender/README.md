@@ -2,113 +2,78 @@
 
 ## Purpose
 
-`tools/blender/` is the operational layer for deterministic production-asset review, validation and GLB export.
+`tools/blender/` provides deterministic production-asset review, validation and GLB export.
+
+It does **not** decide what to model or whether the art is good. Use:
 
 ```text
-asset catalog + art contracts
-→ model/generate asset
-→ named AssetScope
-→ canonical review iterations
-→ validate
-→ profile-based GLB export
-→ Godot import validation
+docs/asset-catalog/                asset requirements
+docs/art/AGENT_ART_PRODUCTION.md   visual loop/review
+docs/ASSET_SPEC.md                 invariants
+this file                           script usage
 ```
 
-These tools must fail on ambiguous mechanical state rather than silently repair production art.
-
-## Supported Blender version
-
-Production automation is pinned to:
-
-```text
-Blender 5.2 LTS
-```
-
-Use the latest 5.2.x patch available to the team. Another major/minor series requires the explicit `--allow-unsupported-blender true` escape hatch and should be treated as unvalidated.
+Production automation is pinned to **Blender 5.2 LTS**. Another major/minor series fails unless explicitly overridden.
 
 ---
 
-# 1. Source ownership
-
-Do **not** force one `.blend` per exported GLB universally. Choose the source unit according to the editing lifecycle.
-
-| Source mode | Use when | Canonical source |
-|---|---|---|
-| `asset` | independently authored manual asset | one `.blend` per asset |
-| `family` | siblings share real authored context: rig, topology, modular kit, lifecycle stages, common base | one family `.blend`, multiple AssetScopes |
-| `generator` | bounded variants are reproducible from code + parameters | generator/config + explicit seed; optional one family workbench `.blend` |
-
-## `source-mode=asset`
-
-Default for isolated manual assets because it gives agents the simplest origin/review/export boundary.
-
-Good examples:
+# Normal loop
 
 ```text
-crate_wood_01
-sealed_metal_container_01
-bowling_ball_rare
-umbrella_found
+model/generate
+→ review_asset.py
+→ inspect images / refine
+→ validate_asset.py
+→ export_asset.py
+→ Godot import check
 ```
 
-```text
-assets/source/<category>/<asset_id>.blend
-```
-
-## `source-mode=family`
-
-Use only when siblings genuinely benefit from being authored together.
-
-Good examples:
-
-```text
-crab_family.blend
-shelter_family.blend
-tool_component_kit.blend
-```
-
-Each runtime output still gets its own scope and GLB.
-
-Do not use a family `.blend` as a miscellaneous asset warehouse.
-
-## `source-mode=generator`
-
-Preferred for procedural families such as rocks, branches/logs, palm variants, bounded debris and simple construction pieces.
-
-Canonical provenance is:
-
-```text
-generator source
-+ optional committed config/parameter file
-+ explicit stable seed
-→ generated AssetScope
-→ GLB
-```
-
-`export_asset.py` requires `--generator-seed` in this mode. Use seed `0` when randomness is intentionally disabled; the provenance should still be explicit.
-
-Do **not** commit one generated `.blend` per procedural variant. One optional workbench/family `.blend` may be useful for comparison, parameter tuning and generator debugging.
-
-Rule of thumb:
-
-```text
-independent manual identity
-→ one blend per asset
-
-authored siblings share real editing context
-→ one blend per family
-
-reproducible from code + bounded parameters
-→ generator is source; optional one workbench blend
-```
+Review/export must not mutate the authored asset to make it pass.
 
 ---
 
-# 2. AssetScope: membership versus root
+# Source ownership
 
-The `.blend` file is an authoring container. The **AssetScope** is the review/export boundary.
+Choose one:
 
-Supported scope kinds:
+## `asset`
+
+Independent manual asset:
+
+```text
+one asset → one .blend
+```
+
+Default because it isolates origin, transforms, review and export.
+
+## `family`
+
+Several authored outputs share real editing context:
+
+- same rig/base topology;
+- modular kit;
+- lifecycle stages;
+- tightly coordinated variants.
+
+Use one family `.blend`, but a separate AssetScope/GLB per exported asset.
+
+## `generator`
+
+Procedural/reproducible family:
+
+```text
+generator + config/parameters + explicit seed → AssetScope → GLB
+```
+
+Do not save one canonical `.blend` per generated variant. An optional family workbench `.blend` is fine for comparison/debugging.
+
+---
+
+# AssetScope
+
+Scripts operate on an explicit scope, not accidental selection.
+
+Supported:
 
 ```text
 object
@@ -117,313 +82,79 @@ collection
 auto
 ```
 
-For composites, family files and generated assets, prefer:
+Preferred for composite/family/generated assets:
 
 ```text
 Collection: ASSET_<asset_id>
 ```
 
-The collection contains every runtime member that must cross glTF:
+Include every runtime member that must export:
 
-- render meshes;
+- meshes;
 - armature when applicable;
-- `ANCHOR_*` empties;
-- `SOCKET_*` empties;
-- other required runtime children.
+- `ANCHOR_*` / `SOCKET_*` nodes;
+- required runtime children.
 
-`auto` prefers `ASSET_<asset_id>`, then a hierarchy root named `<asset_id>`. Active-object fallback exists only for interactive convenience and emits a warning.
+Every AssetScope has exactly one canonical top-level root. The root must have world location `(0,0,0)`, identity rotation and scale `(1,1,1)`.
 
-## Canonical root contract
-
-Every production AssetScope must have **exactly one top-level root**.
+Global authored axes:
 
 ```text
-single simple prop
-→ the mesh itself may be the root
-
-composite/static structure
-→ one identity Empty/root at the asset pivot
-→ all meshes/anchors/sockets parented below it
-
-rigged asset
-→ armature or an explicit identity root, according to the authored hierarchy
-→ still exactly one top-level scope root
-```
-
-The root world transform must be:
-
-```text
-location = (0, 0, 0)
-rotation = identity
-scale    = (1, 1, 1)
-```
-
-This is how pivot/origin stays deterministic even when a family `.blend` contains several assets.
-
-The AssetScope collection controls **membership**. The root controls **asset transform/pivot**. Do not use collection placement as a substitute for a canonical root.
-
-Use `scope-kind=object` only when a genuinely single-object runtime asset has no required children that would be omitted.
-
----
-
-# 3. Review profiles
-
-Profiles change neutral presentation only; they never alter the asset.
-
-| Profile | Intended use | Artificial ground | Rim |
-|---|---|---:|---:|
-| `grounded` | props, tools, containers, rocks, palms, normal structures | yes | no |
-| `character` | Wilson and rigged animals | yes | restrained |
-| `isolated` | hanging/floating pieces, selected exploded diagnostics | no | no |
-| `terrain` | terrain/island/ground patches | no | no |
-
-Ground is useful for contact, footprint, stability and contact shadow. Avoid it when the asset already **is** the ground or when ground contact has no semantic value.
-
-The background is fixed and neutral across assets. Do not adapt the background per asset merely to make an image prettier.
-
----
-
-# 4. Canonical rendering
-
-Canonical review uses a normal **EEVEE scene render**, not viewport Material Preview.
-
-```text
-EEVEE scene render
-= deterministic + scriptable + headless-capable + independent of VIEW_3D UI state
-
-Material Preview
-= fast interactive diagnostic + useful through MCP, but studio-light/HDRI/context dependent
-```
-
-Material Preview is allowed during modeling, but it is not canonical acceptance evidence.
-
-## Neutral light rig
-
-Default review uses:
-
-```text
-one explicitly oriented SUN key
-+ one broad AREA fill
-+ fixed neutral world/background
-+ optional subtle rim for character profile
-```
-
-This is deliberately less flattering than a classic hero three-point rig. It should reveal:
-
-- silhouette;
-- intentional facets/planes;
-- material blocks;
-- construction;
-- grounding.
-
-No depth of field, cinematic fog or grading should hide geometry.
-
----
-
-# 5. Canonical views
-
-`review_asset.py` generates:
-
-```text
-gameplay
-silhouette
-scale
-front
-side
-top
-review_sheet
-review_manifest.json
-```
-
-Orientation contract:
-
-```text
-+Y = nominal front
-+X = nominal right
++Y = forward/front
++X = right
 +Z = up
 ```
 
-Therefore:
+Do not redefine forward per family. Assets with weak/symmetric front semantics still use a stable family orientation.
 
-- front camera looks from `+Y`;
-- side camera looks from `+X`;
-- gameplay uses orthographic ~45° azimuth / ~35° elevation.
-
-Camera framing projects the evaluated bounding box into camera space and fits the orthographic scale with a stable margin.
-
-The scale view adds a neutral 1.72 m production mannequin. It is a diagnostic scale reference, not Wilson's final character design.
+The canonical modeled/reviewed loose or installed pose must also be physically plausible; review framing is not a reason to stand a loose branch vertically.
 
 ---
 
-# 6. Review history and batch visibility
+# `review_asset.py`
 
-Default output:
+Creates deterministic EEVEE review renders under:
 
 ```text
-temp/blender-review/<asset_id>/
-├── iter_01/
-│   ├── <asset_id>_gameplay.png
-│   ├── <asset_id>_silhouette.png
-│   ├── <asset_id>_scale.png
-│   ├── <asset_id>_front.png
-│   ├── <asset_id>_side.png
-│   ├── <asset_id>_top.png
-│   ├── <asset_id>_review_sheet.png
-│   └── <asset_id>_review_manifest.json
-├── iter_02/
-│   └── ...
-└── latest.json
+temp/blender-review/<asset_id>/iter_XX/
 ```
 
-Each review run creates the next iteration unless `--iteration` is explicit.
+Outputs normally include:
 
-The tool also refreshes:
+```text
+<asset_id>_gameplay.png
+<asset_id>_silhouette.png
+<asset_id>_scale.png
+<asset_id>_front.png
+<asset_id>_side.png
+<asset_id>_top.png
+<asset_id>_review_sheet.png
+<asset_id>_review_manifest.json
+```
+
+It also updates:
 
 ```text
 temp/blender-review/index.json
 temp/blender-review/index.html
 ```
 
-The HTML index is a human visual dashboard; JSON/manifests are agent-readable evidence. The asset catalog remains the authoritative production `Status` and is not replaced by this dashboard.
+Canonical camera uses orthographic gameplay ~45° azimuth / ~35° elevation. `front` looks from +Y toward the origin.
 
----
-
-# 7. Export profiles
-
-## `static`
-
-Use for normal props, tools, structures, terrain and evaluated procedural output.
+## Review profiles
 
 ```text
-modifiers: evaluated/applied by glTF export
-animations: off
-skins: off
-morph targets: forbidden
-armature: forbidden
+grounded   ordinary props/tools/vegetation/structures
+character  Wilson and rigged animals
+isolated   floating/hanging/exploded diagnostics
+terrain    terrain/ground assets
 ```
 
-A mesh with shape keys fails this profile rather than losing them.
+Ground exists only when it helps evaluate physical support/contact.
 
-## `deformable`
+Native Blender Material Preview may be used interactively, but canonical review is EEVEE scene rendering so results do not depend on viewport/HDRI state.
 
-Use for a non-armature asset intentionally carrying morph targets/shape-key animation.
-
-```text
-modifiers: not force-applied
-animations: on
-skins: off
-morph targets: on
-armature: forbidden
-```
-
-## `rigged`
-
-Use for Wilson and rigged animals.
-
-```text
-modifiers: not force-applied
-animations: on
-skins: on
-morph targets: on
-armature: required
-```
-
-This split exists because the Blender glTF `Apply Modifiers` path cannot safely preserve shape keys.
-
----
-
-# 8. Validation
-
-Run `validate_asset.py` before final export. `export_asset.py` runs the same validation unless explicitly bypassed for debugging.
-
-Current checks include:
-
-- supported Blender series;
-- deterministic scope resolution;
-- renderable geometry exists;
-- exactly one canonical top-level root;
-- root location/rotation/scale are canonical;
-- static/deformable/rigged profile compatibility;
-- no accidental camera/light/speaker in runtime scope;
-- no leaked `__review_*` objects;
-- no negative scale;
-- suspicious duplicated semantic nodes such as `ANCHOR_X.001`;
-- basic scene-unit expectations.
-
-Validation **does not** move origins, zero transforms or remove objects. Fix source explicitly and run again.
-
----
-
-# 9. Non-destructive export
-
-`export_asset.py`:
-
-1. resolves the scope;
-2. validates it;
-3. optionally writes a `.blend` **copy** for `asset`/`family` source ownership;
-4. temporarily selects exactly the scope;
-5. exports with the chosen profile;
-6. restores selection;
-7. hashes the resulting GLB with SHA-256;
-8. writes a temporary provenance manifest.
-
-It must not:
-
-- delete unrelated scene objects;
-- delete family siblings;
-- move geometry to bottom-center;
-- repair transforms;
-- strip anchors/sockets;
-- export a partial scope because some members are excluded from the active View Layer.
-
-The export manifest lives at:
-
-```text
-temp/blender-export/<asset_id>/<asset_id>_export_manifest.json
-```
-
-It stores repository-relative paths plus:
-
-```text
-Blender version
-source ownership
-AssetScope membership
-generator source/config/seed when procedural
-export profile
-validation result
-runtime GLB SHA-256
-```
-
-This makes later reproduction/debugging substantially easier without creating a second production-status database.
-
----
-
-# 10. Procedural provenance
-
-A procedural export must be reproducible from repository-owned inputs.
-
-Required:
-
-```text
---generator-source <repo-relative path>
---generator-seed <stable value>
-```
-
-Optional:
-
-```text
---generator-config <repo-relative committed config/parameter file>
-```
-
-If a generator does not use randomness, pass `--generator-seed 0`. Explicit provenance is still preferred over an implicit "there is no seed" assumption.
-
-`assets/generated/` is ignored except for its `.gdignore`; reproducible intermediate materializations should not become accidental source artifacts.
-
----
-
-# 11. Typical commands
-
-## Independent static prop
+Example:
 
 ```text
 review_asset.py --
@@ -433,6 +164,16 @@ review_asset.py --
   --profile grounded
 ```
 
+The artistic review criteria and `vs` fallback delegation prompt live in `docs/art/AGENT_ART_PRODUCTION.md`.
+
+---
+
+# `validate_asset.py`
+
+Run before final export.
+
+Example:
+
 ```text
 validate_asset.py --
   --asset-id crate_wood_01
@@ -441,6 +182,79 @@ validate_asset.py --
   --profile static
   --category props/containers
 ```
+
+Validation checks mechanical conditions such as:
+
+- supported Blender series;
+- scope resolution;
+- renderable geometry;
+- exactly one canonical root;
+- root transform identity;
+- no negative scale;
+- no accidental camera/light/speaker in runtime scope;
+- no leaked `__review_*` helpers;
+- suspicious duplicate semantic nodes;
+- profile compatibility with armatures/shape keys/modifiers.
+
+Validation reports errors. It does not repair source geometry/transforms.
+
+Visual/semantic checks such as relative size, plausible physical rest pose and visual reference alignment remain part of image review rather than pretending they can be proven mechanically.
+
+---
+
+# `export_asset.py`
+
+Exports the validated scope non-destructively to:
+
+```text
+assets/models/<category>/<asset_id>.glb
+```
+
+It temporarily selects scope members, exports, restores selection and writes provenance under:
+
+```text
+temp/blender-export/<asset_id>/
+```
+
+It must not purge the scene, move geometry, normalize a bad root or delete family siblings.
+
+## Export profiles
+
+### `static`
+
+Use for ordinary props, structures, terrain and evaluated procedural output.
+
+```text
+animations: off
+skins: off
+morphs: forbidden
+modifiers: evaluated/applied
+```
+
+### `deformable`
+
+Use for non-armature shape-key/morph content.
+
+```text
+animations: on
+skins: off
+morphs: on
+modifiers: not force-applied
+```
+
+### `rigged`
+
+Use for Wilson and rigged animals.
+
+```text
+animations: on
+skins: on
+morphs: on
+exactly one armature required
+modifiers: not force-applied except the normal armature relationship
+```
+
+## Independent manual asset
 
 ```text
 export_asset.py --
@@ -452,7 +266,7 @@ export_asset.py --
   --source-mode asset
 ```
 
-## Authored rigged family
+## Authored family
 
 ```text
 export_asset.py --
@@ -465,7 +279,7 @@ export_asset.py --
   --source-id crab_family
 ```
 
-## Procedural rock
+## Procedural output
 
 ```text
 export_asset.py --
@@ -476,24 +290,45 @@ export_asset.py --
   --category environment/rocks
   --source-mode generator
   --generator-source assets/generators/environment/rocks/generate_rocks.py
-  --generator-config assets/generators/environment/rocks/medium.json
-  --generator-seed 3003
+  --generator-config assets/generators/environment/rocks/rock_medium.json
+  --generator-seed 3
 ```
+
+For generator mode, explicit seed is required. Use seed `0` when randomness is intentionally disabled.
+
+The export manifest records repository-relative source/config paths and GLB SHA-256.
 
 ---
 
-# 12. Agent rule
+# Review environment
 
-A modeling agent should not ask where to save an asset when repository contracts determine it.
+Canonical review lighting is deliberately neutral:
+
+```text
+one directed SUN key
++ one broad AREA fill
++ fixed neutral world/background
++ ground/contact shadow where profile requires it
++ subtle rim only for character profile
+```
+
+This is not a cinematic three-point studio setup. It should expose silhouette, planar form, scale and grounding rather than beautify a weak asset.
+
+---
+
+# Agent behavior
+
+The agent should not ask where to save an ordinary asset when repository contracts determine it.
 
 It should:
 
-1. read the catalog row;
+1. use the nearest existing semantic category path;
 2. choose `asset`, `family` or `generator` source ownership;
-3. reuse the nearest existing semantic category path;
-4. create a named AssetScope with one canonical root;
-5. choose the smallest correct review/export profile;
-6. run review → validation → export;
-7. report unresolved contracts instead of inventing a workaround.
+3. use a stable named AssetScope;
+4. keep `+Y/+X/+Z` global orientation;
+5. keep the canonical loose/installed pose physically plausible;
+6. choose the smallest correct review/export profile;
+7. inspect canonical renders and refine before export;
+8. report a contract conflict rather than invent a workaround.
 
-Do not create folder synonyms such as `items/`, `objects/`, `misc/` or `game_props/` when an existing category already expresses the asset.
+Do not create folder synonyms such as `items/`, `objects/`, `misc/` or `game_props/` when an existing category fits.
