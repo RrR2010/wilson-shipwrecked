@@ -23,16 +23,12 @@ For substantial work:
 
 1. [`../README.md`](../README.md) — project thesis;
 2. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current implementation/test/schema baseline and remaining work;
-3. [`handoffs/system-breadth-to-spatial-scenarios.md`](handoffs/system-breadth-to-spatial-scenarios.md) — **active stage-transition handoff for the remaining spatial/scenario/integrated-validation phase**;
+3. [`handoffs/production-new-run-autonomy-baseline.md`](handoffs/production-new-run-autonomy-baseline.md) — **active runtime stage-transition handoff from the validated production new-run/autonomy baseline**;
 4. then use the relevant canonical bundle below.
 
-**Current phase:** the structural runtime foundation and the planned system-breadth owners through run lifecycle / PlayerProfile are implemented and locally validated. The remaining implementation sequence is now primarily:
+**Current phase:** the structural runtime foundation, full current-run restore/rebootstrap, deterministic engine-scenario tooling, real Godot spatial/navigation/perception adapters, autonomous target selection, authored action commit, grounded drive consequence and production-facing fresh-run bootstrap are implemented and locally validated.
 
-```text
-fine spatial/nav/occlusion + Godot presentation adapters
-→ deterministic restore/bootstrap scenario tooling
-→ representative multi-system scenarios + seed-population validation
-```
+The next runtime vertical should be chosen from the current gaps in `DISCOVERY_STATUS.md`, with product-level new-run/world-generation input and richer representative gameplay semantics as the leading candidates. A generalized production scene-binding/host composer remains deferred until a second real use proves its shape.
 
 Cross-cutting correctness items listed in `DISCOVERY_STATUS.md` should be pulled forward when representative scenarios require them. New work should preserve established owner boundaries rather than reopen foundation architecture by default.
 
@@ -60,7 +56,7 @@ Cross-cutting correctness items listed in `DISCOVERY_STATUS.md` should be pulled
 
 ## Canonical
 
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — **state owners, derived services, module layout, dependency direction, Godot/persistence boundaries and the common restore/bootstrap boundary used by saves, deterministic fixtures and debug scenarios**.
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — **state owners, derived services, module layout, dependency direction, Godot/persistence boundaries and the common restore/bootstrap boundary used by saves, fresh runs, deterministic fixtures and debug scenarios**.
 - [`SIMULATION_CONTRACTS.md`](SIMULATION_CONTRACTS.md) — semantic cross-system contracts.
 - [`SIMULATION_ORCHESTRATION.md`](SIMULATION_ORCHESTRATION.md) — clocks, update ordering, commit/perception/learning/reconsideration/offline orchestration and deterministic fixture/bootstrap ordering.
 - [`MUTATION_AUTHORITY.md`](MUTATION_AUTHORITY.md) — read/propose/mutate ownership matrix.
@@ -187,6 +183,7 @@ README.md / PRODUCT.md
 - [`ASSET_SPEC.md`](ASSET_SPEC.md)
 - [`ASSET_PIPELINE.md`](ASSET_PIPELINE.md)
 - [`art/AGENT_ART_PRODUCTION.md`](art/AGENT_ART_PRODUCTION.md)
+- [`../tools/blender/README.md`](../tools/blender/README.md) — deterministic operational review/validation/export workflow, AssetScope and source-ownership rules.
 
 `art/` must not maintain a second object catalog. Asset identity/backlog lives in `asset-catalog/`.
 
@@ -195,7 +192,6 @@ README.md / PRODUCT.md
 - [`prototyping/README.md`](prototyping/README.md) — prototype-asset authority and repository placement.
 - [`prototyping/blender/BLENDER_PROTOTYPING_GUIDE.md`](prototyping/blender/BLENDER_PROTOTYPING_GUIDE.md) — reusable primitive modeling/export rules.
 - [`prototyping/blender/MCP_AGENT_WORKFLOW.md`](prototyping/blender/MCP_AGENT_WORKFLOW.md) — constrained local Blender MCP workflow when a modeling agent is used.
-- [`prototyping/blender/REVIEW_EXPORT_WORKFLOW.md`](prototyping/blender/REVIEW_EXPORT_WORKFLOW.md) — scripted current-session review/export split.
 
 Prototype source/exports may support executable fixtures, but Godot scene composition and assertions belong under `tests/scenes/`, not under `docs/prototyping/` or `prototypes/*/godot/`.
 
@@ -205,7 +201,7 @@ Prototype source/exports may support executable fixtures, but Godot scene compos
 
 - `brainstorming/functional-asset-catalog/` — historical breadth exploration.
 - `brainstorming/representative-scene-catalog.md` — original scene exploration.
-- `handoffs/` — transition context, never durable design authority.
+- `handoffs/` — transition context, never durable design authority. Only the handoff explicitly identified in **Start here** should be treated as the active transition context.
 
 Use these for intent/recall, not precedence over canonical contracts.
 
@@ -221,7 +217,7 @@ When documents appear to disagree:
 4. **Operations:** `DOMAIN_OPERATIONS.md` is the single canonical public operation surface.
 5. **Concrete implementation checkpoint:** `DISCOVERY_STATUS.md` + source/tests; it does not redefine language-neutral product/domain meaning.
 6. **Asset/content requirements:** `asset-catalog/` owns required modeled families/cross-cutting content requirements.
-7. **Art:** `VISUAL_GUIDE.md` + `art/`; technical production in `ASSET_SPEC.md`/`ASSET_PIPELINE.md`.
+7. **Art:** `VISUAL_GUIDE.md` + `art/`; technical production in `ASSET_SPEC.md`/`ASSET_PIPELINE.md`; Blender execution mechanics in `tools/blender/`.
 8. **Prototype assets:** `prototyping/` may simplify geometry for a test but does not override production asset/domain/art contracts.
 9. **Fixtures/regressions:** `tests/scenes/`, `tests/headless/` and other validation artifacts are evidence only.
 10. **Brainstorming/handoffs:** historical/operational evidence only.
@@ -239,6 +235,7 @@ To prevent renewed fragmentation:
 - do not create permanent `*_REFINEMENTS`, `*_NOTES`, `*_V2` or edge-case override chains;
 - keep executable engine-validation fixtures in `tests/scenes/` and stable strict-runner wrappers in `tests/headless/`;
 - keep prototype modeling guidance in `prototyping/` and prototype source/exports under `prototypes/`;
+- keep production Blender execution mechanics in `tools/blender/`;
 - keep scenario evidence in fixtures/regressions;
 - keep cross-cutting content requirements in `asset-catalog/`;
 - keep exploratory breadth in `brainstorming/`;
