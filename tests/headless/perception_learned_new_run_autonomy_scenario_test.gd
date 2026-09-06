@@ -66,8 +66,9 @@ func _run() -> void:
 		var action_committed = checkpoints[7]
 		var hunger_reduced = checkpoints[8]
 		var complete = checkpoints[9]
-		_expect_equal(boot.probes.get("scenario"), "perception_learned_new_run_autonomy", "bootstrap checkpoint keeps scenario identity")
+		_expect_equal(boot.probes.get("run_id"), "perception_learned_new_run_autonomy_run", "bootstrap checkpoint keeps production run identity")
 		_expect_equal(int(boot.probes.get("seed", -1)), 61043, "bootstrap checkpoint keeps deterministic gameplay seed")
+		_expect_true(bool(boot.probes.get("run_active", false)), "production new run begins ACTIVE")
 		_expect_equal(int(boot.probes.get("belief_count", -1)), 0, "new run begins without pre-seeded opportunity belief")
 		_expect_true(not bool(boot.probes.get("has_current_intention", true)), "new run begins without authoritative intention")
 		_expect_true(bool(learned.probes.get("learned_target_relation", false)), "real passive perception becomes Wilson-owned belief")
