@@ -13,3 +13,6 @@ addons/godot_mcp/
 # Common local/editor noise
 .DS_Store
 Thumbs.db
+
+# Local scratch / renders
+temp/

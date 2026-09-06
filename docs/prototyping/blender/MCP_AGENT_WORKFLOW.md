@@ -6,6 +6,8 @@ This is a constrained execution workflow for local agents controlling Blender th
 
 MCP is an execution and inspection bridge. Prefer short, inspectable Blender Python (`bpy`) operations for repeatable construction over long sequences of fragile UI actions.
 
+For longer-lived asset work, prefer a scripted review/export loop that can run in the **current Blender session** without closing the file. That keeps the live modeling state visible and avoids accidentally exporting from a stale reopened copy.
+
 ## Safety boundary
 
 Treat MCP-driven Blender scripting as code execution on the local workstation.
@@ -107,6 +109,8 @@ Correct mechanical violations before export.
 
 Save the intentional `.blend` to the smoke test's `source/` path. Do not treat the exported GLB as the only source artifact.
 
+For current-session asset work, this step should preserve the live scene, not replace it with a reopened copy.
+
 ### 8. Export
 
 Export the exact requested objects to `exports/`. Prefer deterministic scripted export settings. Do not export the whole working scene accidentally.
@@ -162,3 +166,5 @@ A second pass is justified only for a concrete defect such as wrong scale, pivot
 ## Handoff to a Godot agent
 
 The Blender agent's output is geometry plus a manifest. A Godot agent should be able to consume it without asking what the objects mean. The smoke-test `SCENE_SPEC.md` owns runtime node composition, collisions, navigation and perception wiring.
+
+See also `REVIEW_EXPORT_WORKFLOW.md` for the two-script split used by the asset production loop.

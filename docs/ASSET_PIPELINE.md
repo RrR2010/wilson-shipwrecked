@@ -47,6 +47,8 @@ For repeatable low-poly families, prefer procedural `bpy` generators over one-of
 
 A generator is source code. Generated meshes are build outputs unless there is a clear reason to version an intermediate as authored source.
 
+For this project, the default editable source unit is **one `.blend` per asset**. Batch files are acceptable only as temporary working files or deliberate multi-object prototype scenes.
+
 ## Agent workflow
 
 An autonomous 3D agent should use this loop:
@@ -194,6 +196,8 @@ Create a canonical Blender or Godot preview setup early with:
 
 Use the full preview/review contract in `docs/art/AGENT_ART_PRODUCTION.md`. Turntables and close-ups are diagnostic only; gameplay view determines readability.
 
+The review/export scripts should run against the **current Blender session** and should not require closing and reopening the file. That keeps unsaved modeling work visible and avoids exporting from a stale copy.
+
 ## Blender -> glTF/GLB compatibility rules
 
 Godot 4.x recommends glTF 2.0 for 3D scene interchange. `.blend` direct import is itself a Blender-to-glTF conversion before Godot imports the result.
@@ -270,6 +274,15 @@ LLM/agent
 ```
 
 Avoid long sequences of fragile UI-level operations or vertex-by-vertex tool calls. MCP is an execution/inspection bridge; `bpy` code should carry most repeatable construction logic.
+
+Recommended split:
+
+```text
+tools/blender/review_asset.py
+tools/blender/export_asset.py
+```
+
+`review_asset.py` frames the active asset and renders the canonical review set to a gitignored temp location. `export_asset.py` normalizes origin/transforms and writes the runtime GLB plus the canonical `.blend` source, using the current session state.
 
 ## Version-control policy
 

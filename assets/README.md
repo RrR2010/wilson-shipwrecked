@@ -13,6 +13,20 @@ This directory separates editable authoring sources from Godot runtime-imported 
 
 Direct `.blend` import in Godot is allowed for local experimentation, but it is not the project runtime contract. Runtime model assets should be committed as `.glb` under `assets/models/`.
 
+## Source organization
+
+Default source layout is **one `.blend` per asset**.
+
+Use semantic paths that mirror the runtime asset ID and family, for example:
+
+```text
+assets/source/props/stone_small_01.blend
+assets/source/props/branch_small_01.blend
+assets/source/props/flat_rock_01.blend
+```
+
+This makes it obvious which asset lives in which source file and keeps review/export scripts token-efficient. Shared multi-asset `.blend` files should be the exception, not the default.
+
 ## Directory contract
 
 ```text

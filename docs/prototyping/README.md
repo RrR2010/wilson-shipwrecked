@@ -36,6 +36,8 @@ prototypes/
     └── exports/      # GLB assets consumed by executable scenes
 ```
 
+For production asset batches, the same principle applies inside `assets/source/` and `assets/models/`: the default editable unit is one `.blend` per asset, while runtime exports remain `.glb`.
+
 Executable scenes belong in:
 
 ```text
@@ -63,6 +65,7 @@ A local modeling agent should receive:
 1. this README;
 2. `blender/BLENDER_PROTOTYPING_GUIDE.md`;
 3. `blender/MCP_AGENT_WORKFLOW.md` when MCP is used;
-4. a compact object manifest supplied by the human/implementing agent.
+4. `blender/REVIEW_EXPORT_WORKFLOW.md` when a scripted review/export loop is available;
+5. a compact object manifest supplied by the human/implementing agent.
 
 The modeling agent should return source geometry plus exports. It should not author navigation, collision semantics, runtime identity, perception logic or test assertions.

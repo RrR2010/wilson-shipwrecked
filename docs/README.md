@@ -195,6 +195,7 @@ README.md / PRODUCT.md
 - [`prototyping/README.md`](prototyping/README.md) — prototype-asset authority and repository placement.
 - [`prototyping/blender/BLENDER_PROTOTYPING_GUIDE.md`](prototyping/blender/BLENDER_PROTOTYPING_GUIDE.md) — reusable primitive modeling/export rules.
 - [`prototyping/blender/MCP_AGENT_WORKFLOW.md`](prototyping/blender/MCP_AGENT_WORKFLOW.md) — constrained local Blender MCP workflow when a modeling agent is used.
+- [`prototyping/blender/REVIEW_EXPORT_WORKFLOW.md`](prototyping/blender/REVIEW_EXPORT_WORKFLOW.md) — scripted current-session review/export split.
 
 Prototype source/exports may support executable fixtures, but Godot scene composition and assertions belong under `tests/scenes/`, not under `docs/prototyping/` or `prototypes/*/godot/`.
 
