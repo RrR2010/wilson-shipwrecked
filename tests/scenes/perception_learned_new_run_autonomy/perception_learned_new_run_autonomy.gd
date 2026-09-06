@@ -10,8 +10,8 @@ const ContentRegistry = preload("res://src/domain/content/content_registry.gd")
 const EventDefinition = preload("res://src/domain/content/event_definition.gd")
 const EntityBootstrapSeed = preload("res://src/application/bootstrap/entity_bootstrap_seed.gd")
 const SimulationBootstrapDefinition = preload("res://src/application/bootstrap/simulation_bootstrap_definition.gd")
-const DeterministicScenarioDefinition = preload("res://src/application/bootstrap/deterministic_scenario_definition.gd")
-const DeterministicScenarioBootstrapService = preload("res://src/application/bootstrap/deterministic_scenario_bootstrap_service.gd")
+const NewRunDefinition = preload("res://src/application/bootstrap/new_run_definition.gd")
+const NewRunBootstrapService = preload("res://src/application/bootstrap/new_run_bootstrap_service.gd")
 const RequirementPredicate = preload("res://src/domain/actions/requirement_predicate.gd")
 const ActionDefinition = preload("res://src/domain/actions/action_definition.gd")
 const ActionResolutionDefinition = preload("res://src/domain/actions/action_resolution_definition.gd")
@@ -39,7 +39,7 @@ const GodotPassiveSpatialSensor = preload("res://src/infrastructure/spatial/godo
 const GodotSpatialQueryAdapter = preload("res://src/infrastructure/spatial/godot_spatial_query_adapter.gd")
 const GodotSimulationHost = preload("res://src/infrastructure/spatial/godot_simulation_host.gd")
 
-const SCENARIO_NAME := &"perception_learned_new_run_autonomy"
+const RUN_ID := &"perception_learned_new_run_autonomy_run"
 const GAMEPLAY_SEED := 61043
 const MAX_NAVIGATION_SYNC_FRAMES := 120
 const MAX_MOTION_FRAMES := 600
@@ -206,17 +206,18 @@ func _bootstrap_and_start() -> void:
 		1.0,
 		{DriveState.HUNGER: 0.54}
 	)
-	var definition = DeterministicScenarioDefinition.new(SCENARIO_NAME, GAMEPLAY_SEED, simulation)
-	var boot = DeterministicScenarioBootstrapService.new().bootstrap(definition, content)
+	var definition = NewRunDefinition.new(RUN_ID, GAMEPLAY_SEED, simulation)
+	var boot = NewRunBootstrapService.new().bootstrap(definition, content)
 	if not boot.ok:
-		_fail("Scenario bootstrap failed: %s %s" % [String(boot.code), str(boot.diagnostics)])
+		_fail("New-run bootstrap failed: %s %s" % [String(boot.code), str(boot.diagnostics)])
 		return
 	_owners = boot.owners
 	_runtime = boot.runtime
 
 	checkpoint_reached.emit(&"BOOTSTRAPPED", {
-		"scenario": String(boot.scenario_name),
+		"run_id": String(boot.run_id),
 		"seed": boot.gameplay_seed,
+		"run_active": boot.run_lifecycle.lifecycle == 0,
 		"hunger": _owners.drives.value(DriveState.HUNGER),
 		"has_current_intention": _owners.current_intention.has_current(),
 		"belief_count": _owners.beliefs.entry_count(),
@@ -399,7 +400,7 @@ func _complete() -> void:
 	_finished = true
 	checkpoint_reached.emit(&"COMPLETE", _probes())
 	smoke_finished.emit(true, {
-		"scenario": String(SCENARIO_NAME),
+		"run_id": String(RUN_ID),
 		"seed": GAMEPLAY_SEED,
 		"trace_count": _trace_sink.traces.size(),
 		"final_position": _probes().get("position"),
@@ -411,4 +412,4 @@ func _fail(message: String) -> void:
 	if _finished:
 		return
 	_finished = true
-	smoke_finished.emit(false, {"failures": [message], "scenario": String(SCENARIO_NAME)})
+	smoke_finished.emit(false, {"failures": [message], "run_id": String(RUN_ID)})
