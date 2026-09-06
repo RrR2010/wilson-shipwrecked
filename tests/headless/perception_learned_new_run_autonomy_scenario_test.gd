@@ -24,7 +24,7 @@ func _run() -> void:
 	adapter.configure(scene, harness)
 	root.add_child(scene)
 
-	for _frame in range(1000):
+	for _frame in range(1200):
 		if harness.completed() or harness.failed():
 			break
 		await process_frame
@@ -40,19 +40,35 @@ func _run() -> void:
 		names.append(checkpoint.name)
 	_expect_equal(
 		names,
-		[&"BOOTSTRAPPED", &"PERCEPTION_LEARNED", &"DRIVE_PRESSING", &"INTENTION_SELECTED", &"MOVING", &"ARRIVED", &"COMPLETE"],
-		"scenario exposes perception-learning-to-autonomous-arrival sequence"
+		[
+			&"BOOTSTRAPPED",
+			&"PERCEPTION_LEARNED",
+			&"DRIVE_PRESSING",
+			&"INTENTION_SELECTED",
+			&"MOVING",
+			&"ARRIVED",
+			&"ACTION_STARTED",
+			&"ACTION_COMMITTED",
+			&"HUNGER_REDUCED",
+			&"COMPLETE",
+		],
+		"scenario exposes perception-learning-to-grounded-consumption sequence"
 	)
 
-	if checkpoints.size() >= 7:
+	if checkpoints.size() >= 10:
 		var boot = checkpoints[0]
 		var learned = checkpoints[1]
 		var pressing = checkpoints[2]
 		var selected = checkpoints[3]
 		var moving = checkpoints[4]
 		var arrived = checkpoints[5]
-		_expect_equal(boot.probes.get("scenario"), "perception_learned_new_run_autonomy", "bootstrap checkpoint keeps scenario identity")
+		var action_started = checkpoints[6]
+		var action_committed = checkpoints[7]
+		var hunger_reduced = checkpoints[8]
+		var complete = checkpoints[9]
+		_expect_equal(boot.probes.get("run_id"), "perception_learned_new_run_autonomy_run", "bootstrap checkpoint keeps production run identity")
 		_expect_equal(int(boot.probes.get("seed", -1)), 61043, "bootstrap checkpoint keeps deterministic gameplay seed")
+		_expect_true(bool(boot.probes.get("run_active", false)), "production new run begins ACTIVE")
 		_expect_equal(int(boot.probes.get("belief_count", -1)), 0, "new run begins without pre-seeded opportunity belief")
 		_expect_true(not bool(boot.probes.get("has_current_intention", true)), "new run begins without authoritative intention")
 		_expect_true(bool(learned.probes.get("learned_target_relation", false)), "real passive perception becomes Wilson-owned belief")
@@ -64,6 +80,15 @@ func _run() -> void:
 		_expect_true(int(arrived.probes.get("semantic_step", -1)) > int(learned.probes.get("semantic_step", -1)), "arrival occurs after perception and semantic progression")
 		var final_position: Array = Array(arrived.probes.get("position", []))
 		_expect_true(final_position.size() == 3 and float(final_position[0]) > 5.0, "Wilson physically reaches the perceived food side of the scene")
+		_expect_true(bool(action_started.probes.get("consume_started", false)), "arrival starts authored consume ActionExecution")
+		_expect_true(not bool(action_started.probes.get("consume_committed", true)), "consume begins before its irreversible checkpoint")
+		_expect_true(bool(action_committed.probes.get("consume_committed", false)), "consume crosses ActionExecution commit checkpoint")
+		var hunger_at_start := float(action_started.probes.get("hunger_at_action_start", -1.0))
+		var hunger_after := float(hunger_reduced.probes.get("hunger", 2.0))
+		_expect_true(hunger_at_start >= 0.0, "action-start checkpoint captures pre-consumption hunger")
+		_expect_true(hunger_after <= hunger_at_start - 0.30, "accepted consume outcome produces grounded hunger reduction")
+		_expect_true(bool(hunger_reduced.probes.get("consume_committed", false)), "hunger reduction occurs only after consume commit")
+		_expect_true(float(complete.probes.get("hunger", 2.0)) <= hunger_at_start - 0.30, "scenario completes with reduced authoritative hunger")
 
 	assert(adapter != null)
 	scene.queue_free()
