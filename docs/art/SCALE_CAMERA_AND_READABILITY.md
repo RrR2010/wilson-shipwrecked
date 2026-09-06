@@ -2,132 +2,144 @@
 
 ## Coordinate baseline
 
-Preserve the canonical asset contract:
+Production assets share one local coordinate convention:
 
-- 1 Blender unit = 1 meter;
-- placeable asset origin at sensible ground contact;
-- transforms normalized before export where appropriate.
+```text
+1 Blender unit = 1 meter
++Y = canonical forward/front
++X = canonical right
++Z = up
+```
 
-This file adds visual-production guidance on top of those rules.
+Do not choose a different forward axis per family.
+
+A runtime instance may be rotated freely in the world. The convention above defines the authored local frame so cars, boats, characters, furniture, structures and tools do not disagree about what `forward` means.
+
+Assets without a meaningful semantic front still use a stable family orientation. Symmetry is not permission to switch axes arbitrarily between variants.
+
+## Physical authored pose
+
+Canonical review should show the asset in a physically meaningful normal rest or installed state.
+
+Examples:
+
+- loose branch/log → lying naturally;
+- rock → resting on a plausible support face;
+- crate/table/stool → on intended base/feet;
+- rooted palm → upright;
+- fallen vegetation → gravity-consistent fallen pose;
+- installed wall/roof/panel → installed pose;
+- floating/hanging asset → review without inventing a false ground-rest pose.
+
+Do not stand a loose object upright merely to make framing easier.
 
 ## Canonical gameplay camera
 
 Use an orthographic 3/4 camera as the primary review camera.
 
-Until production calibration locks exact numbers, target approximately:
+Until final game-scene calibration locks exact numbers, target approximately:
 
-- elevation: 32–38 degrees;
-- azimuth: a diagonal 3/4 view rather than strict side/front;
-- minimal perspective distortion;
-- enough visible horizon/water context to read island geography when composition allows;
-- stable framing suitable for ambient fullscreen observation.
+```text
+azimuth:   ~45° around global +Z
+ elevation: 32–38° downward
+projection: orthographic
+```
 
-Do not optimize assets primarily for eye-level closeups or turntables.
+The camera is a stable world/view convention, not an asset-specific "best angle". Do not rotate every asset to present its prettiest side.
 
-## Camera philosophy
+Top surfaces matter, silhouette overlap matters, and interaction props need readable footprints from above.
 
-The camera should make the game feel like observing a miniature living scene rather than inhabiting Wilson's eyes.
+## Relative scale
 
-Important consequences:
+Exact per-asset dimensions should not be hardcoded into an art-only table unless gameplay requires a specific measurement.
 
-- top surfaces matter;
-- silhouette overlap must be managed from above;
-- interaction props need readable footprints;
-- vegetation must not routinely obscure Wilson;
-- shelters should communicate interior/opening direction from the gameplay angle;
-- object orientation should read without relying on tiny labels.
+Judge scale in this order:
 
-## Character scale reference
+1. catalog/domain functional requirement when one exists;
+2. Wilson mannequin/adult reference;
+3. intended interaction;
+4. approved siblings in the same family;
+5. familiar neighboring assets.
 
-Exact Wilson production height should be locked after character prototype. Until then, use an adult mannequin near **1.65–1.80 m** as a scale reference.
+Use an adult mannequin near **1.65–1.80 m** until Wilson's production height is locked.
 
-Do not infer prop scale from concept images alone. Concepts may exaggerate items for readability.
-
-## Readability exaggeration
-
-The following may be intentionally oversized relative to realism:
-
-- coconuts and fruit;
-- crab claws/body;
-- stones intended to be picked up;
-- tool heads and handles;
-- crate structural members;
-- rope bindings;
-- campfire stones/flames;
-- stool/seat thickness;
-- shelter poles and roof panels;
-- interaction handles, lids and openings.
-
-The governing question is not “is this realistic?” but “does Wilson's intended action remain clear at the canonical camera distance?”
+Do not infer scale from concept images alone. Concept sheets may exaggerate objects for readability.
 
 ## Relative-size tiers
 
-Use these tiers during concepting and asset reviews:
+Use these as visual heuristics, not rigid dimensions.
 
-### Tiny hand prop
+### Tiny / hand prop
 
-Approximately palm-sized to forearm-sized. Must still be visible when held.
+Palm-sized to forearm-scale and still visible when held.
 
-Examples: stone, fruit, cup, small tool.
+Examples: fruit, cup, stone, small tool.
 
 ### Carry prop
 
-Clearly visible in Wilson's hands and often requiring pose accommodation.
+Clearly visible in Wilson's hands/body pose.
 
-Examples: log bundle, crate, large container, bowling ball.
+Examples: crate, large container, bowling ball, log bundle.
 
 ### Camp prop
 
-Anchors an interaction location and reads from across the immediate camp.
+Anchors an interaction location.
 
-Examples: stool, table, storage chest, campfire, workbench.
+Examples: stool, table, campfire, storage chest, workbench.
 
 ### Structure
 
-Creates navigation/occlusion and should read as a persistent camp landmark.
+Creates navigation/occlusion and reads as a persistent landmark.
 
-Examples: shelter, raft, larger storage, project frame.
+Examples: shelter, raft, dock, project frame.
 
 ### Environmental landmark
 
-Shapes navigation and scene composition.
+Shapes navigation/composition at island scale.
 
 Examples: palm, large boulder, cliff mass, tide pool.
 
+## Readability exaggeration
+
+Controlled oversizing is acceptable when required for gameplay read, especially for:
+
+- fruit/coconuts;
+- crab claws/body;
+- pickup stones;
+- tool heads/handles;
+- rope bindings;
+- lids/openings/handles;
+- campfire stones/flames;
+- shelter poles/panels.
+
+The question is not only "is this realistic?" but:
+
+> Does the object remain physically believable while making Wilson's intended interaction readable?
+
+## Scale review
+
+Use the canonical `scale` render whenever size is not trivial.
+
+When possible, also compare with approved siblings or known reference props. Avoid gradual family-size drift across batches.
+
 ## Density and spacing
 
-A living diorama needs visual richness but also action clearance.
+Prefer clustered density with usable negative space:
 
-Prefer clustered density:
+- richer vegetation near natural boundaries;
+- clearer pockets around camp/interactions;
+- intentional clearance around important props;
+- background overlap without hiding Wilson or action targets.
 
-- richer vegetation around scene edges and natural boundaries;
-- clearer traversable pockets around camp and interaction anchors;
-- intentional negative space around important props;
-- overlap in background clusters, not at the cost of Wilson/action readability.
+Avoid uniform filler distribution.
 
-Avoid distributing filler objects uniformly across the terrain.
+## Readability test
 
-## Canonical preview scene requirements
-
-The eventual preview scene should contain:
-
-- canonical orthographic camera;
-- neutral daylight lighting;
-- standard ground patch;
-- Wilson mannequin/reference;
-- 1 m measurement reference hidden from beauty renders;
-- known reference assets: coconut, crate, stool, rock, palm segment;
-- optional shadow/contact test plane.
-
-Every asset family should be reviewed in this scene before acceptance.
-
-## Screenshot readability test
-
-For each important scene render:
+For important renders:
 
 1. inspect at native resolution;
-2. reduce to approximately 50% linear size;
-3. reduce again to a small thumbnail;
-4. verify Wilson, action target and major state remain identifiable.
+2. inspect around half linear size;
+3. inspect at small thumbnail scale;
+4. verify asset identity and important state still read.
 
-If readability collapses early, improve silhouette, spacing, scale or color grouping before adding detail.
+If readability collapses, improve silhouette, spacing, scale or color grouping before adding detail.

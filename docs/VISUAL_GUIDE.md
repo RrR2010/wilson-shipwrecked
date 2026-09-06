@@ -47,6 +47,22 @@ Until calibrated:
 - important silhouettes must work from the gameplay camera, not only in turntables;
 - assets should tolerate modest camera rotation but need not look equally optimal from every angle.
 
+## Global authored orientation
+
+All production assets share one local orientation convention:
+
+```text
++Y = forward/front
++X = right
++Z = up
+```
+
+Do not let each family choose its own forward axis. A boat, character, chair, tool, structure entrance or other directional asset must use the same authored meaning of `forward`.
+
+Runtime instances may be rotated freely in the world. This convention defines local asset space only.
+
+For symmetric or weakly directional objects, keep a stable family orientation rather than switching axes between variants.
+
 ## Shape language
 
 ### Environment
@@ -87,11 +103,15 @@ Target soft, readable lighting:
 - day/night/weather may alter lighting but must preserve silhouettes;
 - avoid dramatic contrast that makes ambient viewing tiring.
 
-## Scale and proportions
+## Scale and physical pose
 
 Use a consistent Godot/Blender scale: **1 Blender unit = 1 meter** unless a later architecture decision changes it.
 
-Gameplay readability may exaggerate dimensions. A coconut, axe handle or hand can be larger than realistic if this improves recognition and interaction animation.
+Judge ordinary prop scale relationally against Wilson, intended interaction, approved family siblings and familiar world objects. Do not copy apparent concept-image scale blindly.
+
+Gameplay readability may exaggerate dimensions. A coconut, axe handle or hand can be larger than realistic if this improves recognition and interaction animation while remaining physically believable.
+
+The canonical authored/review pose should match a plausible normal loose or installed state. A loose stick/log normally lies on the ground; a rooted palm stands; an installed panel is shown installed; floating/hanging assets use an appropriate non-grounded review profile. Do not stand loose props vertically only because it makes modeling or framing easier.
 
 ## Geometry budget philosophy
 
@@ -194,6 +214,8 @@ Every new asset family should be reviewed at gameplay camera distance for:
 
 - silhouette;
 - relative scale;
+- global orientation consistency when directional;
+- physically plausible loose/installed pose;
 - style consistency;
 - material simplicity;
 - grounding/contact;
