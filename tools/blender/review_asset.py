@@ -7,6 +7,7 @@ from pathlib import Path
 
 import bpy
 import mathutils
+from bpy_extras.object_utils import world_to_camera_view
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
@@ -14,6 +15,7 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from _workflow_common import (
     argv_after_double_dash,
+    bounds_corners,
     camera_direction,
     create_contact_sheet,
     create_material,
@@ -110,6 +112,44 @@ def raw_object_bounds(obj: bpy.types.Object) -> dict:
     }
 
 
+def refit_orthographic_camera(
+    *,
+    scene: bpy.types.Scene,
+    camera: bpy.types.Object,
+    bounds: dict,
+    margin: float,
+) -> float:
+    """Fit using Blender's actual normalized camera projection.
+
+    `Camera.ortho_scale` is easy to misinterpret when render aspect is not 1:1.
+    Instead of deriving width/height math ourselves, project the world-space
+    bound corners through Blender's camera model at a unit scale, then solve
+    the scale needed to keep every corner inside a centered safe frame.
+    """
+
+    if camera.data.type != "ORTHO":
+        raise RuntimeError("Canonical review camera must be orthographic.")
+
+    safe_margin = max(float(margin), 1.001)
+    camera.data.ortho_scale = 1.0
+
+    projected = [
+        world_to_camera_view(scene, camera, point) for point in bounds_corners(bounds)
+    ]
+    if not projected:
+        raise RuntimeError("Unable to project bounds for camera fitting.")
+
+    max_x_deviation = max(abs(float(point.x) - 0.5) for point in projected)
+    max_y_deviation = max(abs(float(point.y) - 0.5) for point in projected)
+
+    # Orthographic normalized offsets scale inversely with ortho_scale.
+    # At scale=1, a deviation of 0.5 exactly reaches the frame edge.
+    required_scale = max(max_x_deviation, max_y_deviation) * 2.0 * safe_margin
+    required_scale = max(required_scale, 0.001)
+    camera.data.ortho_scale = required_scale
+    return required_scale
+
+
 def cleanup_review_orphans() -> None:
     orphan_data = []
     for obj in list(bpy.data.objects):
@@ -167,6 +207,12 @@ def render_normal_views(
             bounds=bounds,
             direction=direction,
             aspect=aspect,
+            margin=profile.camera_margin,
+        )
+        refit_orthographic_camera(
+            scene=scene,
+            camera=camera,
+            bounds=bounds,
             margin=profile.camera_margin,
         )
         path = output_dir / f"{asset_id}_{name}.png"
@@ -259,7 +305,13 @@ def render_scale_view(
         bounds=combined,
         direction=camera_direction(45.0, 35.0),
         aspect=aspect,
-        margin=max(profile.camera_margin, 1.12),
+        margin=max(profile.camera_margin, 1.30),
+    )
+    refit_orthographic_camera(
+        scene=scene,
+        camera=camera,
+        bounds=combined,
+        margin=max(profile.camera_margin, 1.30),
     )
     output_path = output_dir / f"{asset_id}_scale.png"
     render_scene_still(scene, camera, output_path)
