@@ -102,10 +102,10 @@ position = Vector3(0, 0.1, 0)
 mesh = SubResource("GoalMesh")
 
 [node name="DetourA" type="Node3D" parent="."]
-position = Vector3(-2, 0, 4)
+position = Vector3(-2, 0, 3)
 
 [node name="DetourB" type="Node3D" parent="."]
-position = Vector3(2, 0, 4)
+position = Vector3(2, 0, 3)
 
 [node name="RememberedDangerMarker" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0.04, 0)
