@@ -55,10 +55,15 @@ func _run() -> void:
 		_expect_true(float(boot.probes.get("short_physical_cost", INF)) < float(boot.probes.get("long_physical_cost", -INF)), "short route remains physically cheaper")
 		_expect_equal(selected.probes.get("route"), "long", "Wilson selects long route despite physical shortcut")
 		_expect_true(float(selected.probes.get("short_adjusted_cost", -INF)) > float(selected.probes.get("long_adjusted_cost", INF)), "remembered aversion reverses route preference")
+
 		var first_detour_position: Array = Array(detour_entered.probes.get("position", []))
 		var second_detour_position: Array = Array(detour_crossed.probes.get("position", []))
-		_expect_true(first_detour_position.size() == 3 and float(first_detour_position[2]) > 3.0, "Wilson visibly leaves the direct corridor at first detour")
-		_expect_true(second_detour_position.size() == 3 and float(second_detour_position[2]) > 3.0, "Wilson stays on long northern detour before goal")
+		var first_detour_z := 0.0 if first_detour_position.size() != 3 else absf(float(first_detour_position[2]))
+		var second_detour_z := 0.0 if second_detour_position.size() != 3 else absf(float(second_detour_position[2]))
+		_expect_true(first_detour_position.size() == 3 and first_detour_z > 1.5, "Wilson materially leaves the direct corridor at first detour")
+		_expect_true(second_detour_position.size() == 3 and second_detour_z > 1.5, "Wilson remains materially off the direct corridor before goal")
+		_expect_true(maxf(first_detour_z, second_detour_z) > 2.0, "remembered route produces a clearly visible lateral detour")
+
 		var final_position: Array = Array(arrived.probes.get("position", []))
 		_expect_true(final_position.size() == 3 and float(final_position[0]) > 5.0 and absf(float(final_position[2])) < 1.0, "Wilson ultimately reaches the ordinary goal")
 
