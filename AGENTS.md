@@ -6,25 +6,26 @@ Build Wilson Shipwrecked as a coherent systemic simulation and living 3D diorama
 
 ## Current project phase
 
-The **structural runtime foundation and planned system-breadth owners through run lifecycle / PlayerProfile are implemented and locally validated**.
+The **structural runtime foundation, shared restore/bootstrap composition, deterministic engine-scenario tooling, Godot spatial/navigation/perception bridge, grounded autonomous action slice and production-facing fresh-run bootstrap are implemented and locally validated**.
 
 Current strict baseline is recorded in `docs/DISCOVERY_STATUS.md`. Do not copy test counts/schema versions into this file.
 
-The remaining major implementation sequence is:
+The leading runtime verticals are now:
 
 ```text
-1. fine spatial/nav/occlusion + Godot presentation adapters
-2. deterministic playable scenario/bootstrap tooling
-3. representative multi-system scenarios + seed-population tests
+1. product-level new-run/world-generation input above NewRunBootstrapService
+2. richer representative gameplay semantics driven by validated scene needs
+3. persistence evolution only when product requirements create real pressure
 ```
 
-Cross-cutting correctness items listed in `DISCOVERY_STATUS.md` should be pulled forward when a representative scenario requires them. Do not hide a real domain gap behind scenario-specific code.
+A generalized production scene-binding/host composer remains deferred until a second real production-facing use proves its shape. Cross-cutting correctness items listed in `DISCOVERY_STATUS.md` should be pulled forward when a representative scenario requires them. Do not hide a real domain gap behind scenario-specific code.
 
 Before substantial work, read:
 
 1. [`docs/README.md`](docs/README.md) — documentation map/authority hierarchy;
 2. [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md) — concrete validated baseline and remaining work;
-3. only the canonical bundle relevant to the task.
+3. [`docs/handoffs/production-new-run-autonomy-baseline.md`](docs/handoffs/production-new-run-autonomy-baseline.md) for current runtime continuation work;
+4. only the canonical bundle relevant to the task.
 
 Do not reopen foundation ownership, replace established typed contracts with generic containers, or introduce a new universal framework merely because one new adapter/scenario needs implementation.
 
@@ -141,6 +142,139 @@ A handoff should:
 
 ---
 
+# Git / PR / multi-agent workflow
+
+`main` is the only integrated project state.
+
+Agents must not commit directly to `main` during normal development. Every independent task uses a short-lived task branch and integrates through a pull request.
+
+Canonical flow:
+
+```text
+latest origin/main
+→ short-lived task branch
+→ coherent commits
+→ required validation
+→ PR targeting main
+→ synchronize with main if materially required
+→ validation
+→ squash merge
+→ delete task branch
+```
+
+## Branch isolation
+
+Every normal task branch MUST start from `origin/main`.
+
+Every normal PR MUST target `main`.
+
+Do not base one agent's task branch on another active task branch and do not use an active feature branch as the base of another PR. Stacked branches/PRs require an explicit exceptional reason.
+
+If task B depends on unmerged task A:
+
+```text
+finish and merge A
+→ refresh origin/main
+→ create/update B from the new main
+```
+
+Do not create an implicit dependency chain between agent branches.
+
+## Multi-agent worktrees
+
+Concurrent agents should use separate Git worktrees and separate branches.
+
+Example:
+
+```text
+runtime worktree → runtime/<goal>
+asset worktree   → assets/<goal>
+```
+
+An agent owns its task branch. Do not push commits to another active agent's branch.
+
+Avoid concurrent edits to coordination hotspots such as:
+
+```text
+AGENTS.md
+project.godot
+docs/README.md
+shared catalog/index files
+shared pipeline configuration
+```
+
+When two tasks require a conflicting shared-file change, integrate the smaller/shared change first, then synchronize the other task from `main`.
+
+## Synchronizing long-lived task work
+
+Do not continuously merge `main` merely because another PR landed.
+
+Synchronize when:
+
+- the new `main` changes files/contracts used by the task;
+- conflicts are likely;
+- or immediately before integration when the branch materially depends on newer main state.
+
+For branches actively consumed by another worktree/person for testing, prefer:
+
+```bash
+git fetch origin
+git merge origin/main
+```
+
+Avoid history-rewriting rebase/force-push unless explicitly coordinated. Final history is normalized by squash merge.
+
+After a meaningful synchronization, rerun the affected validation gate.
+
+## Pull requests
+
+Open a PR when the branch represents a coherent reviewable/integratable slice, not for every intermediate commit.
+
+PRs should record:
+
+- behavioral/asset scope;
+- relevant architectural or catalog implications;
+- validation performed;
+- known deferred work.
+
+Runtime/domain PRs must satisfy the strict test gate defined below before merge. Asset PRs must satisfy the applicable asset-pipeline validation and visual inspection.
+
+Use squash merge for normal task PRs.
+
+A PR is not integrated until it is merged into `main`. Passing tests on a feature branch is necessary but not sufficient.
+
+## Merge authorization
+
+Do not merge a PR on behalf of the operator without explicit authorization for that specific merge. Earlier approvals do not carry forward to future PRs.
+
+## Branch lifecycle and cleanup
+
+Task branches are disposable integration vehicles, not historical archives.
+
+After a successful squash merge:
+
+1. delete the remote task branch immediately, or rely on repository automatic head-branch deletion when enabled;
+2. `git fetch --prune` in active worktrees;
+3. delete obsolete local branches/worktrees when safe;
+4. start the next task from the updated `origin/main`.
+
+Do not keep merged task branches for history. Git commits and merged PRs are the historical record.
+
+At steady state, remote branches should normally consist only of:
+
+```text
+main
+currently active task branches
+```
+
+## Direct commits to main
+
+Direct commits to `main` are exceptional.
+
+Normal code, asset, documentation, refactor and configuration work goes through a task branch + PR even when small. This keeps concurrent-agent work isolated and gives every integrated change an explicit validation boundary.
+
+---
+
 # Global authority invariants
 
 These contracts are already regression-backed. Preserve them unless representative evidence proves a canonical change is required.
@@ -223,11 +357,13 @@ ActionExecution
 → validated World commit
 → WorldEvent + SemanticChangeSet
 → derived invalidation
+→ grounded cross-owner consequences
 → Perception
 → PerceptualEvidence
 → owner-local learning
 → reconsideration / decision
 → CurrentIntention
+→ intention execution progression
 ```
 
 - `ActionAttemptability` is a pure authoritative read; it does not guarantee goal success.
@@ -235,6 +371,7 @@ ActionExecution
 - crossing commit emits one `ActionOutcome` exactly once.
 - committed physical truth cannot be rewound by reconsideration, suggestion, Luck, load or debug tools.
 - `SemanticChangeSet` is an invalidation contract, not a generic event bus.
+- cross-owner consequences such as drive changes occur only after accepted grounded commits and through explicit application services.
 
 ## Perception / learning
 
@@ -263,14 +400,16 @@ Every meaningful gameplay subsystem must be testable from an artificial but vali
 Canonical architecture:
 
 ```text
-normal authoritative owner state
-            ↑
-common restore/bootstrap boundary
-            ↑
-real save | deterministic test fixture | debug scenario
+production new run --------┐
+real save -----------------┼→ common owner/bootstrap + runtime-composition boundaries
+valid deterministic fixture┘
+                                  ↓
+                         authoritative owner state
 ```
 
 This is a global project invariant.
+
+`NewRunDefinition` and deterministic scenario definitions are bootstrap inputs, not authoritative runtime owners. Fresh runs, restore and deterministic fixtures converge on the same `SimulationOwnerBootstrapper` / `RunRuntimeComposer` boundaries where applicable.
 
 A fixture/debug scenario may declare durable owner causes and deterministic seed state, but must pass the same validation/construction/reconstruction semantics as normal restore/bootstrap.
 
@@ -381,59 +520,59 @@ When adding tests:
 
 # Current implementation focus
 
-## 1. Fine spatial/nav/occlusion + Godot presentation adapters
+## 1. Product-level new-run/world-generation input
 
-The coarse semantic spatial foundation is already closed:
+`NewRunDefinition → NewRunBootstrapService` is already the validated production-facing fresh-run boundary. The next upstream problem is deriving those durable causes from actual product/run parameters without moving authority into presentation or scene construction.
 
-```text
-Entity/ Wilson PlaceId
-→ bounded nearby/co-location semantics
-→ perception access boundary
-```
-
-The next spatial work refines infrastructure behind the ports:
+Target shape:
 
 ```text
-metric distance
-route/path queries
-navmesh integration
-occlusion / visibility / hearing geometry
-semantic InteractionRegion anchors
-body/assembly/perch sockets
-entity ↔ scene-instance mapping
+product run parameters + authored content + gameplay seed
+→ deterministic world/run cause generation
+→ NewRunDefinition
+→ NewRunBootstrapService
+→ authoritative owners/runtime
 ```
 
 Rules:
 
-- Godot nodes/scene paths/navmesh IDs/colliders/meshes are adapters, not domain identity.
-- domain/application code consumes narrow spatial/perception ports.
-- UI/presentation queries simulation affordances/attemptability rather than duplicating legality.
-- render FPS/animation completion are not authoritative time/outcome.
-- a visual transform update does not itself commit World placement semantics.
+- generation inputs/recipes are not new runtime owners;
+- Godot nodes/transforms do not become bootstrap truth;
+- generated causes must still satisfy ordinary bootstrap/content validation;
+- deterministic generation uses explicit reproducible seed state;
+- do not bypass `SimulationOwnerBootstrapper` or `RunRuntimeComposer`.
 
-## 2. Deterministic playable scenario/bootstrap tooling
+## 2. Richer representative gameplay semantics
 
-Build the common bootstrap/restore mechanism before a proliferation of bespoke smoke scenes.
+Use `docs/SCENE_VALIDATION.md`, `docs/brainstorming/representative-scene-catalog.md` and functional domain contracts as evidence for the next missing primitive.
 
-Target:
+Current validated autonomous slice already reaches:
 
 ```text
-scenario definition
-→ common restore/bootstrap
-→ authoritative owners + rebuilt projections
-→ optional headless run
-→ optional Godot presentation scene
+passive perception
+→ durable learning
+→ drive-triggered intention
+→ Godot motion
+→ authored ActionExecution
+→ World-accepted outcome/event
+→ grounded hunger reduction
 ```
 
-The same scenario should be usable by headless regression, development launcher and presentation smoke test where practical.
+Prefer the next scenario that exposes a real missing semantic capability, such as richer Gerald behavior/relationships, physical accident authoring where representative behavior needs it, or Wilson-relative learned route/escape reasoning. Do not add scene-specific APIs just to make one scripted outcome pass.
 
-## 3. Representative multi-system scenarios + seed-population tests
+## 3. Persistence evolution only under pressure
 
-Use `docs/SCENE_VALIDATION.md`, `docs/brainstorming/representative-scene-catalog.md` and `docs/asset-catalog/SCENE_COVERAGE.md` as evidence sources, not as new authority.
+Current-run restore/rebootstrap and action-execution reconstruction are already validated. Further persistence work should be requirement-driven.
 
-Prefer representative scenes that force several already-implemented systems to interact and expose missing primitives honestly.
+Candidates include:
 
-Do not add scene-specific APIs just to make one scripted outcome pass.
+```text
+snapshot v9 → v10 compatibility policy
+drive hysteresis-band memory persistence
+grouped capture/bootstrap request objects if schemas expand again
+```
+
+Do not refactor long positional persistence/bootstrap APIs merely for cosmetic cleanup.
 
 ---
 
@@ -442,15 +581,18 @@ Do not add scene-specific APIs just to make one scripted outcome pass.
 `docs/DISCOVERY_STATUS.md` owns the current list. Pull items forward when required by representative behavior, including areas such as:
 
 ```text
-grounded collision/body consequences
-generic reconsideration gating
+snapshot compatibility policy
 drive hysteresis-memory persistence
+Legacy-to-new-Wilson seeding policy
+product-level NewRunDefinition/world-generation input
+collision/grounding/fall policies beyond current impact behavior
 Wilson-relative route/escape evaluation
 intervention causal windows
 automatic habit-disuse/context production
 Presence attribution production
-full run-save composition
-new-run bootstrap / Legacy seeding
+orientation/view-cone passive refresh
+negative/absence passive evidence
+richer Gerald behavior/relationship semantics
 ```
 
 Do not silently mark these solved because an adapter/scenario can work around them.
