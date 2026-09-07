@@ -1,8 +1,8 @@
 # Environment / Context Interruption Pressure
 
-Status: OPEN
+Status: COMPLETED
 
-Second adjacent representative pressure in the systemic gameplay expansion block.
+Second adjacent representative pressure evaluated during the systemic gameplay expansion block.
 
 ## Representative question
 
@@ -10,13 +10,19 @@ Can an authoritative environment/context transition make Wilson abandon or redir
 
 ## Scope guard
 
-This pressure must reuse the project/need continuity contracts already proven in this branch. It must not introduce a weather planner, routine owner, generic context blackboard, arbitrary intention stack, or scene-specific project controller.
+This pressure was required to reuse the project/need continuity contracts already proven in the branch. It was not allowed to introduce a weather planner, routine owner, generic context blackboard, arbitrary intention stack, or scene-specific project controller merely to extend the current PR.
 
-Prefer an already-existing environment/context fact and an already-existing candidate source. Add a new semantic primitive only if the repository cannot express the visible sequence through current owners.
+## Finding
 
-## Exit condition
+The repository did not expose a concrete weather/rain gameplay path or an existing environment-context candidate source sufficient to build this sequence as a small composition pressure. Repository code searches for `weather` and `rain` returned no implementation path to compose.
 
-A focused or integrated regression proves:
+That means continuing here would change the nature of the block from composing established foundations into implementing a qualitatively new environment/weather gameplay slice.
+
+## Decision
+
+Defer this pressure to the next systemic gameplay block rather than enlarge the project/need PR.
+
+The desired future sequence remains:
 
 ```text
 ordinary activity/project active
@@ -27,4 +33,4 @@ ordinary activity/project active
 → later context allows project to become meaningful again
 ```
 
-If satisfying this requires a qualitatively new weather/content system rather than a small composition pressure, stop and defer it to the next block instead of expanding this PR.
+The next implementation should first identify the smallest player-visible environment pressure and then add only the minimal authoritative environment fact/candidate semantics required by that pressure.
