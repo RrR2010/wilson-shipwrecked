@@ -1,8 +1,8 @@
 # Project / Need Continuity Pressure
 
-Status: OPEN
+Status: COMPLETED
 
-Active implementation pressure on `feat/systemic-project-need-continuity`.
+Validated implementation pressure on `feat/systemic-project-need-continuity`.
 
 ## Representative question
 
@@ -32,24 +32,20 @@ This is deliberately based on `completed`, not `new_outcome`/commit, so post-com
 
 ## Evidence added
 
-- `action_completion_reconsideration_test.gd`: focused regression proving a completed action opens normal reconsideration without an external trigger;
+- `action_completion_reconsideration_test.gd`: focused regression proving committed-but-not-completed actions remain quiet while terminal completion opens normal reconsideration without an external trigger;
 - `project_need_continuity_scenario_test.gd`: representative sequence proving project contribution → growing hunger → food interruption → grounded hunger relief → autonomous return to persistent project progress.
 
 The long scenario uses one initial `PROJECT_CHECKPOINT` to enter the project loop. After that point it injects no completion/drive triggers; action completion and drive-band transition carry the sequence.
 
-## Exit condition
+## Validation
 
-The block is closed when the strict headless suite is green for the branch and the representative sequence demonstrates:
+Strict operator validation on the branch:
 
 ```text
-partial project
-→ contribution
-→ growing competing need
-→ autonomous reconsideration/interruption
-→ need resolution
-→ persistent project progress
-→ project becomes eligible/attractive again
-→ later autonomous contribution
+RESULT: 106 PASS / 106 TOTAL
+PASS headless_suite (106 tests)
 ```
 
-Validation is still pending because the current agent environment has neither a Godot executable nor network access for cloning/running the repository locally.
+## Closed conclusion
+
+The representative pressure is satisfied without a routine owner, planner, arbitrary intention stack, or project-specific controller. The durable orchestration rule is that terminal action completion is itself a meaningful reconsideration boundary, while commit alone is not.
