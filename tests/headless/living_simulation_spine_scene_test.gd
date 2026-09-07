@@ -2,7 +2,8 @@ extends SceneTree
 
 const SCENE_PATH := "res://tools/living_simulation/living_simulation.tscn"
 const MAX_BOOT_FRAMES := 180
-const MAX_OBSERVATION_FRAMES := 900
+const MAX_OBSERVATION_FRAMES := 1200
+const POST_CONSEQUENCE_FRAMES := 120
 
 var _failures: Array[String] = []
 
@@ -42,6 +43,9 @@ func _run() -> void:
 	var initial: Dictionary = scene.observation_snapshot()
 	var moved := false
 	var selected_intention := false
+	var max_hunger := float(initial.get("hunger", -1.0))
+	var hunger_after_meal := -1.0
+	var completion_time := -1.0
 	var final: Dictionary = initial
 	for _frame in range(MAX_OBSERVATION_FRAMES):
 		await physics_frame
@@ -53,19 +57,31 @@ func _run() -> void:
 		var current_position: Vector3 = final.get("wilson_position", Vector3.ZERO)
 		moved = moved or initial_position.distance_to(current_position) > 0.5
 		selected_intention = selected_intention or bool(final.get("has_intention", false))
-		if moved and selected_intention and float(final.get("simulation_time", 0.0)) >= 5.0:
+		max_hunger = maxf(max_hunger, float(final.get("hunger", -1.0)))
+		if int(final.get("grounded_consumptions", 0)) > 0 and hunger_after_meal < 0.0:
+			hunger_after_meal = float(final.get("hunger", -1.0))
+			completion_time = float(final.get("simulation_time", 0.0))
+		if hunger_after_meal >= 0.0 and float(final.get("simulation_time", 0.0)) >= completion_time + 2.0:
 			break
 
 	if float(final.get("simulation_time", 0.0)) <= float(initial.get("simulation_time", 0.0)):
 		_failures.append("Authoritative simulation time did not advance")
 	if int(final.get("semantic_step", 0)) <= int(initial.get("semantic_step", 0)):
 		_failures.append("Semantic step count did not advance")
-	if float(final.get("hunger", -1.0)) <= float(initial.get("hunger", -1.0)):
-		_failures.append("Drive progression did not advance hunger")
+	if max_hunger <= float(initial.get("hunger", -1.0)):
+		_failures.append("Drive progression did not increase hunger before resource use")
 	if not selected_intention:
 		_failures.append("Wilson did not autonomously select an intention")
 	if not moved:
 		_failures.append("Wilson did not physically move during bounded observation")
+	if hunger_after_meal < 0.0:
+		_failures.append("Wilson never produced a grounded food consumption")
+	elif hunger_after_meal >= max_hunger - 0.2:
+		_failures.append("Grounded food consumption did not materially reduce hunger")
+	if int(final.get("grounded_intention_completions", 0)) <= 0:
+		_failures.append("Grounded food outcome did not complete seek_food intention")
+	if hunger_after_meal >= 0.0 and float(final.get("simulation_time", 0.0)) < completion_time + 2.0:
+		_failures.append("Simulation did not remain live after the grounded consequence")
 	if int(final.get("trace_count", 0)) <= 0:
 		_failures.append("Living simulation produced no semantic traces")
 
