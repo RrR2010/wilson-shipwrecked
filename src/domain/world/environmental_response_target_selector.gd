@@ -18,12 +18,12 @@ func _init(p_kind: int, p_slot_id = null) -> void:
 	slot_id = p_slot_id
 
 
-static func self_target() -> EnvironmentalResponseTargetSelector:
-	return EnvironmentalResponseTargetSelector.new(Kind.SELF)
+static func self_target():
+	return new(Kind.SELF)
 
 
-static func assembly_slot(slot_id) -> EnvironmentalResponseTargetSelector:
-	return EnvironmentalResponseTargetSelector.new(Kind.ASSEMBLY_SLOT, slot_id)
+static func assembly_slot(slot_id):
+	return new(Kind.ASSEMBLY_SLOT, slot_id)
 
 
 func stable_key() -> String:
