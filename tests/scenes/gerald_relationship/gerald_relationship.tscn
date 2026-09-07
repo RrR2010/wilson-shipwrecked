@@ -1,0 +1,57 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://tests/scenes/gerald_relationship/gerald_relationship.gd" id="1_script"]
+
+[sub_resource type="StandardMaterial3D" id="GroundMaterial"]
+albedo_color = Color(0.32, 0.45, 0.28, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="WilsonMaterial"]
+albedo_color = Color(0.18, 0.4, 0.9, 1)
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="GeraldMaterial"]
+albedo_color = Color(0.88, 0.88, 0.84, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="GroundMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(12, 0.2, 8)
+
+[sub_resource type="CapsuleMesh" id="WilsonMesh"]
+material = SubResource("WilsonMaterial")
+radius = 0.35
+height = 1.8
+
+[sub_resource type="SphereMesh" id="GeraldMesh"]
+material = SubResource("GeraldMaterial")
+radius = 0.45
+height = 0.9
+
+[node name="GeraldRelationship" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.1, 0)
+mesh = SubResource("GroundMesh")
+
+[node name="Wilson" type="MeshInstance3D" parent="."]
+position = Vector3(3, 0.9, 0)
+mesh = SubResource("WilsonMesh")
+
+[node name="Gerald" type="MeshInstance3D" parent="."]
+position = Vector3(-3, 0.45, 0)
+mesh = SubResource("GeraldMesh")
+
+[node name="GeraldCamp" type="Marker3D" parent="."]
+position = Vector3(-3, 0.45, 0)
+
+[node name="NearWilson" type="Marker3D" parent="."]
+position = Vector3(1.5, 0.45, 0)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 9, 8)
+rotation_degrees = Vector3(-48, 0, 0)
+projection = 1
+size = 11.0
+current = true
