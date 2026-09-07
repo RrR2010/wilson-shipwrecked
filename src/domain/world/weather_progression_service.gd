@@ -4,6 +4,8 @@ extends RefCounted
 ## Deterministic procedural weather progression over authored regime and transition data.
 ## This service mutates only EnvironmentState and owns no independent durable truth.
 
+const SAMPLE_MODULUS := 2147483647
+
 var _environment
 var _seed: int
 var _definitions: Dictionary = {}
@@ -101,19 +103,17 @@ func _duration_for(weather_id: StringName, transition_index: int) -> float:
 
 
 func _sample_unit(weather_id: StringName, transition_index: int, salt: int) -> float:
-	var state := int(_seed) * 1103515245
-	state += transition_index * 12345
-	state += _stable_string_hash(String(weather_id)) * 2654435761
-	state += salt * 1013904223
-	var modulus := 2147483647
-	state %= modulus
-	if state < 0:
-		state += modulus
-	return float(state) / float(modulus)
+	# Modular mixing avoids relying on mutable RNG state and keeps arithmetic bounded
+	# even when product seeds are large signed integers.
+	var state := posmod(_seed, SAMPLE_MODULUS)
+	state = posmod(state * 48271 + posmod(transition_index, SAMPLE_MODULUS), SAMPLE_MODULUS)
+	state = posmod(state * 69621 + _stable_string_hash(String(weather_id)), SAMPLE_MODULUS)
+	state = posmod(state * 40699 + salt, SAMPLE_MODULUS)
+	return float(state) / float(SAMPLE_MODULUS)
 
 
 func _stable_string_hash(value: String) -> int:
-	var result := 216613626
+	var result := 7
 	for index in range(value.length()):
-		result = (result * 16777619 + value.unicode_at(index)) % 2147483647
+		result = posmod(result * 131 + value.unicode_at(index), SAMPLE_MODULUS)
 	return result
