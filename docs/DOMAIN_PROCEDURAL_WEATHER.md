@@ -134,13 +134,22 @@ wind on a wet covering host
 
 without testing weather names, shelter entity types, or component subclasses.
 
+When susceptibility or protection needs a physical property, production runtime uses a shared effective-property read boundary:
+
+```text
+EffectivePhysicalProfile value when present
+→ otherwise authoritative WorldQuery value
+```
+
+This keeps derived semantics reconstructible while giving actions, environmental responses and protection the same effective-value contract.
+
 ---
 
 # 6. Protection and feedback
 
 Environmental exposure is resolved independently through protection composition.
 
-Canonical implemented feedback pressure:
+Implemented representative feedback chain:
 
 ```text
 rain exposure
@@ -150,14 +159,56 @@ rain exposure
 → wind response targets binding slot
 → binding integrity changes
 → transitive derived invalidation
-→ host physical profile/protection can worsen
+→ host effective protection strength decreases
+→ residual rain exposure increases
 ```
+
+Protection coverage/strength and environmental susceptibility therefore observe the same effective-property precedence.
 
 The environmental response service remains unaware of `shelter`, `roof`, `cloth`, or specific weather regime names.
 
 ---
 
-# 7. Assembly/configuration boundary
+# 7. Structural relation failure
+
+Authored content may declare a structural relation failure boundary:
+
+```text
+RelationFailureDefinition
+  relation
+  monitored_property
+  threshold
+  compare: <= | >=
+  optional qualifier
+```
+
+Production ordering is:
+
+```text
+weather segmentation
+→ environmental response property mutations
+→ relation failure evaluation
+→ dynamic-process advancement
+→ combined SemanticChangeSet returned
+→ application-layer derived invalidation
+```
+
+This allows a single world step to do:
+
+```text
+wind response lowers binding_integrity
+→ threshold is now crossed
+→ attached_to relation is removed
+→ returned change set contains PROPERTY + RELATION changes
+```
+
+The relation-failure evaluator intentionally reads authoritative subject properties, not effective derived properties. Consuming freshly changed derived values within the same step would require an explicit mid-step invalidation/re-resolution boundary and is not currently implied.
+
+Relation failure does not automatically create a moving hazard. A detached component becomes a hazard only if a later ordinary `DynamicProcessState`/collision boundary makes it one.
+
+---
+
+# 8. Assembly/configuration boundary
 
 Production runtime composition supplies `AssemblyBindingProjection` to effective physical profile derivation and environmental response targeting.
 
@@ -167,7 +218,7 @@ Relations/configuration remain authoritative World truth. Derived profiles and p
 
 ---
 
-# 8. Ambient weather events
+# 9. Ambient weather events
 
 A transition may author an ordinary semantic `WorldEvent`.
 
@@ -191,7 +242,7 @@ Weather progression itself never calls Wilson cognition.
 
 ---
 
-# 9. Wilson behavioral continuity
+# 10. Wilson behavioral continuity
 
 A perceived ambient weather transition may influence Wilson only through the ordinary perceptual/cognitive chain:
 
@@ -226,7 +277,7 @@ Cognition does not read `EnvironmentState.weather` directly.
 
 ---
 
-# 10. Persistence and restore equivalence
+# 11. Persistence and restore equivalence
 
 Snapshot schema persists weather phase causes:
 
@@ -251,7 +302,7 @@ emitted transition events
 
 ---
 
-# 11. Content-pack surface
+# 12. Content-pack surface
 
 Content schema version 1 supports additive environmental fields:
 
@@ -261,6 +312,7 @@ weather_transitions
 environmental_responses
 protection_rules
 dynamic_processes
+relation_failures
 ```
 
 Weather events may author:
@@ -283,11 +335,27 @@ Environmental response target selection defaults to `self` and may explicitly ta
 }
 ```
 
-Malformed selector shapes fail content loading instead of silently falling back to `self`.
+A relation failure may be authored as:
+
+```json
+{
+  "id": "binding_breaks_when_weak",
+  "relation": "attached_to",
+  "monitored_property": "binding_integrity",
+  "threshold": 0.25,
+  "compare": "<=",
+  "qualifier": {
+    "kind": "assembly_slot",
+    "id": "roof_binding"
+  }
+}
+```
+
+Malformed selector/failure shapes fail content loading instead of silently changing semantics.
 
 ---
 
-# 12. Rejected alternatives
+# 13. Rejected alternatives
 
 Do not introduce by default:
 
@@ -300,11 +368,12 @@ Wilson cognition reading EnvironmentState.weather
 synthetic ambient event subjects
 final-weather retroactive application across a coarse tick
 non-persisted caller weather RNG seed
+relation-failure callbacks keyed by shelter/component subtype
 ```
 
 ---
 
-# 13. Regression coverage
+# 14. Regression coverage
 
 The implemented boundary is covered by dedicated regressions for:
 
@@ -314,8 +383,13 @@ ambient event perception
 coarse-step weather segmentation
 environmental response mutation
 protection/exposure composition
+shared effective-property reads
 assembly-slot wind/binding stress
 transitive effective-profile invalidation
+effective protection degradation
+binding-threshold relation failure
+relation-failure production runtime composition
+relation-failure content-pack authoring
 fresh runtime composition
 snapshot phase persistence
 restore future equivalence
@@ -323,11 +397,9 @@ content-pack environmental authoring
 context-triggered Wilson project continuity
 ```
 
-Current local strict-suite checkpoint before the final content-loader/doc-only pass:
+Latest reported strict local checkpoint on the feature branch:
 
 ```text
-RESULT: 118 PASS / 118 TOTAL
-PASS headless_suite (118 tests)
+RESULT: 122 PASS / 122 TOTAL
+PASS headless_suite (122 tests)
 ```
-
-A final strict run is required after any subsequent runtime/content-loader edit.
