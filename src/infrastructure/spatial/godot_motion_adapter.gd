@@ -112,10 +112,10 @@ func physics_tick(_delta_seconds: float) -> void:
 			_status_by_key[key] = MotionStatus.ROUTE_INVALID
 			continue
 
-		# NavigationAgent3D needs at least one physics/navigation synchronization after
-		# target_position changes. get_next_path_position() is intentionally called
-		# before interpreting is_navigation_finished(), otherwise a freshly requested
-		# move can be misclassified as ARRIVED while the previous empty path is stale.
+		# NavigationAgent3D can report an empty path transiently both immediately after
+		# assigning target_position and during a later repath. Treat only consecutive
+		# empty-path ticks as sync failures; any valid path resets the grace window.
+		# get_next_path_position() is intentionally called before interpreting the path.
 		var next_position: Vector3 = agent.get_next_path_position()
 		var path: PackedVector3Array = agent.get_current_navigation_path()
 		if path.is_empty():
@@ -132,7 +132,7 @@ func physics_tick(_delta_seconds: float) -> void:
 			_status_by_key[key] = MotionStatus.ROUTE_INVALID
 			continue
 
-		_path_sync_ticks_by_key[key] = PATH_SYNC_GRACE_TICKS
+		_path_sync_ticks_by_key[key] = 0
 		if agent.is_navigation_finished():
 			_stop_body(body)
 			_status_by_key[key] = MotionStatus.ARRIVED if agent.is_target_reached() else MotionStatus.BLOCKED
