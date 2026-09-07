@@ -299,7 +299,7 @@ func _expect_current_intention(store, expected_id, label: String) -> void:
 func _expect_source_count(candidates: Array, source: String, expected: int, label: String) -> void:
 	var actual := 0
 	for candidate in candidates:
-		if String(candidate.metadata.get("source", "")) == source:
+		if String(candidate.provenance.get("source", "")) == source:
 			actual += 1
 	_expect_equal(actual, expected, label)
 
