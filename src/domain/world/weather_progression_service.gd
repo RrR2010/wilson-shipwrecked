@@ -41,14 +41,21 @@ func _init(environment, definitions: Array, transitions: Array, seed: int) -> vo
 func advance(elapsed: float) -> Dictionary:
 	assert(is_finite(elapsed) and elapsed >= 0.0, "Weather elapsed must be finite and non-negative")
 	var transitions: Array = []
+	var segments: Array = []
 	var remaining := elapsed
 	while remaining > 0.0:
 		var until_transition := _environment.weather_planned_duration - _environment.weather_elapsed
-		if remaining < until_transition and not is_equal_approx(remaining, until_transition):
-			_environment.weather_elapsed += remaining
-			remaining = 0.0
+		var segment_elapsed := minf(remaining, until_transition)
+		if segment_elapsed > 0.0:
+			segments.append({
+				"weather": _environment.weather,
+				"elapsed": segment_elapsed,
+				"conditions": _definitions[_environment.weather].conditions.duplicate(true),
+			})
+			_environment.weather_elapsed += segment_elapsed
+			remaining = maxf(remaining - segment_elapsed, 0.0)
+		if _environment.weather_elapsed < _environment.weather_planned_duration and not is_equal_approx(_environment.weather_elapsed, _environment.weather_planned_duration):
 			break
-		remaining = maxf(remaining - until_transition, 0.0)
 		var previous: StringName = _environment.weather
 		var next: StringName = _select_next(previous, _environment.weather_transition_index)
 		var next_index := _environment.weather_transition_index + 1
@@ -66,6 +73,7 @@ func advance(elapsed: float) -> Dictionary:
 		"planned_duration": _environment.weather_planned_duration,
 		"transition_index": _environment.weather_transition_index,
 		"transitions": transitions,
+		"segments": segments,
 		"conditions": current_conditions(),
 	}
 
@@ -103,8 +111,6 @@ func _duration_for(weather_id: StringName, transition_index: int) -> float:
 
 
 func _sample_unit(weather_id: StringName, transition_index: int, salt: int) -> float:
-	# Modular mixing avoids relying on mutable RNG state and keeps arithmetic bounded
-	# even when product seeds are large signed integers.
 	var state := posmod(_seed, SAMPLE_MODULUS)
 	state = posmod(state * 48271 + posmod(transition_index, SAMPLE_MODULUS), SAMPLE_MODULUS)
 	state = posmod(state * 69621 + _stable_string_hash(String(weather_id)), SAMPLE_MODULUS)
