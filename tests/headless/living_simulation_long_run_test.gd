@@ -2,6 +2,9 @@ extends SceneTree
 
 const SCENE_PATH := "res://tools/living_simulation/living_simulation.tscn"
 const MAX_BOOT_FRAMES := 180
+# Weather intentionally consumes a meaningful share of Wilson's available activity
+# time. Ten simulated minutes preserves the strong eventual-completion + post-
+# completion-liveness guard without calibrating project speed around this test.
 const TARGET_SIMULATION_SECONDS := 600.0
 const MAX_OBSERVATION_FRAMES := 4800
 const MAX_CONSECUTIVE_BAD_MOTION_FRAMES := 120
