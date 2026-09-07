@@ -19,6 +19,7 @@ const ProjectInstance = preload("res://src/domain/projects/project_instance.gd")
 const ProjectStore = preload("res://src/domain/projects/project_store.gd")
 const ProjectCandidateSource = preload("res://src/domain/projects/project_candidate_source.gd")
 const PerceivedContextTransitionTriggerSource = preload("res://src/application/simulation/perceived_context_transition_trigger_source.gd")
+const ReconsiderationGate = preload("res://src/application/simulation/reconsideration_gate.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
 const SimulationStepContext = preload("res://src/application/simulation/simulation_step_context.gd")
 const WorldAdvanceResult = preload("res://src/application/simulation/world_advance_result.gd")
@@ -49,6 +50,12 @@ class DerivedInvalidatorStub:
 	extends RefCounted
 	func apply(_change_set):
 		return []
+
+
+class ProjectContributionStub:
+	extends RefCounted
+	func apply_grounded(_outcome, _commit_result):
+		return null
 
 
 class ActivityQueryStub:
@@ -171,14 +178,13 @@ func _run_slice() -> void:
 		traces,
 		null,
 		null,
-		null,
+		ProjectContributionStub.new(),
 		project_candidates,
 		[],
 		null,
 		null,
 		null,
 		context_triggers,
-		null,
 		null,
 		null,
 		null,
@@ -213,7 +219,11 @@ func _run_slice() -> void:
 	_expect_true(projects.get_instance(project_instance_id).is_active(), "returning to project uses same persistent project instance")
 	_expect_equal(projects.get_instance(project_instance_id).contribution_count, 1, "return to project preserves prior progress exactly")
 
-	_expect_equal(context_triggers.derive(perception.result), [8], "authored observed context event derives only CONTEXT_TRANSITION")
+	_expect_equal(
+		context_triggers.derive(perception.result),
+		[ReconsiderationGate.Trigger.CONTEXT_TRANSITION],
+		"authored observed context event derives only CONTEXT_TRANSITION"
+	)
 	_completed = true
 
 
