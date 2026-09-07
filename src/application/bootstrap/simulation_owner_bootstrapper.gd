@@ -12,6 +12,7 @@ const DynamicProcessInstance = preload("res://src/domain/world/dynamic_process_i
 const DynamicProcessStore = preload("res://src/domain/world/dynamic_process_store.gd")
 const ActorRuntimeState = preload("res://src/domain/actors/actor_runtime_state.gd")
 const ActorStateStore = preload("res://src/domain/actors/actor_state_store.gd")
+const ActorRelationshipStore = preload("res://src/domain/actors/actor_relationship_store.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
@@ -97,6 +98,10 @@ func bootstrap(definition):
 		if not actors.add(actor_state):
 			return SimulationBootstrapResult.failure(&"duplicate_actor_state", ["Duplicate actor state: %s" % seed.actor.sort_key()])
 
+	var actor_relationships = ActorRelationshipStore.new()
+	for seed in definition.actor_relationship_seeds:
+		actor_relationships.restore_entry(seed.actor, seed.subject, seed.affinity, seed.evidence_count, seed.last_source_execution_id)
+
 	return SimulationBootstrapResult.success(SimulationOwnerSet.new(
 		entities,
 		relations,
@@ -112,5 +117,6 @@ func bootstrap(definition):
 		presence,
 		environment,
 		dynamic_processes,
-		actors
+		actors,
+		actor_relationships
 	))

@@ -19,6 +19,7 @@ var presence
 var environment
 var dynamic_processes
 var actors
+var actor_relationships
 var epistemic_projection
 
 
@@ -38,6 +39,7 @@ func _init(
 	p_environment,
 	p_dynamic_processes,
 	p_actors,
+	p_actor_relationships,
 	p_epistemic_projection
 ) -> void:
 	entities = p_entities
@@ -55,4 +57,5 @@ func _init(
 	environment = p_environment
 	dynamic_processes = p_dynamic_processes
 	actors = p_actors
+	actor_relationships = p_actor_relationships
 	epistemic_projection = p_epistemic_projection

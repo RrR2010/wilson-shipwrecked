@@ -10,6 +10,7 @@ const WorldRelationStore = preload("res://src/domain/world/world_relation_store.
 const EnvironmentState = preload("res://src/domain/world/environment_state.gd")
 const DynamicProcessStore = preload("res://src/domain/world/dynamic_process_store.gd")
 const ActorStateStore = preload("res://src/domain/actors/actor_state_store.gd")
+const ActorRelationshipStore = preload("res://src/domain/actors/actor_relationship_store.gd")
 const BeliefProposition = preload("res://src/domain/cognition/belief_proposition.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
@@ -25,7 +26,7 @@ const RestoredSimulationState = preload("res://src/infrastructure/persistence/re
 const SimulationSnapshotBootstrapDecoder = preload("res://src/infrastructure/persistence/simulation_snapshot_bootstrap_decoder.gd")
 const SimulationOwnerBootstrapper = preload("res://src/application/bootstrap/simulation_owner_bootstrapper.gd")
 
-const SCHEMA_VERSION := 10
+const SCHEMA_VERSION := 11
 
 var _codec
 
@@ -49,7 +50,8 @@ func capture(
 	environment_state = null,
 	dynamic_process_store = null,
 	actor_state_store = null,
-	wilson_body_state = null
+	wilson_body_state = null,
+	actor_relationship_store = null
 ) -> Dictionary:
 	assert(entity_store != null, "capture requires EntityStore")
 	assert(relation_store != null, "capture requires WorldRelationStore")
@@ -65,6 +67,7 @@ func capture(
 	var environment = environment_state if environment_state != null else EnvironmentState.new()
 	var dynamic_processes = dynamic_process_store if dynamic_process_store != null else DynamicProcessStore.new()
 	var actors = actor_state_store if actor_state_store != null else ActorStateStore.new()
+	var actor_relationships = actor_relationship_store if actor_relationship_store != null else ActorRelationshipStore.new()
 	var body_vitality: float = 1.0 if wilson_body_state == null else float(wilson_body_state.vitality)
 	return {
 		"schema_version": SCHEMA_VERSION,
@@ -83,6 +86,7 @@ func capture(
 		"environment": _capture_environment(environment),
 		"dynamic_processes": _capture_dynamic_processes(dynamic_processes),
 		"actors": _capture_actors(actors),
+		"actor_relationships": _capture_actor_relationships(actor_relationships),
 	}
 
 
@@ -107,6 +111,7 @@ func restore(snapshot: Dictionary):
 	var environment = owners.environment
 	var dynamic_processes = owners.dynamic_processes
 	var actors = owners.actors
+	var actor_relationships = owners.actor_relationships
 
 	var epistemic_projection = EpistemicGraphProjection.new()
 	epistemic_projection.rebuild(beliefs)
@@ -126,6 +131,7 @@ func restore(snapshot: Dictionary):
 		environment,
 		dynamic_processes,
 		actors,
+		actor_relationships,
 		epistemic_projection
 	)
 
@@ -279,6 +285,19 @@ func _capture_actors(actor_state_store) -> Array:
 			"mode": String(state.mode),
 			"decision_cooldown": state.decision_cooldown,
 			"last_rule_id": String(state.last_rule_id),
+		})
+	return result
+
+
+func _capture_actor_relationships(actor_relationship_store) -> Array:
+	var result: Array = []
+	for entry in actor_relationship_store.entries():
+		result.append({
+			"actor": _codec.encode(entry["actor"]),
+			"subject": _codec.encode(entry["subject"]),
+			"affinity": entry["affinity"],
+			"evidence_count": entry["evidence_count"],
+			"last_source_execution_id": String(entry["last_source_execution_id"]),
 		})
 	return result
 
