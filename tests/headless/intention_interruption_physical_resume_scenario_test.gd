@@ -182,6 +182,12 @@ func _run() -> void:
 		await physics_frame
 	var position_before_interrupt: Vector3 = fixture.wilson.global_position
 
+	var threat_marker := Node3D.new()
+	threat_marker.name = "InterruptionThreatSpatialReference"
+	threat_marker.global_position = position_before_interrupt + Vector3(0.5, 0.0, 0.0)
+	fixture.add_child(threat_marker)
+	_expect_true(fixture._registry.bind(threat_ref, threat_marker), "threat binds to explicit RuntimeWorldRef for escape geometry")
+
 	var threat_service = PerceivedThreatService.new([
 		ThreatInterpretationRule.new(threat_event_type, &"source", 0.9, 0.95, 0.5),
 	])
@@ -237,6 +243,7 @@ func _run() -> void:
 			break
 		await physics_frame
 	_expect_true(escaped, "defensive movement reaches escape destination")
+	_expect_ref(fixture._motion.get_target(wilson_ref), escape_ref, "defensive ARRIVED belongs to escape target")
 
 	var resume_result: Dictionary = resume.complete_and_resume()
 	_expect_true(bool(resume_result.get("resumed", false)), "completed defense resumes suspended routine execution")
