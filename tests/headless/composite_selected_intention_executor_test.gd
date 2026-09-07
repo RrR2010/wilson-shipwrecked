@@ -23,7 +23,9 @@ class DelegateStub:
 		return _result(current_intention)
 
 	func _result(current_intention) -> Dictionary:
-		var key: StringName = current_intention.get("key", &"") if current_intention != null else &""
+		var key: StringName = &""
+		if current_intention != null:
+			key = StringName(current_intention.get("key", &""))
 		return {
 			"handled": key == handled_key,
 			"reason": &"handled" if key == handled_key else &"not_handled",
