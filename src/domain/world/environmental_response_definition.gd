@@ -2,10 +2,12 @@ class_name EnvironmentalResponseDefinition
 extends RefCounted
 
 const DomainId = preload("res://src/domain/core/domain_id.gd")
+const EnvironmentalResponseTargetSelector = preload("res://src/domain/world/environmental_response_target_selector.gd")
 
 ## Declarative mapping from one environmental magnitude to bounded ordinary World
 ## property change. Eligibility is expressed through reusable capability/property
-## semantics rather than entity types or weather-specific callbacks.
+## semantics rather than entity types or weather-specific callbacks. Mutation targets
+## are selected semantically from the eligible source subject.
 
 var id: StringName
 var condition_id: StringName
@@ -17,6 +19,7 @@ var exposure_kind: StringName
 var required_capability
 var susceptibility_property
 var minimum_susceptibility: float
+var target_selector
 
 
 func _init(
@@ -29,7 +32,8 @@ func _init(
 	p_exposure_kind: StringName = &"",
 	p_required_capability = null,
 	p_susceptibility_property = null,
-	p_minimum_susceptibility: float = 0.0
+	p_minimum_susceptibility: float = 0.0,
+	p_target_selector = null
 ) -> void:
 	assert(p_id != &"", "Environmental response requires id")
 	assert(p_condition_id != &"", "Environmental response requires condition id")
@@ -52,3 +56,4 @@ func _init(
 	required_capability = p_required_capability
 	susceptibility_property = p_susceptibility_property
 	minimum_susceptibility = p_minimum_susceptibility
+	target_selector = p_target_selector if p_target_selector != null else EnvironmentalResponseTargetSelector.self_target()
