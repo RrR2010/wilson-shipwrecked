@@ -26,7 +26,9 @@ func bootstrap(definition, content):
 		owners.wilson_world_state,
 		owners.beliefs,
 		owners.current_intention,
-		content
+		content,
+		owners.environment,
+		owners.dynamic_processes
 	)
 	if not runtime_result.ok:
 		return DeterministicScenarioBootstrapResult.failure(
