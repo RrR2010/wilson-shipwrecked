@@ -1,6 +1,7 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://tools/living_simulation/living_simulation.gd" id="1_script"]
+[ext_resource type="Script" path="res://tools/living_simulation/living_simulation_calibration_overlay.gd" id="2_overlay"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_island"]
 vertices = PackedVector3Array(-10, 0, -7, 10, 0, -7, 10, 0, 7, -10, 0, 7)
@@ -256,3 +257,6 @@ text = "Motion: -"
 
 [node name="Trace" type="Label" parent="DebugUI/Panel/Margin/VBox"]
 text = "Recent semantic traces: 0"
+
+[node name="CalibrationOverlay" type="CanvasLayer" parent="."]
+script = ExtResource("2_overlay")
