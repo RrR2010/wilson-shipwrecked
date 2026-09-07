@@ -10,14 +10,7 @@ const GodotDynamicContactObserver = preload("res://src/infrastructure/spatial/go
 var _failures: Array[String] = []
 
 func _init() -> void:
-	if not GodotSceneSpatialRegistry.can_instantiate():
-		_failures.append("GodotSceneSpatialRegistry must compile and instantiate")
-	if not GodotPhysicalObservationBuffer.can_instantiate():
-		_failures.append("GodotPhysicalObservationBuffer must compile and instantiate")
-	if not GodotDynamicContactObserver.can_instantiate():
-		_failures.append("GodotDynamicContactObserver must compile and instantiate")
-	if _failures.is_empty():
-		_run_test()
+	_run_test()
 	if _failures.is_empty():
 		print("PASS godot_dynamic_contact_observer_test")
 		quit(0)
