@@ -122,16 +122,16 @@ func _run() -> void:
 	var wilson_ref: RuntimeWorldRef = fixture._wilson_ref
 	var original_target_ref: RuntimeWorldRef = fixture._target_ref
 	var escape_ref: RuntimeWorldRef = fixture._escape_ref
-	var palm_ref := RuntimeWorldRef.entity(DomainId.entity(&"physical_threat_palm"))
+	var palm_ref: RuntimeWorldRef = RuntimeWorldRef.entity(DomainId.entity(&"physical_threat_palm"))
 	var palm_falling = DomainId.event_definition(&"palm_started_falling")
 	var dodge = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"dodge_threat")
 
-	var palm := RigidBody3D.new()
+	var palm: RigidBody3D = RigidBody3D.new()
 	palm.name = "PhysicalThreatPalm"
 	palm.position = Vector3(-1.5, 6.0, 0.0)
 	palm.freeze = true
-	var palm_shape := CollisionShape3D.new()
-	var box := BoxShape3D.new()
+	var palm_shape: CollisionShape3D = CollisionShape3D.new()
+	var box: BoxShape3D = BoxShape3D.new()
 	box.size = Vector3(1.0, 1.0, 1.0)
 	palm_shape.shape = box
 	palm.add_child(palm_shape)
@@ -236,7 +236,7 @@ func _run() -> void:
 	_expect_true(event.event_type.equals(palm_falling), "admitted event is palm_started_falling")
 	_expect_true(event.bindings.get_subject(&"source").equals(palm_ref), "admitted event binds falling palm as source")
 
-	var access := PerceptionAccess.new(true, [&"vision"], [&"source"], 0.8)
+	var access: PerceptionAccess = PerceptionAccess.new(true, [&"vision"], [&"source"], 0.8)
 	var perceived = perception_service.perceive(admitted, {event.execution_id: access})
 	_expect_equal(perceived.evidence.size(), 1, "accessible falling event produces one perceptual evidence item")
 	var threats = threat_service.derive(perceived)
@@ -266,12 +266,12 @@ func _run() -> void:
 	_expect_equal(fixture._motion.get_status(wilson_ref), MotionPort.MotionStatus.MOVING, "redirect remains a live Godot MOVING request")
 
 	var redirect_position: Vector3 = fixture.wilson.global_position
-	var escaped := false
-	var max_displacement := 0.0
+	var escaped: bool = false
+	var max_displacement: float = 0.0
 	for _frame in range(600):
 		fixture.wilson.velocity.y = -0.5
 		fixture._motion.physics_tick(1.0 / 60.0)
-		var displacement := Vector2(
+		var displacement: float = Vector2(
 			fixture.wilson.global_position.x - redirect_position.x,
 			fixture.wilson.global_position.z - redirect_position.z
 		).length()
