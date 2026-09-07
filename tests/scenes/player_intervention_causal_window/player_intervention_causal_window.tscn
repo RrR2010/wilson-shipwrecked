@@ -36,7 +36,7 @@ max_contacts_reported = 4
 shape = SubResource("PalmShape")
 
 [node name="LatePalm" type="RigidBody3D" parent="."]
-position = Vector3(0, 6, 0)
+position = Vector3(4, 6, 0)
 mass = 3.0
 freeze = true
 contact_monitor = true
