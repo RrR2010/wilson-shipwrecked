@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://tests/scenes/physical_accident/physical_accident.gd" id="1_script"]
+
+[sub_resource type="BoxShape3D" id="BoxShapeWilson"]
+size = Vector3(1.2, 2.0, 1.2)
+
+[sub_resource type="BoxShape3D" id="BoxShapePalm"]
+size = Vector3(1.4, 1.4, 1.4)
+
+[node name="PhysicalAccident" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Wilson" type="CharacterBody3D" parent="."]
+position = Vector3(0, 1, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Wilson"]
+shape = SubResource("BoxShapeWilson")
+
+[node name="FallingPalm" type="RigidBody3D" parent="."]
+position = Vector3(0, 5, 0)
+mass = 3.0
+contact_monitor = true
+max_contacts_reported = 4
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="FallingPalm"]
+shape = SubResource("BoxShapePalm")
