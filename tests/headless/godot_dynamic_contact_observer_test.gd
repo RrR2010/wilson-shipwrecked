@@ -10,7 +10,14 @@ const GodotDynamicContactObserver = preload("res://src/infrastructure/spatial/go
 var _failures: Array[String] = []
 
 func _init() -> void:
-	_run_test()
+	if not GodotSceneSpatialRegistry.can_instantiate():
+		_failures.append("GodotSceneSpatialRegistry must compile and instantiate")
+	if not GodotPhysicalObservationBuffer.can_instantiate():
+		_failures.append("GodotPhysicalObservationBuffer must compile and instantiate")
+	if not GodotDynamicContactObserver.can_instantiate():
+		_failures.append("GodotDynamicContactObserver must compile and instantiate")
+	if _failures.is_empty():
+		_run_test()
 	if _failures.is_empty():
 		print("PASS godot_dynamic_contact_observer_test")
 		quit(0)
@@ -21,13 +28,6 @@ func _init() -> void:
 	quit(1)
 
 func _run_test() -> void:
-	if not _script_can_instantiate(GodotSceneSpatialRegistry, "GodotSceneSpatialRegistry"):
-		return
-	if not _script_can_instantiate(GodotPhysicalObservationBuffer, "GodotPhysicalObservationBuffer"):
-		return
-	if not _script_can_instantiate(GodotDynamicContactObserver, "GodotDynamicContactObserver"):
-		return
-
 	var registry = GodotSceneSpatialRegistry.new()
 	var buffer = GodotPhysicalObservationBuffer.new()
 	var observer = GodotDynamicContactObserver.new(registry, buffer)
@@ -36,10 +36,8 @@ func _run_test() -> void:
 	var wilson_ref = RuntimeWorldRef.wilson()
 	var palm = RigidBody3D.new()
 	var wilson = CharacterBody3D.new()
-	root.add_child(palm)
-	root.add_child(wilson)
-	palm.global_position = Vector3(2.0, 1.0, 0.0)
-	wilson.global_position = Vector3.ZERO
+	palm.position = Vector3(2.0, 1.0, 0.0)
+	wilson.position = Vector3.ZERO
 	palm.linear_velocity = Vector3(-6.0, 0.0, 0.0)
 	wilson.velocity = Vector3(1.0, 0.0, 0.0)
 
@@ -65,7 +63,6 @@ func _run_test() -> void:
 		_expect_true(observation.point.distance_to(Vector3(1.0, 0.5, 0.0)) < 0.001, "contact point is a coarse engine observation")
 
 	var unbound = RigidBody3D.new()
-	root.add_child(unbound)
 	_expect_true(not observer.bind_body(unbound), "unbound body cannot silently acquire semantic identity")
 	_expect_true(not observer.observe_contact(unbound, wilson), "unbound contact is rejected")
 	_expect_equal(buffer.pending_count(), 0, "rejected contact produces no observation")
@@ -74,15 +71,9 @@ func _run_test() -> void:
 	_expect_true(registry.unbind(palm_ref, palm), "registry unbind succeeds")
 	_expect_true(registry.runtime_ref_for_node(palm) == null, "reverse lookup clears with binding")
 
-	palm.queue_free()
-	wilson.queue_free()
-	unbound.queue_free()
-
-func _script_can_instantiate(script: Script, label: String) -> bool:
-	if script != null and script.can_instantiate():
-		return true
-	_failures.append("%s must compile and be instantiable" % label)
-	return false
+	palm.free()
+	wilson.free()
+	unbound.free()
 
 func _expect_true(condition: bool, message: String) -> void:
 	if not condition:
