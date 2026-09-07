@@ -23,12 +23,14 @@ For substantial work:
 
 1. [`../README.md`](../README.md) — project thesis;
 2. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current implementation/test/schema baseline and remaining work;
-3. [`handoffs/physical-accident-authoring-to-next-representative-gameplay.md`](handoffs/physical-accident-authoring-to-next-representative-gameplay.md) — **active runtime stage-transition handoff after the validated real-Godot physical accident slice**;
+3. [`handoffs/foundational-causality-to-systemic-gameplay-expansion.md`](handoffs/foundational-causality-to-systemic-gameplay-expansion.md) — **active runtime stage-transition handoff from foundation/causality proof into systemic gameplay expansion**;
 4. then use the relevant canonical bundle below.
 
-**Current phase:** the structural runtime foundation, full current-run restore/rebootstrap, deterministic engine-scenario tooling, real Godot spatial/navigation/perception/physics adapters, grounded autonomous action, production-facing fresh-run bootstrap, deterministic product-level world/run generation, Wilson-relative remembered-route preference, persistent non-Wilson actor relationship semantics, and dynamic-contact-to-grounded-body-consequence authoring are implemented and locally validated.
+**Current phase:** the structural runtime foundation, common bootstrap/restore boundary, deterministic engine-scenario tooling, production fresh-run generation, Godot spatial/navigation/perception/physics adapters, grounded autonomous action, remembered route learning, non-Wilson actor relationships/locomotion, authored physical accidents, perceived threats, causal-window player intervention, Presence attribution, perceptually activated habits, interruption/resumption of ordinary intentions, and unseen-World-change belief reconciliation are implemented and locally validated.
 
-The leading runtime work should now return to representative gameplay pressure beyond already-proved accident grounding. Prefer a post-accident learning/behavior slice, causal-window intervention slice, or another distinct representative scene only when it forces a reusable missing primitive. Continuous physical locomotion for non-Wilson actors remains deferred until a scenario actually requires it. Persistence evolution remains requirement-driven, and generalized production scene-binding/host composition remains deferred until a real production use proves its shape.
+The leading runtime work should now **compose these foundations into richer persistent player-visible gameplay**: needs/routines, multi-step projects, actor interference, environment/weather changes, learned preferences and return-to-game historical readability. Prefer representative living-world sequences over further foundation architecture in isolation. Add a new primitive only when a representative scene proves a reusable missing semantic capability.
+
+Persistence/API cleanup and generalized infrastructure remain requirement-driven. Asset/modeling production is a parallel workstream and should not be pulled into runtime coordination unless a gameplay fixture needs a test representation.
 
 Cross-cutting correctness items listed in `DISCOVERY_STATUS.md` should be pulled forward when representative scenarios require them. New work should preserve established owner boundaries rather than reopen foundation architecture by default.
 
