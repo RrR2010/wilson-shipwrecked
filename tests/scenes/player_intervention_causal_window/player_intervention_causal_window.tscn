@@ -1,0 +1,46 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://tests/scenes/player_intervention_causal_window/player_intervention_causal_window.gd" id="1_script"]
+
+[sub_resource type="BoxShape3D" id="WilsonShape"]
+size = Vector3(1.2, 2.0, 1.2)
+
+[sub_resource type="BoxShape3D" id="PalmShape"]
+size = Vector3(1.4, 1.4, 1.4)
+
+[sub_resource type="BoxShape3D" id="GroundShape"]
+size = Vector3(20, 0.2, 20)
+
+[node name="PlayerInterventionCausalWindow" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Ground" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.2, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("GroundShape")
+
+[node name="Wilson" type="CharacterBody3D" parent="."]
+position = Vector3(0, 1, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Wilson"]
+shape = SubResource("WilsonShape")
+
+[node name="EarlyPalm" type="RigidBody3D" parent="."]
+position = Vector3(0, 6, 0)
+mass = 3.0
+contact_monitor = true
+max_contacts_reported = 4
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EarlyPalm"]
+shape = SubResource("PalmShape")
+
+[node name="LatePalm" type="RigidBody3D" parent="."]
+position = Vector3(4, 6, 0)
+mass = 3.0
+freeze = true
+contact_monitor = true
+max_contacts_reported = 4
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LatePalm"]
+shape = SubResource("PalmShape")
