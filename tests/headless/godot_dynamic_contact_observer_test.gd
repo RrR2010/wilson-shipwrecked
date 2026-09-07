@@ -21,6 +21,13 @@ func _init() -> void:
 	quit(1)
 
 func _run_test() -> void:
+	if not _script_can_instantiate(GodotSceneSpatialRegistry, "GodotSceneSpatialRegistry"):
+		return
+	if not _script_can_instantiate(GodotPhysicalObservationBuffer, "GodotPhysicalObservationBuffer"):
+		return
+	if not _script_can_instantiate(GodotDynamicContactObserver, "GodotDynamicContactObserver"):
+		return
+
 	var registry = GodotSceneSpatialRegistry.new()
 	var buffer = GodotPhysicalObservationBuffer.new()
 	var observer = GodotDynamicContactObserver.new(registry, buffer)
@@ -70,6 +77,12 @@ func _run_test() -> void:
 	palm.queue_free()
 	wilson.queue_free()
 	unbound.queue_free()
+
+func _script_can_instantiate(script: Script, label: String) -> bool:
+	if script != null and script.can_instantiate():
+		return true
+	_failures.append("%s must compile and be instantiable" % label)
+	return false
 
 func _expect_true(condition: bool, message: String) -> void:
 	if not condition:
