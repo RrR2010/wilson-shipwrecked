@@ -8,12 +8,15 @@ enum AccessScope { SPATIAL_ROLES, AMBIENT }
 ## Authored semantic/perceptual envelope for one event definition.
 ## Spatial-role events remain subject-access constrained. Ambient events represent
 ## locally pervasive environmental facts and need no synthetic subject binding.
+## `context_transition` is domain semantics only; application policy decides whether
+## a perceived transition should wake reconsideration.
 
 var id
 var perceptible_roles: Array[StringName] = []
 var modalities: Array[StringName] = []
 var base_confidence: float
 var access_scope: int
+var context_transition: bool
 
 
 func _init(
@@ -21,7 +24,8 @@ func _init(
 	p_perceptible_roles: Array[StringName],
 	p_modalities: Array[StringName],
 	p_base_confidence: float = 1.0,
-	p_access_scope: int = AccessScope.SPATIAL_ROLES
+	p_access_scope: int = AccessScope.SPATIAL_ROLES,
+	p_context_transition: bool = false
 ) -> void:
 	assert(p_id != null, "EventDefinition requires EventDefinitionId")
 	p_id.assert_kind(DomainId.Kind.EVENT_DEFINITION)
@@ -32,6 +36,7 @@ func _init(
 	id = p_id
 	base_confidence = p_base_confidence
 	access_scope = p_access_scope
+	context_transition = p_context_transition
 	var seen_roles: Dictionary = {}
 	for role_name in p_perceptible_roles:
 		assert(role_name != &"", "EventDefinition role cannot be empty")
