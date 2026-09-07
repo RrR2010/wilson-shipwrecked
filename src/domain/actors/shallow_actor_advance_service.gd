@@ -5,13 +5,15 @@ var _store
 var _profiles: Dictionary = {}
 var _rules: Array
 var _entities
+var _relationships
 
 
-func _init(store, profiles: Array, rules: Array, entity_store) -> void:
+func _init(store, profiles: Array, rules: Array, entity_store, relationship_store = null) -> void:
 	assert(store != null, "ShallowActorAdvanceService requires ActorStateStore")
 	assert(entity_store != null, "ShallowActorAdvanceService requires EntityStore")
 	_store = store
 	_entities = entity_store
+	_relationships = relationship_store
 	_rules = rules.duplicate()
 	for profile in profiles:
 		assert(profile != null, "Actor profiles cannot contain null")
@@ -64,8 +66,11 @@ func advance(elapsed: float, stimuli_by_actor: Dictionary = {}) -> Dictionary:
 func _select_rule(state, stimuli: Array[StringName]):
 	var matches: Array = []
 	for rule in _rules:
-		if rule != null and rule.matches(state, stimuli):
-			matches.append(rule)
+		if rule == null or not rule.matches(state, stimuli):
+			continue
+		if not rule.relationship_matches(_relationships, state.actor):
+			continue
+		matches.append(rule)
 	if matches.is_empty():
 		return null
 	matches.sort_custom(func(a, b):
