@@ -26,7 +26,7 @@ const RestoredSimulationState = preload("res://src/infrastructure/persistence/re
 const SimulationSnapshotBootstrapDecoder = preload("res://src/infrastructure/persistence/simulation_snapshot_bootstrap_decoder.gd")
 const SimulationOwnerBootstrapper = preload("res://src/application/bootstrap/simulation_owner_bootstrapper.gd")
 
-const SCHEMA_VERSION := 11
+const SCHEMA_VERSION := 12
 
 var _codec
 
@@ -260,6 +260,9 @@ func _capture_environment(environment) -> Dictionary:
 	return {
 		"weather": String(environment.weather),
 		"daylight_phase": String(environment.daylight_phase),
+		"weather_elapsed": environment.weather_elapsed,
+		"weather_planned_duration": environment.weather_planned_duration,
+		"weather_transition_index": environment.weather_transition_index,
 	}
 
 
