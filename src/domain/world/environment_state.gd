@@ -29,8 +29,12 @@ func _init(
 
 
 func set_weather(value: StringName) -> void:
+	## Explicit non-procedural weather mutation invalidates the current procedural phase.
+	## A later WeatherProgressionService composition may derive a fresh duration.
 	assert(value != &"", "weather cannot be empty")
 	weather = value
+	weather_elapsed = 0.0
+	weather_planned_duration = 0.0
 
 
 func begin_weather(value: StringName, planned_duration: float, transition_index: int) -> void:
