@@ -10,30 +10,22 @@ This file records the **currently implemented and locally validated runtime base
 
 Strict external runner: **Godot 4.7.1**.
 
-Current integrated `main` checkpoint:
+Current integrated `main` checkpoint after PR #67:
 
 ```text
-7900c158f4733bc1040e0666a798b2722d5cff51
+f9082e766a01b982a3caefdf6d7c6168a10da4d8
 ```
 
-Latest strict validation reported for that integrated checkpoint:
+Latest strict local validation reported for the merged feature head before squash integration:
 
 ```text
-RESULT: 118 PASS / 118 TOTAL
-PASS headless_suite (118 tests)
-```
-
-Current validated feature candidate:
-
-```text
-branch: feat/effective-protection-feedback
 RESULT: 122 PASS / 122 TOTAL
 PASS headless_suite (122 tests)
 ```
 
-The feature candidate is **not integrated main** until its pull request is explicitly approved and merged.
+The squash merge changed Git history but not the validated feature content. No GitHub Actions status checks are currently configured for this runtime gate; the operator-reported strict local suite remains authoritative.
 
-The structural/runtime-foundation phase remains closed. The leading work is composing those foundations into richer persistent systemic gameplay while admitting new primitives only when a representative causal vertical proves a real semantic gap.
+The structural/runtime-foundation phase remains closed. The leading work is now to turn the validated simulation breadth into an **observable, continuously running Godot living-diorama development experience**, using representative primitive geometry and debug/readability tooling before final assets are available.
 
 ---
 
@@ -141,7 +133,7 @@ Player suggestions / bounded insistence                     PASS
 Run lifecycle / resurrection                                PASS
 PlayerProfile cross-run separation                          PASS
 Deterministic EngineScenarioHarness                         PASS
-Strict feature-branch suite                                 PASS — 122 tests
+Strict integrated feature suite                             PASS — 122 tests
 ```
 
 This list is capability-oriented rather than a duplicate of every test name.
@@ -230,7 +222,7 @@ simulation snapshot ──────┘
                       reconstructible runtime
 ```
 
-`RunRuntimeComposer` now shares one effective-property resolver across action predicates, environmental susceptibility and protection projection.
+`RunRuntimeComposer` shares one effective-property resolver across action predicates, environmental susceptibility and protection projection.
 
 When environment/process owners are present, production world advancement composes:
 
@@ -248,7 +240,7 @@ Derived invalidation remains application-layer work after the authoritative worl
 
 # Environmental composition evidence
 
-The cloth-shelter weather fixture now has regression-backed causal continuity through both degradation and structural failure:
+The cloth-shelter weather fixture has regression-backed causal continuity through both degradation and structural failure:
 
 ```text
 rain / moisture
@@ -288,7 +280,7 @@ ActionExecutionSnapshotService schema: v2
 ContentPackLoader schema:              v1
 ```
 
-The content schema remains v1 because the new `relation_failures` field is additive and optional.
+The content schema remains v1 because the `relation_failures` field is additive and optional.
 
 Historical development-snapshot migration remains requirement-driven; current schema handling is intentionally strict.
 
@@ -319,33 +311,41 @@ explicit mid-step invalidation if a future rule must consume freshly mutated der
 automatic detached-component dynamic-process creation only if a representative scene proves the need
 ```
 
-Do not implement these merely to clear a backlog.
+Do not implement these merely to clear a backlog. The upcoming Godot living-simulation phase may legitimately pull `generalized production scene-binding/host composition` forward if repeated concrete scene wiring proves a stable composition boundary.
 
 ---
 
-# Current phase: systemic gameplay expansion
+# Current phase: observable Godot living simulation
 
-The next blocks should compose existing foundations into player-visible living-world sequences rather than continue adding architecture in isolation.
+The next stage should produce a development scene that can be opened and watched for minutes, not another isolated smoke demonstration.
 
 Target question:
 
-> Can Wilson live through coherent multi-system situations that produce readable history, routines, interruptions, learning and persistent environmental change?
+> Can the operator watch Wilson live in a primitive-shape island, understand what he is doing and why, accelerate time, and observe coherent multi-system history emerge from the real runtime?
 
-Strong pressure areas include:
+The phase should compose existing foundations into a continuous player-visible loop involving a representative subset of:
 
 ```text
-needs / routines / habits interacting over time
-multi-step projects with visible persistent partial progress
-resource acquisition / transport / contribution / interruption / resumption
-Gerald or another shallow actor interfering with Wilson activity
-weather/environment changing what is attractive or possible
-weather physically degrading constructed configuration
-repair/maintenance emerging from persistent structural consequences
-learned preferences changing later decisions
-return-to-game situations where the player can infer what happened
+needs / routines / habits
+multi-step projects with persistent partial progress
+resource acquisition / transport / contribution
+interruption / resumption
+Gerald or another shallow actor
+weather/environment pressure
+constructed protection and degradation
+learning/history changing later decisions
+recent-event readability
 ```
 
-Prefer one representative scene that composes several already-proved systems over isolated new primitives.
+Primitive geometry is presentation only. Use deliberately recognizable silhouettes and multi-primitive compositions where helpful; do not use scene nodes/transforms as semantic identity or authoritative World state.
+
+Because final facial animation is unavailable in this prototype, a Wilson-attached thought/speech bubble or emote surface may expose **presentation-level expression/readability**. It must project existing cognition/intent/emotion-like semantics rather than create hidden cognition or mutate simulation state. If it proves useful, it may survive into the product.
+
+The active runtime transition context is recorded in:
+
+```text
+docs/handoffs/systemic-runtime-to-observable-godot-living-simulation.md
+```
 
 ---
 

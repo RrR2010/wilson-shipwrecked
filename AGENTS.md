@@ -6,40 +6,41 @@ Build Wilson Shipwrecked as a coherent systemic simulation and living 3D diorama
 
 ## Current project phase
 
-The **structural runtime foundation and its key causal boundaries are implemented and locally validated**. This includes common bootstrap/restore composition, production new-run generation, deterministic engine-scenario tooling, Godot spatial/navigation/perception/physics adapters, grounded autonomous action, learning/habits, projects, non-Wilson actor relationships/locomotion, physical accidents/threats, player intervention/Presence attribution, intention interruption/resumption and belief reconciliation after unseen World changes.
+The **structural runtime foundation and its key causal boundaries are implemented and locally validated**. This includes common bootstrap/restore composition, production new-run generation, deterministic engine-scenario tooling, Godot spatial/navigation/perception/physics adapters, grounded autonomous action, learning/habits, projects, non-Wilson actor relationships/locomotion, physical accidents/threats, player intervention/Presence attribution, intention interruption/resumption, belief reconciliation after unseen World changes, procedural weather, configuration-relative protection/exposure and authored structural relation failure.
 
 Current strict baseline is recorded only in `docs/DISCOVERY_STATUS.md`; do not duplicate test counts or schema versions here.
 
 The leading runtime phase is now:
 
 ```text
-representative player-visible situation
-→ compose existing systems
-→ expose the smallest real semantic gap
-→ add the smallest reusable primitive if required
-→ validate the whole causal sequence
+observable Godot living simulation
+→ compose existing systemic runtime in one continuous scene
+→ use readable primitive presentation before final assets
+→ expose operator-facing causal readability / time controls
+→ discover real integration/calibration gaps
+→ add the smallest reusable primitive only when required
 ```
 
 Primary goals:
 
 ```text
-1. richer needs / routines / habits over time
-2. visible multi-step project loops and persistent partial progress
-3. actor/environment interference with Wilson activity
-4. learned history changing later decisions
-5. return-to-game situations whose recent history is readable from persistent simulation state
+1. a real continuously running Godot development scene
+2. readable primitive-shape composition for Wilson, actors, resources and projects
+3. coherent needs / routines / projects / weather / actor interference over time
+4. visible interruption, persistence and later resumption/history effects
+5. operator inspection of current intent/recent causes plus safe time acceleration
 ```
 
-Do not continue foundation architecture merely because another abstraction could be invented. Persistence/API cleanup and generalized infrastructure remain requirement-driven.
+Do not continue foundation architecture merely because another abstraction could be invented. Persistence/API cleanup and generalized infrastructure remain requirement-driven, although repeated concrete scene wiring may now justify a narrow reusable scene-binding/host composition boundary.
 
 Before substantial runtime work, read:
 
 1. [`docs/README.md`](docs/README.md) — documentation map and authority hierarchy;
 2. [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md) — concrete validated baseline and deferred pressures;
-3. [`docs/handoffs/foundational-causality-to-systemic-gameplay-expansion.md`](docs/handoffs/foundational-causality-to-systemic-gameplay-expansion.md) — active runtime transition context;
+3. [`docs/handoffs/systemic-runtime-to-observable-godot-living-simulation.md`](docs/handoffs/systemic-runtime-to-observable-godot-living-simulation.md) — active runtime transition context;
 4. only the canonical bundle relevant to the selected representative situation.
 
-Asset/modeling work may proceed in parallel. Do not pull it into runtime scope unless an executable gameplay fixture needs a temporary/test representation.
+Asset/modeling work proceeds in parallel. The active living-simulation handoff intentionally excludes art/asset/modeling documentation unless the operator later changes that scope. Primitive-shape presentation is a runtime readability scaffold, not asset production.
 
 Do not reopen foundation ownership, replace established typed contracts with generic containers, or introduce a universal framework merely because one new scenario needs implementation.
 
@@ -92,11 +93,14 @@ docs/ARCHITECTURE.md
 docs/SIMULATION_ORCHESTRATION.md
 docs/SIMULATION_CONTRACTS.md
 docs/MUTATION_AUTHORITY.md
-docs/ASSET_SPEC.md
-docs/ASSET_PIPELINE.md
+docs/testing/SCENE_TESTS.md
 ```
 
 Then inspect relevant ports/tests before adding infrastructure adapters.
+
+For non-trivial Godot API behavior, **research before implementing**: verify the exact current API and lifecycle semantics in authoritative Godot documentation/references, inspect existing repository adapters, and use a small executable probe when timing/order behavior remains ambiguous. Do not guess navigation synchronization, physics/process ordering, transform-space behavior, scene-tree lifecycle, time scaling or UI/world projection semantics.
+
+During the current primitive living-simulation phase, follow the active handoff's explicit exclusion of art/asset/modeling documentation. That exclusion is phase-specific, not a change to the repository's general asset authority model.
 
 ## Asset/content catalog
 

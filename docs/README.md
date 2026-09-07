@@ -19,18 +19,22 @@ Read the smallest bundle sufficient for the task. Validation/history must not be
 
 # 1. Start here
 
-For substantial work:
+For substantial runtime work:
 
 1. [`../README.md`](../README.md) — project thesis;
 2. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current implementation/test/schema baseline and remaining work;
-3. [`handoffs/foundational-causality-to-systemic-gameplay-expansion.md`](handoffs/foundational-causality-to-systemic-gameplay-expansion.md) — **active runtime stage-transition handoff from foundation/causality proof into systemic gameplay expansion**;
+3. [`handoffs/systemic-runtime-to-observable-godot-living-simulation.md`](handoffs/systemic-runtime-to-observable-godot-living-simulation.md) — **active runtime stage-transition handoff for the observable Godot living-simulation phase**;
 4. then use the relevant canonical bundle below.
 
-**Current phase:** the structural runtime foundation, common bootstrap/restore boundary, deterministic engine-scenario tooling, production fresh-run generation, Godot spatial/navigation/perception/physics adapters, grounded autonomous action, remembered route learning, non-Wilson actor relationships/locomotion, authored physical accidents, perceived threats, causal-window player intervention, Presence attribution, perceptually activated habits, interruption/resumption of ordinary intentions, and unseen-World-change belief reconciliation are implemented and locally validated.
+**Current phase:** the structural/runtime foundation, production new-run generation, common bootstrap/restore composition, Godot spatial/navigation/perception/physics adapters, grounded autonomous action, projects, habits/history, actor behavior, procedural weather, protection/exposure and structural relation-failure feedback are implemented and locally validated.
 
-The leading runtime work should now **compose these foundations into richer persistent player-visible gameplay**: needs/routines, multi-step projects, actor interference, environment/weather changes, learned preferences and return-to-game historical readability. Prefer representative living-world sequences over further foundation architecture in isolation. Add a new primitive only when a representative scene proves a reusable missing semantic capability.
+The leading runtime work is now to **compose this breadth into a continuously observable and calibratable Godot living diorama**, using readable primitive geometry before final assets are available. The target is not another isolated smoke test: the operator should be able to open a development scene, watch Wilson live for several simulated minutes, accelerate time, inspect important causal state and understand why he changes behavior.
 
-Persistence/API cleanup and generalized infrastructure remain requirement-driven. Asset/modeling production is a parallel workstream and should not be pulled into runtime coordination unless a gameplay fixture needs a test representation.
+The active handoff explicitly treats primitive shapes, emotes/bubbles and debug overlays as presentation projections over the real runtime. They must not become semantic identity, hidden cognition or a second World model.
+
+Persistence/API cleanup and generalized infrastructure remain requirement-driven, although repeated concrete Godot scene wiring may now create legitimate pressure for a reusable scene-binding/host composition boundary.
+
+Asset/modeling production is a parallel workstream. The active runtime handoff intentionally excludes art/asset/modeling documentation unless the operator later changes that scope.
 
 Cross-cutting correctness items listed in `DISCOVERY_STATUS.md` should be pulled forward when representative scenarios require them. New work should preserve established owner boundaries rather than reopen foundation architecture by default.
 
