@@ -40,17 +40,17 @@ func _run_slice() -> void:
 
 	var first_state = EnvironmentState.new(&"clear", &"day")
 	var second_state = EnvironmentState.new(&"clear", &"day")
-	var first = WeatherProgressionService.new(first_state, definitions, transitions, 424242)
-	var second = WeatherProgressionService.new(second_state, definitions, transitions, 424242)
+	var first = WeatherProgressionService.new(first_state, definitions, transitions)
+	var second = WeatherProgressionService.new(second_state, definitions, transitions)
 	_expect_true(first_state.weather_planned_duration >= 2.0 and first_state.weather_planned_duration <= 4.0, "initial duration comes from current weather definition")
-	_expect_true(is_equal_approx(first_state.weather_planned_duration, second_state.weather_planned_duration), "same seed produces same initial duration")
+	_expect_true(is_equal_approx(first_state.weather_planned_duration, second_state.weather_planned_duration), "equivalent durable causes produce same initial duration")
 	_expect_true(is_equal_approx(first.condition(&"rain_intensity"), 0.0), "conditions derive from current authored regime")
 
 	var first_result = first.advance(first_state.weather_planned_duration)
 	var second_result = second.advance(second_state.weather_planned_duration)
 	_expect_equal(first_result.transitions.size(), 1, "crossing planned duration causes exactly one weather transition")
 	_expect_equal(second_result.transitions.size(), 1, "matching deterministic run also transitions once")
-	_expect_equal(first_state.weather, second_state.weather, "same seed and graph produce same next weather")
+	_expect_equal(first_state.weather, second_state.weather, "equivalent authored graph and history produce same next weather")
 	_expect_equal(first_state.weather_transition_index, 1, "transition index advances with procedural weather history")
 	_expect_true(first.condition(&"rain_intensity") > 0.0, "new weather exposes its composed environmental conditions")
 
@@ -61,7 +61,7 @@ func _run_slice() -> void:
 		first_state.weather_planned_duration,
 		first_state.weather_transition_index
 	)
-	var restored_service = WeatherProgressionService.new(restored, definitions, transitions, 424242)
+	var restored_service = WeatherProgressionService.new(restored, definitions, transitions)
 	var delta := first_state.weather_planned_duration * 0.5
 	first.advance(delta)
 	restored_service.advance(delta)
@@ -71,7 +71,7 @@ func _run_slice() -> void:
 	_expect_equal(restored.weather_transition_index, first_state.weather_transition_index, "restored progression retains procedural transition index")
 
 	var overshoot_state = EnvironmentState.new(&"clear", &"day")
-	var overshoot = WeatherProgressionService.new(overshoot_state, definitions, transitions, 7)
+	var overshoot = WeatherProgressionService.new(overshoot_state, definitions, transitions)
 	var initial_duration := overshoot_state.weather_planned_duration
 	var overshoot_result = overshoot.advance(initial_duration + 0.25)
 	_expect_equal(overshoot_result.transitions.size(), 1, "overshoot preserves leftover elapsed into next regime")
