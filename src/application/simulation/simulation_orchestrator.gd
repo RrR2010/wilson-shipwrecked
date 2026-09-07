@@ -12,7 +12,7 @@ const ReconsiderationGate = preload("res://src/application/simulation/reconsider
 ##
 ## Authoritative ordering:
 ## world progression -> derived invalidation -> action progression
-## -> committed outcome application -> derived invalidation -> grounded drive/project progression
+## -> committed outcome application -> derived invalidation -> grounded drive/project/intention progression
 ## -> current intention execution progression -> committed-event lifecycle propagation
 ## -> event + passive spatial perception -> immediate Wilson learning
 ## -> due-gated drive progression -> perception/external trigger derivation
@@ -47,6 +47,7 @@ var _selected_intention_executor
 var _drive_due_gate
 var _grounded_drive_consequence
 var _perceived_habit_candidate_source
+var _grounded_intention_completion
 
 
 func _init(
@@ -77,7 +78,8 @@ func _init(
 	selected_intention_executor = null,
 	drive_due_gate = null,
 	grounded_drive_consequence = null,
-	perceived_habit_candidate_source = null
+	perceived_habit_candidate_source = null,
+	grounded_intention_completion = null
 ) -> void:
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
 	assert(action_execution != null, "SimulationOrchestrator requires action execution")
@@ -113,6 +115,8 @@ func _init(
 		assert(grounded_drive_consequence.has_method("apply_grounded"), "Grounded drive consequence must implement apply_grounded(outcome, world_commit_result)")
 	if perceived_habit_candidate_source != null:
 		assert(perceived_habit_candidate_source.has_method("generate"), "Perceived habit source must implement generate(perception_result)")
+	if grounded_intention_completion != null:
+		assert(grounded_intention_completion.has_method("apply_grounded"), "Grounded intention completion must implement apply_grounded(outcome, world_commit_result)")
 	_world_advance = world_advance
 	_action_execution = action_execution
 	_world_commands = world_commands
@@ -141,6 +145,7 @@ func _init(
 	_drive_due_gate = drive_due_gate
 	_grounded_drive_consequence = grounded_drive_consequence
 	_perceived_habit_candidate_source = perceived_habit_candidate_source
+	_grounded_intention_completion = grounded_intention_completion
 
 
 func advance(step):
@@ -159,6 +164,7 @@ func advance(step):
 	var action_progress = null
 	var commit_result = null
 	var drive_consequence_result = null
+	var intention_completion_result = null
 	var project_progress = null
 	var execution_id: StringName = _activity_query.active_execution_id()
 	if execution_id != &"":
@@ -176,6 +182,9 @@ func advance(step):
 			if _project_contribution != null:
 				project_progress = _project_contribution.apply_grounded(action_progress.new_outcome, commit_result)
 				trace.record_result(&"project_progression", project_progress)
+			if _grounded_intention_completion != null:
+				intention_completion_result = _grounded_intention_completion.apply_grounded(action_progress.new_outcome, commit_result)
+				trace.record_result(&"intention_completion", intention_completion_result)
 
 	var intention_execution_progress = null
 	if _selected_intention_executor != null and _selected_intention_executor.has_method("advance"):
