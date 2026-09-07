@@ -5,18 +5,21 @@ const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
 const SemanticChange = preload("res://src/domain/world/semantic_change.gd")
 const SemanticChangeSet = preload("res://src/domain/world/semantic_change_set.gd")
 const EntityInstance = preload("res://src/domain/world/entity_instance.gd")
+const EnvironmentalResponseTargetSelector = preload("res://src/domain/world/environmental_response_target_selector.gd")
 
 ## Applies declarative environmental responses to ordinary World properties.
 ## The condition provider may be procedural weather or any future environment source
 ## implementing condition(condition_id, fallback). Explicit condition snapshots allow
 ## coarse/offline advancement to preserve the exact duration spent in each regime.
-## Protection is optional and remains a separate derived query through ExposureResolver.
+## Protection and assembly targeting remain derived queries rather than durable state.
 
 var _condition_provider
 var _world_query
 var _entities
 var _definitions: Array
 var _exposure_resolver
+var _physical_profiles
+var _assembly_bindings
 
 
 func _init(
@@ -24,7 +27,9 @@ func _init(
 	world_query,
 	entity_store,
 	definitions: Array,
-	exposure_resolver = null
+	exposure_resolver = null,
+	physical_profiles = null,
+	assembly_bindings = null
 ) -> void:
 	assert(condition_provider != null and condition_provider.has_method("condition"), "Environmental response requires condition provider")
 	assert(world_query != null, "Environmental response requires WorldQuery")
@@ -33,12 +38,16 @@ func _init(
 	_world_query = world_query
 	_entities = entity_store
 	_exposure_resolver = exposure_resolver
+	_physical_profiles = physical_profiles
+	_assembly_bindings = assembly_bindings
 	var seen: Dictionary = {}
 	for definition in definitions:
 		assert(definition != null, "Environmental response definitions cannot contain null")
 		assert(not seen.has(definition.id), "Duplicate environmental response definition: %s" % String(definition.id))
 		if definition.exposure_kind != &"":
 			assert(_exposure_resolver != null, "Exposure-aware environmental response requires ExposureResolver")
+		if definition.target_selector.kind == EnvironmentalResponseTargetSelector.Kind.ASSEMBLY_SLOT:
+			assert(_assembly_bindings != null, "Assembly-targeted environmental response requires AssemblyBindingProjection")
 		seen[definition.id] = true
 		_definitions.append(definition)
 	_definitions.sort_custom(func(a, b): return String(a.id) < String(b.id))
@@ -59,51 +68,109 @@ func advance(elapsed: float, condition_snapshot: Dictionary = {}) -> Dictionary:
 		for entity in _entities.entities():
 			if entity.lifecycle != EntityInstance.Lifecycle.ACTIVE:
 				continue
-			var subject = RuntimeWorldRef.entity(entity.id)
-			if definition.required_capability != null and not _world_query.has_authored_capability(subject, definition.required_capability):
+			var source_subject = RuntimeWorldRef.entity(entity.id)
+			if definition.required_capability != null and not _world_query.has_authored_capability(source_subject, definition.required_capability):
 				continue
-			var current_value = _world_query.get_instance_property(subject, definition.target_property)
-			if not _finite_numeric(current_value):
-				continue
-			var susceptibility: float = 1.0
+			var susceptibility := 1.0
 			if definition.susceptibility_property != null:
-				var susceptibility_value = _world_query.get_instance_property(subject, definition.susceptibility_property)
+				var susceptibility_value = _property_value(source_subject, definition.susceptibility_property)
 				if not _unit_numeric(susceptibility_value):
 					continue
 				susceptibility = float(susceptibility_value)
 				if susceptibility < definition.minimum_susceptibility:
 					continue
-			var exposure: float = condition
+			var exposure := condition
 			if definition.exposure_kind != &"":
-				var exposure_result = _exposure_resolver.resolve(subject, definition.exposure_kind, condition)
+				var exposure_result = _exposure_resolver.resolve(source_subject, definition.exposure_kind, condition)
 				exposure = exposure_result.exposure_level
 			if exposure <= 0.0:
 				continue
-			var current: float = float(current_value)
-			var delta: float = definition.rate_per_second_at_full_exposure * exposure * susceptibility * elapsed
-			var next_value: float = clampf(current + delta, definition.lower_bound, definition.upper_bound)
-			if is_equal_approx(next_value, current):
-				continue
-			if _world_query.has_method("validate_property_value") and not _world_query.validate_property_value(definition.target_property, next_value):
-				diagnostics.append("Environmental response produced invalid property value: %s" % definition.target_property.sort_key())
-				continue
-			var mutation = _entities.set_property_override(entity.id, definition.target_property, next_value)
-			if not mutation.ok:
-				diagnostics.append("Environmental response mutation failed: %s" % String(mutation.code))
-				continue
-			change_set.add(SemanticChange.property_change(subject, definition.target_property))
-			transitions.append({
-				"subject": subject,
-				"property": definition.target_property,
-				"previous": current,
-				"current": next_value,
-				"response_id": definition.id,
-				"condition_id": definition.condition_id,
-				"raw_condition": condition,
-				"residual_exposure": exposure,
-			})
+			for target_subject in _resolve_targets(source_subject, definition.target_selector):
+				_apply_response(
+					definition,
+					source_subject,
+					target_subject,
+					condition,
+					exposure,
+					susceptibility,
+					elapsed,
+					change_set,
+					transitions,
+					diagnostics
+				)
 
 	return _result(change_set, transitions, diagnostics)
+
+
+func _apply_response(
+	definition,
+	source_subject,
+	target_subject,
+	condition: float,
+	exposure: float,
+	susceptibility: float,
+	elapsed: float,
+	change_set,
+	transitions: Array,
+	diagnostics: Array[String]
+) -> void:
+	var current_value = _world_query.get_instance_property(target_subject, definition.target_property)
+	if not _finite_numeric(current_value):
+		return
+	var current := float(current_value)
+	var delta: float = definition.rate_per_second_at_full_exposure * exposure * susceptibility * elapsed
+	var next_value := clampf(current + delta, definition.lower_bound, definition.upper_bound)
+	if is_equal_approx(next_value, current):
+		return
+	if _world_query.has_method("validate_property_value") and not _world_query.validate_property_value(definition.target_property, next_value):
+		diagnostics.append("Environmental response produced invalid property value: %s" % definition.target_property.sort_key())
+		return
+	if target_subject.kind != RuntimeWorldRef.Kind.ENTITY:
+		diagnostics.append("Environmental response target must currently be an entity: %s" % target_subject.sort_key())
+		return
+	var mutation = _entities.set_property_override(target_subject.id, definition.target_property, next_value)
+	if not mutation.ok:
+		diagnostics.append("Environmental response mutation failed: %s" % String(mutation.code))
+		return
+	change_set.add(SemanticChange.property_change(target_subject, definition.target_property))
+	transitions.append({
+		"subject": target_subject,
+		"source_subject": source_subject,
+		"property": definition.target_property,
+		"previous": current,
+		"current": next_value,
+		"response_id": definition.id,
+		"condition_id": definition.condition_id,
+		"raw_condition": condition,
+		"residual_exposure": exposure,
+		"target_selector": definition.target_selector.stable_key(),
+	})
+
+
+func _resolve_targets(source_subject, selector) -> Array:
+	match selector.kind:
+		EnvironmentalResponseTargetSelector.Kind.SELF:
+			return [source_subject]
+		EnvironmentalResponseTargetSelector.Kind.ASSEMBLY_SLOT:
+			var result: Array = []
+			for binding in _assembly_bindings.bindings_for_host(source_subject):
+				if binding.slot_id.equals(selector.slot_id):
+					result.append(binding.component)
+			result.sort_custom(func(a, b): return a.sort_key() < b.sort_key())
+			return result
+	return []
+
+
+func _property_value(subject, property_id):
+	var world_value = _world_query.get_instance_property(subject, property_id)
+	if world_value != null:
+		return world_value
+	if _physical_profiles == null:
+		return null
+	var profile = _physical_profiles.resolve(subject)
+	if profile.has_property(property_id):
+		return profile.get_property(property_id)
+	return null
 
 
 func _condition_value(condition_id: StringName, snapshot: Dictionary) -> float:
