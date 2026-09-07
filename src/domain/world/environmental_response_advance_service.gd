@@ -8,8 +8,9 @@ const EntityInstance = preload("res://src/domain/world/entity_instance.gd")
 
 ## Applies declarative environmental responses to ordinary World properties.
 ## The condition provider may be procedural weather or any future environment source
-## implementing condition(condition_id, fallback). Protection is optional and remains
-## a separate derived query through ExposureResolver.
+## implementing condition(condition_id, fallback). Explicit condition snapshots allow
+## coarse/offline advancement to preserve the exact duration spent in each regime.
+## Protection is optional and remains a separate derived query through ExposureResolver.
 
 var _condition_provider
 var _world_query
@@ -43,7 +44,7 @@ func _init(
 	_definitions.sort_custom(func(a, b): return String(a.id) < String(b.id))
 
 
-func advance(elapsed: float) -> Dictionary:
+func advance(elapsed: float, condition_snapshot: Dictionary = {}) -> Dictionary:
 	assert(is_finite(elapsed) and elapsed >= 0.0, "Environmental response elapsed must be finite and non-negative")
 	var change_set = SemanticChangeSet.new()
 	var transitions: Array = []
@@ -52,7 +53,7 @@ func advance(elapsed: float) -> Dictionary:
 		return _result(change_set, transitions, diagnostics)
 
 	for definition in _definitions:
-		var condition := clampf(float(_condition_provider.condition(definition.condition_id, 0.0)), 0.0, 1.0)
+		var condition := _condition_value(definition.condition_id, condition_snapshot)
 		if condition <= 0.0:
 			continue
 		for entity in _entities.entities():
@@ -103,6 +104,16 @@ func advance(elapsed: float) -> Dictionary:
 			})
 
 	return _result(change_set, transitions, diagnostics)
+
+
+func _condition_value(condition_id: StringName, snapshot: Dictionary) -> float:
+	if snapshot.has(condition_id):
+		return clampf(float(snapshot[condition_id]), 0.0, 1.0)
+	if snapshot.has(String(condition_id)):
+		return clampf(float(snapshot[String(condition_id)]), 0.0, 1.0)
+	if not snapshot.is_empty():
+		return 0.0
+	return clampf(float(_condition_provider.condition(condition_id, 0.0)), 0.0, 1.0)
 
 
 func _result(change_set, transitions: Array, diagnostics: Array[String]) -> Dictionary:
