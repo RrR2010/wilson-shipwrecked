@@ -224,8 +224,8 @@ current = true
 [node name="Panel" type="PanelContainer" parent="DebugUI"]
 offset_left = 18.0
 offset_top = 18.0
-offset_right = 430.0
-offset_bottom = 190.0
+offset_right = 560.0
+offset_bottom = 225.0
 
 [node name="Margin" type="MarginContainer" parent="DebugUI/Panel"]
 theme_override_constants/margin_left = 12
@@ -237,7 +237,7 @@ theme_override_constants/margin_bottom = 10
 theme_override_constants/separation = 5
 
 [node name="Title" type="Label" parent="DebugUI/Panel/Margin/VBox"]
-text = "WILSON — LIVING SIMULATION SPINE"
+text = "WILSON — LIVING SIMULATION / PERSISTENT WORK"
 
 [node name="Status" type="Label" parent="DebugUI/Panel/Margin/VBox"]
 text = "Runtime: bootstrapping..."
@@ -247,6 +247,9 @@ text = "Intention: none"
 
 [node name="Drive" type="Label" parent="DebugUI/Panel/Margin/VBox"]
 text = "Hunger: -"
+
+[node name="Project" type="Label" parent="DebugUI/Panel/Margin/VBox"]
+text = "Shelter project: -"
 
 [node name="Motion" type="Label" parent="DebugUI/Panel/Margin/VBox"]
 text = "Motion: -"
