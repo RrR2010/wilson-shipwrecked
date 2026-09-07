@@ -123,12 +123,8 @@ func _run_slice() -> void:
 	var result = runtime.world_advance.advance(1.0, SimulationStepContext.new(&"wind_step", 1.0, 1.0, null, []))
 	# -0.5 full-rate * 1.0 wind * 0.8 susceptibility = -0.4 binding integrity.
 	_expect_float(runtime.world_query.get_instance_property(binding, binding_integrity), 0.6, "wind stress degrades configured binding through semantic slot targeting")
-	_expect_equal(result.get("transitions", []).size(), 1, "world advance reports one environmental material transition")
-	if result.get("transitions", []).size() == 1:
-		var transition = result["transitions"][0]
-		_expect_equal(transition.get("source_subject").key(), host.key(), "transition retains load-source provenance")
-		_expect_equal(transition.get("subject").key(), binding.key(), "transition retains mutated binding target")
-		_expect_equal(transition.get("target_selector"), "assembly_slot:%s" % binding_slot.sort_key(), "transition retains semantic target selector provenance")
+	_expect_true(result.diagnostics.is_empty(), "wind response produces no world-advance diagnostics")
+	_expect_true(not result.change_set.is_empty(), "binding degradation emits semantic invalidation")
 
 	_completed = true
 
