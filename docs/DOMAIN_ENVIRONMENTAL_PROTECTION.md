@@ -77,9 +77,9 @@ Other kinds require a validated gameplay need before admission.
 
 ---
 
-# 3. Projection inputs
+# 3. Projection inputs and effective-property reads
 
-The derivation may read authoritative world semantics only:
+The derivation may read authoritative world semantics and reconstructible derived physical semantics only:
 
 ```text
 assembly bindings/configuration
@@ -90,6 +90,17 @@ containment/support relations
 protected region geometry category
 current environmental direction/intensity when directional
 ```
+
+When a protection rule requests a property such as `coverage` or `strength`, production runtime uses the shared `EffectivePropertyValueResolver` contract:
+
+```text
+if EffectivePhysicalProfile defines property
+→ use derived effective value
+else
+→ use ordinary WorldQuery property value
+```
+
+This makes protection configuration-relative without copying derived values back into authoritative World state.
 
 It must not read Wilson belief or intent.
 
@@ -166,9 +177,8 @@ Example:
 
 ```text
 one roof binding weakens
-→ configuration changes
-→ ProtectionProjection gap region appears
-→ sleep-area ExposureResult rises locally
+→ configuration-effective protection decreases
+→ sleep-area ExposureResult rises
 → rain response wets bedding/ground
 ```
 
@@ -230,45 +240,67 @@ Guard:
 
 Environmental exposure may mutate components that themselves contribute to protection.
 
-Example:
+Implemented representative chain:
 
 ```text
 rain exposure
-→ cloth moisture increases
-→ effective mass/sag changes
-→ wind stress on bindings increases
-→ binding integrity falls
-→ ProtectionProjection worsens
+→ cloth moisture
+→ effective physical profile changes
+→ wind susceptibility increases
+→ wind response degrades binding integrity
+→ host effective protection strength decreases
+→ residual rain exposure increases
 ```
 
-This is a valid feedback chain, but orchestration must advance it through explicit semantic boundaries rather than opaque fixed-point recursion.
+This is a valid feedback chain, but orchestration advances it through explicit semantic boundaries rather than opaque fixed-point recursion.
 
-Canonical style:
+The implemented read contract deliberately keeps mutation and derivation separate:
 
 ```text
-environment step
-→ resolve exposure
-→ apply response mutations
-→ recompute affected derived projections
-→ detect threshold/failure boundary
-→ emit grounded events/processes
+authoritative property mutation
+→ SemanticChange
+→ derived invalidation
+→ effective property re-resolution
+→ new ProtectionProjection / ExposureResult
 ```
 
 ---
 
-# 10. Dynamic detachment and hazards
+# 10. Structural failure and detachment
 
-If protection failure creates moving dangerous geometry, use existing hazard semantics.
+A relation may have an authored structural failure boundary:
 
 ```text
-binding failure
-→ cloth/panel detaches
-→ assembly relation mutation
-→ ProtectionProjection changes immediately
-→ optional DynamicProcessState for wind-driven component
+RelationFailureDefinition
+  relation_type
+  monitored authoritative property on relation subject
+  threshold
+  comparison (<= or >=)
+  optional qualifier
 ```
 
-No separate weather-debris system is required.
+Example:
+
+```text
+binding_integrity <= authored threshold
++ attached_to(binding, host, roof_binding)
+→ remove attached_to relation
+→ emit relation SemanticChange
+→ assembly-dependent derived state invalidates
+→ derived protection disappears or worsens
+```
+
+The failure evaluator intentionally reads authoritative World properties, not reconstructible effective properties. Freshly mutated derived values require an explicit invalidation boundary before they are safe to consume as causal thresholds.
+
+Detachment is not automatically a moving hazard. If the detached component subsequently becomes moving dangerous geometry, that later boundary reuses existing hazard semantics:
+
+```text
+relation failure / detachment
+→ optional DynamicProcessState for moving component
+→ ordinary hazard projection / collision semantics
+```
+
+No separate weather-debris or shelter-failure system is required.
 
 ---
 
@@ -347,6 +379,7 @@ roof_leak_level authoritative scalar
 inside_shelter boolean as universal weather truth
 weather immunity flags per object type
 continuous CFD/rain simulation requirement
+relation-failure callbacks specialized by entity type
 ```
 
 ---
@@ -364,6 +397,7 @@ covered storage crate
 open vs closed container exposure
 windbreak wall
 partial rain protection from wreck geometry
+binding failure causing configuration loss
 ```
 
 ---
@@ -374,11 +408,13 @@ PASS when:
 
 - covering capability is distinct from actual protection;
 - environmental exposure is target/configuration-specific rather than globally place-based;
+- effective derived properties can alter protection without duplicating them into World truth;
 - partial coverage/leaks emerge from configuration/integrity;
 - layered protection is bounded;
 - environmental degradation can alter protection through grounded mutations;
-- detached components reuse hazard dynamics;
+- authored relation thresholds can remove failed structural relations;
+- detached components reuse hazard dynamics only when a later moving-hazard boundary exists;
 - projects consume world-derived protection rather than duplicate it;
 - no shelter-specific state owner is required.
 
-Current result after `DOMAIN_FIXTURE_CLOTH_SHELTER_WEATHER.md`: **PASS**.
+Current implemented regression chain includes effective protection degradation and binding-threshold detachment: **PASS**.
