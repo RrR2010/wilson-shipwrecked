@@ -48,14 +48,6 @@ var _boot_error := ""
 @onready var _trace_label: Label = $DebugUI/Panel/Margin/VBox/Trace
 
 
-class EmptyWorldAdvance:
-	extends RefCounted
-	const ResultType = preload("res://src/application/simulation/world_advance_result.gd")
-
-	func advance(_elapsed: float, _step):
-		return ResultType.new()
-
-
 class TraceSink:
 	extends RefCounted
 	var traces: Array = []
@@ -111,6 +103,10 @@ func _bootstrap_and_start() -> void:
 		_fail_boot("Scenario bootstrap failed: %s %s" % [String(boot.code), str(boot.diagnostics)])
 		return
 	_owners = boot.owners
+	var runtime = boot.runtime
+	if runtime.world_advance == null:
+		_fail_boot("Runtime composition did not provide authoritative World advance")
+		return
 
 	var registry = GodotSceneSpatialRegistry.new()
 	var wilson_body: CharacterBody3D = $Wilson
@@ -161,9 +157,8 @@ func _bootstrap_and_start() -> void:
 	scheduler.register(&"drives", 1.0, 0.0)
 	var drive_due_gate = DueElapsedGate.new(scheduler, &"drives")
 	var executor = DirectTargetMotionExecutionCoordinator.new(_motion, _wilson_ref, [seek_food])
-	var runtime = boot.runtime
 	var orchestrator = SimulationOrchestrator.new(
-		EmptyWorldAdvance.new(),
+		runtime.world_advance,
 		runtime.action_execution,
 		runtime.world_commands,
 		runtime.derived_invalidator,
