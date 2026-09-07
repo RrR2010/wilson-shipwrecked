@@ -10,6 +10,7 @@ const EnvironmentalResponseAdvanceService = preload("res://src/domain/world/envi
 const PropertyDependencyGraph = preload("res://src/domain/physical/property_dependency_graph.gd")
 const PhysicalDerivationPolicyRegistry = preload("res://src/domain/physical/physical_derivation_policy_registry.gd")
 const EffectivePhysicalProfileResolver = preload("res://src/domain/physical/effective_physical_profile_resolver.gd")
+const EffectivePropertyValueResolver = preload("res://src/domain/physical/effective_property_value_resolver.gd")
 const AssemblyBindingProjection = preload("res://src/domain/physical/assembly_binding_projection.gd")
 const CompositionDependencyProjection = preload("res://src/domain/physical/composition_dependency_projection.gd")
 const ProtectionProjectionService = preload("res://src/domain/physical/protection_projection_service.gd")
@@ -66,7 +67,8 @@ func compose(
 	var assembly_bindings = AssemblyBindingProjection.new(query, attached_to)
 	var composition_dependencies = CompositionDependencyProjection.new(query, [attached_to])
 	var profiles = EffectivePhysicalProfileResolver.new(query, graph, policies, assembly_bindings)
-	var evaluator = RequirementPredicateEvaluator.new(query, profiles)
+	var property_values = EffectivePropertyValueResolver.new(query, profiles)
+	var evaluator = RequirementPredicateEvaluator.new(query, profiles, property_values)
 	var attemptability = ActionAttemptabilityService.new(evaluator)
 	var execution = ActionExecutionService.new(attemptability)
 	var commands = DefaultWorldCommandPort.new(entities, relations, query)
@@ -116,7 +118,7 @@ func compose(
 					break
 			if requires_exposure:
 				exposure_resolver = ExposureResolver.new(
-					ProtectionProjectionService.new(query, content.protection_rule_definitions())
+					ProtectionProjectionService.new(query, content.protection_rule_definitions(), property_values)
 				)
 			environmental_response_advance = EnvironmentalResponseAdvanceService.new(
 				weather_progression,
@@ -125,7 +127,8 @@ func compose(
 				environmental_responses,
 				exposure_resolver,
 				profiles,
-				assembly_bindings
+				assembly_bindings,
+				property_values
 			)
 
 		world_advance = EnvironmentWorldAdvanceService.new(
