@@ -31,7 +31,7 @@ func apply(decision_result, step_id: StringName):
 
 	var current = _activity_query.current_intention()
 	var selected = decision_result.selected_candidate
-	if current != null and not current.intention_id.equals(selected.intention_id):
+	if current != null and not _same_intention_state(current, selected):
 		var execution_id: StringName = _activity_query.active_execution_id()
 		if execution_id != &"":
 			if not _action_execution.can_interrupt(execution_id):
@@ -46,3 +46,15 @@ func apply(decision_result, step_id: StringName):
 				)
 
 	return _decision_commit.apply(decision_result, step_id)
+
+
+func _same_intention_state(current, selected) -> bool:
+	if current == null or selected == null:
+		return false
+	if current.intention_id == null or selected.intention_id == null:
+		return false
+	if not current.intention_id.equals(selected.intention_id):
+		return false
+	if current.bindings == null or selected.bindings == null:
+		return current.bindings == selected.bindings
+	return current.bindings.stable_key() == selected.bindings.stable_key()
