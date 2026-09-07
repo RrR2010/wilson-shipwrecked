@@ -134,7 +134,7 @@ func _resolve_contact_batch() -> void:
 	if not is_equal_approx(_body_state.vitality, 0.75):
 		_fail("grounded body consequence did not reduce Wilson vitality to 0.75")
 		return
-	if body.changes == null or body.changes.is_empty():
+	if body.change_set == null or body.change_set.is_empty():
 		_fail("body consequence did not expose vitality semantic change")
 		return
 	checkpoint_reached.emit(&"BODY_DAMAGED", _probes())
