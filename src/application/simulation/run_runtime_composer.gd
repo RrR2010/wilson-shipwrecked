@@ -7,9 +7,11 @@ const DefaultWorldCommandPort = preload("res://src/domain/world/default_world_co
 const DynamicProcessAdvanceService = preload("res://src/domain/world/dynamic_process_advance_service.gd")
 const WeatherProgressionService = preload("res://src/domain/world/weather_progression_service.gd")
 const EnvironmentalResponseAdvanceService = preload("res://src/domain/world/environmental_response_advance_service.gd")
+const RelationFailureAdvanceService = preload("res://src/domain/world/relation_failure_advance_service.gd")
 const PropertyDependencyGraph = preload("res://src/domain/physical/property_dependency_graph.gd")
 const PhysicalDerivationPolicyRegistry = preload("res://src/domain/physical/physical_derivation_policy_registry.gd")
 const EffectivePhysicalProfileResolver = preload("res://src/domain/physical/effective_physical_profile_resolver.gd")
+const EffectivePropertyValueResolver = preload("res://src/domain/physical/effective_property_value_resolver.gd")
 const AssemblyBindingProjection = preload("res://src/domain/physical/assembly_binding_projection.gd")
 const CompositionDependencyProjection = preload("res://src/domain/physical/composition_dependency_projection.gd")
 const ProtectionProjectionService = preload("res://src/domain/physical/protection_projection_service.gd")
@@ -66,7 +68,8 @@ func compose(
 	var assembly_bindings = AssemblyBindingProjection.new(query, attached_to)
 	var composition_dependencies = CompositionDependencyProjection.new(query, [attached_to])
 	var profiles = EffectivePhysicalProfileResolver.new(query, graph, policies, assembly_bindings)
-	var evaluator = RequirementPredicateEvaluator.new(query, profiles)
+	var property_values = EffectivePropertyValueResolver.new(query, profiles)
+	var evaluator = RequirementPredicateEvaluator.new(query, profiles, property_values)
 	var attemptability = ActionAttemptabilityService.new(evaluator)
 	var execution = ActionExecutionService.new(attemptability)
 	var commands = DefaultWorldCommandPort.new(entities, relations, query)
@@ -87,9 +90,11 @@ func compose(
 		var weather_progression = null
 		var weather_event_projector = null
 		var environmental_response_advance = null
+		var relation_failure_advance = null
 		var weather_definitions: Array = content.weather_definitions()
 		var weather_transitions: Array = content.weather_transition_definitions()
 		var environmental_responses: Array = content.environmental_response_definitions()
+		var relation_failures: Array = content.relation_failure_definitions()
 
 		if not weather_definitions.is_empty():
 			var weather_validation = _validate_weather_graph(environment, weather_definitions, weather_transitions)
@@ -116,7 +121,7 @@ func compose(
 					break
 			if requires_exposure:
 				exposure_resolver = ExposureResolver.new(
-					ProtectionProjectionService.new(query, content.protection_rule_definitions())
+					ProtectionProjectionService.new(query, content.protection_rule_definitions(), property_values)
 				)
 			environmental_response_advance = EnvironmentalResponseAdvanceService.new(
 				weather_progression,
@@ -125,8 +130,12 @@ func compose(
 				environmental_responses,
 				exposure_resolver,
 				profiles,
-				assembly_bindings
+				assembly_bindings,
+				property_values
 			)
+
+		if not relation_failures.is_empty():
+			relation_failure_advance = RelationFailureAdvanceService.new(query, relations, relation_failures)
 
 		world_advance = EnvironmentWorldAdvanceService.new(
 			dynamic_process_advance,
@@ -136,7 +145,8 @@ func compose(
 			null,
 			weather_progression,
 			weather_event_projector,
-			environmental_response_advance
+			environmental_response_advance,
+			relation_failure_advance
 		)
 
 	return RunRuntimeCompositionResult.success(RunRuntimeComposition.new(

@@ -12,6 +12,7 @@ var _semantic_event_projector
 var _weather_progression
 var _weather_event_projector
 var _environmental_response_advance
+var _relation_failure_advance
 
 
 func _init(
@@ -22,7 +23,8 @@ func _init(
 	semantic_event_projector = null,
 	weather_progression = null,
 	weather_event_projector = null,
-	environmental_response_advance = null
+	environmental_response_advance = null,
+	relation_failure_advance = null
 ) -> void:
 	assert(dynamic_process_advance != null, "EnvironmentWorldAdvanceService requires dynamic process advance service")
 	assert(actor_advance != null or actor_stimulus_provider == null, "Actor stimulus provider requires actor advance service")
@@ -37,6 +39,8 @@ func _init(
 		assert(weather_event_projector.has_method("project"), "Weather event projector must implement project(transitions, step_id)")
 	if environmental_response_advance != null:
 		assert(environmental_response_advance.has_method("advance"), "Environmental response service must implement advance(elapsed, conditions)")
+	if relation_failure_advance != null:
+		assert(relation_failure_advance.has_method("advance"), "Relation failure service must implement advance()")
 	_dynamic_process_advance = dynamic_process_advance
 	_actor_advance = actor_advance
 	_actor_stimulus_provider = actor_stimulus_provider
@@ -45,6 +49,7 @@ func _init(
 	_weather_progression = weather_progression
 	_weather_event_projector = weather_event_projector
 	_environmental_response_advance = environmental_response_advance
+	_relation_failure_advance = relation_failure_advance
 
 
 func advance(elapsed: float, step):
@@ -86,6 +91,16 @@ func advance(elapsed: float, step):
 	gradual_transitions.append_array(Array(process_result.get("transitions", [])))
 	for diagnostic in process_result["diagnostics"]:
 		diagnostics.append(String(diagnostic))
+
+	# Relation-failure thresholds are evaluated after all authoritative property
+	# mutations for this environment step. They intentionally read raw World truth,
+	# so freshly degraded bindings can detach in the same causal boundary without
+	# consuming stale derived-profile caches.
+	if _relation_failure_advance != null:
+		var failure_result: Dictionary = _relation_failure_advance.advance()
+		combined_change_set.append_set(failure_result["change_set"])
+		for diagnostic in failure_result.get("diagnostics", []):
+			diagnostics.append(String(diagnostic))
 
 	if _semantic_event_projector != null:
 		events.append_array(_semantic_event_projector.project(gradual_transitions, step.step_id))

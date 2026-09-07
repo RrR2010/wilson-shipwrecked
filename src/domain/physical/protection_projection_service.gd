@@ -2,15 +2,19 @@ class_name ProtectionProjectionService
 extends RefCounted
 
 const ProtectionProjection = preload("res://src/domain/physical/protection_projection.gd")
+const EffectivePropertyValueResolver = preload("res://src/domain/physical/effective_property_value_resolver.gd")
 
 var _world_query
 var _rules: Array
+var _property_values
 
 
-func _init(world_query, rules: Array) -> void:
+func _init(world_query, rules: Array, property_values = null) -> void:
 	assert(world_query != null, "ProtectionProjectionService requires WorldQuery")
 	_world_query = world_query
 	_rules = rules.duplicate()
+	_property_values = property_values if property_values != null else EffectivePropertyValueResolver.new(world_query)
+	assert(_property_values.has_method("get_value"), "Protection property resolver must implement get_value(subject, property_id)")
 
 
 func derive_for_target(target, exposure_kind: StringName) -> Array:
@@ -21,8 +25,8 @@ func derive_for_target(target, exposure_kind: StringName) -> Array:
 		if rule == null or rule.exposure_kind != exposure_kind:
 			continue
 		for relation in _world_query.find_relations(rule.relation_type, null, target):
-			var coverage_value = _world_query.get_instance_property(relation.subject, rule.coverage_property)
-			var strength_value = _world_query.get_instance_property(relation.subject, rule.strength_property)
+			var coverage_value = _property_values.get_value(relation.subject, rule.coverage_property)
+			var strength_value = _property_values.get_value(relation.subject, rule.strength_property)
 			if not _unit_numeric(coverage_value) or not _unit_numeric(strength_value):
 				continue
 			result.append(ProtectionProjection.new(

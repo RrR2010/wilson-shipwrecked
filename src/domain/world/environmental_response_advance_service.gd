@@ -6,6 +6,7 @@ const SemanticChange = preload("res://src/domain/world/semantic_change.gd")
 const SemanticChangeSet = preload("res://src/domain/world/semantic_change_set.gd")
 const EntityInstance = preload("res://src/domain/world/entity_instance.gd")
 const EnvironmentalResponseTargetSelector = preload("res://src/domain/world/environmental_response_target_selector.gd")
+const EffectivePropertyValueResolver = preload("res://src/domain/physical/effective_property_value_resolver.gd")
 
 ## Applies declarative environmental responses to ordinary World properties.
 ## The condition provider may be procedural weather or any future environment source
@@ -18,7 +19,7 @@ var _world_query
 var _entities
 var _definitions: Array
 var _exposure_resolver
-var _physical_profiles
+var _property_values
 var _assembly_bindings
 
 
@@ -29,7 +30,8 @@ func _init(
 	definitions: Array,
 	exposure_resolver = null,
 	physical_profiles = null,
-	assembly_bindings = null
+	assembly_bindings = null,
+	property_values = null
 ) -> void:
 	assert(condition_provider != null and condition_provider.has_method("condition"), "Environmental response requires condition provider")
 	assert(world_query != null, "Environmental response requires WorldQuery")
@@ -38,8 +40,9 @@ func _init(
 	_world_query = world_query
 	_entities = entity_store
 	_exposure_resolver = exposure_resolver
-	_physical_profiles = physical_profiles
+	_property_values = property_values if property_values != null else EffectivePropertyValueResolver.new(world_query, physical_profiles)
 	_assembly_bindings = assembly_bindings
+	assert(_property_values.has_method("get_value"), "Environmental property resolver must implement get_value(subject, property_id)")
 	var seen: Dictionary = {}
 	for definition in definitions:
 		assert(definition != null, "Environmental response definitions cannot contain null")
@@ -73,7 +76,7 @@ func advance(elapsed: float, condition_snapshot: Dictionary = {}) -> Dictionary:
 				continue
 			var susceptibility := 1.0
 			if definition.susceptibility_property != null:
-				var susceptibility_value = _property_value(source_subject, definition.susceptibility_property)
+				var susceptibility_value = _property_values.get_value(source_subject, definition.susceptibility_property)
 				if not _unit_numeric(susceptibility_value):
 					continue
 				susceptibility = float(susceptibility_value)
@@ -159,18 +162,6 @@ func _resolve_targets(source_subject, selector) -> Array:
 			result.sort_custom(func(a, b): return a.sort_key() < b.sort_key())
 			return result
 	return []
-
-
-func _property_value(subject, property_id):
-	var world_value = _world_query.get_instance_property(subject, property_id)
-	if world_value != null:
-		return world_value
-	if _physical_profiles == null:
-		return null
-	var profile = _physical_profiles.resolve(subject)
-	if profile.has_property(property_id):
-		return profile.get_property(property_id)
-	return null
 
 
 func _condition_value(condition_id: StringName, snapshot: Dictionary) -> float:

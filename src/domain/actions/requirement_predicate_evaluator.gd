@@ -4,16 +4,18 @@ extends RefCounted
 const DomainId = preload("res://src/domain/core/domain_id.gd")
 const RequirementPredicate = preload("res://src/domain/actions/requirement_predicate.gd")
 const PredicateEvaluationResult = preload("res://src/domain/actions/predicate_evaluation_result.gd")
+const EffectivePropertyValueResolver = preload("res://src/domain/physical/effective_property_value_resolver.gd")
 
 var _world_query
-var _physical_profiles
+var _property_values
 
 
-func _init(world_query, physical_profiles) -> void:
+func _init(world_query, physical_profiles, property_values = null) -> void:
 	assert(world_query != null, "RequirementPredicateEvaluator requires WorldQuery")
 	assert(physical_profiles != null, "RequirementPredicateEvaluator requires physical profile resolver")
 	_world_query = world_query
-	_physical_profiles = physical_profiles
+	_property_values = property_values if property_values != null else EffectivePropertyValueResolver.new(world_query, physical_profiles)
+	assert(_property_values.has_method("get_value"), "Requirement property resolver must implement get_value(subject, property_id)")
 
 
 func evaluate(predicate, bindings):
@@ -77,8 +79,7 @@ func _evaluate_node(predicate, bindings):
 			var property_subject = _require_role(bindings, predicate.role_name)
 			if property_subject == null:
 				return PredicateEvaluationResult.failure(["missing role %s" % String(predicate.role_name)])
-			var profile = _physical_profiles.resolve(property_subject)
-			var actual = profile.get_property(predicate.semantic_id) if profile.has_property(predicate.semantic_id) else _world_query.get_instance_property(property_subject, predicate.semantic_id)
+			var actual = _property_values.get_value(property_subject, predicate.semantic_id)
 			if actual == null:
 				return PredicateEvaluationResult.failure([
 					"%s property %s absent" % [String(predicate.role_name), String(predicate.semantic_id.value)]
