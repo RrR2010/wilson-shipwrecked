@@ -51,6 +51,7 @@ func _test_named_scenario_builds_fresh_owners_and_runtime() -> void:
 	_expect_equal(result.owners.beliefs.entry_count(), 1, "bootstrap reconstructs supplied cognition cause")
 	_expect_true(result.owners.current_intention.has_current(), "bootstrap reconstructs supplied intention cause")
 	_expect_true(result.runtime != null, "scenario proceeds through normal runtime composition")
+	_expect_true(result.runtime.world_advance != null, "deterministic scenario composes authoritative environment World advance")
 	var food_ref = RuntimeWorldRef.entity(DomainId.entity(&"food_1"))
 	_expect_equal(result.runtime.world_query.get_instance_property(food_ref, DomainId.property(&"freshness")), 0.75, "runtime query sees bootstrapped World truth")
 	_expect_true(result.runtime.activity_query.current_intention().bindings.get_subject(&"target").equals(food_ref), "runtime sees bootstrapped cognition through normal owner")
