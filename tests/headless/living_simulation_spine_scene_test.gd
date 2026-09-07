@@ -2,8 +2,7 @@ extends SceneTree
 
 const SCENE_PATH := "res://tools/living_simulation/living_simulation.tscn"
 const MAX_BOOT_FRAMES := 180
-const MAX_OBSERVATION_FRAMES := 1200
-const POST_CONSEQUENCE_FRAMES := 120
+const MAX_OBSERVATION_FRAMES := 2400
 
 var _failures: Array[String] = []
 
@@ -44,9 +43,14 @@ func _run() -> void:
 	var moved := false
 	var selected_intention := false
 	var max_hunger := float(initial.get("hunger", -1.0))
-	var hunger_after_meal := -1.0
-	var completion_time := -1.0
+	var hunger_after_first_meal := -1.0
+	var project_started := false
+	var project_progress_before_interruption := 0
+	var saw_food_interruption_after_work := false
+	var second_meal_project_progress := -1
+	var resumed_project_after_interruption := false
 	var final: Dictionary = initial
+
 	for _frame in range(MAX_OBSERVATION_FRAMES):
 		await physics_frame
 		if scene.boot_error() != "":
@@ -58,10 +62,24 @@ func _run() -> void:
 		moved = moved or initial_position.distance_to(current_position) > 0.5
 		selected_intention = selected_intention or bool(final.get("has_intention", false))
 		max_hunger = maxf(max_hunger, float(final.get("hunger", -1.0)))
-		if int(final.get("grounded_consumptions", 0)) > 0 and hunger_after_meal < 0.0:
-			hunger_after_meal = float(final.get("hunger", -1.0))
-			completion_time = float(final.get("simulation_time", 0.0))
-		if hunger_after_meal >= 0.0 and float(final.get("simulation_time", 0.0)) >= completion_time + 2.0:
+
+		var meals := int(final.get("grounded_consumptions", 0))
+		var project_progress := int(final.get("project_contributions", 0))
+		var intention_key := String(final.get("intention_key", ""))
+		if meals > 0 and hunger_after_first_meal < 0.0:
+			hunger_after_first_meal = float(final.get("hunger", -1.0))
+		if project_progress > 0:
+			project_started = true
+		if project_started and meals < 2:
+			project_progress_before_interruption = maxi(project_progress_before_interruption, project_progress)
+		if project_started and intention_key.contains("seek_food"):
+			saw_food_interruption_after_work = true
+		if meals >= 2 and second_meal_project_progress < 0:
+			second_meal_project_progress = project_progress
+		if second_meal_project_progress >= 0 \
+			and intention_key.contains("continue_shelter_project") \
+			and project_progress > second_meal_project_progress:
+			resumed_project_after_interruption = true
 			break
 
 	if float(final.get("simulation_time", 0.0)) <= float(initial.get("simulation_time", 0.0)):
@@ -74,14 +92,24 @@ func _run() -> void:
 		_failures.append("Wilson did not autonomously select an intention")
 	if not moved:
 		_failures.append("Wilson did not physically move during bounded observation")
-	if hunger_after_meal < 0.0:
-		_failures.append("Wilson never produced a grounded food consumption")
-	elif hunger_after_meal >= max_hunger - 0.2:
+	if hunger_after_first_meal < 0.0:
+		_failures.append("Wilson never produced the initial grounded food consumption")
+	elif hunger_after_first_meal >= max_hunger - 0.2:
 		_failures.append("Grounded food consumption did not materially reduce hunger")
-	if int(final.get("grounded_intention_completions", 0)) <= 0:
-		_failures.append("Grounded food outcome did not complete seek_food intention")
-	if hunger_after_meal >= 0.0 and float(final.get("simulation_time", 0.0)) < completion_time + 2.0:
-		_failures.append("Simulation did not remain live after the grounded consequence")
+	if not project_started:
+		_failures.append("Wilson never produced grounded shelter project progress")
+	if project_progress_before_interruption <= 0:
+		_failures.append("Shelter project had no persistent partial progress before competing hunger")
+	if not saw_food_interruption_after_work:
+		_failures.append("Pressing hunger never displaced visible shelter project work")
+	if int(final.get("grounded_consumptions", 0)) < 2:
+		_failures.append("Competing hunger did not resolve through a second grounded meal")
+	if not resumed_project_after_interruption:
+		_failures.append("Wilson did not return to the same persistent shelter project after hunger resolved")
+	if not bool(final.get("project_active", false)):
+		_failures.append("Persistent shelter project stopped being active during continuity observation")
+	if int(final.get("grounded_project_contributions", 0)) < int(final.get("project_contributions", 0)):
+		_failures.append("Observed project progress was not backed by grounded project contributions")
 	if int(final.get("trace_count", 0)) <= 0:
 		_failures.append("Living simulation produced no semantic traces")
 

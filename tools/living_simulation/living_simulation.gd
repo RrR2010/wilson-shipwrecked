@@ -2,9 +2,11 @@ extends Node3D
 
 const DomainId = preload("res://src/domain/core/domain_id.gd")
 const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
+const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const ContentRegistry = preload("res://src/domain/content/content_registry.gd")
 const EntityBootstrapSeed = preload("res://src/application/bootstrap/entity_bootstrap_seed.gd")
 const BeliefBootstrapSeed = preload("res://src/application/bootstrap/belief_bootstrap_seed.gd")
+const ProjectBootstrapSeed = preload("res://src/application/bootstrap/project_bootstrap_seed.gd")
 const SimulationBootstrapDefinition = preload("res://src/application/bootstrap/simulation_bootstrap_definition.gd")
 const DeterministicScenarioDefinition = preload("res://src/application/bootstrap/deterministic_scenario_definition.gd")
 const DeterministicScenarioBootstrapService = preload("res://src/application/bootstrap/deterministic_scenario_bootstrap_service.gd")
@@ -24,8 +26,13 @@ const PerceivedOpportunityDefinition = preload("res://src/domain/cognition/perce
 const PerceivedOpportunityService = preload("res://src/domain/cognition/perceived_opportunity_service.gd")
 const DriveBackedBelievedOpportunityCandidateSource = preload("res://src/domain/cognition/drive_backed_believed_opportunity_candidate_source.gd")
 const DecisionRouter = preload("res://src/domain/cognition/decision_router.gd")
+const ProjectDefinition = preload("res://src/domain/projects/project_definition.gd")
+const ProjectInstance = preload("res://src/domain/projects/project_instance.gd")
+const ProjectContributionService = preload("res://src/domain/projects/project_contribution_service.gd")
+const ProjectCandidateSource = preload("res://src/domain/projects/project_candidate_source.gd")
 const DecisionCommitCoordinator = preload("res://src/application/simulation/decision_commit_coordinator.gd")
 const TargetedActionExecutionCoordinator = preload("res://src/application/simulation/targeted_action_execution_coordinator.gd")
+const CompositeSelectedIntentionExecutor = preload("res://src/application/simulation/composite_selected_intention_executor.gd")
 const GroundedDriveConsequenceService = preload("res://src/application/simulation/grounded_drive_consequence_service.gd")
 const GroundedIntentionCompletionService = preload("res://src/application/simulation/grounded_intention_completion_service.gd")
 const SemanticDueScheduler = preload("res://src/application/simulation/semantic_due_scheduler.gd")
@@ -35,9 +42,10 @@ const GodotSceneSpatialRegistry = preload("res://src/infrastructure/spatial/godo
 const GodotMotionAdapter = preload("res://src/infrastructure/spatial/godot_motion_adapter.gd")
 const GodotSimulationHost = preload("res://src/infrastructure/spatial/godot_simulation_host.gd")
 
-const SCENARIO_NAME := &"living_simulation_need_resource_consequence"
+const SCENARIO_NAME := &"living_simulation_persistent_work_interference"
 const GAMEPLAY_SEED := 61007
 const MAX_NAVIGATION_SYNC_FRAMES := 120
+const SHELTER_REQUIRED_CONTRIBUTIONS := 100
 
 var _owners
 var _motion
@@ -45,12 +53,14 @@ var _host
 var _wilson_ref
 var _food_ref
 var _shelter_ref
+var _shelter_project_id
 var _trace_sink := TraceSink.new()
 var _boot_error := ""
 
 @onready var _status_label: Label = $DebugUI/Panel/Margin/VBox/Status
 @onready var _intention_label: Label = $DebugUI/Panel/Margin/VBox/Intention
 @onready var _drive_label: Label = $DebugUI/Panel/Margin/VBox/Drive
+@onready var _project_label: Label = $DebugUI/Panel/Margin/VBox/Project
 @onready var _motion_label: Label = $DebugUI/Panel/Margin/VBox/Motion
 @onready var _trace_label: Label = $DebugUI/Panel/Margin/VBox/Trace
 
@@ -60,6 +70,7 @@ class TraceSink:
 	var traces: Array = []
 	var grounded_consumptions := 0
 	var grounded_intention_completions := 0
+	var grounded_project_contributions := 0
 
 	func record(trace) -> void:
 		traces.append(trace)
@@ -69,6 +80,9 @@ class TraceSink:
 		var intention_result = trace.stage_results.get(&"intention_completion")
 		if intention_result != null and intention_result.code == &"intention_completion_applied":
 			grounded_intention_completions += 1
+		var project_result = trace.stage_results.get(&"project_progression")
+		if project_result is Dictionary:
+			grounded_project_contributions += project_result.get("applied", []).size()
 		if traces.size() > 64:
 			traces.pop_front()
 
@@ -95,13 +109,27 @@ func _bootstrap_and_start() -> void:
 	var shelter_type_id = DomainId.entity_type(&"shelter")
 	var edible_property = DomainId.property(&"edible")
 	var seek_food = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"seek_food")
+	var continue_shelter = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"continue_shelter_project")
 	var consume_food = DomainId.action(&"consume_food")
+	var contribute_shelter = DomainId.action(&"contribute_shelter")
 	var food_consumed = DomainId.event_definition(&"food_consumed")
+	var shelter_contribution = DomainId.event_definition(&"shelter_contribution_committed")
+	var shelter_project_definition_id = DomainId.new(DomainId.Kind.PROJECT_DEFINITION, &"build_shelter")
+	_shelter_project_id = DomainId.new(DomainId.Kind.PROJECT_INSTANCE, &"build_shelter_001")
 	_wilson_ref = RuntimeWorldRef.wilson()
 	_food_ref = RuntimeWorldRef.entity(food_entity_id)
 	_shelter_ref = RuntimeWorldRef.entity(shelter_entity_id)
 
 	var known_food = BeliefProposition.new(EpistemicClaim.property_claim(_food_ref, edible_property, true))
+	var shelter_project_bindings = RoleBinding.new()
+	shelter_project_bindings.bind(&"target", _shelter_ref)
+	var project_seed = ProjectBootstrapSeed.new(
+		_shelter_project_id,
+		shelter_project_definition_id,
+		shelter_project_bindings,
+		ProjectInstance.Lifecycle.ACTIVE,
+		0
+	)
 	var simulation = SimulationBootstrapDefinition.new(
 		place_id,
 		[
@@ -112,7 +140,8 @@ func _bootstrap_and_start() -> void:
 		[BeliefBootstrapSeed.new(known_food, 0.9, 1, &"new_run_seed", &"memory")],
 		null,
 		1.0,
-		{DriveState.HUNGER: 0.54}
+		{DriveState.HUNGER: 0.54},
+		[project_seed]
 	)
 	var definition = DeterministicScenarioDefinition.new(SCENARIO_NAME, GAMEPLAY_SEED, simulation)
 	var boot = DeterministicScenarioBootstrapService.new().bootstrap(definition, content)
@@ -162,7 +191,7 @@ func _bootstrap_and_start() -> void:
 		DecisionCandidate.Scope.INTENTIONAL,
 		0.1
 	)
-	var drive_progression = DriveProgressionService.new(_owners.drives, {DriveState.HUNGER: 0.02})
+	var drive_progression = DriveProgressionService.new(_owners.drives, {DriveState.HUNGER: 0.04})
 	var drive_source = DriveCandidateSource.new(_owners.drives, [drive_definition])
 	var grounded_opportunities = DriveBackedBelievedOpportunityCandidateSource.new(
 		_owners.drives,
@@ -187,7 +216,20 @@ func _bootstrap_and_start() -> void:
 		food_consumed,
 		&"consume_food_default"
 	)
-	var executor = TargetedActionExecutionCoordinator.new(
+	var shelter_action_definition = ActionDefinition.new(
+		contribute_shelter,
+		[&"actor", &"target"] as Array[StringName],
+		RequirementPredicate.all_of([])
+	)
+	var shelter_action_resolution = ActionResolutionDefinition.new(
+		contribute_shelter,
+		0.8,
+		0.5,
+		[],
+		shelter_contribution,
+		&"contribute_shelter_default"
+	)
+	var food_executor = TargetedActionExecutionCoordinator.new(
 		_motion,
 		runtime.action_execution,
 		_wilson_ref,
@@ -195,6 +237,15 @@ func _bootstrap_and_start() -> void:
 		consume_definition,
 		consume_resolution
 	)
+	var project_executor = TargetedActionExecutionCoordinator.new(
+		_motion,
+		runtime.action_execution,
+		_wilson_ref,
+		continue_shelter,
+		shelter_action_definition,
+		shelter_action_resolution
+	)
+	var executor = CompositeSelectedIntentionExecutor.new([food_executor, project_executor])
 	var drive_consequence = GroundedDriveConsequenceService.new(
 		_owners.drives,
 		[DriveConsequenceDefinition.new(consume_food, DriveState.HUNGER, -0.45, food_consumed)]
@@ -203,6 +254,18 @@ func _bootstrap_and_start() -> void:
 		_owners.current_intention,
 		[IntentionCompletionDefinition.new(seek_food, consume_food, food_consumed)]
 	)
+	var shelter_project_definition = ProjectDefinition.new(
+		shelter_project_definition_id,
+		contribute_shelter,
+		shelter_contribution,
+		&"target",
+		&"target",
+		continue_shelter,
+		SHELTER_REQUIRED_CONTRIBUTIONS,
+		0.35
+	)
+	var project_contribution = ProjectContributionService.new(_owners.projects, [shelter_project_definition])
+	var project_source = ProjectCandidateSource.new(_owners.projects, [shelter_project_definition])
 	var orchestrator = SimulationOrchestrator.new(
 		runtime.world_advance,
 		runtime.action_execution,
@@ -220,8 +283,8 @@ func _bootstrap_and_start() -> void:
 		_trace_sink,
 		drive_progression,
 		drive_source,
-		null,
-		null,
+		project_contribution,
+		project_source,
 		[grounded_opportunities],
 		null,
 		null,
@@ -250,6 +313,10 @@ func boot_error() -> String:
 
 
 func observation_snapshot() -> Dictionary:
+	var project = null if _owners == null or _shelter_project_id == null else _owners.projects.get_instance(_shelter_project_id)
+	var intention_key := ""
+	if _owners != null and _owners.current_intention.has_current():
+		intention_key = _owners.current_intention.current().intention_id.sort_key()
 	return {
 		"live": is_live(),
 		"simulation_time": -1.0 if _host == null else _host.simulation_time(),
@@ -257,11 +324,15 @@ func observation_snapshot() -> Dictionary:
 		"hunger": -1.0 if _owners == null else _owners.drives.value(DriveState.HUNGER),
 		"hunger_band": -1 if _owners == null else _owners.drives.band(DriveState.HUNGER),
 		"has_intention": false if _owners == null else _owners.current_intention.has_current(),
+		"intention_key": intention_key,
 		"motion_status": -1 if _motion == null or _wilson_ref == null else _motion.get_status(_wilson_ref),
 		"wilson_position": $Wilson.global_position,
 		"trace_count": _trace_sink.traces.size(),
 		"grounded_consumptions": _trace_sink.grounded_consumptions,
 		"grounded_intention_completions": _trace_sink.grounded_intention_completions,
+		"project_contributions": 0 if project == null else project.contribution_count,
+		"project_active": false if project == null else project.is_active(),
+		"grounded_project_contributions": _trace_sink.grounded_project_contributions,
 	}
 
 
@@ -288,14 +359,21 @@ func _update_debug_projection() -> void:
 		_owners.drives.band(DriveState.HUNGER),
 		_trace_sink.grounded_consumptions,
 	]
+	var project = _owners.projects.get_instance(_shelter_project_id)
+	_project_label.text = "Shelter project: %d/%d contributions   active=%s" % [
+		0 if project == null else project.contribution_count,
+		SHELTER_REQUIRED_CONTRIBUTIONS,
+		false if project == null else project.is_active(),
+	]
 	_motion_label.text = "Motion: %s   pos (%.1f, %.1f)" % [
 		_motion_status_name(_motion.get_status(_wilson_ref)),
 		$Wilson.global_position.x,
 		$Wilson.global_position.z,
 	]
-	_trace_label.text = "Recent semantic traces: %d   completed intentions: %d" % [
+	_trace_label.text = "Recent traces: %d   completed food intentions: %d   grounded work: %d" % [
 		_trace_sink.traces.size(),
 		_trace_sink.grounded_intention_completions,
+		_trace_sink.grounded_project_contributions,
 	]
 
 
