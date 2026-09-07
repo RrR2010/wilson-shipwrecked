@@ -1,6 +1,7 @@
 class_name SimulationOrchestrator
 extends RefCounted
 
+const ActionProgressResult = preload("res://src/domain/actions/action_progress_result.gd")
 const PerceptionResult = preload("res://src/domain/cognition/perception_result.gd")
 const SimulationStepResult = preload("res://src/application/simulation/simulation_step_result.gd")
 const SimulationStepTrace = preload("res://src/infrastructure/diagnostics/simulation_step_trace.gd")
@@ -214,6 +215,8 @@ func advance(step):
 		trace.record_result(&"drive_progression", drive_progress)
 
 	var raw_triggers: Array = [] if step.trigger_set == null else Array(step.trigger_set).duplicate()
+	if action_progress is ActionProgressResult and action_progress.completed:
+		raw_triggers.append(ReconsiderationGate.Trigger.ACTION_OR_INTENTION_COMPLETION)
 	var perception_triggers: Array = []
 	if _perception_trigger_source != null:
 		perception_triggers = _perception_trigger_source.derive(perception_result)
