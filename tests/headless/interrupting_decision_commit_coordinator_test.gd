@@ -118,11 +118,24 @@ func _run() -> void:
 		same_commit
 	)
 	var same_result = same.apply(DecisionStub.new(CandidateStub.new(project, target_a)), &"reconsider_step")
-	_expect_true(same_result != null and same_result.ok, "same semantic intention continues")
-	_expect_equal(same_result.code, &"current_intention_continued", "same intention reports continuity")
+	_expect_true(same_result != null and same_result.ok, "same semantic intention continues while action is active")
+	_expect_equal(same_result.code, &"current_intention_continued", "active same intention reports continuity")
 	_expect_true(same_result.value == current_same, "continuity preserves current intention identity and selected step")
-	_expect_true(same_actions.interrupted.is_empty(), "same intention leaves execution untouched")
-	_expect_equal(same_commit.calls, 0, "same intention does not mint a fresh commitment")
+	_expect_true(same_actions.interrupted.is_empty(), "same active intention leaves execution untouched")
+	_expect_equal(same_commit.calls, 0, "same active intention does not mint a fresh commitment")
+
+	var cycle_actions = ActionExecutionStub.new()
+	var cycle_commit = CommitStub.new()
+	var cycle = InterruptingDecisionCommitCoordinator.new(
+		ActivityStub.new(IntentionStub.new(project, target_a, &"completed_action_step"), &""),
+		cycle_actions,
+		cycle_commit
+	)
+	var cycle_result = cycle.apply(DecisionStub.new(CandidateStub.new(project, target_a)), &"next_action_step")
+	_expect_true(cycle_result != null and cycle_result.ok, "same semantic intention may recommit after prior action becomes terminal")
+	_expect_equal(cycle_result.code, &"committed", "completed action cycle reaches wrapped commit")
+	_expect_true(cycle_actions.interrupted.is_empty(), "terminal prior action requires no interruption")
+	_expect_equal(cycle_commit.calls, 1, "same intention gets a fresh selected step for the next repeated action")
 
 	var retarget_actions = ActionExecutionStub.new()
 	var retarget_commit = CommitStub.new()
