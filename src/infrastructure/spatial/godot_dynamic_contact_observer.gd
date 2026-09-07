@@ -6,6 +6,11 @@ const PhysicalObservation = preload("res://src/application/simulation/physical_o
 ## Converts Godot body-entered callbacks into non-authoritative PhysicalObservation
 ## facts. Semantic identity comes only from GodotSceneSpatialRegistry bindings.
 ## This adapter never decides whether contact is harmful and never mutates World.
+##
+## Contact observations are oriented toward the contacted/impacted body:
+## `subject` is the body entered by the observed dynamic body, while `other` is
+## the dynamic body that produced the callback. This keeps body consequence
+## policies independent from which RigidBody3D happened to report the contact.
 
 var _registry
 var _observation_buffer
@@ -44,26 +49,26 @@ func unbind_body(body: RigidBody3D) -> bool:
 	_callbacks_by_body_id.erase(body_id)
 	return true
 
-func observe_contact(subject_body: Node3D, other_body: Node3D) -> bool:
-	if subject_body == null or other_body == null:
+func observe_contact(dynamic_body: Node3D, impacted_body: Node3D) -> bool:
+	if dynamic_body == null or impacted_body == null:
 		return false
-	var subject_ref = _registry.runtime_ref_for_node(subject_body)
-	var other_ref = _registry.runtime_ref_for_node(other_body)
-	if subject_ref == null or other_ref == null:
+	var dynamic_ref = _registry.runtime_ref_for_node(dynamic_body)
+	var impacted_ref = _registry.runtime_ref_for_node(impacted_body)
+	if dynamic_ref == null or impacted_ref == null:
 		return false
 	var observation = PhysicalObservation.new(
 		PhysicalObservation.Kind.CONTACT,
-		subject_ref,
-		other_ref,
-		_relative_speed(subject_body, other_body),
-		_midpoint(subject_body, other_body),
+		impacted_ref,
+		dynamic_ref,
+		_relative_speed(dynamic_body, impacted_body),
+		_midpoint(dynamic_body, impacted_body),
 		Vector3.ZERO
 	)
 	return _observation_buffer.enqueue(observation)
 
-func _on_body_entered(other_body: Node, subject_body: RigidBody3D) -> void:
+func _on_body_entered(other_body: Node, dynamic_body: RigidBody3D) -> void:
 	if other_body is Node3D:
-		observe_contact(subject_body, other_body as Node3D)
+		observe_contact(dynamic_body, other_body as Node3D)
 
 func _relative_speed(a: Node3D, b: Node3D) -> float:
 	return (_linear_velocity(a) - _linear_velocity(b)).length()
