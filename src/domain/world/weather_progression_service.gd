@@ -57,7 +57,8 @@ func advance(elapsed: float) -> Dictionary:
 		if _environment.weather_elapsed < _environment.weather_planned_duration and not is_equal_approx(_environment.weather_elapsed, _environment.weather_planned_duration):
 			break
 		var previous: StringName = _environment.weather
-		var next: StringName = _select_next(previous, _environment.weather_transition_index)
+		var selected = _select_transition(previous, _environment.weather_transition_index)
+		var next: StringName = selected.to_weather
 		var next_index := _environment.weather_transition_index + 1
 		var duration := _duration_for(next, next_index)
 		_environment.begin_weather(next, duration, next_index)
@@ -66,6 +67,7 @@ func advance(elapsed: float) -> Dictionary:
 			"to": next,
 			"transition_index": next_index,
 			"planned_duration": duration,
+			"event_type": selected.event_type,
 		})
 	return {
 		"weather": _environment.weather,
@@ -88,7 +90,7 @@ func condition(condition_id: StringName, fallback: float = 0.0) -> float:
 	return definition.condition(condition_id, fallback)
 
 
-func _select_next(from_weather: StringName, transition_index: int) -> StringName:
+func _select_transition(from_weather: StringName, transition_index: int):
 	var options: Array = _transitions_by_from[from_weather]
 	var total_weight := 0.0
 	for option in options:
@@ -98,8 +100,8 @@ func _select_next(from_weather: StringName, transition_index: int) -> StringName
 	for option in options:
 		cumulative += option.weight
 		if sample < cumulative:
-			return option.to_weather
-	return options[options.size() - 1].to_weather
+			return option
+	return options[options.size() - 1]
 
 
 func _duration_for(weather_id: StringName, transition_index: int) -> float:
