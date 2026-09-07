@@ -76,12 +76,12 @@ func advance(elapsed: float, condition_snapshot: Dictionary = {}) -> Dictionary:
 			var exposure: float = condition
 			if definition.exposure_kind != &"":
 				var exposure_result = _exposure_resolver.resolve(subject, definition.exposure_kind, condition)
-				exposure = float(exposure_result.residual_exposure)
+				exposure = exposure_result.exposure_level
 			if exposure <= 0.0:
 				continue
 			var current: float = float(current_value)
-			var delta: float = float(definition.rate_per_second_at_full_exposure) * exposure * susceptibility * elapsed
-			var next_value: float = clampf(current + delta, float(definition.lower_bound), float(definition.upper_bound))
+			var delta: float = definition.rate_per_second_at_full_exposure * exposure * susceptibility * elapsed
+			var next_value: float = clampf(current + delta, definition.lower_bound, definition.upper_bound)
 			if is_equal_approx(next_value, current):
 				continue
 			if _world_query.has_method("validate_property_value") and not _world_query.validate_property_value(definition.target_property, next_value):
