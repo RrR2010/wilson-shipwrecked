@@ -54,7 +54,7 @@ func _run_slice() -> void:
 		var second = definitions[1]
 		_expect_equal(String(first.id), "binding_breaks_when_weak", "definitions sort by stable id")
 		_expect_equal(first.compare, RelationFailureDefinition.Compare.LTE, "<= parses to LTE")
-		_expect_equal(first.qualifier.sort_key(), "assembly_slot:roof_binding", "typed assembly-slot qualifier parses")
+		_expect_equal(first.qualifier.sort_key(), "AssemblySlotId:roof_binding", "typed assembly-slot qualifier parses")
 		_expect_equal(second.compare, RelationFailureDefinition.Compare.GTE, ">= parses to GTE")
 		_expect_true(second.qualifier == null, "qualifier remains optional")
 
