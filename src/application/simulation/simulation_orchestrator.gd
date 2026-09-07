@@ -45,6 +45,7 @@ var _lifecycle_event_coordinator
 var _selected_intention_executor
 var _drive_due_gate
 var _grounded_drive_consequence
+var _perceived_habit_candidate_source
 
 
 func _init(
@@ -74,7 +75,8 @@ func _init(
 	lifecycle_event_coordinator = null,
 	selected_intention_executor = null,
 	drive_due_gate = null,
-	grounded_drive_consequence = null
+	grounded_drive_consequence = null,
+	perceived_habit_candidate_source = null
 ) -> void:
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
 	assert(action_execution != null, "SimulationOrchestrator requires action execution")
@@ -108,6 +110,8 @@ func _init(
 		assert(drive_due_gate.has_method("elapsed_for_step"), "Drive due gate must implement elapsed_for_step()")
 	if grounded_drive_consequence != null:
 		assert(grounded_drive_consequence.has_method("apply_grounded"), "Grounded drive consequence must implement apply_grounded(outcome, world_commit_result)")
+	if perceived_habit_candidate_source != null:
+		assert(perceived_habit_candidate_source.has_method("generate"), "Perceived habit source must implement generate(perception_result)")
 	_world_advance = world_advance
 	_action_execution = action_execution
 	_world_commands = world_commands
@@ -135,6 +139,7 @@ func _init(
 	_selected_intention_executor = selected_intention_executor
 	_drive_due_gate = drive_due_gate
 	_grounded_drive_consequence = grounded_drive_consequence
+	_perceived_habit_candidate_source = perceived_habit_candidate_source
 
 
 func advance(step):
@@ -238,6 +243,10 @@ func advance(step):
 			candidates.append_array(_project_candidate_source.generate())
 		for source in _additional_candidate_sources:
 			candidates.append_array(source.generate())
+		if _perceived_habit_candidate_source != null:
+			var habit_candidates: Array = _perceived_habit_candidate_source.generate(perception_result)
+			candidates.append_array(habit_candidates)
+			trace.record_result(&"perceived_habit_candidates", habit_candidates)
 		candidates.sort_custom(func(a, b): return a.stable_key() < b.stable_key())
 		trace.record_result(&"decision_candidates", candidates)
 		decision_result = _decision_router.resolve(candidates, _activity_query.current_intention())
