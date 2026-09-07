@@ -76,4 +76,6 @@ func _linear_velocity(node: Node3D) -> Vector3:
 	return Vector3.ZERO
 
 func _midpoint(a: Node3D, b: Node3D) -> Vector3:
-	return (a.global_position + b.global_position) * 0.5
+	var a_position := a.global_position if a.is_inside_tree() else a.position
+	var b_position := b.global_position if b.is_inside_tree() else b.position
+	return (a_position + b_position) * 0.5
