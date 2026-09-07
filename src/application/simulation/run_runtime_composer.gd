@@ -11,6 +11,7 @@ const PropertyDependencyGraph = preload("res://src/domain/physical/property_depe
 const PhysicalDerivationPolicyRegistry = preload("res://src/domain/physical/physical_derivation_policy_registry.gd")
 const EffectivePhysicalProfileResolver = preload("res://src/domain/physical/effective_physical_profile_resolver.gd")
 const AssemblyBindingProjection = preload("res://src/domain/physical/assembly_binding_projection.gd")
+const CompositionDependencyProjection = preload("res://src/domain/physical/composition_dependency_projection.gd")
 const ProtectionProjectionService = preload("res://src/domain/physical/protection_projection_service.gd")
 const ExposureResolver = preload("res://src/domain/physical/exposure_resolver.gd")
 const RequirementPredicateEvaluator = preload("res://src/domain/actions/requirement_predicate_evaluator.gd")
@@ -61,16 +62,15 @@ func compose(
 		return RunRuntimeCompositionResult.failure(graph_result.code, graph_result.diagnostics)
 
 	var query = DefaultWorldQuery.new(entities, relations, content, wilson_world_state)
-	var assembly_bindings = AssemblyBindingProjection.new(
-		query,
-		DomainId.relation_type(ASSEMBLY_BINDING_RELATION)
-	)
+	var attached_to = DomainId.relation_type(ASSEMBLY_BINDING_RELATION)
+	var assembly_bindings = AssemblyBindingProjection.new(query, attached_to)
+	var composition_dependencies = CompositionDependencyProjection.new(query, [attached_to])
 	var profiles = EffectivePhysicalProfileResolver.new(query, graph, policies, assembly_bindings)
 	var evaluator = RequirementPredicateEvaluator.new(query, profiles)
 	var attemptability = ActionAttemptabilityService.new(evaluator)
 	var execution = ActionExecutionService.new(attemptability)
 	var commands = DefaultWorldCommandPort.new(entities, relations, query)
-	var invalidator = DerivedStateInvalidator.new(profiles)
+	var invalidator = DerivedStateInvalidator.new(profiles, composition_dependencies)
 	var perception_access = CoarsePerceptionAccessResolver.new(query)
 	var perception = PerceptionService.new()
 	var learning = BeliefLearningCoordinator.new(BeliefLearningService.new(), beliefs)
