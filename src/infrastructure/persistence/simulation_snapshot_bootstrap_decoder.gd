@@ -17,6 +17,7 @@ const EpisodeBootstrapSeed = preload("res://src/application/bootstrap/episode_bo
 const PresenceBootstrapSeed = preload("res://src/application/bootstrap/presence_bootstrap_seed.gd")
 const DynamicProcessBootstrapSeed = preload("res://src/application/bootstrap/dynamic_process_bootstrap_seed.gd")
 const ActorStateBootstrapSeed = preload("res://src/application/bootstrap/actor_state_bootstrap_seed.gd")
+const ActorRelationshipBootstrapSeed = preload("res://src/application/bootstrap/actor_relationship_bootstrap_seed.gd")
 
 ## Persistence-facing decoder from schema DTOs into the application bootstrap
 ## contract. Snapshot schema/codec concerns stay here; owner construction stays in
@@ -88,11 +89,22 @@ func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 			StringName(record.get("last_rule_id", ""))
 		))
 
+	var actor_relationship_seeds: Array = []
+	for record in snapshot.get("actor_relationships", []):
+		actor_relationship_seeds.append(ActorRelationshipBootstrapSeed.new(
+			_codec.decode(record["actor"]),
+			_codec.decode(record["subject"]),
+			float(record["affinity"]),
+			int(record["evidence_count"]),
+			StringName(record.get("last_source_execution_id", ""))
+		))
+
 	return SimulationBootstrapDefinition.new(
 		_codec.decode(wilson_record["place_id"]), entity_seeds, relation_seeds, belief_seeds, intention_seed,
 		float(body_record["vitality"]), _decode_drives(drive_record), project_seeds, association_seeds,
 		habit_seeds, episode_seeds, presence_seed, StringName(environment_record["weather"]),
-		StringName(environment_record["daylight_phase"]), dynamic_process_seeds, actor_state_seeds
+		StringName(environment_record["daylight_phase"]), dynamic_process_seeds, actor_state_seeds,
+		actor_relationship_seeds
 	)
 
 func _decode_drives(record: Dictionary) -> Dictionary:
