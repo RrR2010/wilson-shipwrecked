@@ -75,8 +75,7 @@ func _run_slice() -> void:
 		[
 			WeatherTransitionDefinition.new(&"clear", &"rain"),
 			WeatherTransitionDefinition.new(&"rain", &"clear"),
-		],
-		123
+		]
 	)
 	var response = EnvironmentalResponseAdvanceService.new(
 		weather,
