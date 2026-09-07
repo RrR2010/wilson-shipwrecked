@@ -3,20 +3,22 @@ extends RefCounted
 
 ## Deterministic procedural weather progression over authored regime and transition data.
 ## This service mutates only EnvironmentState and owns no independent durable truth.
+##
+## Selection is intentionally derived from authored ids plus the persisted transition
+## index. Run-specific entropy is not accepted here until the runtime has a common
+## persisted entropy cause rather than a caller-supplied seed that restore can lose.
 
 const SAMPLE_MODULUS := 2147483647
 
 var _environment
-var _seed: int
 var _definitions: Dictionary = {}
 var _transitions_by_from: Dictionary = {}
 
 
-func _init(environment, definitions: Array, transitions: Array, seed: int) -> void:
+func _init(environment, definitions: Array, transitions: Array) -> void:
 	assert(environment != null, "WeatherProgressionService requires EnvironmentState")
 	assert(not definitions.is_empty(), "Weather progression requires definitions")
 	_environment = environment
-	_seed = seed
 	for definition in definitions:
 		assert(definition != null, "Weather definitions cannot contain null")
 		assert(not _definitions.has(definition.id), "Duplicate weather definition: %s" % String(definition.id))
@@ -113,7 +115,7 @@ func _duration_for(weather_id: StringName, transition_index: int) -> float:
 
 
 func _sample_unit(weather_id: StringName, transition_index: int, salt: int) -> float:
-	var state := posmod(_seed, SAMPLE_MODULUS)
+	var state := 17
 	state = posmod(state * 48271 + posmod(transition_index, SAMPLE_MODULUS), SAMPLE_MODULUS)
 	state = posmod(state * 69621 + _stable_string_hash(String(weather_id)), SAMPLE_MODULUS)
 	state = posmod(state * 40699 + salt, SAMPLE_MODULUS)
