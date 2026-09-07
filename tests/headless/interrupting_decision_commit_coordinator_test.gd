@@ -7,18 +7,31 @@ const InterruptingDecisionCommitCoordinator = preload("res://src/application/sim
 var _failures: Array[String] = []
 
 
+class BindingStub:
+	extends RefCounted
+	var key: String
+	func _init(p_key: String) -> void:
+		key = p_key
+	func stable_key() -> String:
+		return key
+
+
 class IntentionStub:
 	extends RefCounted
 	var intention_id
-	func _init(p_intention_id) -> void:
+	var bindings
+	func _init(p_intention_id, p_binding_key: String = "target=a") -> void:
 		intention_id = p_intention_id
+		bindings = BindingStub.new(p_binding_key)
 
 
 class CandidateStub:
 	extends RefCounted
 	var intention_id
-	func _init(p_intention_id) -> void:
+	var bindings
+	func _init(p_intention_id, p_binding_key: String = "target=a") -> void:
 		intention_id = p_intention_id
+		bindings = BindingStub.new(p_binding_key)
 
 
 class DecisionStub:
@@ -95,14 +108,26 @@ func _run() -> void:
 	var same_actions = ActionExecutionStub.new()
 	var same_commit = CommitStub.new()
 	var same = InterruptingDecisionCommitCoordinator.new(
-		ActivityStub.new(IntentionStub.new(project), &"project_exec_2"),
+		ActivityStub.new(IntentionStub.new(project, "target=a"), &"project_exec_2"),
 		same_actions,
 		same_commit
 	)
-	var same_result = same.apply(DecisionStub.new(CandidateStub.new(project)), &"same_step")
-	_expect_true(same_result != null and same_result.ok, "same semantic intention does not require interruption")
-	_expect_true(same_actions.interrupted.is_empty(), "same intention leaves execution untouched")
+	var same_result = same.apply(DecisionStub.new(CandidateStub.new(project, "target=a")), &"same_step")
+	_expect_true(same_result != null and same_result.ok, "same semantic intention and bindings do not require interruption")
+	_expect_true(same_actions.interrupted.is_empty(), "same intention state leaves execution untouched")
 	_expect_equal(same_commit.calls, 1, "same intention still reaches normal commit")
+
+	var retarget_actions = ActionExecutionStub.new()
+	var retarget_commit = CommitStub.new()
+	var retarget = InterruptingDecisionCommitCoordinator.new(
+		ActivityStub.new(IntentionStub.new(project, "target=a"), &"project_exec_3"),
+		retarget_actions,
+		retarget_commit
+	)
+	var retarget_result = retarget.apply(DecisionStub.new(CandidateStub.new(project, "target=b")), &"retarget_step")
+	_expect_true(retarget_result != null and retarget_result.ok, "same semantic intention with new bindings is a valid replacement")
+	_expect_equal(retarget_actions.interrupted, [&"project_exec_3"], "retarget interrupts stale active execution")
+	_expect_equal(retarget_commit.calls, 1, "retarget commits after stale execution interruption")
 
 	var blocked_actions = ActionExecutionStub.new()
 	blocked_actions.interruptible = false
