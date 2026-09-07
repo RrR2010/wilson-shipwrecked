@@ -7,6 +7,7 @@ const DefaultWorldCommandPort = preload("res://src/domain/world/default_world_co
 const DynamicProcessAdvanceService = preload("res://src/domain/world/dynamic_process_advance_service.gd")
 const WeatherProgressionService = preload("res://src/domain/world/weather_progression_service.gd")
 const EnvironmentalResponseAdvanceService = preload("res://src/domain/world/environmental_response_advance_service.gd")
+const RelationFailureAdvanceService = preload("res://src/domain/world/relation_failure_advance_service.gd")
 const PropertyDependencyGraph = preload("res://src/domain/physical/property_dependency_graph.gd")
 const PhysicalDerivationPolicyRegistry = preload("res://src/domain/physical/physical_derivation_policy_registry.gd")
 const EffectivePhysicalProfileResolver = preload("res://src/domain/physical/effective_physical_profile_resolver.gd")
@@ -89,9 +90,11 @@ func compose(
 		var weather_progression = null
 		var weather_event_projector = null
 		var environmental_response_advance = null
+		var relation_failure_advance = null
 		var weather_definitions: Array = content.weather_definitions()
 		var weather_transitions: Array = content.weather_transition_definitions()
 		var environmental_responses: Array = content.environmental_response_definitions()
+		var relation_failures: Array = content.relation_failure_definitions()
 
 		if not weather_definitions.is_empty():
 			var weather_validation = _validate_weather_graph(environment, weather_definitions, weather_transitions)
@@ -131,6 +134,9 @@ func compose(
 				property_values
 			)
 
+		if not relation_failures.is_empty():
+			relation_failure_advance = RelationFailureAdvanceService.new(query, relations, relation_failures)
+
 		world_advance = EnvironmentWorldAdvanceService.new(
 			dynamic_process_advance,
 			null,
@@ -139,7 +145,8 @@ func compose(
 			null,
 			weather_progression,
 			weather_event_projector,
-			environmental_response_advance
+			environmental_response_advance,
+			relation_failure_advance
 		)
 
 	return RunRuntimeCompositionResult.success(RunRuntimeComposition.new(
