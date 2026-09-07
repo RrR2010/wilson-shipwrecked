@@ -7,6 +7,11 @@ const MutationResult = preload("res://src/domain/core/mutation_result.gd")
 ## ActionExecution. Cognition still owns selection and the wrapped commit service
 ## still owns CurrentIntentionStore mutation; this bridge only prevents a replaced
 ## intention from leaving a second active execution behind.
+##
+## Reconsidering into the exact same semantic intention + bindings is continuity,
+## not a fresh commitment. Preserving the existing CurrentIntentionState also
+## preserves selected_step_id, so execution identity cannot fork merely because a
+## context/drive trigger asked Wilson to reconsider what he was already doing.
 
 var _activity_query
 var _action_execution
@@ -31,7 +36,10 @@ func apply(decision_result, step_id: StringName):
 
 	var current = _activity_query.current_intention()
 	var selected = decision_result.selected_candidate
-	if current != null and not _same_intention_state(current, selected):
+	if current != null and _same_intention_state(current, selected):
+		return MutationResult.success(&"current_intention_continued", current)
+
+	if current != null:
 		var execution_id: StringName = _activity_query.active_execution_id()
 		if execution_id != &"":
 			if not _action_execution.can_interrupt(execution_id):
