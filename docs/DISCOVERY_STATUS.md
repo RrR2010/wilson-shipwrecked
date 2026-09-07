@@ -10,20 +10,30 @@ This file records the **currently implemented and locally validated runtime base
 
 Strict external runner: **Godot 4.7.1**.
 
-Latest locally validated checkpoint:
+Current integrated `main` checkpoint:
 
 ```text
-RESULT: 104 PASS / 104 TOTAL
-PASS headless_suite (104 tests)
+7900c158f4733bc1040e0666a798b2722d5cff51
 ```
 
-Current integrated `main` checkpoint after the last runtime block:
+Latest strict validation reported for that integrated checkpoint:
 
 ```text
-f92d98543db5d73c1bb9de47ca7a270ca45eea54
+RESULT: 118 PASS / 118 TOTAL
+PASS headless_suite (118 tests)
 ```
 
-The structural/runtime-foundation phase is closed. The validated runtime now supports enough causal breadth to shift the leading work from proving fundamental ownership boundaries to **composing those foundations into richer persistent systemic gameplay**.
+Current validated feature candidate:
+
+```text
+branch: feat/effective-protection-feedback
+RESULT: 122 PASS / 122 TOTAL
+PASS headless_suite (122 tests)
+```
+
+The feature candidate is **not integrated main** until its pull request is explicitly approved and merged.
+
+The structural/runtime-foundation phase remains closed. The leading work is composing those foundations into richer persistent systemic gameplay while admitting new primitives only when a representative causal vertical proves a real semantic gap.
 
 ---
 
@@ -46,14 +56,6 @@ passive perception
 → accepted World consequence
 → grounded cross-owner consequences
 
-physical Godot observation
-→ semantic event admission
-→ authored body consequence
-→ WilsonBodyState
-→ accessible injury evidence
-→ Wilson learning
-→ later route preference change
-
 physical falling-body observation
 → admitted falling event
 → perception access
@@ -70,24 +72,32 @@ ongoing ordinary intention
 → suspended intention restored
 → original physical activity resumes
 
-player physical intervention
-→ committed World consequence
-→ perception
-→ causal attribution evidence
-→ Presence relationship learning
-
-historical learned habit
-+
-current perceptual context
-→ perceived semantic cue
-→ context-matching habit candidate
-→ ordinary decision competition
-
 World truth changes while Wilson is absent
 → BeliefStore remains stale
 → Wilson later perceives current property state
 → new belief receives support
 → mutually exclusive prior property belief is contradicted
+
+procedural weather
+→ elapsed regime segmentation
+→ generic environmental response
+→ assembly-slot target
+→ binding degradation
+→ transitive EffectivePhysicalProfile invalidation
+
+binding integrity degradation
+→ effective protection strength decreases
+→ ProtectionProjection worsens
+→ residual rain exposure increases
+
+binding integrity crosses authored failure threshold
+→ attached_to relation removed
+→ relation SemanticChange
+→ assembly-derived protection disappears
+
+wind response mutates binding integrity in production runtime
+→ same world advance evaluates authored relation failure
+→ combined PROPERTY + RELATION change set
 ```
 
 ---
@@ -107,37 +117,34 @@ Content-dependent ActionExecution reconstruction            PASS
 Godot spatial/query/navigation/motion bridge                PASS
 Passive spatial perception                                  PASS
 Grounded autonomous action causality                        PASS
-Drives and grounded drive consequences                      PASS
-Projects and project candidate pressure                     PASS
-Associations / habits / episodes                            PASS
-Perceived-context habit activation                          PASS
+Drives / projects / habits / episodes                       PASS
 Belief learning / epistemic projection                      PASS
-Unseen-world-change belief reconciliation                   PASS
 Presence relationship learning                             PASS
-Perceived-consequence Presence causal attribution           PASS
 Environment / gradual dynamic processes                     PASS
+Procedural weather and coarse-step segmentation             PASS
 Protection / exposure                                       PASS
+Shared effective-property read boundary                     PASS
+Assembly-composed effective protection feedback             PASS
+Authored structural relation failure                        PASS
+Relation-failure production runtime composition             PASS
+Relation-failure content-pack authoring                     PASS
 Hazard projection kept separate from Wilson knowledge       PASS
 Perceived threat / immediate-threat routing                 PASS
-Real Godot falling-threat defensive response                PASS
 Intention interruption / suspension / physical resumption   PASS
 WilsonBody impact / injury / death causality                PASS
 Real RigidBody3D contact observation                        PASS
-Post-accident learning and remembered route avoidance       PASS
 Player intervention causal-window validation                PASS
-Shallow non-Wilson actor behavior                           PASS
-Shallow non-Wilson physical locomotion                      PASS
+Shallow non-Wilson actor behavior / locomotion              PASS
 ActorRelationshipStore authority                            PASS
-Relationship-conditioned Gerald behavior                    PASS
 Director opportunity lifecycle                              PASS
 Player suggestions / bounded insistence                     PASS
 Run lifecycle / resurrection                                PASS
 PlayerProfile cross-run separation                          PASS
 Deterministic EngineScenarioHarness                         PASS
-Strict headless suite                                       PASS — 104 tests
+Strict feature-branch suite                                 PASS — 122 tests
 ```
 
-This list is intentionally capability-oriented rather than a duplicate of every test name.
+This list is capability-oriented rather than a duplicate of every test name.
 
 ---
 
@@ -146,7 +153,9 @@ This list is intentionally capability-oriented rather than a duplicate of every 
 ```text
 World
   physical truth
-  environment / dynamic processes
+  environment / weather / dynamic processes
+  entity properties
+  relations / assembly bindings
   Wilson body truth
   shallow non-Wilson actor runtime state
   non-Wilson actor relationship state
@@ -183,21 +192,21 @@ World truth
 != Wilson observation
 != Wilson belief
 != Wilson desirability
-!= non-Wilson actor relationship state
 != player-private intent
 != Director intent
-!= cross-run profile state
+!= derived physical projection
 != presentation
 ```
 
 Important proven refinements:
 
 - `HazardProjection` is authoritative future-risk projection, not Wilson knowledge. Wilson reacts through `PerceivedThreat` derived from accessible perceptual evidence.
-- `AssociationStore` is Wilson-relative cognition. Non-Wilson actor affinity belongs to `ActorRelationshipStore`.
 - current perceived context is not historical `HabitStore`; perceptual cues activate learned tendencies without becoming durable habit state.
 - player-private intent is never Presence evidence by itself; attribution starts from a perceived World consequence.
-- an immediate-threat commitment may suspend an ordinary current intention, but does not create a generic arbitrary intention stack.
 - hidden World changes do not synchronize into `BeliefStore`; contradictory property values are reconciled only after accessible perceptual evidence arrives.
+- `EffectivePhysicalProfile`, `ProtectionProjection` and `ExposureResult` are reconstructible derived state, not authoritative copies of World truth.
+- shared effective-property reads use derived profile output when present and ordinary `WorldQuery` property truth otherwise.
+- relation-failure thresholds currently consume authoritative subject properties only; derived thresholds require an explicit mid-step invalidation boundary before admission.
 
 ---
 
@@ -221,70 +230,49 @@ simulation snapshot ──────┘
                       reconstructible runtime
 ```
 
-The owner bootstrap includes the implemented World, Wilson cognition, project, environment/process and actor relationship owners. `ActionExecution` reconstruction remains content-dependent and outside generic owner construction. `PlayerProfile` remains outside current-run composition.
+`RunRuntimeComposer` now shares one effective-property resolver across action predicates, environmental susceptibility and protection projection.
 
-`NewRunDefinition` and scenario definitions are bootstrap causes, not runtime authority.
+When environment/process owners are present, production world advancement composes:
+
+```text
+weather progression
+→ environmental responses
+→ authored relation-failure evaluation
+→ gradual dynamic-process advancement
+→ combined SemanticChangeSet
+```
+
+Derived invalidation remains application-layer work after the authoritative world advance returns its changes.
 
 ---
 
-# Representative gameplay evidence
+# Environmental composition evidence
 
-## Autonomous consume loop
-
-```text
-passive perception
-→ target learning
-→ hunger pressure
-→ food-seeking intention
-→ Godot traversal
-→ matching ARRIVED
-→ authored consume action
-→ World commit/event
-→ hunger reduction
-```
-
-## Long Way Around / accident learning
+The cloth-shelter weather fixture now has regression-backed causal continuity through both degradation and structural failure:
 
 ```text
-physical short route is cheaper
-→ falling palm causes real contact/injury
-→ injury is perceived and learned
-→ palm/route association becomes negative
-→ physical route truth remains unchanged
-→ Wilson later chooses the longer remembered-preferred route
+rain / moisture
+→ effective physical properties
+→ wind susceptibility
+→ binding stress
+→ binding integrity decreases
+→ effective rain protection decreases
+→ residual rain exposure increases
 ```
 
-## Gerald relationship
-
-Gerald has owner-local actor state plus a separate `ActorRelationshipStore`. Repeated interaction can change Gerald's affinity toward Wilson and alter later behavior. A later vertical also validates non-Wilson semantic destination selection followed by physical transit and semantic arrival commit.
-
-## Threat interruption and continuity
+and:
 
 ```text
-ordinary physical activity in progress
-→ perceived threat
-→ ordinary intention suspended
-→ defensive intention committed
-→ physical redirect to safety
-→ defense completion
-→ original intention restored
-→ original destination physically resumed
+binding_integrity <= authored threshold
+→ attached_to removed
+→ assembly dependency invalidated
+→ derived protection disappears
+→ exposure rises to unprotected level
 ```
 
-This establishes continuity of autonomy across an emergency rather than a sequence of disconnected reactions.
+No `ShelterSystem`, entity-subtype callback, or weather-specific structural controller is required.
 
-## Unseen World change / later belief revision
-
-```text
-Wilson believes fire_lit=true
-→ World changes fire_lit=false while inaccessible
-→ belief remains stale
-→ Wilson returns and perceives false
-→ current value is supported
-→ prior mutually exclusive property belief is weakened
-```
-
-This is the strongest current regression for `World truth != Wilson knowledge`.
+A detached component does **not** automatically become a hazard. Moving dangerous geometry remains a later boundary expressed through ordinary dynamic-process/hazard semantics when warranted.
 
 ---
 
@@ -300,13 +288,15 @@ ActionExecutionSnapshotService schema: v2
 ContentPackLoader schema:              v1
 ```
 
+The content schema remains v1 because the new `relation_failures` field is additive and optional.
+
 Historical development-snapshot migration remains requirement-driven; current schema handling is intentionally strict.
 
 ---
 
 # Known limitations / deferred pressures
 
-Still open, but **not the leading phase by default**:
+Still open, but not leading by default:
 
 ```text
 snapshot compatibility/migration policy for earlier development schemas
@@ -324,21 +314,24 @@ habit disuse/decay/context-generalization producers
 route-memory acquisition/decay/generalization
 broader collision/grounding/fall consequence policies
 snapshot support for newly introduced suspended-intention semantics if product save pressure requires mid-interruption persistence guarantees
+derived component properties feeding assembly-slot derivations (currently slot reads raw component property)
+explicit mid-step invalidation if a future rule must consume freshly mutated derived state in the same world advance
+automatic detached-component dynamic-process creation only if a representative scene proves the need
 ```
 
-Do not implement these merely to clear a backlog. Pull one forward when representative gameplay or product requirements create concrete pressure.
+Do not implement these merely to clear a backlog.
 
 ---
 
 # Current phase: systemic gameplay expansion
 
-The next block should **compose existing foundations into player-visible living-world sequences**, not continue adding architecture in isolation.
+The next blocks should compose existing foundations into player-visible living-world sequences rather than continue adding architecture in isolation.
 
 Target question:
 
-> Can Wilson now live through coherent multi-system situations that produce readable history, routines, interruptions, learning and persistent environmental change?
+> Can Wilson live through coherent multi-system situations that produce readable history, routines, interruptions, learning and persistent environmental change?
 
-Good pressure areas include:
+Strong pressure areas include:
 
 ```text
 needs / routines / habits interacting over time
@@ -346,45 +339,13 @@ multi-step projects with visible persistent partial progress
 resource acquisition / transport / contribution / interruption / resumption
 Gerald or another shallow actor interfering with Wilson activity
 weather/environment changing what is attractive or possible
+weather physically degrading constructed configuration
+repair/maintenance emerging from persistent structural consequences
 learned preferences changing later decisions
 return-to-game situations where the player can infer what happened
 ```
 
-Prefer one representative scene that composes several already-proved systems over five new isolated primitives.
-
-A strong example target is:
-
-```text
-Wilson wakes hungry
-→ acts from a known food source / routine
-→ Gerald or environment interferes
-→ Wilson adapts from relationship/history
-→ resolves or fails the need
-→ weather/context changes
-→ Wilson redirects
-→ later resumes an existing project
-```
-
-This is an example pressure shape, not a required scripted sequence.
-
----
-
-# Recommended next-agent objective
-
-Active transition context:
-
-`docs/handoffs/foundational-causality-to-systemic-gameplay-expansion.md`
-
-The next agent should:
-
-1. select the next representative player-visible situation from product/scene evidence;
-2. attempt to compose existing runtime primitives first;
-3. add the smallest new primitive only when the scene proves a real semantic gap;
-4. keep all established authority boundaries intact;
-5. validate both focused semantics and at least one integrated player-visible/headless scenario;
-6. prefer progress toward a coherent living-day loop over infrastructure breadth.
-
-The phase is successful when representative sequences feel like one continuous autonomous simulation rather than separate subsystem demonstrations.
+Prefer one representative scene that composes several already-proved systems over isolated new primitives.
 
 ---
 
