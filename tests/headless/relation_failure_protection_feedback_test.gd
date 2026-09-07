@@ -21,7 +21,7 @@ const PhysicalDerivationPolicyRegistry = preload("res://src/domain/physical/phys
 const AssemblyBindingProjection = preload("res://src/domain/physical/assembly_binding_projection.gd")
 const CompositionDependencyProjection = preload("res://src/domain/physical/composition_dependency_projection.gd")
 const EffectivePhysicalProfileResolver = preload("res://src/domain/physical/effective_physical_profile_resolver.gd")
-const EffectivePropertyReader = preload("res://src/domain/physical/effective_property_reader.gd")
+const EffectivePropertyValueResolver = preload("res://src/domain/physical/effective_property_value_resolver.gd")
 const ProtectionRuleDefinition = preload("res://src/domain/physical/protection_rule_definition.gd")
 const ProtectionProjectionService = preload("res://src/domain/physical/protection_projection_service.gd")
 const ExposureResolver = preload("res://src/domain/physical/exposure_resolver.gd")
@@ -94,7 +94,7 @@ func _run_slice() -> void:
 	_expect_true(graph.compile(content.property_derivation_definitions(), policies).ok, "dependency graph compiles")
 	var profiles = EffectivePhysicalProfileResolver.new(query, graph, policies, assembly)
 	var invalidator = DerivedStateInvalidator.new(profiles, dependencies)
-	var reader = EffectivePropertyReader.new(query, profiles)
+	var reader = EffectivePropertyValueResolver.new(query, profiles)
 	var exposure = ExposureResolver.new(ProtectionProjectionService.new(query, [
 		ProtectionRuleDefinition.new(&"rain_cover", &"rain", protects, coverage, rain_protection),
 	], reader))
