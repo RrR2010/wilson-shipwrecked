@@ -50,8 +50,8 @@ func _run_test() -> void:
 	if observations.size() == 1:
 		var observation = observations[0]
 		_expect_equal(observation.kind, PhysicalObservation.Kind.CONTACT, "contact callback keeps physical observation kind")
-		_expect_true(observation.subject.equals(palm_ref), "contact subject uses semantic palm ref")
-		_expect_true(observation.other.equals(wilson_ref), "contact other uses semantic Wilson ref")
+		_expect_true(observation.subject.equals(wilson_ref), "contact subject is the impacted semantic body")
+		_expect_true(observation.other.equals(palm_ref), "contact other is the observed dynamic body")
 		_expect_true(is_equal_approx(observation.magnitude, 7.0), "contact magnitude is observed relative speed")
 		_expect_true(observation.point.distance_to(Vector3(1.0, 0.5, 0.0)) < 0.001, "contact point is a coarse engine observation")
 
