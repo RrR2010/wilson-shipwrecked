@@ -21,6 +21,7 @@ const DynamicProcessDefinition = preload("res://src/domain/world/dynamic_process
 const WeatherDefinition = preload("res://src/domain/world/weather_definition.gd")
 const WeatherTransitionDefinition = preload("res://src/domain/world/weather_transition_definition.gd")
 const EnvironmentalResponseDefinition = preload("res://src/domain/world/environmental_response_definition.gd")
+const EnvironmentalResponseTargetSelector = preload("res://src/domain/world/environmental_response_target_selector.gd")
 
 const SCHEMA_VERSION := 1
 
@@ -97,7 +98,8 @@ func _load_events(records, registry) -> MutationResult:
 			roles_result.value,
 			modalities_result.value,
 			float(record.get("base_confidence", 1.0)),
-			access_scope
+			access_scope,
+			bool(record.get("context_transition", false))
 		)
 		var result = registry.register_event_definition(definition)
 		if not result.ok: return result
@@ -243,6 +245,8 @@ func _load_environmental_responses(records, registry) -> MutationResult:
 		var susceptibility_property = null
 		if record.has("susceptibility_property") and not String(record["susceptibility_property"]).is_empty():
 			susceptibility_property = DomainId.property(StringName(record["susceptibility_property"]))
+		var target_result = _parse_environmental_response_target(record.get("target", {"kind": "self"}))
+		if not target_result.ok: return target_result
 		var result = registry.register_environmental_response_definition(EnvironmentalResponseDefinition.new(
 			StringName(record["id"]),
 			StringName(record["condition"]),
@@ -253,10 +257,27 @@ func _load_environmental_responses(records, registry) -> MutationResult:
 			StringName(record.get("exposure_kind", "")),
 			required_capability,
 			susceptibility_property,
-			float(record.get("minimum_susceptibility", 0.0))
+			float(record.get("minimum_susceptibility", 0.0)),
+			target_result.value
 		))
 		if not result.ok: return result
 	return MutationResult.success(&"content_environmental_responses_loaded")
+
+
+func _parse_environmental_response_target(record) -> MutationResult:
+	if not (record is Dictionary) or not record.has("kind"):
+		return _shape_failure("environmental response target requires kind")
+	match String(record["kind"]):
+		"self":
+			return MutationResult.success(&"environmental_response_target_parsed", EnvironmentalResponseTargetSelector.self_target())
+		"assembly_slot":
+			if not record.has("slot") or String(record["slot"]).is_empty():
+				return _shape_failure("assembly_slot environmental response target requires slot")
+			return MutationResult.success(
+				&"environmental_response_target_parsed",
+				EnvironmentalResponseTargetSelector.assembly_slot(DomainId.assembly_slot(StringName(record["slot"])))
+			)
+	return MutationResult.failure(&"unknown_environmental_response_target_kind", [String(record["kind"])])
 
 
 func _parse_property_input(record) -> MutationResult:
