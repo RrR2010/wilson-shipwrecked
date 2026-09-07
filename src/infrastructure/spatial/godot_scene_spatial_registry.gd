@@ -9,15 +9,20 @@ const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
 ## Node names, scene paths and instance IDs are never inferred as domain identity.
 
 var _nodes_by_ref: Dictionary = {}
+var _refs_by_node_id: Dictionary = {}
 var _anchors_by_key: Dictionary = {}
 
 func bind(runtime_ref: RuntimeWorldRef, node: Node3D) -> bool:
 	if runtime_ref == null or node == null:
 		return false
 	var key := runtime_ref.key()
+	var node_id := node.get_instance_id()
 	if _nodes_by_ref.has(key):
 		return _nodes_by_ref[key] == node
+	if _refs_by_node_id.has(node_id):
+		return _refs_by_node_id[node_id].equals(runtime_ref)
 	_nodes_by_ref[key] = node
+	_refs_by_node_id[node_id] = runtime_ref
 	return true
 
 func bind_anchor(runtime_ref: RuntimeWorldRef, interaction_id: StringName, node: Node3D) -> bool:
@@ -35,15 +40,26 @@ func unbind(runtime_ref: RuntimeWorldRef, node: Node3D = null) -> bool:
 	var key := runtime_ref.key()
 	if not _nodes_by_ref.has(key):
 		return false
-	if node != null and _nodes_by_ref[key] != node:
+	var bound_node = _nodes_by_ref[key]
+	if node != null and bound_node != node:
 		return false
 	_nodes_by_ref.erase(key)
+	if bound_node != null and is_instance_valid(bound_node):
+		var node_id := bound_node.get_instance_id()
+		var reverse_ref = _refs_by_node_id.get(node_id)
+		if reverse_ref != null and reverse_ref.equals(runtime_ref):
+			_refs_by_node_id.erase(node_id)
 	return true
 
 func resolve(runtime_ref: RuntimeWorldRef) -> Node3D:
 	if runtime_ref == null:
 		return null
 	return _resolve_from(_nodes_by_ref, runtime_ref.key())
+
+func runtime_ref_for_node(node: Node3D):
+	if node == null or not is_instance_valid(node):
+		return null
+	return _refs_by_node_id.get(node.get_instance_id())
 
 func resolve_anchor(runtime_ref: RuntimeWorldRef, interaction_id: StringName) -> Node3D:
 	if runtime_ref == null:
@@ -57,6 +73,7 @@ func has(runtime_ref: RuntimeWorldRef) -> bool:
 
 func clear() -> void:
 	_nodes_by_ref.clear()
+	_refs_by_node_id.clear()
 	_anchors_by_key.clear()
 
 func _resolve_from(source: Dictionary, key: Variant) -> Node3D:
