@@ -19,14 +19,18 @@ func _init(
 	assert(p_id != &"", "WeatherDefinition requires id")
 	assert(is_finite(p_min_duration) and p_min_duration > 0.0, "Weather minimum duration must be finite and positive")
 	assert(is_finite(p_max_duration) and p_max_duration >= p_min_duration, "Weather maximum duration must be finite and >= minimum")
+	var normalized: Dictionary = {}
 	for condition_id in p_conditions.keys():
 		assert(condition_id is StringName or condition_id is String, "Weather condition ids must be strings")
+		var normalized_id := StringName(condition_id)
+		assert(normalized_id != &"", "Weather condition ids cannot be empty")
 		var value := float(p_conditions[condition_id])
 		assert(is_finite(value), "Weather condition values must be finite")
+		normalized[normalized_id] = value
 	id = p_id
 	min_duration = p_min_duration
 	max_duration = p_max_duration
-	conditions = p_conditions.duplicate(true)
+	conditions = normalized
 
 
 func condition(condition_id: StringName, fallback: float = 0.0) -> float:
