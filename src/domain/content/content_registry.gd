@@ -22,6 +22,7 @@ var _weather_definitions: Dictionary = {}
 var _weather_transition_definitions: Dictionary = {}
 var _environmental_response_definitions: Dictionary = {}
 var _protection_rule_definitions: Dictionary = {}
+var _relation_failure_definitions: Dictionary = {}
 var _sealed := false
 
 
@@ -134,6 +135,10 @@ func register_protection_rule_definition(definition) -> MutationResult:
 	return _register_named_definition(_protection_rule_definitions, definition, &"protection_rule_definition_registered", &"duplicate_protection_rule_definition")
 
 
+func register_relation_failure_definition(definition) -> MutationResult:
+	return _register_named_definition(_relation_failure_definitions, definition, &"relation_failure_definition_registered", &"duplicate_relation_failure_definition")
+
+
 func seal() -> MutationResult:
 	if not _property_definitions.is_empty():
 		var property_validation = _validate_property_references()
@@ -190,6 +195,9 @@ func _validate_environment_references() -> MutationResult:
 			return MutationResult.failure(&"missing_property_definition", ["Missing protection coverage property for %s" % String(definition.id)])
 		if not _property_definitions.has(definition.strength_property.key()):
 			return MutationResult.failure(&"missing_property_definition", ["Missing protection strength property for %s" % String(definition.id)])
+	for definition in _relation_failure_definitions.values():
+		if not _property_definitions.has(definition.monitored_property.key()):
+			return MutationResult.failure(&"missing_property_definition", ["Missing relation-failure monitored property for %s" % String(definition.id)])
 	return MutationResult.success(&"environment_references_valid")
 
 
@@ -270,6 +278,10 @@ func environmental_response_definitions() -> Array:
 
 func protection_rule_definitions() -> Array:
 	return _sorted_named_definitions(_protection_rule_definitions)
+
+
+func relation_failure_definitions() -> Array:
+	return _sorted_named_definitions(_relation_failure_definitions)
 
 
 func entity_definition_ids() -> Array[String]:
