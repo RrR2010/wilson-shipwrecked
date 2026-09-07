@@ -184,8 +184,8 @@ func _run() -> void:
 
 	var threat_marker := Node3D.new()
 	threat_marker.name = "InterruptionThreatSpatialReference"
-	threat_marker.global_position = position_before_interrupt + Vector3(0.5, 0.0, 0.0)
 	fixture.add_child(threat_marker)
+	threat_marker.global_position = position_before_interrupt + Vector3(0.5, 0.0, 0.0)
 	_expect_true(fixture._registry.bind(threat_ref, threat_marker), "threat binds to explicit RuntimeWorldRef for escape geometry")
 
 	var threat_service = PerceivedThreatService.new([
@@ -237,13 +237,12 @@ func _run() -> void:
 		fixture._motion.physics_tick(1.0 / 60.0)
 		var status: int = fixture._motion.get_status(wilson_ref)
 		if status == MotionPort.MotionStatus.ARRIVED:
-			escaped = true
+			escaped = fixture._motion.get_target(wilson_ref) != null and fixture._motion.get_target(wilson_ref).equals(escape_ref)
 			break
 		if status == MotionPort.MotionStatus.BLOCKED or status == MotionPort.MotionStatus.ROUTE_INVALID:
 			break
 		await physics_frame
 	_expect_true(escaped, "defensive movement reaches escape destination")
-	_expect_ref(fixture._motion.get_target(wilson_ref), escape_ref, "defensive ARRIVED belongs to escape target")
 
 	var resume_result: Dictionary = resume.complete_and_resume()
 	_expect_true(bool(resume_result.get("resumed", false)), "completed defense resumes suspended routine execution")
@@ -263,7 +262,7 @@ func _run() -> void:
 		).length())
 		var status: int = fixture._motion.get_status(wilson_ref)
 		if status == MotionPort.MotionStatus.ARRIVED:
-			reached_original_target = true
+			reached_original_target = fixture._motion.get_target(wilson_ref) != null and fixture._motion.get_target(wilson_ref).equals(forage_target_ref)
 			break
 		if status == MotionPort.MotionStatus.BLOCKED or status == MotionPort.MotionStatus.ROUTE_INVALID:
 			break
