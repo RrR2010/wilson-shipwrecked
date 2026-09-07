@@ -36,7 +36,7 @@ func _init(
 	if weather_event_projector != null:
 		assert(weather_event_projector.has_method("project"), "Weather event projector must implement project(transitions, step_id)")
 	if environmental_response_advance != null:
-		assert(environmental_response_advance.has_method("advance"), "Environmental response service must implement advance(elapsed)")
+		assert(environmental_response_advance.has_method("advance"), "Environmental response service must implement advance(elapsed, conditions)")
 	_dynamic_process_advance = dynamic_process_advance
 	_actor_advance = actor_advance
 	_actor_stimulus_provider = actor_stimulus_provider
@@ -52,12 +52,14 @@ func advance(elapsed: float, step):
 	var events: Array = []
 	var combined_change_set = SemanticChangeSet.new()
 	var gradual_transitions: Array = []
+	var weather_segments: Array = []
 
-	# Macro environment state advances before ordinary property processes so
-	# environmental-response composition consumes the newly authoritative regime
-	# within the same World phase.
+	# Macro environment state advances first, but it also returns the exact elapsed
+	# segments spent in each regime. Environmental responses consume those segments
+	# so coarse/offline advancement cannot apply the final weather retroactively.
 	if _weather_progression != null:
 		var weather_result: Dictionary = _weather_progression.advance(elapsed)
+		weather_segments = Array(weather_result.get("segments", []))
 		if _weather_event_projector != null:
 			events.append_array(_weather_event_projector.project(
 				Array(weather_result.get("transitions", [])),
@@ -65,11 +67,16 @@ func advance(elapsed: float, step):
 			))
 
 	if _environmental_response_advance != null:
-		var response_result: Dictionary = _environmental_response_advance.advance(elapsed)
-		combined_change_set.append_set(response_result["change_set"])
-		gradual_transitions.append_array(Array(response_result.get("transitions", [])))
-		for diagnostic in response_result.get("diagnostics", []):
-			diagnostics.append(String(diagnostic))
+		if _weather_progression != null:
+			for segment in weather_segments:
+				var response_result: Dictionary = _environmental_response_advance.advance(
+					float(segment.get("elapsed", 0.0)),
+					Dictionary(segment.get("conditions", {}))
+				)
+				_append_environmental_response(response_result, combined_change_set, gradual_transitions, diagnostics)
+		else:
+			var response_result: Dictionary = _environmental_response_advance.advance(elapsed)
+			_append_environmental_response(response_result, combined_change_set, gradual_transitions, diagnostics)
 
 	var process_elapsed: float = elapsed
 	if _dynamic_process_due_gate != null:
@@ -92,3 +99,15 @@ func advance(elapsed: float, step):
 			diagnostics.append(String(diagnostic))
 
 	return WorldAdvanceResult.new(events, diagnostics, combined_change_set)
+
+
+func _append_environmental_response(
+	response_result: Dictionary,
+	combined_change_set,
+	gradual_transitions: Array,
+	diagnostics: Array[String]
+) -> void:
+	combined_change_set.append_set(response_result["change_set"])
+	gradual_transitions.append_array(Array(response_result.get("transitions", [])))
+	for diagnostic in response_result.get("diagnostics", []):
+		diagnostics.append(String(diagnostic))
