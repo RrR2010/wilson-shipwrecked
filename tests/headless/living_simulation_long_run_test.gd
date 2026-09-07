@@ -36,19 +36,19 @@ func _run() -> void:
 	if not live:
 		if _failures.is_empty():
 			_failures.append("Living simulation did not become live within bounded boot frames")
-		_cleanup(scene)
+		await _cleanup(scene)
 		return
 
 	var overlay = scene.get_node_or_null("CalibrationOverlay")
 	if overlay == null:
 		_failures.append("Calibration overlay is missing from living simulation")
-		_cleanup(scene)
+		await _cleanup(scene)
 		return
 	if overlay.set_speed_multiplier(2.0):
 		_failures.append("Calibration overlay accepted unsupported 2x speed")
 	if not overlay.set_speed_multiplier(16.0):
 		_failures.append("Calibration overlay rejected supported 16x speed")
-		_cleanup(scene)
+		await _cleanup(scene)
 		return
 	if not is_equal_approx(Engine.time_scale, 16.0):
 		_failures.append("16x calibration control did not scale engine execution")
@@ -166,7 +166,7 @@ func _run() -> void:
 	if absf(float(final_step) - final_time * 10.0) > 2.0:
 		_failures.append("Semantic step count drifted from authoritative 0.1s cadence: time=%.3f step=%d" % [final_time, final_step])
 
-	_cleanup(scene)
+	await _cleanup(scene)
 
 
 func _cleanup(scene) -> void:
