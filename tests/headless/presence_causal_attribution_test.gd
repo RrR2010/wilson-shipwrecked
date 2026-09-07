@@ -31,9 +31,9 @@ func _init() -> void:
 
 
 func _run_slice() -> void:
-	var coconut := RuntimeWorldRef.entity(DomainId.entity(&"coconut_1"))
-	var unexplained_move := DomainId.event_definition(&"object_moved_unexplained")
-	var ordinary_move := DomainId.event_definition(&"object_moved_by_wind")
+	var coconut = RuntimeWorldRef.entity(DomainId.entity(&"coconut_1"))
+	var unexplained_move = DomainId.event_definition(&"object_moved_unexplained")
+	var ordinary_move = DomainId.event_definition(&"object_moved_by_wind")
 	var bindings := RoleBinding.new()
 	bindings.bind(&"object", coconut)
 
