@@ -113,9 +113,9 @@ func _run_slice() -> void:
 	var candidates: Array = [weak_alternative]
 	candidates.append_array(habit_candidates)
 	var decision = DecisionRouter.new().resolve(candidates)
-	_expect_true(decision.selected != null, "decision router selects an intentional candidate")
-	if decision.selected != null:
-		_expect_equal(decision.selected.intention_id.sort_key(), protect_food.sort_key(), "learned habit changes the later autonomous choice")
+	_expect_true(decision.selected_candidate != null, "decision router selects an intentional candidate")
+	if decision.selected_candidate != null:
+		_expect_equal(decision.selected_candidate.intention_id.sort_key(), protect_food.sort_key(), "learned habit changes the later autonomous choice")
 
 	var inactive_candidates: Array = HabitCandidateSource.new(habits, [], 1.0, 0.2).generate()
 	_expect_equal(inactive_candidates.size(), 0, "stored habit does not fire when its current cue is absent")
