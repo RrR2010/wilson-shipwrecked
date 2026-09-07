@@ -197,6 +197,27 @@ func _bootstrap_and_start() -> void:
 	_host.configure(orchestrator, _motion, 0.1, 0.0)
 
 
+func is_live() -> bool:
+	return _boot_error == "" and _owners != null and _host != null
+
+
+func boot_error() -> String:
+	return _boot_error
+
+
+func observation_snapshot() -> Dictionary:
+	return {
+		"live": is_live(),
+		"simulation_time": -1.0 if _host == null else _host.simulation_time(),
+		"semantic_step": -1 if _host == null else _host.semantic_step_count(),
+		"hunger": -1.0 if _owners == null else _owners.drives.value(DriveState.HUNGER),
+		"has_intention": false if _owners == null else _owners.current_intention.has_current(),
+		"motion_status": -1 if _motion == null or _wilson_ref == null else _motion.get_status(_wilson_ref),
+		"wilson_position": $Wilson.global_position,
+		"trace_count": _trace_sink.traces.size(),
+	}
+
+
 func _update_debug_projection() -> void:
 	if _boot_error != "":
 		_status_label.text = "Runtime: ERROR — %s" % _boot_error
