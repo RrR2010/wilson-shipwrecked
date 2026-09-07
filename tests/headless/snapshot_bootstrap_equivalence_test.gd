@@ -101,7 +101,7 @@ func _run_test() -> void:
 		null,
 		body
 	)
-	_expect_equal(int(snapshot.get("schema_version", -1)), 11, "snapshot uses current simulation schema")
+	_expect_equal(int(snapshot.get("schema_version", -1)), 12, "snapshot uses current simulation schema")
 	_expect_true(is_equal_approx(float(snapshot.get("wilson_body", {}).get("vitality", -1.0)), 0.42), "snapshot captures Wilson body vitality")
 
 	var legacy = snapshot_service.restore(snapshot)
