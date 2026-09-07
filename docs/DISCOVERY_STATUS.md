@@ -13,11 +13,11 @@ Strict external runner: **Godot 4.7.1**.
 Latest locally validated checkpoint:
 
 ```text
-RESULT: 86 PASS / 86 TOTAL
-PASS headless_suite (86 tests)
+RESULT: 88 PASS / 88 TOTAL
+PASS headless_suite (88 tests)
 ```
 
-The strict suite covers the structural runtime foundation, shared simulation-owner bootstrap/restore, deterministic engine-scenario tooling, Godot spatial/navigation/perception adapters, grounded Wilson action causality, production-facing fresh-run bootstrap, deterministic product-level generation, Wilson-relative remembered-route preference, shallow non-Wilson actor behavior, and durable relationship-conditioned Gerald behavior with a visible Godot presentation consequence.
+The strict suite covers the structural runtime foundation, shared simulation-owner bootstrap/restore, deterministic engine-scenario tooling, Godot spatial/navigation/perception/physics adapters, grounded Wilson action causality, production-facing fresh-run bootstrap, deterministic product-level generation, Wilson-relative remembered-route preference, shallow non-Wilson actor behavior, durable Gerald relationship behavior, and real Godot dynamic-contact authoring into grounded Wilson body consequences.
 
 Validated causal breadth includes:
 
@@ -29,11 +29,11 @@ structural World/runtime foundation
 → actor relationship authority
 → Director + PlayerRunState
 → run lifecycle/resurrection/profile boundaries
-→ Godot spatial/query/motion/physics observation boundary
+→ Godot spatial/query/motion/perception/physics observation boundary
 → trigger-gated cognition with NONE as steady state
 → passive perception while MOVING
 → perceived-threat evidence → THREAT reconsideration
-→ physical observation → authored WorldEvent
+→ physical observation → authored semantic WorldEvent
 → admitted impact → WilsonBodyState → injury/death WorldEvent
 → grounded Wilson death → RunLifecycleState DEAD
 → defensive intention → deterministic escape → concrete Godot redirection
@@ -57,6 +57,12 @@ structural World/runtime foundation
 → relationship-conditioned actor rule selection
 → semantic Gerald placement changes
 → Godot presentation visibly reflects later relationship-driven behavior
+→ RigidBody3D collision callback
+→ explicit Node3D → RuntimeWorldRef reverse binding
+→ PhysicalObservation.CONTACT
+→ authored contact-event admission
+→ authored Wilson body-impact policy
+→ WilsonBodyState vitality mutation
 ```
 
 ---
@@ -64,67 +70,69 @@ structural World/runtime foundation
 # Closed implementation gates
 
 ```text
-Structural World/runtime foundation                PASS
-Drives                                             PASS
-Projects                                           PASS
-Associations / habits / episodes                   PASS
-Presence relationship learning boundary            PASS
-EnvironmentState / dynamic processes               PASS
-Protection / exposure                              PASS
-Hazard projection / perceived threat               PASS
-Immediate-threat routing                           PASS
-Perceived-threat same-chain wake-up                PASS
-Immediate-threat concrete motion redirection       PASS
-Shared due scheduling — drives/processes           PASS
-Gradual environment semantic thresholds            PASS
-Integrated Gerald/falling-palm timing scenario     PASS
-Shallow non-Wilson actors                          PASS
-Actor relationship authority                       PASS
-Relationship-conditioned actor behavior            PASS
-Actor relationship bootstrap/persistence           PASS
-Gerald relationship real-Godot presentation slice  PASS
-Director opportunity lifecycle                     PASS
-Player suggestions / bounded insistence            PASS
-Physical player intervention boundary              PASS
-Run lifecycle / resurrection                       PASS
-Grounded Wilson death lifecycle propagation        PASS
-PlayerProfile / cross-run Legacy admission         PASS
-Owner-local persistence for implemented owners     PASS
-Godot spatial / navmesh / LOS integration          PASS
-Passive spatial perception while MOVING            PASS
-Physical observation semantic admission            PASS
-Grounded Wilson body impact consequences           PASS
-Generic reconsideration gate / trigger coalescing  PASS
-Core runtime composition                           PASS
-Deterministic scenario owner bootstrap             PASS
-Snapshot/bootstrap equivalence                     PASS
-EngineScenarioHarness core                         PASS
-Engine scenario AUTOMATED adapter                  PASS
-Engine scenario ASSISTED checkpoint flow           PASS
-Current-intention motion resume                    PASS
-Deterministic playable/bootstrap 3D scenario       PASS
-WilsonBodyState shared bootstrap/persistence       PASS
-DriveState shared bootstrap                        PASS
-ProjectStore shared bootstrap                      PASS
-Learning owners shared bootstrap                   PASS
-Environment / dynamic-process shared bootstrap     PASS
-ActorStateStore shared bootstrap                   PASS
-Content-dependent ActionExecution restore          PASS
-Full current-run restore composition               PASS
-Full-run reset/rebootstrap determinism             PASS
-Drive-backed new-run autonomy                      PASS
-Perception-learned new-run autonomy                PASS
-Grounded drive consequences                        PASS
-Targeted action execution after arrival            PASS
-Grounded autonomous consume sequence               PASS
-Targeted action reconstruction/idempotency         PASS
-Production-facing fresh-run bootstrap              PASS
-Production new-run → Godot host autonomous flow    PASS
-Product-level deterministic new-run generation     PASS
-Remembered route preference                        PASS
-Remembered multi-waypoint motion progression       PASS
-Long Way Around real-Godot scenario                PASS
-Strict headless suite                              PASS — 86 tests
+Structural World/runtime foundation                 PASS
+Drives                                              PASS
+Projects                                            PASS
+Associations / habits / episodes                    PASS
+Presence relationship learning boundary             PASS
+EnvironmentState / dynamic processes                PASS
+Protection / exposure                               PASS
+Hazard projection / perceived threat                PASS
+Immediate-threat routing                            PASS
+Perceived-threat same-chain wake-up                 PASS
+Immediate-threat concrete motion redirection        PASS
+Shared due scheduling — drives/processes            PASS
+Gradual environment semantic thresholds             PASS
+Integrated Gerald/falling-palm timing scenario      PASS
+Shallow non-Wilson actors                           PASS
+Actor relationship authority                        PASS
+Relationship-conditioned actor behavior             PASS
+Actor relationship bootstrap/persistence            PASS
+Gerald relationship real-Godot presentation slice   PASS
+Director opportunity lifecycle                      PASS
+Player suggestions / bounded insistence             PASS
+Physical player intervention boundary               PASS
+Run lifecycle / resurrection                        PASS
+Grounded Wilson death lifecycle propagation         PASS
+PlayerProfile / cross-run Legacy admission          PASS
+Owner-local persistence for implemented owners      PASS
+Godot spatial / navmesh / LOS integration           PASS
+Passive spatial perception while MOVING             PASS
+Physical observation semantic admission             PASS
+Grounded Wilson body impact consequences            PASS
+Godot dynamic contact observer                      PASS
+Physical accident real-Godot consequence slice      PASS
+Generic reconsideration gate / trigger coalescing   PASS
+Core runtime composition                            PASS
+Deterministic scenario owner bootstrap              PASS
+Snapshot/bootstrap equivalence                      PASS
+EngineScenarioHarness core                          PASS
+Engine scenario AUTOMATED adapter                   PASS
+Engine scenario ASSISTED checkpoint flow            PASS
+Current-intention motion resume                     PASS
+Deterministic playable/bootstrap 3D scenario        PASS
+WilsonBodyState shared bootstrap/persistence        PASS
+DriveState shared bootstrap                         PASS
+ProjectStore shared bootstrap                       PASS
+Learning owners shared bootstrap                    PASS
+Environment / dynamic-process shared bootstrap      PASS
+ActorStateStore shared bootstrap                    PASS
+Content-dependent ActionExecution restore           PASS
+Full current-run restore composition                PASS
+Full-run reset/rebootstrap determinism              PASS
+Drive-backed new-run autonomy                       PASS
+Perception-learned new-run autonomy                 PASS
+Grounded drive consequences                         PASS
+Targeted action execution after arrival             PASS
+Grounded autonomous consume sequence                PASS
+Targeted action reconstruction/idempotency          PASS
+Production-facing fresh-run bootstrap               PASS
+Production new-run → Godot host autonomous flow     PASS
+Product-level deterministic new-run generation      PASS
+Remembered route preference                         PASS
+Remembered multi-waypoint motion progression        PASS
+Long Way Around real-Godot scenario                 PASS
+Strict headless suite                               PASS — 88 tests
 ```
 
 ---
@@ -251,15 +259,13 @@ ActorStateStore
 ActorRelationshipStore
 ```
 
-`ActionExecution` remains outside `SimulationOwnerBootstrapper` because restoring active executions depends on sealed authored action content.
-
-`PlayerProfile` remains outside current-run bootstrap/restore because it is cross-run state.
+`ActionExecution` remains outside `SimulationOwnerBootstrapper` because restoring active executions depends on sealed authored action content. `PlayerProfile` remains outside current-run bootstrap/restore because it is cross-run state.
 
 ---
 
-# Autonomous action baseline
+# Representative gameplay baselines
 
-Validated grounded autonomous slice:
+## Grounded autonomous food slice
 
 ```text
 passive Godot perception
@@ -275,11 +281,7 @@ passive Godot perception
 → GroundedDriveConsequenceService reduces DriveState.HUNGER
 ```
 
-Godot arrival does not directly mutate World or drives. ActionExecution owns action progress and grounded World consequences drive later cognition/body changes.
-
----
-
-# Wilson-relative route preference baseline
+## Wilson-relative route preference
 
 ```text
 GodotSpatialQueryAdapter / SpatialQueryPort
@@ -295,13 +297,9 @@ RememberedRouteMotionCoordinator
 → ordinary MotionPort requests over selected waypoints
 ```
 
-The `Long Way Around` fixture proves the shortcut stays physically valid and cheaper while Wilson's remembered aversion makes the longer route preferable and visibly executed. No parallel durable route-progress authority is introduced.
+The `Long Way Around` fixture proves the shortcut remains physically valid and cheaper while remembered aversion makes the longer route preferable and visibly executed.
 
----
-
-# Non-Wilson actor relationship baseline
-
-The Gerald slice adds a separate durable relationship authority:
+## Non-Wilson actor relationship
 
 ```text
 ActorRelationshipImpact
@@ -309,23 +307,29 @@ ActorRelationshipImpact
 → optional relationship condition on ActorBehaviorRule
 → ShallowActorAdvanceService
 → semantic actor placement consequence
-→ Godot presentation binding reflects placement
+→ Godot presentation reflects placement
 ```
 
-Validated behavior:
+The Gerald fixture proves repeated positive interactions can change durable Gerald affinity and later visible behavior. It does not claim continuous physical locomotion for non-Wilson actors.
+
+## Physical accident authoring
+
+The production-shaped physical-contact boundary is now validated:
 
 ```text
-neutral Gerald
-→ neutral_watch
-
-repeated positive Wilson interactions
-→ affinity/evidence accumulate
-→ later approach_wilson rule becomes eligible
-→ Gerald semantic place changes near Wilson
-→ visible presentation moves accordingly
+GodotSceneSpatialRegistry explicit binding
+→ reverse Node3D → RuntimeWorldRef lookup
+→ GodotDynamicContactObserver
+→ GodotPhysicalObservationBuffer
+→ PhysicalObservation.CONTACT
+→ PhysicalObservationConsequenceResolver
+→ authored semantic WorldEvent
+→ WilsonBodyImpactConsequenceResolver
+→ WilsonBodyState
+→ injury/death WorldEvent + SemanticChangeSet
 ```
 
-This does **not** yet claim continuous physical locomotion for non-Wilson actors. `ShallowActorAdvanceService` still mutates coarse semantic placement; the Gerald engine fixture intentionally treats transform change as presentation reflection rather than World authority.
+The real-Godot fixture uses an actual falling `RigidBody3D` collision. Physics callbacks never mutate vitality directly. Contact itself is non-authoritative evidence; semantic admission and body damage remain separately authored policies.
 
 ---
 
@@ -341,7 +345,7 @@ ActionExecutionSnapshotService schema: v2
 ContentPackLoader schema:              v1
 ```
 
-`SimulationSnapshotService` persists authoritative/minimal causes and restores its owners through:
+`SimulationSnapshotService` persists authoritative/minimal causes and restores owners through:
 
 ```text
 SimulationSnapshotBootstrapDecoder
@@ -349,9 +353,7 @@ SimulationSnapshotBootstrapDecoder
 → SimulationOwnerBootstrapper
 ```
 
-Snapshot v11 adds the `actor_relationships` family and persists actor, relationship subject, bounded affinity, evidence count and last source execution id. Round-trip tests prove reconstruction into a fresh owner.
-
-Current schema handling is strict. Historical snapshot migration compatibility remains requirement-driven and is not implemented merely because the current development schema advanced.
+Snapshot v11 includes `actor_relationships`. Current schema handling remains strict; historical snapshot migration compatibility is requirement-driven and not implemented merely because development schemas advanced.
 
 ---
 
@@ -376,6 +378,13 @@ BOOTSTRAPPED
 → RELATIONSHIP_WARMED
 → APPROACHED_WILSON
 → COMPLETE
+
+Physical accident:
+BOOTSTRAPPED
+→ CONTACT_OBSERVED
+→ EVENT_ADMITTED
+→ BODY_DAMAGED
+→ COMPLETE
 ```
 
 ---
@@ -391,7 +400,8 @@ SimulationBootstrapDefinition positional constructor cleanup
 drive hysteresis-band memory persistence
 Legacy-to-new-Wilson seeding policy
 production scene-binding/host composition only when a real production use proves it
-collision/grounding/fall-specific policies beyond current impact damage
+collision/grounding/fall-specific policies beyond current authored impact damage
+post-accident Wilson learning/behavior acquisition
 route-memory acquisition/decay/generalization
 continuous physical locomotion for non-Wilson actors
 actor relationship decay/generalization/social-graph breadth
@@ -401,7 +411,6 @@ automatic habit-disuse/context producers
 Presence causal-attribution production
 orientation/view-cone passive refresh
 negative/absence perceptual evidence on passive exit
-production falling-palm / physical-accident authoring
 ```
 
 The long positional APIs remain documented debt, not blockers. Refactor them only when another owner/schema expansion creates real pressure.
@@ -412,13 +421,13 @@ A generalized production scene-binding/host composer remains deferred until a ge
 
 # Recommended next major verticals
 
-From the validated 86-test checkpoint:
+From the validated 88-test checkpoint:
 
 ```text
-1. physical accident authoring from representative scene pressure
-   - inspect existing falling-palm evidence and current physical observation/impact path
-   - add the smallest reusable missing primitive
-   - preserve engine observation != semantic World event != body consequence != cognition
+1. representative gameplay pressure beyond already-proved accident grounding
+   - post-accident Wilson learning/behavior from accessible evidence; or
+   - committed-accident player intervention with causal-window validation; or
+   - another representative scene exposing a distinct missing primitive
 
 2. persistence evolution only when product requirements require it
    - decide historical snapshot compatibility policy
@@ -427,7 +436,7 @@ From the validated 86-test checkpoint:
 3. continuous non-Wilson actor motion only when a representative scenario requires physical traversal
 ```
 
-Active transition context: `docs/handoffs/gerald-relationship-to-physical-accident-authoring.md`.
+Active transition context: `docs/handoffs/physical-accident-authoring-to-next-representative-gameplay.md`.
 
 ---
 
