@@ -43,6 +43,7 @@ func _init() -> void:
 
 func _run_slice() -> void:
 	var environment = EnvironmentState.new(&"clear", &"day")
+	var weather_changed = DomainId.event_definition(&"weather_changed")
 	var weather = WeatherProgressionService.new(
 		environment,
 		[
@@ -50,12 +51,11 @@ func _run_slice() -> void:
 			WeatherDefinition.new(&"rain", 2.0, 2.0, {&"rain_intensity": 0.8}),
 		],
 		[
-			WeatherTransitionDefinition.new(&"clear", &"rain"),
-			WeatherTransitionDefinition.new(&"rain", &"clear"),
+			WeatherTransitionDefinition.new(&"clear", &"rain", 1.0, weather_changed),
+			WeatherTransitionDefinition.new(&"rain", &"clear", 1.0, weather_changed),
 		],
 		99
 	)
-	var weather_changed = DomainId.event_definition(&"weather_changed")
 	var world_advance = EnvironmentWorldAdvanceService.new(
 		DynamicProcessAdvanceStub.new(),
 		null,
@@ -63,7 +63,7 @@ func _run_slice() -> void:
 		null,
 		null,
 		weather,
-		WeatherTransitionEventProjector.new(weather_changed)
+		WeatherTransitionEventProjector.new()
 	)
 
 	var quiet = world_advance.advance(0.5, SimulationStepContext.new(&"weather_quiet", 0.5, 0.5, null, []))
