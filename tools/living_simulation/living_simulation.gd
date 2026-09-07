@@ -8,6 +8,9 @@ const BeliefBootstrapSeed = preload("res://src/application/bootstrap/belief_boot
 const SimulationBootstrapDefinition = preload("res://src/application/bootstrap/simulation_bootstrap_definition.gd")
 const DeterministicScenarioDefinition = preload("res://src/application/bootstrap/deterministic_scenario_definition.gd")
 const DeterministicScenarioBootstrapService = preload("res://src/application/bootstrap/deterministic_scenario_bootstrap_service.gd")
+const ActionDefinition = preload("res://src/domain/actions/action_definition.gd")
+const ActionResolutionDefinition = preload("res://src/domain/actions/action_resolution_definition.gd")
+const RequirementPredicate = preload("res://src/domain/actions/requirement_predicate.gd")
 const BeliefProposition = preload("res://src/domain/cognition/belief_proposition.gd")
 const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 const DecisionCandidate = preload("res://src/domain/cognition/decision_candidate.gd")
@@ -15,12 +18,16 @@ const DriveState = preload("res://src/domain/cognition/drive_state.gd")
 const DriveProgressionService = preload("res://src/domain/cognition/drive_progression_service.gd")
 const DriveCandidateDefinition = preload("res://src/domain/cognition/drive_candidate_definition.gd")
 const DriveCandidateSource = preload("res://src/domain/cognition/drive_candidate_source.gd")
+const DriveConsequenceDefinition = preload("res://src/domain/cognition/drive_consequence_definition.gd")
+const IntentionCompletionDefinition = preload("res://src/domain/cognition/intention_completion_definition.gd")
 const PerceivedOpportunityDefinition = preload("res://src/domain/cognition/perceived_opportunity_definition.gd")
 const PerceivedOpportunityService = preload("res://src/domain/cognition/perceived_opportunity_service.gd")
-const BelievedOpportunityCandidateSource = preload("res://src/domain/cognition/believed_opportunity_candidate_source.gd")
+const DriveBackedBelievedOpportunityCandidateSource = preload("res://src/domain/cognition/drive_backed_believed_opportunity_candidate_source.gd")
 const DecisionRouter = preload("res://src/domain/cognition/decision_router.gd")
 const DecisionCommitCoordinator = preload("res://src/application/simulation/decision_commit_coordinator.gd")
-const DirectTargetMotionExecutionCoordinator = preload("res://src/application/simulation/direct_target_motion_execution_coordinator.gd")
+const TargetedActionExecutionCoordinator = preload("res://src/application/simulation/targeted_action_execution_coordinator.gd")
+const GroundedDriveConsequenceService = preload("res://src/application/simulation/grounded_drive_consequence_service.gd")
+const GroundedIntentionCompletionService = preload("res://src/application/simulation/grounded_intention_completion_service.gd")
 const SemanticDueScheduler = preload("res://src/application/simulation/semantic_due_scheduler.gd")
 const DueElapsedGate = preload("res://src/application/simulation/due_elapsed_gate.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
@@ -28,7 +35,7 @@ const GodotSceneSpatialRegistry = preload("res://src/infrastructure/spatial/godo
 const GodotMotionAdapter = preload("res://src/infrastructure/spatial/godot_motion_adapter.gd")
 const GodotSimulationHost = preload("res://src/infrastructure/spatial/godot_simulation_host.gd")
 
-const SCENARIO_NAME := &"living_simulation_spine"
+const SCENARIO_NAME := &"living_simulation_need_resource_consequence"
 const GAMEPLAY_SEED := 61007
 const MAX_NAVIGATION_SYNC_FRAMES := 120
 
@@ -51,9 +58,17 @@ var _boot_error := ""
 class TraceSink:
 	extends RefCounted
 	var traces: Array = []
+	var grounded_consumptions := 0
+	var grounded_intention_completions := 0
 
 	func record(trace) -> void:
 		traces.append(trace)
+		var drive_result = trace.stage_results.get(&"drive_consequence")
+		if drive_result != null and drive_result.code == &"drive_consequence_applied":
+			grounded_consumptions += 1
+		var intention_result = trace.stage_results.get(&"intention_completion")
+		if intention_result != null and intention_result.code == &"intention_completion_applied":
+			grounded_intention_completions += 1
 		if traces.size() > 64:
 			traces.pop_front()
 
@@ -80,6 +95,8 @@ func _bootstrap_and_start() -> void:
 	var shelter_type_id = DomainId.entity_type(&"shelter")
 	var edible_property = DomainId.property(&"edible")
 	var seek_food = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"seek_food")
+	var consume_food = DomainId.action(&"consume_food")
+	var food_consumed = DomainId.event_definition(&"food_consumed")
 	_wilson_ref = RuntimeWorldRef.wilson()
 	_food_ref = RuntimeWorldRef.entity(food_entity_id)
 	_shelter_ref = RuntimeWorldRef.entity(shelter_entity_id)
@@ -137,11 +154,7 @@ func _bootstrap_and_start() -> void:
 		_fail_boot("Navigation map did not synchronize")
 		return
 
-	var drive_progression = DriveProgressionService.new(_owners.drives, {DriveState.HUNGER: 0.02})
-	var drive_source = DriveCandidateSource.new(
-		_owners.drives,
-		[DriveCandidateDefinition.new(DriveState.HUNGER, seek_food, 0.1)]
-	)
+	var drive_definition = DriveCandidateDefinition.new(DriveState.HUNGER, seek_food, 0.1)
 	var opportunity_definition = PerceivedOpportunityDefinition.new(
 		EpistemicClaim.Kind.PROPERTY,
 		edible_property,
@@ -149,14 +162,47 @@ func _bootstrap_and_start() -> void:
 		DecisionCandidate.Scope.INTENTIONAL,
 		0.1
 	)
-	var believed_opportunities = BelievedOpportunityCandidateSource.new(
+	var drive_progression = DriveProgressionService.new(_owners.drives, {DriveState.HUNGER: 0.02})
+	var drive_source = DriveCandidateSource.new(_owners.drives, [drive_definition])
+	var grounded_opportunities = DriveBackedBelievedOpportunityCandidateSource.new(
+		_owners.drives,
 		_owners.beliefs,
+		[drive_definition],
 		[opportunity_definition]
 	)
 	var scheduler = SemanticDueScheduler.new()
 	scheduler.register(&"drives", 1.0, 0.0)
 	var drive_due_gate = DueElapsedGate.new(scheduler, &"drives")
-	var executor = DirectTargetMotionExecutionCoordinator.new(_motion, _wilson_ref, [seek_food])
+
+	var consume_definition = ActionDefinition.new(
+		consume_food,
+		[&"actor", &"target"] as Array[StringName],
+		RequirementPredicate.all_of([])
+	)
+	var consume_resolution = ActionResolutionDefinition.new(
+		consume_food,
+		0.8,
+		0.5,
+		[],
+		food_consumed,
+		&"consume_food_default"
+	)
+	var executor = TargetedActionExecutionCoordinator.new(
+		_motion,
+		runtime.action_execution,
+		_wilson_ref,
+		seek_food,
+		consume_definition,
+		consume_resolution
+	)
+	var drive_consequence = GroundedDriveConsequenceService.new(
+		_owners.drives,
+		[DriveConsequenceDefinition.new(consume_food, DriveState.HUNGER, -0.45, food_consumed)]
+	)
+	var intention_completion = GroundedIntentionCompletionService.new(
+		_owners.current_intention,
+		[IntentionCompletionDefinition.new(seek_food, consume_food, food_consumed)]
+	)
 	var orchestrator = SimulationOrchestrator.new(
 		runtime.world_advance,
 		runtime.action_execution,
@@ -176,14 +222,17 @@ func _bootstrap_and_start() -> void:
 		drive_source,
 		null,
 		null,
-		[believed_opportunities],
+		[grounded_opportunities],
 		null,
 		null,
 		null,
 		null,
 		null,
 		executor,
-		drive_due_gate
+		drive_due_gate,
+		drive_consequence,
+		null,
+		intention_completion
 	)
 
 	_host = GodotSimulationHost.new()
@@ -206,10 +255,13 @@ func observation_snapshot() -> Dictionary:
 		"simulation_time": -1.0 if _host == null else _host.simulation_time(),
 		"semantic_step": -1 if _host == null else _host.semantic_step_count(),
 		"hunger": -1.0 if _owners == null else _owners.drives.value(DriveState.HUNGER),
+		"hunger_band": -1 if _owners == null else _owners.drives.band(DriveState.HUNGER),
 		"has_intention": false if _owners == null else _owners.current_intention.has_current(),
 		"motion_status": -1 if _motion == null or _wilson_ref == null else _motion.get_status(_wilson_ref),
 		"wilson_position": $Wilson.global_position,
 		"trace_count": _trace_sink.traces.size(),
+		"grounded_consumptions": _trace_sink.grounded_consumptions,
+		"grounded_intention_completions": _trace_sink.grounded_intention_completions,
 	}
 
 
@@ -231,13 +283,20 @@ func _update_debug_projection() -> void:
 		if current_target != null:
 			target = " → %s" % current_target.sort_key()
 	_intention_label.text = "Intention: %s%s" % [intention, target]
-	_drive_label.text = "Hunger: %.3f   band %d" % [_owners.drives.value(DriveState.HUNGER), _owners.drives.band(DriveState.HUNGER)]
+	_drive_label.text = "Hunger: %.3f   band %d   meals %d" % [
+		_owners.drives.value(DriveState.HUNGER),
+		_owners.drives.band(DriveState.HUNGER),
+		_trace_sink.grounded_consumptions,
+	]
 	_motion_label.text = "Motion: %s   pos (%.1f, %.1f)" % [
 		_motion_status_name(_motion.get_status(_wilson_ref)),
 		$Wilson.global_position.x,
 		$Wilson.global_position.z,
 	]
-	_trace_label.text = "Recent semantic traces: %d" % _trace_sink.traces.size()
+	_trace_label.text = "Recent semantic traces: %d   completed intentions: %d" % [
+		_trace_sink.traces.size(),
+		_trace_sink.grounded_intention_completions,
+	]
 
 
 func _motion_status_name(status: int) -> String:
