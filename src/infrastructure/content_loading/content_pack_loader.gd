@@ -22,6 +22,7 @@ const WeatherDefinition = preload("res://src/domain/world/weather_definition.gd"
 const WeatherTransitionDefinition = preload("res://src/domain/world/weather_transition_definition.gd")
 const EnvironmentalResponseDefinition = preload("res://src/domain/world/environmental_response_definition.gd")
 const EnvironmentalResponseTargetSelector = preload("res://src/domain/world/environmental_response_target_selector.gd")
+const RelationFailureDefinition = preload("res://src/domain/world/relation_failure_definition.gd")
 
 const SCHEMA_VERSION := 1
 
@@ -56,6 +57,8 @@ func load_dictionary(pack: Dictionary) -> MutationResult:
 	result = _load_weather_transitions(pack.get("weather_transitions", []), registry)
 	if not result.ok: return result
 	result = _load_environmental_responses(pack.get("environmental_responses", []), registry)
+	if not result.ok: return result
+	result = _load_relation_failures(pack.get("relation_failures", []), registry)
 	if not result.ok: return result
 	result = _load_actions(pack.get("actions", []), registry)
 	if not result.ok: return result
@@ -264,6 +267,31 @@ func _load_environmental_responses(records, registry) -> MutationResult:
 	return MutationResult.success(&"content_environmental_responses_loaded")
 
 
+func _load_relation_failures(records, registry) -> MutationResult:
+	if not (records is Array): return _shape_failure("relation_failures must be an Array")
+	for record in records:
+		if not (record is Dictionary) or not record.has("id") or not record.has("relation") or not record.has("monitored_property") or not record.has("threshold"):
+			return _shape_failure("relation failure requires id, relation, monitored_property and threshold")
+		var threshold_value = record["threshold"]
+		if not (threshold_value is int or threshold_value is float) or not is_finite(float(threshold_value)):
+			return _shape_failure("relation failure threshold must be a finite number")
+		var compare = _relation_failure_compare(String(record.get("compare", "<=")))
+		if compare < 0:
+			return MutationResult.failure(&"unknown_relation_failure_compare", [String(record.get("compare"))])
+		var qualifier_result = _parse_relation_qualifier(record.get("qualifier"))
+		if not qualifier_result.ok: return qualifier_result
+		var result = registry.register_relation_failure_definition(RelationFailureDefinition.new(
+			StringName(record["id"]),
+			DomainId.relation_type(StringName(record["relation"])),
+			DomainId.property(StringName(record["monitored_property"])),
+			float(threshold_value),
+			compare,
+			qualifier_result.value
+		))
+		if not result.ok: return result
+	return MutationResult.success(&"content_relation_failures_loaded")
+
+
 func _parse_environmental_response_target(record) -> MutationResult:
 	if not (record is Dictionary) or not record.has("kind"):
 		return _shape_failure("environmental response target requires kind")
@@ -442,6 +470,13 @@ func _compare_op(value: String) -> int:
 		"<=": return RequirementPredicate.CompareOp.LTE
 		">": return RequirementPredicate.CompareOp.GT
 		">=": return RequirementPredicate.CompareOp.GTE
+	return -1
+
+
+func _relation_failure_compare(value: String) -> int:
+	match value:
+		"<=": return RelationFailureDefinition.Compare.LTE
+		">=": return RelationFailureDefinition.Compare.GTE
 	return -1
 
 
