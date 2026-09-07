@@ -1,6 +1,6 @@
 # Project / Need Continuity Pressure
 
-## Status
+Status: OPEN
 
 Active implementation pressure on `feat/systemic-project-need-continuity`.
 
