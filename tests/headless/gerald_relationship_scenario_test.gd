@@ -51,10 +51,10 @@ func _run() -> void:
 		var approached = checkpoints[3]
 		_expect_equal(boot.probes.get("scenario"), "gerald_relationship", "bootstrap keeps scenario identity")
 		_expect_true(is_zero_approx(float(boot.probes.get("affinity", 99.0))), "Gerald starts relationship-neutral")
-		_expect_equal(neutral.probes.get("gerald_place"), "Place:gerald_camp", "neutral Gerald stays at ordinary camp")
+		_expect_equal(neutral.probes.get("gerald_place"), "PlaceId:gerald_camp", "neutral Gerald stays at ordinary camp")
 		_expect_true(float(warmed.probes.get("affinity", 0.0)) >= 0.40, "helpful interactions produce friendly Gerald affinity")
 		_expect_true(int(warmed.probes.get("evidence_count", 0)) == 3, "relationship records repeated evidence")
-		_expect_equal(approached.probes.get("gerald_place"), "Place:near_wilson", "friendly Gerald chooses semantic place near Wilson")
+		_expect_equal(approached.probes.get("gerald_place"), "PlaceId:near_wilson", "friendly Gerald chooses semantic place near Wilson")
 		var neutral_position: Array = Array(neutral.probes.get("gerald_position", []))
 		var approached_position: Array = Array(approached.probes.get("gerald_position", []))
 		_expect_true(neutral_position.size() == 3 and approached_position.size() == 3 and float(approached_position[0]) - float(neutral_position[0]) > 3.0, "presentation visibly reflects Gerald approaching Wilson")
