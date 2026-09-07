@@ -21,6 +21,7 @@ const GodotDynamicContactObserver = preload("res://src/infrastructure/spatial/go
 
 const MAX_PHYSICS_TICKS := 420
 const INTERVENTION_ID := &"deflect_small_dynamic_body"
+const LATE_START_POSITION := Vector3(0.0, 6.0, 0.0)
 
 class FixtureWorldInterventionPort:
 	extends RefCounted
@@ -148,6 +149,9 @@ func _advance_early_window() -> void:
 			return
 		_early_avoided = true
 		$EarlyPalm.freeze = true
+		$LatePalm.global_position = LATE_START_POSITION
+		$LatePalm.linear_velocity = Vector3.ZERO
+		$LatePalm.angular_velocity = Vector3.ZERO
 		$LatePalm.freeze = false
 		_phase = &"late_fall"
 		checkpoint_reached.emit(&"EARLY_COLLISION_AVOIDED", _probes())
