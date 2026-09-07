@@ -1,7 +1,8 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://tools/living_simulation/living_simulation.gd" id="1_script"]
 [ext_resource type="Script" path="res://tools/living_simulation/living_simulation_calibration_overlay.gd" id="2_overlay"]
+[ext_resource type="Script" path="res://tools/living_simulation/living_simulation_world_projection.gd" id="3_projection"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_island"]
 vertices = PackedVector3Array(-10, 0, -7, 10, 0, -7, 10, 0, 7, -10, 0, 7)
@@ -220,6 +221,9 @@ projection = 1
 size = 19.0
 current = true
 
+[node name="WorldProjection" type="Node" parent="."]
+script = ExtResource("3_projection")
+
 [node name="DebugUI" type="CanvasLayer" parent="."]
 
 [node name="Panel" type="PanelContainer" parent="DebugUI"]
@@ -238,7 +242,7 @@ theme_override_constants/margin_bottom = 10
 theme_override_constants/separation = 5
 
 [node name="Title" type="Label" parent="DebugUI/Panel/Margin/VBox"]
-text = "WILSON — LIVING SIMULATION / PERSISTENT WORK"
+text = "WILSON — LIVING SIMULATION / WEATHER CONTEXT"
 
 [node name="Status" type="Label" parent="DebugUI/Panel/Margin/VBox"]
 text = "Runtime: bootstrapping..."
