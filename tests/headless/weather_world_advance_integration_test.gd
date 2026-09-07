@@ -53,8 +53,7 @@ func _run_slice() -> void:
 		[
 			WeatherTransitionDefinition.new(&"clear", &"rain", 1.0, weather_changed),
 			WeatherTransitionDefinition.new(&"rain", &"clear", 1.0, weather_changed),
-		],
-		99
+		]
 	)
 	var world_advance = EnvironmentWorldAdvanceService.new(
 		DynamicProcessAdvanceStub.new(),
