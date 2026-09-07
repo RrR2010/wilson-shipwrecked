@@ -16,7 +16,7 @@ func bind(runtime_ref: RuntimeWorldRef, node: Node3D) -> bool:
 	if runtime_ref == null or node == null:
 		return false
 	var key := runtime_ref.key()
-	var node_id := node.get_instance_id()
+	var node_id: int = node.get_instance_id()
 	if _nodes_by_ref.has(key):
 		return _nodes_by_ref[key] == node
 	if _refs_by_node_id.has(node_id):
@@ -45,7 +45,7 @@ func unbind(runtime_ref: RuntimeWorldRef, node: Node3D = null) -> bool:
 		return false
 	_nodes_by_ref.erase(key)
 	if bound_node != null and is_instance_valid(bound_node):
-		var node_id := bound_node.get_instance_id()
+		var node_id: int = bound_node.get_instance_id()
 		var reverse_ref = _refs_by_node_id.get(node_id)
 		if reverse_ref != null and reverse_ref.equals(runtime_ref):
 			_refs_by_node_id.erase(node_id)
