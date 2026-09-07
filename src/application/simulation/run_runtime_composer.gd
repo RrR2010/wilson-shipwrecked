@@ -123,7 +123,9 @@ func compose(
 				query,
 				entities,
 				environmental_responses,
-				exposure_resolver
+				exposure_resolver,
+				profiles,
+				assembly_bindings
 			)
 
 		world_advance = EnvironmentWorldAdvanceService.new(
