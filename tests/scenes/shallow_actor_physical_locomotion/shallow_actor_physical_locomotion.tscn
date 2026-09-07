@@ -1,0 +1,96 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://tests/scenes/shallow_actor_physical_locomotion/shallow_actor_physical_locomotion.gd" id="1_script"]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_route"]
+vertices = PackedVector3Array(-7, 0, -4, 7, 0, -4, 7, 0, 4, -7, 0, 4)
+polygons = [PackedInt32Array(0, 1, 2), PackedInt32Array(0, 2, 3)]
+cell_size = 0.25
+cell_height = 0.1
+agent_height = 1.0
+agent_radius = 0.25
+agent_max_climb = 0.3
+agent_max_slope = 45.0
+
+[sub_resource type="BoxShape3D" id="GroundShape"]
+size = Vector3(16, 0.2, 10)
+
+[sub_resource type="CapsuleShape3D" id="GeraldShape"]
+radius = 0.25
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="GroundMaterial"]
+albedo_color = Color(0.28, 0.4, 0.24, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="GeraldMaterial"]
+albedo_color = Color(0.92, 0.92, 0.88, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="WilsonMaterial"]
+albedo_color = Color(0.2, 0.42, 0.9, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="GroundMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(16, 0.2, 10)
+
+[sub_resource type="CapsuleMesh" id="ActorMesh"]
+material = SubResource("GeraldMaterial")
+radius = 0.25
+height = 1.0
+
+[node name="ShallowActorPhysicalLocomotion" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("NavigationMesh_route")
+
+[node name="Ground" type="StaticBody3D" parent="."]
+collision_layer = 1
+collision_mask = 1
+
+[node name="Visual" type="MeshInstance3D" parent="Ground"]
+position = Vector3(0, -0.1, 0)
+mesh = SubResource("GroundMesh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+position = Vector3(0, -0.1, 0)
+shape = SubResource("GroundShape")
+
+[node name="Gerald" type="CharacterBody3D" parent="."]
+position = Vector3(-5, 0, 0)
+collision_layer = 1
+collision_mask = 1
+floor_snap_length = 0.2
+
+[node name="Visual" type="MeshInstance3D" parent="Gerald"]
+position = Vector3(0, 0.5, 0)
+mesh = SubResource("ActorMesh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Gerald"]
+position = Vector3(0, 0.5, 0)
+shape = SubResource("GeraldShape")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="Gerald"]
+path_desired_distance = 0.25
+target_desired_distance = 0.45
+path_max_distance = 2.0
+radius = 0.25
+height = 1.0
+max_speed = 3.0
+
+[node name="NearWilson" type="Node3D" parent="."]
+position = Vector3(4.5, 0, 0)
+
+[node name="WilsonMarker" type="MeshInstance3D" parent="."]
+position = Vector3(5.2, 0.9, 0)
+mesh = SubResource("ActorMesh")
+material_override = SubResource("WilsonMaterial")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 12, 9)
+rotation_degrees = Vector3(-53, 0, 0)
+projection = 1
+size = 14.0
+current = true
