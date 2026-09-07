@@ -44,10 +44,10 @@ func advance(elapsed: float) -> Dictionary:
 	assert(is_finite(elapsed) and elapsed >= 0.0, "Weather elapsed must be finite and non-negative")
 	var transitions: Array = []
 	var segments: Array = []
-	var remaining := elapsed
+	var remaining: float = elapsed
 	while remaining > 0.0:
-		var until_transition := _environment.weather_planned_duration - _environment.weather_elapsed
-		var segment_elapsed := minf(remaining, until_transition)
+		var until_transition: float = float(_environment.weather_planned_duration) - float(_environment.weather_elapsed)
+		var segment_elapsed: float = minf(remaining, until_transition)
 		if segment_elapsed > 0.0:
 			segments.append({
 				"weather": _environment.weather,
@@ -59,10 +59,10 @@ func advance(elapsed: float) -> Dictionary:
 		if _environment.weather_elapsed < _environment.weather_planned_duration and not is_equal_approx(_environment.weather_elapsed, _environment.weather_planned_duration):
 			break
 		var previous: StringName = _environment.weather
-		var selected = _select_transition(previous, _environment.weather_transition_index)
+		var selected = _select_transition(previous, int(_environment.weather_transition_index))
 		var next: StringName = selected.to_weather
-		var next_index := _environment.weather_transition_index + 1
-		var duration := _duration_for(next, next_index)
+		var next_index: int = int(_environment.weather_transition_index) + 1
+		var duration: float = _duration_for(next, next_index)
 		_environment.begin_weather(next, duration, next_index)
 		transitions.append({
 			"from": previous,
@@ -94,13 +94,13 @@ func condition(condition_id: StringName, fallback: float = 0.0) -> float:
 
 func _select_transition(from_weather: StringName, transition_index: int):
 	var options: Array = _transitions_by_from[from_weather]
-	var total_weight := 0.0
+	var total_weight: float = 0.0
 	for option in options:
-		total_weight += option.weight
-	var sample := _sample_unit(from_weather, transition_index, 11) * total_weight
-	var cumulative := 0.0
+		total_weight += float(option.weight)
+	var sample: float = _sample_unit(from_weather, transition_index, 11) * total_weight
+	var cumulative: float = 0.0
 	for option in options:
-		cumulative += option.weight
+		cumulative += float(option.weight)
 		if sample < cumulative:
 			return option
 	return options[options.size() - 1]
@@ -109,13 +109,13 @@ func _select_transition(from_weather: StringName, transition_index: int):
 func _duration_for(weather_id: StringName, transition_index: int) -> float:
 	var definition = _definitions[weather_id]
 	if is_equal_approx(definition.min_duration, definition.max_duration):
-		return definition.min_duration
-	var sample := _sample_unit(weather_id, transition_index, 29)
-	return lerpf(definition.min_duration, definition.max_duration, sample)
+		return float(definition.min_duration)
+	var sample: float = _sample_unit(weather_id, transition_index, 29)
+	return lerpf(float(definition.min_duration), float(definition.max_duration), sample)
 
 
 func _sample_unit(weather_id: StringName, transition_index: int, salt: int) -> float:
-	var state := 17
+	var state: int = 17
 	state = posmod(state * 48271 + posmod(transition_index, SAMPLE_MODULUS), SAMPLE_MODULUS)
 	state = posmod(state * 69621 + _stable_string_hash(String(weather_id)), SAMPLE_MODULUS)
 	state = posmod(state * 40699 + salt, SAMPLE_MODULUS)
@@ -123,7 +123,7 @@ func _sample_unit(weather_id: StringName, transition_index: int, salt: int) -> f
 
 
 func _stable_string_hash(value: String) -> int:
-	var result := 7
+	var result: int = 7
 	for index in range(value.length()):
 		result = posmod(result * 131 + value.unicode_at(index), SAMPLE_MODULUS)
 	return result
