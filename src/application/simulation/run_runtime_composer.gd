@@ -1,6 +1,7 @@
 class_name RunRuntimeComposer
 extends RefCounted
 
+const DomainId = preload("res://src/domain/core/domain_id.gd")
 const DefaultWorldQuery = preload("res://src/domain/world/default_world_query.gd")
 const DefaultWorldCommandPort = preload("res://src/domain/world/default_world_command_port.gd")
 const DynamicProcessAdvanceService = preload("res://src/domain/world/dynamic_process_advance_service.gd")
@@ -9,6 +10,7 @@ const EnvironmentalResponseAdvanceService = preload("res://src/domain/world/envi
 const PropertyDependencyGraph = preload("res://src/domain/physical/property_dependency_graph.gd")
 const PhysicalDerivationPolicyRegistry = preload("res://src/domain/physical/physical_derivation_policy_registry.gd")
 const EffectivePhysicalProfileResolver = preload("res://src/domain/physical/effective_physical_profile_resolver.gd")
+const AssemblyBindingProjection = preload("res://src/domain/physical/assembly_binding_projection.gd")
 const ProtectionProjectionService = preload("res://src/domain/physical/protection_projection_service.gd")
 const ExposureResolver = preload("res://src/domain/physical/exposure_resolver.gd")
 const RequirementPredicateEvaluator = preload("res://src/domain/actions/requirement_predicate_evaluator.gd")
@@ -24,6 +26,8 @@ const EnvironmentWorldAdvanceService = preload("res://src/application/simulation
 const WeatherTransitionEventProjector = preload("res://src/application/simulation/weather_transition_event_projector.gd")
 const RunRuntimeComposition = preload("res://src/application/simulation/run_runtime_composition.gd")
 const RunRuntimeCompositionResult = preload("res://src/application/simulation/run_runtime_composition_result.gd")
+
+const ASSEMBLY_BINDING_RELATION := &"attached_to"
 
 ## Application composition root for the reconstructible core runtime.
 ##
@@ -57,7 +61,11 @@ func compose(
 		return RunRuntimeCompositionResult.failure(graph_result.code, graph_result.diagnostics)
 
 	var query = DefaultWorldQuery.new(entities, relations, content, wilson_world_state)
-	var profiles = EffectivePhysicalProfileResolver.new(query, graph, policies)
+	var assembly_bindings = AssemblyBindingProjection.new(
+		query,
+		DomainId.relation_type(ASSEMBLY_BINDING_RELATION)
+	)
+	var profiles = EffectivePhysicalProfileResolver.new(query, graph, policies, assembly_bindings)
 	var evaluator = RequirementPredicateEvaluator.new(query, profiles)
 	var attemptability = ActionAttemptabilityService.new(evaluator)
 	var execution = ActionExecutionService.new(attemptability)
