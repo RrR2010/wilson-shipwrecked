@@ -48,6 +48,7 @@ func _run_slice() -> void:
 	var moisture = DomainId.property(&"moisture")
 	var wind_susceptibility = DomainId.property(&"wind_susceptibility")
 	var binding_integrity = DomainId.property(&"binding_integrity")
+	var roof_stability = DomainId.property(&"roof_stability")
 	var covering_slot = DomainId.assembly_slot(&"roof_covering")
 	var binding_slot = DomainId.assembly_slot(&"roof_binding")
 	var host_type = DomainId.entity_type(&"cover_host")
@@ -58,6 +59,7 @@ func _run_slice() -> void:
 	_expect_true(content.register_property_definition(PropertyDefinition.new(moisture, PropertyDefinition.ValueFamily.NUMBER, 0.0, 1.0)).ok, "moisture registers")
 	_expect_true(content.register_property_definition(PropertyDefinition.new(wind_susceptibility, PropertyDefinition.ValueFamily.NUMBER, 0.0, 1.0)).ok, "wind susceptibility registers")
 	_expect_true(content.register_property_definition(PropertyDefinition.new(binding_integrity, PropertyDefinition.ValueFamily.NUMBER, 0.0, 1.0)).ok, "binding integrity registers")
+	_expect_true(content.register_property_definition(PropertyDefinition.new(roof_stability, PropertyDefinition.ValueFamily.NUMBER, 0.0, 1.0)).ok, "roof stability registers")
 	_expect_true(content.register_entity_definition(EntityDefinition.new(host_type, [], {}, [covering])).ok, "host semantics register")
 	_expect_true(content.register_entity_definition(EntityDefinition.new(cloth_type, [], {moisture.key(): 0.8}, [])).ok, "cloth semantics register")
 	_expect_true(content.register_entity_definition(EntityDefinition.new(binding_type, [], {binding_integrity.key(): 1.0}, [])).ok, "binding semantics register")
@@ -67,6 +69,12 @@ func _run_slice() -> void:
 		wind_susceptibility,
 		&"max_numeric"
 	)).ok, "assembly-derived wind susceptibility registers")
+	_expect_true(content.register_property_derivation_definition(PropertyDerivationDefinition.new(
+		&"binding_driven_roof_stability",
+		[PropertyInputSelector.assembly_slot_property(binding_slot, binding_integrity)],
+		roof_stability,
+		&"min_numeric"
+	)).ok, "assembly-derived roof stability registers")
 	_expect_true(content.register_weather_definition(WeatherDefinition.new(
 		&"storm", 10.0, 10.0, {&"wind_intensity": 1.0}
 	)).ok, "storm weather registers")
@@ -118,13 +126,19 @@ func _run_slice() -> void:
 		_completed = true
 		return
 	var runtime = composed.composition
-	_expect_float(runtime.effective_physical_profiles.resolve(host).get_property(wind_susceptibility), 0.8, "host derives wind susceptibility from wet covering slot")
+	var initial_profile = runtime.effective_physical_profiles.resolve(host)
+	_expect_float(initial_profile.get_property(wind_susceptibility), 0.8, "host derives wind susceptibility from wet covering slot")
+	_expect_float(initial_profile.get_property(roof_stability), 1.0, "host initially derives full stability from binding slot")
 
 	var result = runtime.world_advance.advance(1.0, SimulationStepContext.new(&"wind_step", 1.0, 1.0, null, []))
 	# -0.5 full-rate * 1.0 wind * 0.8 susceptibility = -0.4 binding integrity.
 	_expect_float(runtime.world_query.get_instance_property(binding, binding_integrity), 0.6, "wind stress degrades configured binding through semantic slot targeting")
 	_expect_true(result.diagnostics.is_empty(), "wind response produces no world-advance diagnostics")
 	_expect_true(not result.change_set.is_empty(), "binding degradation emits semantic invalidation")
+	_expect_float(runtime.effective_physical_profiles.resolve(host).get_property(roof_stability), 1.0, "cached host profile remains stable until explicit invalidation boundary")
+	var invalidation = runtime.derived_invalidator.apply(result.change_set)
+	_expect_true(not invalidation.is_empty(), "world change enters derived invalidation boundary")
+	_expect_float(runtime.effective_physical_profiles.resolve(host).get_property(roof_stability), 0.6, "component invalidation propagates to host assembly profile")
 
 	_completed = true
 
