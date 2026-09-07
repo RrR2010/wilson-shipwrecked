@@ -39,6 +39,9 @@ func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 	assert(presence_record is Dictionary, "Snapshot missing Presence relationship")
 	var environment_record = snapshot.get("environment")
 	assert(environment_record is Dictionary, "Snapshot missing environment state")
+	assert(environment_record.has("weather_elapsed"), "Snapshot missing procedural weather elapsed")
+	assert(environment_record.has("weather_planned_duration"), "Snapshot missing procedural weather planned duration")
+	assert(environment_record.has("weather_transition_index"), "Snapshot missing procedural weather transition index")
 
 	var entity_seeds: Array = []
 	for record in snapshot.get("entities", []):
@@ -104,7 +107,10 @@ func decode(snapshot: Dictionary) -> SimulationBootstrapDefinition:
 		float(body_record["vitality"]), _decode_drives(drive_record), project_seeds, association_seeds,
 		habit_seeds, episode_seeds, presence_seed, StringName(environment_record["weather"]),
 		StringName(environment_record["daylight_phase"]), dynamic_process_seeds, actor_state_seeds,
-		actor_relationship_seeds
+		actor_relationship_seeds,
+		float(environment_record["weather_elapsed"]),
+		float(environment_record["weather_planned_duration"]),
+		int(environment_record["weather_transition_index"])
 	)
 
 func _decode_drives(record: Dictionary) -> Dictionary:

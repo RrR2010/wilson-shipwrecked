@@ -19,6 +19,7 @@ var perception_access
 var perception
 var learning
 var activity_query
+var world_advance
 
 
 func _init(
@@ -34,7 +35,8 @@ func _init(
 	p_perception_access,
 	p_perception,
 	p_learning,
-	p_activity_query
+	p_activity_query,
+	p_world_advance = null
 ) -> void:
 	assert(p_world_query != null, "RunRuntimeComposition requires WorldQuery")
 	assert(p_property_dependency_graph != null, "RunRuntimeComposition requires PropertyDependencyGraph")
@@ -62,3 +64,4 @@ func _init(
 	perception = p_perception
 	learning = p_learning
 	activity_query = p_activity_query
+	world_advance = p_world_advance

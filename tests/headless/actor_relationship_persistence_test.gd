@@ -79,7 +79,7 @@ func _run_test() -> void:
 		boot.owners.wilson_body_state,
 		boot.owners.actor_relationships
 	)
-	_expect_equal(int(snapshot.get("schema_version", -1)), 11, "actor relationship persistence advances simulation snapshot schema")
+	_expect_equal(int(snapshot.get("schema_version", -1)), 12, "actor relationship persistence uses current simulation snapshot schema")
 	_expect_equal(Array(snapshot.get("actor_relationships", [])).size(), 1, "snapshot captures actor relationship")
 
 	var restored = snapshots.restore(snapshot)

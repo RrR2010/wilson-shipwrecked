@@ -43,7 +43,12 @@ func _run() -> void:
 		[], [], [], [], null,
 		&"storm",
 		&"dusk",
-		[seed]
+		[seed],
+		[],
+		[],
+		1.25,
+		6.0,
+		4
 	)
 	var first = SimulationOwnerBootstrapper.new().bootstrap(definition)
 	var second = SimulationOwnerBootstrapper.new().bootstrap(definition)
@@ -55,6 +60,9 @@ func _run() -> void:
 
 	_expect_equal(first.owners.environment.weather, &"storm", "bootstrap preserves weather")
 	_expect_equal(first.owners.environment.daylight_phase, &"dusk", "bootstrap preserves daylight phase")
+	_expect_true(is_equal_approx(first.owners.environment.weather_elapsed, 1.25), "bootstrap preserves procedural weather elapsed")
+	_expect_true(is_equal_approx(first.owners.environment.weather_planned_duration, 6.0), "bootstrap preserves procedural weather planned duration")
+	_expect_equal(first.owners.environment.weather_transition_index, 4, "bootstrap preserves procedural weather transition index")
 	var first_process = first.owners.dynamic_processes.get_process(&"weaken_crate_1")
 	var second_process = second.owners.dynamic_processes.get_process(&"weaken_crate_1")
 	_expect_true(first_process != null and second_process != null, "dynamic process seed reconstructs owner state")
@@ -72,6 +80,7 @@ func _run() -> void:
 	if first_process != null:
 		first_process.elapsed = 20.0
 	_expect_equal(second.owners.environment.weather, &"storm", "environment mutation is isolated between bootstraps")
+	_expect_true(is_equal_approx(second.owners.environment.weather_elapsed, 1.25), "procedural phase mutation is isolated between bootstraps")
 	if second_process != null:
 		_expect_equal(second_process.lifecycle, DynamicProcessInstance.Lifecycle.PAUSED, "process lifecycle mutation is isolated")
 		_expect_true(is_equal_approx(second_process.elapsed, 12.5), "process elapsed mutation is isolated")
@@ -83,6 +92,9 @@ func _run() -> void:
 	if defaults.ok:
 		_expect_equal(defaults.owners.environment.weather, &"clear", "new-run default weather is clear")
 		_expect_equal(defaults.owners.environment.daylight_phase, &"day", "new-run default daylight phase is day")
+		_expect_true(is_equal_approx(defaults.owners.environment.weather_elapsed, 0.0), "new-run default weather phase starts at zero elapsed")
+		_expect_true(is_equal_approx(defaults.owners.environment.weather_planned_duration, 0.0), "new-run default weather duration remains unplanned until progression composition")
+		_expect_equal(defaults.owners.environment.weather_transition_index, 0, "new-run default weather transition index starts at zero")
 		_expect_equal(defaults.owners.dynamic_processes.instances().size(), 0, "new-run default dynamic process store starts empty")
 
 	_completed = true

@@ -17,6 +17,11 @@ var _assembly_definitions: Dictionary = {}
 var _property_derivation_definitions: Dictionary = {}
 var _action_definitions: Dictionary = {}
 var _action_resolution_definitions: Dictionary = {}
+var _dynamic_process_definitions: Dictionary = {}
+var _weather_definitions: Dictionary = {}
+var _weather_transition_definitions: Dictionary = {}
+var _environmental_response_definitions: Dictionary = {}
+var _protection_rule_definitions: Dictionary = {}
 var _sealed := false
 
 
@@ -102,11 +107,41 @@ func register_action_resolution_definition(definition) -> MutationResult:
 	return MutationResult.success(&"action_resolution_definition_registered", definition)
 
 
+func register_dynamic_process_definition(definition) -> MutationResult:
+	return _register_named_definition(_dynamic_process_definitions, definition, &"dynamic_process_definition_registered", &"duplicate_dynamic_process_definition")
+
+
+func register_weather_definition(definition) -> MutationResult:
+	return _register_named_definition(_weather_definitions, definition, &"weather_definition_registered", &"duplicate_weather_definition")
+
+
+func register_weather_transition_definition(definition) -> MutationResult:
+	if _sealed:
+		return _sealed_failure()
+	assert(definition != null, "register_weather_transition_definition requires WeatherTransitionDefinition")
+	var key := StringName(definition.stable_key())
+	if _weather_transition_definitions.has(key):
+		return MutationResult.failure(&"duplicate_weather_transition_definition", ["Duplicate weather transition definition: %s" % definition.stable_key()])
+	_weather_transition_definitions[key] = definition
+	return MutationResult.success(&"weather_transition_definition_registered", definition)
+
+
+func register_environmental_response_definition(definition) -> MutationResult:
+	return _register_named_definition(_environmental_response_definitions, definition, &"environmental_response_definition_registered", &"duplicate_environmental_response_definition")
+
+
+func register_protection_rule_definition(definition) -> MutationResult:
+	return _register_named_definition(_protection_rule_definitions, definition, &"protection_rule_definition_registered", &"duplicate_protection_rule_definition")
+
+
 func seal() -> MutationResult:
 	if not _property_definitions.is_empty():
 		var property_validation = _validate_property_references()
 		if not property_validation.ok:
 			return property_validation
+	var environment_validation = _validate_environment_references()
+	if not environment_validation.ok:
+		return environment_validation
 	for resolution in _action_resolution_definitions.values():
 		if not _action_definitions.has(resolution.action_id.key()):
 			return MutationResult.failure(&"missing_action_definition", ["Missing action definition for %s" % resolution.action_id.sort_key()])
@@ -132,6 +167,30 @@ func _validate_property_references() -> MutationResult:
 			if not _property_definitions.has(selector.property_id.key()):
 				return MutationResult.failure(&"missing_property_definition", ["Missing input property definition for derivation %s" % String(derivation.id)])
 	return MutationResult.success(&"property_references_valid")
+
+
+func _validate_environment_references() -> MutationResult:
+	for definition in _dynamic_process_definitions.values():
+		if not _property_definitions.has(definition.target_property.key()):
+			return MutationResult.failure(&"missing_property_definition", ["Missing dynamic-process target property for %s" % String(definition.id)])
+	for transition in _weather_transition_definitions.values():
+		if not _weather_definitions.has(transition.from_weather):
+			return MutationResult.failure(&"missing_weather_definition", ["Missing weather transition source: %s" % String(transition.from_weather)])
+		if not _weather_definitions.has(transition.to_weather):
+			return MutationResult.failure(&"missing_weather_definition", ["Missing weather transition target: %s" % String(transition.to_weather)])
+		if transition.event_type != null and not _event_definitions.has(transition.event_type.key()):
+			return MutationResult.failure(&"missing_event_definition", ["Missing weather transition event definition: %s" % transition.event_type.sort_key()])
+	for definition in _environmental_response_definitions.values():
+		if not _property_definitions.has(definition.target_property.key()):
+			return MutationResult.failure(&"missing_property_definition", ["Missing environmental-response target property for %s" % String(definition.id)])
+		if definition.susceptibility_property != null and not _property_definitions.has(definition.susceptibility_property.key()):
+			return MutationResult.failure(&"missing_property_definition", ["Missing environmental-response susceptibility property for %s" % String(definition.id)])
+	for definition in _protection_rule_definitions.values():
+		if not _property_definitions.has(definition.coverage_property.key()):
+			return MutationResult.failure(&"missing_property_definition", ["Missing protection coverage property for %s" % String(definition.id)])
+		if not _property_definitions.has(definition.strength_property.key()):
+			return MutationResult.failure(&"missing_property_definition", ["Missing protection strength property for %s" % String(definition.id)])
+	return MutationResult.success(&"environment_references_valid")
 
 
 func is_sealed() -> bool:
@@ -177,9 +236,7 @@ func get_property_derivation_definition(definition_id: StringName):
 
 
 func property_derivation_definitions() -> Array:
-	var result: Array = _property_derivation_definitions.values()
-	result.sort_custom(func(a, b): return a.sort_key() < b.sort_key())
-	return result
+	return _sorted_named_definitions(_property_derivation_definitions)
 
 
 func get_action_definition(action_id):
@@ -191,6 +248,28 @@ func get_action_definition(action_id):
 func get_action_resolution_definition(definition_id: StringName):
 	assert(definition_id != &"", "get_action_resolution_definition requires definition id")
 	return _action_resolution_definitions.get(definition_id)
+
+
+func dynamic_process_definitions() -> Array:
+	return _sorted_named_definitions(_dynamic_process_definitions)
+
+
+func weather_definitions() -> Array:
+	return _sorted_named_definitions(_weather_definitions)
+
+
+func weather_transition_definitions() -> Array:
+	var result: Array = _weather_transition_definitions.values()
+	result.sort_custom(func(a, b): return a.stable_key() < b.stable_key())
+	return result
+
+
+func environmental_response_definitions() -> Array:
+	return _sorted_named_definitions(_environmental_response_definitions)
+
+
+func protection_rule_definitions() -> Array:
+	return _sorted_named_definitions(_protection_rule_definitions)
 
 
 func entity_definition_ids() -> Array[String]:
@@ -210,11 +289,7 @@ func assembly_definition_ids() -> Array[String]:
 
 
 func property_derivation_definition_ids() -> Array[String]:
-	var result: Array[String] = []
-	for definition_id in _property_derivation_definitions.keys():
-		result.append(String(definition_id))
-	result.sort()
-	return result
+	return _named_definition_ids(_property_derivation_definitions)
 
 
 func action_definition_ids() -> Array[String]:
@@ -222,8 +297,29 @@ func action_definition_ids() -> Array[String]:
 
 
 func action_resolution_definition_ids() -> Array[String]:
+	return _named_definition_ids(_action_resolution_definitions)
+
+
+func _register_named_definition(source: Dictionary, definition, success_code: StringName, duplicate_code: StringName) -> MutationResult:
+	if _sealed:
+		return _sealed_failure()
+	assert(definition != null, "authored definition cannot be null")
+	assert(definition.id != &"", "authored definition requires stable id")
+	if source.has(definition.id):
+		return MutationResult.failure(duplicate_code, ["Duplicate authored definition: %s" % String(definition.id)])
+	source[definition.id] = definition
+	return MutationResult.success(success_code, definition)
+
+
+func _sorted_named_definitions(source: Dictionary) -> Array:
+	var result: Array = source.values()
+	result.sort_custom(func(a, b): return String(a.id) < String(b.id))
+	return result
+
+
+func _named_definition_ids(source: Dictionary) -> Array[String]:
 	var result: Array[String] = []
-	for definition_id in _action_resolution_definitions.keys():
+	for definition_id in source.keys():
 		result.append(String(definition_id))
 	result.sort()
 	return result

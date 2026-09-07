@@ -48,7 +48,9 @@ func restore(
 		simulation.wilson_world_state,
 		simulation.beliefs,
 		simulation.current_intention,
-		content
+		content,
+		simulation.environment,
+		simulation.dynamic_processes
 	)
 	if not composition_result.ok:
 		return RunRuntimeRestoreResult.failure(

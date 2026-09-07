@@ -154,7 +154,7 @@ func _run_slice() -> void:
 		null,
 		wilson_body
 	)
-	_expect_equal(snapshot.get("schema_version"), 11, "snapshot uses current simulation schema")
+	_expect_equal(snapshot.get("schema_version"), 12, "snapshot uses current simulation schema")
 	_expect_true(snapshot.has("wilson_body"), "Wilson body truth is persisted")
 	_expect_equal(snapshot["wilson_body"].get("vitality"), 0.37, "Wilson body vitality is captured")
 	_expect_true(snapshot.has("drives"), "durable Wilson drives are persisted")

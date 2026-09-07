@@ -84,7 +84,13 @@ func bootstrap(definition):
 	if definition.presence_seed != null:
 		presence.restore(definition.presence_seed.presence_belief, definition.presence_seed.trust, definition.presence_seed.dependency, definition.presence_seed.evidence_count, definition.presence_seed.last_source_execution_id)
 
-	var environment = EnvironmentState.new(definition.environment_weather, definition.environment_daylight_phase)
+	var environment = EnvironmentState.new(
+		definition.environment_weather,
+		definition.environment_daylight_phase,
+		definition.environment_weather_elapsed,
+		definition.environment_weather_planned_duration,
+		definition.environment_weather_transition_index
+	)
 
 	var dynamic_processes = DynamicProcessStore.new()
 	for seed in definition.dynamic_process_seeds:

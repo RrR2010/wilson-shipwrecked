@@ -3,11 +3,11 @@ extends RefCounted
 
 const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
 const PerceptionAccess = preload("res://src/domain/cognition/perception_access.gd")
+const EventDefinition = preload("res://src/domain/content/event_definition.gd")
 
 ## Concrete engine-agnostic perception adapter for the current coarse spatial model.
-## EventDefinition owns potentially perceptible roles/modalities; WorldQuery owns
-## current PlaceId truth. Fine distance/occlusion adapters can replace this class
-## behind the same resolve() contract.
+## Spatial-role events use current PlaceId truth. Ambient event definitions represent
+## locally pervasive environmental facts and are observable without synthetic bindings.
 
 var _world_query
 var _observer
@@ -26,6 +26,14 @@ func resolve(world_events: Array, _step_context) -> Dictionary:
 		var definition = _world_query.get_event_definition(world_event.event_type)
 		if definition == null:
 			result[world_event.execution_id] = PerceptionAccess.new(false)
+			continue
+		if definition.access_scope == EventDefinition.AccessScope.AMBIENT:
+			result[world_event.execution_id] = PerceptionAccess.new(
+				true,
+				definition.modalities,
+				[],
+				definition.base_confidence
+			)
 			continue
 		var accessible_roles: Array[StringName] = []
 		for role_name in definition.perceptible_roles:
