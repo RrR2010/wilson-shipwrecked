@@ -23,12 +23,12 @@ For substantial work:
 
 1. [`../README.md`](../README.md) — project thesis;
 2. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current implementation/test/schema baseline and remaining work;
-3. [`handoffs/long-way-around-to-next-representative-gameplay.md`](handoffs/long-way-around-to-next-representative-gameplay.md) — **active runtime stage-transition handoff after the validated Wilson-relative route-memory slice**;
+3. [`handoffs/gerald-relationship-to-physical-accident-authoring.md`](handoffs/gerald-relationship-to-physical-accident-authoring.md) — **active runtime stage-transition handoff after the validated persistent Gerald relationship slice**;
 4. then use the relevant canonical bundle below.
 
-**Current phase:** the structural runtime foundation, full current-run restore/rebootstrap, deterministic engine-scenario tooling, real Godot spatial/navigation/perception adapters, grounded autonomous action, production-facing fresh-run bootstrap, deterministic product-level world/run generation, and a Wilson-relative remembered-route preference slice are implemented and locally validated.
+**Current phase:** the structural runtime foundation, full current-run restore/rebootstrap, deterministic engine-scenario tooling, real Godot spatial/navigation/perception adapters, grounded autonomous action, production-facing fresh-run bootstrap, deterministic product-level world/run generation, Wilson-relative remembered-route preference, and persistent non-Wilson actor relationship semantics are implemented and locally validated.
 
-The leading runtime vertical is now another representative gameplay primitive from a distinct scene need. Prefer a slice that exercises a different interaction/owner boundary rather than another route variant. Richer Gerald relationship/behavior semantics and physical accident authoring are the leading candidates. Persistence evolution remains requirement-driven, and generalized production scene-binding/host composition remains deferred until a real production use proves its shape.
+The leading runtime vertical is now a distinct representative gameplay primitive around physical accident authoring. Prefer a falling-palm-style slice only if it forces a reusable physical-event authoring boundary rather than fixture-specific rigid-body scripting. Continuous physical locomotion for non-Wilson actors remains deferred until a scenario actually requires it. Persistence evolution remains requirement-driven, and generalized production scene-binding/host composition remains deferred until a real production use proves its shape.
 
 Cross-cutting correctness items listed in `DISCOVERY_STATUS.md` should be pulled forward when representative scenarios require them. New work should preserve established owner boundaries rather than reopen foundation architecture by default.
 
