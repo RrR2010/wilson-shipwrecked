@@ -46,6 +46,22 @@ func _ready() -> void:
 	_roof_c = _simulation.get_node_or_null("Shelter/RoofC") as MeshInstance3D
 	_sleeping_area = _simulation.get_node_or_null("Shelter/SleepingArea") as MeshInstance3D
 
+	# Keep visible props honest: the campfire has no authored affordance yet, so it
+	# should not read like an interactable object in this calibration scene.
+	var campfire = _simulation.get_node_or_null("Campfire")
+	if campfire != null:
+		campfire.visible = false
+
+	# The in-world bubble is the primary player-facing communication layer. Make it
+	# readable at the default camera scale rather than relying on the debug overlay.
+	if _wilson_bubble != null:
+		_wilson_bubble.font_size = 48
+		_wilson_bubble.outline_size = 12
+		_wilson_bubble.position.y = 2.65
+	if _gerald_bubble != null:
+		_gerald_bubble.font_size = 34
+		_gerald_bubble.outline_size = 9
+
 
 func _process(_delta: float) -> void:
 	if _simulation == null or not _simulation.has_method("observation_snapshot"):
@@ -70,8 +86,6 @@ func _project_weather(weather: String) -> void:
 
 
 func _project_shelter(contributions: int) -> void:
-	## More milestones make the persistent project read as construction rather than
-	## a finished prop with a hidden counter.
 	if _base_frame != null:
 		_base_frame.visible = contributions >= 1
 	if _post_left != null:
@@ -97,17 +111,17 @@ func _project_wilson(snapshot: Dictionary) -> void:
 	if _wilson_bubble != null:
 		match intention:
 			"SemanticIntentionId:seek_food":
-				_wilson_bubble.text = "☔  🍖 EAT" if raining else "🍖 EAT"
+				_wilson_bubble.text = "🌧  🍖" if raining else "🍖"
 			"SemanticIntentionId:seek_rest":
-				_wilson_bubble.text = "💤 REST"
+				_wilson_bubble.text = "💤"
 			"SemanticIntentionId:seek_stimulation":
-				_wilson_bubble.text = "🔎 EXPLORE"
+				_wilson_bubble.text = "🔎"
 			"SemanticIntentionId:continue_shelter_project":
-				_wilson_bubble.text = "🔨 BUILD"
+				_wilson_bubble.text = "🔨"
 			"SemanticIntentionId:seek_safer_cover":
-				_wilson_bubble.text = "☔ COVER"
+				_wilson_bubble.text = "🌧 🏠"
 			_:
-				_wilson_bubble.text = "☔ …" if raining else "🙂 …"
+				_wilson_bubble.text = "🌧 ?" if raining else ""
 
 	if _wilson_visual == null:
 		return
@@ -130,12 +144,12 @@ func _project_gerald(snapshot: Dictionary) -> void:
 	var mode := String(snapshot.get("gerald_mode", &""))
 	match mode:
 		"roost":
-			_gerald_bubble.text = "🐦 ROOST"
+			_gerald_bubble.text = "🐦"
 		"beach":
-			_gerald_bubble.text = "🐟 BEACH"
+			_gerald_bubble.text = "🐟"
 		"camp":
-			_gerald_bubble.text = "👀 CAMP"
+			_gerald_bubble.text = "👀"
 		"lookout":
-			_gerald_bubble.text = "👀 LOOK"
+			_gerald_bubble.text = "👀"
 		_:
-			_gerald_bubble.text = "🐦 GERALD"
+			_gerald_bubble.text = "🐦"
