@@ -42,8 +42,8 @@ func _run() -> void:
 		await _cleanup(scene)
 		return
 
-	var initial := scene.observation_snapshot()
-	var deadline := float(initial.get("simulation_time", 0.0)) + MAX_SEMANTIC_SECONDS
+	var initial: Dictionary = scene.observation_snapshot()
+	var deadline: float = float(initial.get("simulation_time", 0.0)) + MAX_SEMANTIC_SECONDS
 	var project_completed := false
 	var completion_weather_index := -1
 	var saw_clear_after_completion := false
