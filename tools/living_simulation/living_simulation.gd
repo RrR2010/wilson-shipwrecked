@@ -418,7 +418,13 @@ func _bootstrap_and_start() -> void:
 	var weather_cues = PerceivedCueService.new([
 		ObservedEventCueRule.new(weather_worsened, &"dangerous_weather", &"hearing")
 	])
-	var weather_habit_source = PerceivedHabitCandidateSource.new(weather_cues, _owners.habits, 0.5, 0.2)
+	var weather_habit_source = PerceivedHabitCandidateSource.new(
+		weather_cues,
+		_owners.habits,
+		0.5,
+		0.2,
+		DecisionCandidate.Scope.TACTICAL
+	)
 	var context_trigger_source = PerceivedContextTransitionTriggerSource.new(content)
 	var base_decision_commit = DecisionCommitCoordinator.new(_owners.current_intention)
 	var decision_commit = InterruptingDecisionCommitCoordinator.new(
