@@ -2,8 +2,11 @@ extends SceneTree
 
 const SCENE_PATH := "res://tools/living_simulation/living_simulation.tscn"
 const MAX_BOOT_FRAMES := 180
-const TARGET_SIMULATION_SECONDS := 300.0
-const MAX_OBSERVATION_FRAMES := 2400
+# Weather intentionally consumes a meaningful share of Wilson's available activity
+# time. Ten simulated minutes preserves the strong eventual-completion + post-
+# completion-liveness guard without calibrating project speed around this test.
+const TARGET_SIMULATION_SECONDS := 600.0
+const MAX_OBSERVATION_FRAMES := 4800
 const MAX_CONSECUTIVE_BAD_MOTION_FRAMES := 120
 const MAX_CONSECUTIVE_STALLED_FRAMES := 120
 
@@ -146,7 +149,7 @@ func _run() -> void:
 	if not saw_project_progress:
 		_failures.append("Long run produced no persistent project progress")
 	if not project_completed:
-		_failures.append("Shelter project did not reach bounded completion during five-minute long run")
+		_failures.append("Shelter project did not reach bounded completion during ten-minute long run")
 	if int(final.get("project_contributions", 0)) != int(final.get("grounded_project_contributions", 0)):
 		_failures.append("Project owner progress diverged from grounded contribution count")
 	if not meals_after_project_completion:
@@ -154,9 +157,9 @@ func _run() -> void:
 	var final_meals := int(final.get("grounded_consumptions", 0))
 	if final_meals < 5:
 		_failures.append("Long run produced implausibly little grounded need activity: %d meals" % final_meals)
-	if final_meals > 80:
+	if final_meals > 160:
 		_failures.append("Long run produced likely duplicate/runaway grounded need activity: %d meals" % final_meals)
-	if intention_transitions > 150:
+	if intention_transitions > 300:
 		_failures.append("Long run showed likely intention oscillation: %d transitions" % intention_transitions)
 	if int(final.get("trace_count", 0)) > 64:
 		_failures.append("Bounded trace projection grew beyond configured buffer")

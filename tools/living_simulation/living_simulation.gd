@@ -4,9 +4,11 @@ const DomainId = preload("res://src/domain/core/domain_id.gd")
 const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const ContentRegistry = preload("res://src/domain/content/content_registry.gd")
+const EventDefinition = preload("res://src/domain/content/event_definition.gd")
 const EntityBootstrapSeed = preload("res://src/application/bootstrap/entity_bootstrap_seed.gd")
 const BeliefBootstrapSeed = preload("res://src/application/bootstrap/belief_bootstrap_seed.gd")
 const ProjectBootstrapSeed = preload("res://src/application/bootstrap/project_bootstrap_seed.gd")
+const HabitBootstrapSeed = preload("res://src/application/bootstrap/habit_bootstrap_seed.gd")
 const SimulationBootstrapDefinition = preload("res://src/application/bootstrap/simulation_bootstrap_definition.gd")
 const DeterministicScenarioDefinition = preload("res://src/application/bootstrap/deterministic_scenario_definition.gd")
 const DeterministicScenarioBootstrapService = preload("res://src/application/bootstrap/deterministic_scenario_bootstrap_service.gd")
@@ -25,16 +27,24 @@ const IntentionCompletionDefinition = preload("res://src/domain/cognition/intent
 const PerceivedOpportunityDefinition = preload("res://src/domain/cognition/perceived_opportunity_definition.gd")
 const PerceivedOpportunityService = preload("res://src/domain/cognition/perceived_opportunity_service.gd")
 const DriveBackedBelievedOpportunityCandidateSource = preload("res://src/domain/cognition/drive_backed_believed_opportunity_candidate_source.gd")
+const PerceivedCueService = preload("res://src/domain/cognition/perceived_cue_service.gd")
+const ObservedEventCueRule = preload("res://src/domain/cognition/observed_event_cue_rule.gd")
+const PerceivedHabitCandidateSource = preload("res://src/domain/cognition/perceived_habit_candidate_source.gd")
 const DecisionRouter = preload("res://src/domain/cognition/decision_router.gd")
 const ProjectDefinition = preload("res://src/domain/projects/project_definition.gd")
 const ProjectInstance = preload("res://src/domain/projects/project_instance.gd")
 const ProjectContributionService = preload("res://src/domain/projects/project_contribution_service.gd")
 const ProjectCandidateSource = preload("res://src/domain/projects/project_candidate_source.gd")
+const WeatherDefinition = preload("res://src/domain/world/weather_definition.gd")
+const WeatherTransitionDefinition = preload("res://src/domain/world/weather_transition_definition.gd")
 const DecisionCommitCoordinator = preload("res://src/application/simulation/decision_commit_coordinator.gd")
+const InterruptingDecisionCommitCoordinator = preload("res://src/application/simulation/interrupting_decision_commit_coordinator.gd")
 const TargetedActionExecutionCoordinator = preload("res://src/application/simulation/targeted_action_execution_coordinator.gd")
+const DirectTargetMotionExecutionCoordinator = preload("res://src/application/simulation/direct_target_motion_execution_coordinator.gd")
 const CompositeSelectedIntentionExecutor = preload("res://src/application/simulation/composite_selected_intention_executor.gd")
 const GroundedDriveConsequenceService = preload("res://src/application/simulation/grounded_drive_consequence_service.gd")
 const GroundedIntentionCompletionService = preload("res://src/application/simulation/grounded_intention_completion_service.gd")
+const PerceivedContextTransitionTriggerSource = preload("res://src/application/simulation/perceived_context_transition_trigger_source.gd")
 const SemanticDueScheduler = preload("res://src/application/simulation/semantic_due_scheduler.gd")
 const DueElapsedGate = preload("res://src/application/simulation/due_elapsed_gate.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
@@ -42,10 +52,12 @@ const GodotSceneSpatialRegistry = preload("res://src/infrastructure/spatial/godo
 const GodotMotionAdapter = preload("res://src/infrastructure/spatial/godot_motion_adapter.gd")
 const GodotSimulationHost = preload("res://src/infrastructure/spatial/godot_simulation_host.gd")
 
-const SCENARIO_NAME := &"living_simulation_persistent_work_interference"
+const SCENARIO_NAME := &"living_simulation_weather_context_interference"
 const GAMEPLAY_SEED := 61007
 const MAX_NAVIGATION_SYNC_FRAMES := 120
 const SHELTER_REQUIRED_CONTRIBUTIONS := 100
+const CLEAR_DURATION_SECONDS := 18.0
+const RAIN_DURATION_SECONDS := 12.0
 
 var _owners
 var _motion
@@ -97,9 +109,37 @@ func _process(_delta: float) -> void:
 
 func _bootstrap_and_start() -> void:
 	var content = ContentRegistry.new()
+	var weather_worsened = DomainId.event_definition(&"weather_worsened")
+	var weather_improved = DomainId.event_definition(&"weather_improved")
+	var authored_results: Array = [
+		content.register_event_definition(EventDefinition.new(
+			weather_worsened,
+			[] as Array[StringName],
+			[&"hearing"] as Array[StringName],
+			1.0,
+			EventDefinition.AccessScope.AMBIENT,
+			true
+		)),
+		content.register_event_definition(EventDefinition.new(
+			weather_improved,
+			[] as Array[StringName],
+			[&"hearing"] as Array[StringName],
+			1.0,
+			EventDefinition.AccessScope.AMBIENT,
+			true
+		)),
+		content.register_weather_definition(WeatherDefinition.new(&"clear", CLEAR_DURATION_SECONDS, CLEAR_DURATION_SECONDS, {&"rain": 0.0})),
+		content.register_weather_definition(WeatherDefinition.new(&"rain", RAIN_DURATION_SECONDS, RAIN_DURATION_SECONDS, {&"rain": 1.0})),
+		content.register_weather_transition_definition(WeatherTransitionDefinition.new(&"clear", &"rain", 1.0, weather_worsened)),
+		content.register_weather_transition_definition(WeatherTransitionDefinition.new(&"rain", &"clear", 1.0, weather_improved)),
+	]
+	for authored_result in authored_results:
+		if authored_result == null or not authored_result.ok:
+			_fail_boot("Weather content registration failed")
+			return
 	var seal_result = content.seal()
 	if not seal_result.ok:
-		_fail_boot("Content registry failed to seal")
+		_fail_boot("Content registry failed to seal: %s" % str(seal_result.diagnostics))
 		return
 
 	var place_id = DomainId.place(&"living_island")
@@ -110,6 +150,7 @@ func _bootstrap_and_start() -> void:
 	var edible_property = DomainId.property(&"edible")
 	var seek_food = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"seek_food")
 	var continue_shelter = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"continue_shelter_project")
+	var seek_cover = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"seek_safer_cover")
 	var consume_food = DomainId.action(&"consume_food")
 	var contribute_shelter = DomainId.action(&"contribute_shelter")
 	var food_consumed = DomainId.event_definition(&"food_consumed")
@@ -130,6 +171,16 @@ func _bootstrap_and_start() -> void:
 		ProjectInstance.Lifecycle.ACTIVE,
 		0
 	)
+	var cover_bindings = RoleBinding.new()
+	cover_bindings.bind(&"target", _shelter_ref)
+	var weather_habit = HabitBootstrapSeed.new(
+		&"dangerous_weather",
+		seek_cover,
+		cover_bindings,
+		0.95,
+		4,
+		&"weather_routine_history"
+	)
 	var simulation = SimulationBootstrapDefinition.new(
 		place_id,
 		[
@@ -141,7 +192,9 @@ func _bootstrap_and_start() -> void:
 		null,
 		1.0,
 		{DriveState.HUNGER: 0.54},
-		[project_seed]
+		[project_seed],
+		[],
+		[weather_habit]
 	)
 	var definition = DeterministicScenarioDefinition.new(SCENARIO_NAME, GAMEPLAY_SEED, simulation)
 	var boot = DeterministicScenarioBootstrapService.new().bootstrap(definition, content)
@@ -206,7 +259,8 @@ func _bootstrap_and_start() -> void:
 	var consume_definition = ActionDefinition.new(
 		consume_food,
 		[&"actor", &"target"] as Array[StringName],
-		RequirementPredicate.all_of([])
+		RequirementPredicate.all_of([]),
+		ActionDefinition.InterruptionClass.ANYTIME
 	)
 	var consume_resolution = ActionResolutionDefinition.new(
 		consume_food,
@@ -219,7 +273,8 @@ func _bootstrap_and_start() -> void:
 	var shelter_action_definition = ActionDefinition.new(
 		contribute_shelter,
 		[&"actor", &"target"] as Array[StringName],
-		RequirementPredicate.all_of([])
+		RequirementPredicate.all_of([]),
+		ActionDefinition.InterruptionClass.ANYTIME
 	)
 	var shelter_action_resolution = ActionResolutionDefinition.new(
 		contribute_shelter,
@@ -245,7 +300,12 @@ func _bootstrap_and_start() -> void:
 		shelter_action_definition,
 		shelter_action_resolution
 	)
-	var executor = CompositeSelectedIntentionExecutor.new([food_executor, project_executor])
+	var cover_executor = DirectTargetMotionExecutionCoordinator.new(
+		_motion,
+		_wilson_ref,
+		[seek_cover]
+	)
+	var executor = CompositeSelectedIntentionExecutor.new([food_executor, project_executor, cover_executor])
 	var drive_consequence = GroundedDriveConsequenceService.new(
 		_owners.drives,
 		[DriveConsequenceDefinition.new(consume_food, DriveState.HUNGER, -0.45, food_consumed)]
@@ -266,6 +326,17 @@ func _bootstrap_and_start() -> void:
 	)
 	var project_contribution = ProjectContributionService.new(_owners.projects, [shelter_project_definition])
 	var project_source = ProjectCandidateSource.new(_owners.projects, [shelter_project_definition])
+	var weather_cues = PerceivedCueService.new([
+		ObservedEventCueRule.new(weather_worsened, &"dangerous_weather", &"hearing")
+	])
+	var weather_habit_source = PerceivedHabitCandidateSource.new(weather_cues, _owners.habits, 0.5, 0.2)
+	var context_trigger_source = PerceivedContextTransitionTriggerSource.new(content)
+	var base_decision_commit = DecisionCommitCoordinator.new(_owners.current_intention)
+	var decision_commit = InterruptingDecisionCommitCoordinator.new(
+		runtime.activity_query,
+		runtime.action_execution,
+		base_decision_commit
+	)
 	var orchestrator = SimulationOrchestrator.new(
 		runtime.world_advance,
 		runtime.action_execution,
@@ -279,7 +350,7 @@ func _bootstrap_and_start() -> void:
 		_owners.beliefs,
 		[],
 		DecisionRouter.new(),
-		DecisionCommitCoordinator.new(_owners.current_intention),
+		decision_commit,
 		_trace_sink,
 		drive_progression,
 		drive_source,
@@ -289,12 +360,12 @@ func _bootstrap_and_start() -> void:
 		null,
 		null,
 		null,
-		null,
+		context_trigger_source,
 		null,
 		executor,
 		drive_due_gate,
 		drive_consequence,
-		null,
+		weather_habit_source,
 		intention_completion
 	)
 
@@ -333,6 +404,9 @@ func observation_snapshot() -> Dictionary:
 		"project_contributions": 0 if project == null else project.contribution_count,
 		"project_active": false if project == null else project.is_active(),
 		"grounded_project_contributions": _trace_sink.grounded_project_contributions,
+		"weather": &"" if _owners == null else _owners.environment.weather,
+		"daylight_phase": &"" if _owners == null else _owners.environment.daylight_phase,
+		"weather_transition_index": -1 if _owners == null else _owners.environment.weather_transition_index,
 	}
 
 

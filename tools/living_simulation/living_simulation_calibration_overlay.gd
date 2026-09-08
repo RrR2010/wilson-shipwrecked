@@ -148,15 +148,11 @@ func _render(snapshot: Dictionary) -> void:
 		int(snapshot.get("grounded_project_contributions", 0)),
 	]
 
-	var owners = _simulation.get("_owners")
-	if owners != null and owners.environment != null:
-		_environment_label.text = "Environment: %s   daylight=%s   weather phase #%d" % [
-			String(owners.environment.weather),
-			String(owners.environment.daylight_phase),
-			int(owners.environment.weather_transition_index),
-		]
-	else:
-		_environment_label.text = "Environment: waiting"
+	_environment_label.text = "Environment: %s   daylight=%s   weather phase #%d" % [
+		String(snapshot.get("weather", &"")),
+		String(snapshot.get("daylight_phase", &"")),
+		int(snapshot.get("weather_transition_index", -1)),
+	]
 
 	var motion_status := int(snapshot.get("motion_status", -1))
 	var health := "Health: nominal"
@@ -171,7 +167,7 @@ func _render(snapshot: Dictionary) -> void:
 
 func _observe_transitions(snapshot: Dictionary) -> void:
 	if _previous_snapshot.is_empty():
-		_capture_environment_baseline()
+		_capture_environment_baseline(snapshot)
 		return
 
 	var old_intention := String(_previous_snapshot.get("intention_key", ""))
@@ -199,23 +195,17 @@ func _observe_transitions(snapshot: Dictionary) -> void:
 	if new_motion != old_motion and (new_motion == 3 or new_motion == 4):
 		_append_transition("motion entered %s" % ("BLOCKED" if new_motion == 3 else "ROUTE_INVALID"))
 
-	_observe_environment_transition()
+	_observe_environment_transition(snapshot)
 
 
-func _capture_environment_baseline() -> void:
-	var owners = _simulation.get("_owners")
-	if owners == null or owners.environment == null:
-		return
-	_previous_weather = String(owners.environment.weather)
-	_previous_daylight = String(owners.environment.daylight_phase)
+func _capture_environment_baseline(snapshot: Dictionary) -> void:
+	_previous_weather = String(snapshot.get("weather", &""))
+	_previous_daylight = String(snapshot.get("daylight_phase", &""))
 
 
-func _observe_environment_transition() -> void:
-	var owners = _simulation.get("_owners")
-	if owners == null or owners.environment == null:
-		return
-	var weather := String(owners.environment.weather)
-	var daylight := String(owners.environment.daylight_phase)
+func _observe_environment_transition(snapshot: Dictionary) -> void:
+	var weather := String(snapshot.get("weather", &""))
+	var daylight := String(snapshot.get("daylight_phase", &""))
 	if _previous_weather != "" and weather != _previous_weather:
 		_append_transition("weather: %s → %s" % [_previous_weather, weather])
 	if _previous_daylight != "" and daylight != _previous_daylight:
