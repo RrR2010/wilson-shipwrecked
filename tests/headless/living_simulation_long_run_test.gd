@@ -165,11 +165,27 @@ func _run() -> void:
 	if not saw_project_progress:
 		_failures.append("Long run produced no persistent project progress")
 	if not project_completed:
-		_failures.append("Shelter project did not reach bounded completion during ten-minute long run")
+		_failures.append(
+			"Shelter project did not reach bounded completion during ten-minute long run " +
+			"(progress=%d/100 meals=%d rests=%d explores=%d transitions=%d)" % [
+				int(final.get("project_contributions", 0)),
+				int(final.get("grounded_consumptions", 0)),
+				int(final.get("grounded_rests", 0)),
+				int(final.get("grounded_explorations", 0)),
+				intention_transitions,
+			]
+		)
 	if int(final.get("project_contributions", 0)) != int(final.get("grounded_project_contributions", 0)):
 		_failures.append("Project owner progress diverged from grounded contribution count")
 	if not meals_after_project_completion:
-		_failures.append("Simulation did not continue grounded hunger behavior after project completion")
+		_failures.append(
+			"Simulation did not continue grounded hunger behavior after project completion " +
+			"(project_completed=%s progress=%d meals=%d)" % [
+				str(project_completed),
+				int(final.get("project_contributions", 0)),
+				int(final.get("grounded_consumptions", 0)),
+			]
+		)
 
 	var final_meals := int(final.get("grounded_consumptions", 0))
 	var final_rests := int(final.get("grounded_rests", 0))
