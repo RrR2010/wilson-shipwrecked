@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://tools/living_simulation/living_simulation.gd" id="1_script"]
 [ext_resource type="Script" path="res://tools/living_simulation/living_simulation_calibration_overlay.gd" id="2_overlay"]
@@ -21,16 +21,20 @@ size = Vector3(22, 0.2, 16)
 radius = 0.3
 height = 1.6
 
+[sub_resource type="CapsuleShape3D" id="GeraldShape"]
+radius = 0.24
+height = 0.9
+
 [sub_resource type="StandardMaterial3D" id="GroundMaterial"]
-albedo_color = Color(0.37, 0.5, 0.27, 1)
+albedo_color = Color(0.34, 0.48, 0.25, 1)
 roughness = 1.0
 
 [sub_resource type="StandardMaterial3D" id="SandMaterial"]
-albedo_color = Color(0.8, 0.72, 0.47, 1)
+albedo_color = Color(0.82, 0.72, 0.46, 1)
 roughness = 1.0
 
 [sub_resource type="StandardMaterial3D" id="WilsonBodyMaterial"]
-albedo_color = Color(0.18, 0.36, 0.78, 1)
+albedo_color = Color(0.16, 0.34, 0.78, 1)
 roughness = 0.75
 
 [sub_resource type="StandardMaterial3D" id="WilsonHeadMaterial"]
@@ -42,11 +46,11 @@ albedo_color = Color(0.95, 0.22, 0.12, 1)
 roughness = 0.65
 
 [sub_resource type="StandardMaterial3D" id="PlantMaterial"]
-albedo_color = Color(0.12, 0.55, 0.17, 1)
+albedo_color = Color(0.11, 0.54, 0.16, 1)
 roughness = 0.9
 
 [sub_resource type="StandardMaterial3D" id="FoodMaterial"]
-albedo_color = Color(0.95, 0.55, 0.08, 1)
+albedo_color = Color(0.96, 0.48, 0.05, 1)
 roughness = 0.7
 
 [sub_resource type="StandardMaterial3D" id="WoodMaterial"]
@@ -54,8 +58,48 @@ albedo_color = Color(0.38, 0.21, 0.1, 1)
 roughness = 0.95
 
 [sub_resource type="StandardMaterial3D" id="RoofMaterial"]
-albedo_color = Color(0.55, 0.42, 0.18, 1)
+albedo_color = Color(0.56, 0.43, 0.18, 1)
 roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="RestMaterial"]
+albedo_color = Color(0.77, 0.47, 0.2, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="RelicMetalMaterial"]
+albedo_color = Color(0.23, 0.29, 0.31, 1)
+metallic = 0.45
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="RelicFabricMaterial"]
+albedo_color = Color(0.72, 0.67, 0.5, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="GeraldBodyMaterial"]
+albedo_color = Color(0.88, 0.9, 0.91, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="GeraldWingMaterial"]
+albedo_color = Color(0.34, 0.38, 0.42, 1)
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="GeraldBeakMaterial"]
+albedo_color = Color(0.96, 0.55, 0.08, 1)
+roughness = 0.72
+
+[sub_resource type="StandardMaterial3D" id="RockMaterial"]
+albedo_color = Color(0.34, 0.36, 0.34, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="FireMaterial"]
+albedo_color = Color(0.95, 0.32, 0.04, 1)
+emission_enabled = true
+emission = Color(0.75, 0.18, 0.02, 1)
+emission_energy_multiplier = 1.4
+
+[sub_resource type="StandardMaterial3D" id="RainMaterial"]
+albedo_color = Color(0.42, 0.68, 0.92, 0.6)
+transparency = 1
+roughness = 0.3
 
 [sub_resource type="BoxMesh" id="GroundMesh"]
 material = SubResource("GroundMaterial")
@@ -71,8 +115,23 @@ material = SubResource("WilsonHeadMaterial")
 radius = 0.28
 height = 0.56
 
+[sub_resource type="SphereMesh" id="GeraldBodyMesh"]
+material = SubResource("GeraldBodyMaterial")
+radius = 0.32
+height = 0.64
+
+[sub_resource type="SphereMesh" id="GeraldHeadMesh"]
+material = SubResource("GeraldBodyMaterial")
+radius = 0.22
+height = 0.44
+
 [sub_resource type="BoxMesh" id="SmallBoxMesh"]
 size = Vector3(1, 1, 1)
+
+[sub_resource type="SphereMesh" id="RockMesh"]
+material = SubResource("RockMaterial")
+radius = 0.5
+height = 1.0
 
 [sub_resource type="Environment" id="Environment_living"]
 background_mode = 1
@@ -113,25 +172,146 @@ scale = Vector3(1.08, 0.35, 1.1)
 mesh = SubResource("GroundMesh")
 material_override = SubResource("SandMaterial")
 
+[node name="Palm" type="Node3D" parent="."]
+position = Vector3(-7.5, 0, 3.8)
+
+[node name="Trunk" type="MeshInstance3D" parent="Palm"]
+position = Vector3(0, 1.4, 0)
+rotation_degrees = Vector3(0, 0, -7)
+scale = Vector3(0.32, 2.8, 0.32)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("WoodMaterial")
+
+[node name="LeafA" type="MeshInstance3D" parent="Palm"]
+position = Vector3(0.65, 2.9, 0)
+rotation_degrees = Vector3(0, 0, -18)
+scale = Vector3(1.7, 0.12, 0.45)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("PlantMaterial")
+
+[node name="LeafB" type="MeshInstance3D" parent="Palm"]
+position = Vector3(-0.65, 3.0, 0.1)
+rotation_degrees = Vector3(0, 0, 18)
+scale = Vector3(1.7, 0.12, 0.45)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("PlantMaterial")
+
+[node name="LeafC" type="MeshInstance3D" parent="Palm"]
+position = Vector3(0, 3.0, 0.65)
+rotation_degrees = Vector3(-18, 0, 0)
+scale = Vector3(0.45, 0.12, 1.7)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("PlantMaterial")
+
+[node name="RockCluster" type="Node3D" parent="."]
+position = Vector3(-1.6, 0.15, -5.2)
+
+[node name="RockA" type="MeshInstance3D" parent="RockCluster"]
+scale = Vector3(1.2, 0.7, 0.9)
+mesh = SubResource("RockMesh")
+
+[node name="RockB" type="MeshInstance3D" parent="RockCluster"]
+position = Vector3(0.8, -0.05, 0.35)
+scale = Vector3(0.7, 0.45, 0.6)
+mesh = SubResource("RockMesh")
+
+[node name="Campfire" type="Node3D" parent="."]
+position = Vector3(0.2, 0, 2.1)
+
+[node name="LogA" type="MeshInstance3D" parent="Campfire"]
+position = Vector3(0, 0.12, 0)
+rotation_degrees = Vector3(0, 45, 0)
+scale = Vector3(1.0, 0.16, 0.16)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("WoodMaterial")
+
+[node name="LogB" type="MeshInstance3D" parent="Campfire"]
+position = Vector3(0, 0.14, 0)
+rotation_degrees = Vector3(0, -45, 0)
+scale = Vector3(1.0, 0.16, 0.16)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("WoodMaterial")
+
+[node name="Flame" type="MeshInstance3D" parent="Campfire"]
+position = Vector3(0, 0.48, 0)
+scale = Vector3(0.28, 0.65, 0.28)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("FireMaterial")
+
+[node name="RainVisual" type="Node3D" parent="."]
+visible = false
+
+[node name="Drop1" type="MeshInstance3D" parent="RainVisual"]
+position = Vector3(-7, 4.5, -4)
+rotation_degrees = Vector3(0, 0, 15)
+scale = Vector3(0.04, 2.2, 0.04)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("RainMaterial")
+
+[node name="Drop2" type="MeshInstance3D" parent="RainVisual"]
+position = Vector3(-4, 4.2, 1)
+rotation_degrees = Vector3(0, 0, 15)
+scale = Vector3(0.04, 2.0, 0.04)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("RainMaterial")
+
+[node name="Drop3" type="MeshInstance3D" parent="RainVisual"]
+position = Vector3(-1, 4.7, -2.5)
+rotation_degrees = Vector3(0, 0, 15)
+scale = Vector3(0.04, 2.4, 0.04)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("RainMaterial")
+
+[node name="Drop4" type="MeshInstance3D" parent="RainVisual"]
+position = Vector3(2, 4.3, 3.5)
+rotation_degrees = Vector3(0, 0, 15)
+scale = Vector3(0.04, 2.1, 0.04)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("RainMaterial")
+
+[node name="Drop5" type="MeshInstance3D" parent="RainVisual"]
+position = Vector3(5, 4.8, -4.5)
+rotation_degrees = Vector3(0, 0, 15)
+scale = Vector3(0.04, 2.5, 0.04)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("RainMaterial")
+
+[node name="Drop6" type="MeshInstance3D" parent="RainVisual"]
+position = Vector3(7, 4.4, 1.5)
+rotation_degrees = Vector3(0, 0, 15)
+scale = Vector3(0.04, 2.2, 0.04)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("RainMaterial")
+
 [node name="Wilson" type="CharacterBody3D" parent="."]
 position = Vector3(-6, 0, 1)
 collision_layer = 1
 collision_mask = 1
 floor_snap_length = 0.2
 
-[node name="Body" type="MeshInstance3D" parent="Wilson"]
+[node name="VisualRoot" type="Node3D" parent="Wilson"]
+
+[node name="Body" type="MeshInstance3D" parent="Wilson/VisualRoot"]
 position = Vector3(0, 0.72, 0)
 mesh = SubResource("WilsonBodyMesh")
 
-[node name="Head" type="MeshInstance3D" parent="Wilson"]
+[node name="Head" type="MeshInstance3D" parent="Wilson/VisualRoot"]
 position = Vector3(0, 1.55, 0)
 mesh = SubResource("WilsonHeadMesh")
 
-[node name="ForwardMarker" type="MeshInstance3D" parent="Wilson"]
+[node name="ForwardMarker" type="MeshInstance3D" parent="Wilson/VisualRoot"]
 position = Vector3(0, 1.08, -0.34)
 scale = Vector3(0.12, 0.12, 0.18)
 mesh = SubResource("SmallBoxMesh")
 material_override = SubResource("ForwardMaterial")
+
+[node name="ThoughtBubble" type="Label3D" parent="Wilson"]
+position = Vector3(0, 2.45, 0)
+text = "…"
+font_size = 30
+outline_size = 8
+billboard = 1
+no_depth_test = true
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Wilson"]
 position = Vector3(0, 0.8, 0)
@@ -187,7 +367,13 @@ mesh = SubResource("SmallBoxMesh")
 material_override = SubResource("FoodMaterial")
 
 [node name="Shelter" type="Node3D" parent="."]
-position = Vector3(3.2, 0, 4.2)
+position = Vector3(3.2, 0, 4.5)
+
+[node name="BaseFrame" type="MeshInstance3D" parent="Shelter"]
+position = Vector3(0, 0.1, 0)
+scale = Vector3(2.6, 0.12, 1.8)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("SandMaterial")
 
 [node name="PostLeft" type="MeshInstance3D" parent="Shelter"]
 position = Vector3(-1.0, 0.85, 0)
@@ -201,24 +387,165 @@ scale = Vector3(0.18, 1.7, 0.18)
 mesh = SubResource("SmallBoxMesh")
 material_override = SubResource("WoodMaterial")
 
-[node name="Roof" type="MeshInstance3D" parent="Shelter"]
-position = Vector3(0, 1.78, 0)
+[node name="CrossBeam" type="MeshInstance3D" parent="Shelter"]
+position = Vector3(0, 1.62, 0)
+scale = Vector3(2.25, 0.16, 0.18)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("WoodMaterial")
+
+[node name="RoofA" type="MeshInstance3D" parent="Shelter"]
+position = Vector3(-0.78, 1.85, 0)
 rotation_degrees = Vector3(0, 0, -8)
-scale = Vector3(2.6, 0.18, 1.8)
+scale = Vector3(0.92, 0.16, 1.9)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("RoofMaterial")
+
+[node name="RoofB" type="MeshInstance3D" parent="Shelter"]
+position = Vector3(0, 1.85, 0)
+rotation_degrees = Vector3(0, 0, -8)
+scale = Vector3(0.92, 0.16, 1.9)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("RoofMaterial")
+
+[node name="RoofC" type="MeshInstance3D" parent="Shelter"]
+position = Vector3(0.78, 1.85, 0)
+rotation_degrees = Vector3(0, 0, -8)
+scale = Vector3(0.92, 0.16, 1.9)
 mesh = SubResource("SmallBoxMesh")
 material_override = SubResource("RoofMaterial")
 
 [node name="SleepingArea" type="MeshInstance3D" parent="Shelter"]
-position = Vector3(0, 0.08, 0)
+position = Vector3(0, 0.23, 0)
 scale = Vector3(1.6, 0.12, 1.0)
 mesh = SubResource("SmallBoxMesh")
-material_override = SubResource("SandMaterial")
+material_override = SubResource("RestMaterial")
+
+[node name="RestSpot" type="Node3D" parent="."]
+position = Vector3(5.6, 0, 4.1)
+
+[node name="Mat" type="MeshInstance3D" parent="RestSpot"]
+position = Vector3(0, 0.08, 0)
+scale = Vector3(1.45, 0.12, 0.82)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("RestMaterial")
+
+[node name="Pillow" type="MeshInstance3D" parent="RestSpot"]
+position = Vector3(-0.48, 0.22, 0)
+scale = Vector3(0.35, 0.18, 0.58)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("RelicFabricMaterial")
+
+[node name="Headboard" type="MeshInstance3D" parent="RestSpot"]
+position = Vector3(-0.76, 0.42, 0)
+scale = Vector3(0.12, 0.7, 0.95)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("WoodMaterial")
+
+[node name="CuriositySpot" type="Node3D" parent="."]
+position = Vector3(-6.0, 0, -4.2)
+
+[node name="Crate" type="MeshInstance3D" parent="CuriositySpot"]
+position = Vector3(0.55, 0.45, 0.35)
+rotation_degrees = Vector3(0, 18, 0)
+scale = Vector3(0.9, 0.9, 0.9)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("WoodMaterial")
+
+[node name="Mast" type="MeshInstance3D" parent="CuriositySpot"]
+position = Vector3(-0.2, 1.35, 0)
+rotation_degrees = Vector3(0, 0, -17)
+scale = Vector3(0.16, 2.7, 0.16)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("RelicMetalMaterial")
+
+[node name="CrossBar" type="MeshInstance3D" parent="CuriositySpot"]
+position = Vector3(-0.42, 1.9, 0)
+rotation_degrees = Vector3(0, 0, -17)
+scale = Vector3(1.6, 0.12, 0.12)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("RelicMetalMaterial")
+
+[node name="SailScrap" type="MeshInstance3D" parent="CuriositySpot"]
+position = Vector3(-0.7, 1.45, 0.06)
+rotation_degrees = Vector3(0, 0, -17)
+scale = Vector3(0.75, 0.8, 0.06)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("RelicFabricMaterial")
+
+[node name="Gerald" type="CharacterBody3D" parent="."]
+position = Vector3(-3.5, 0, -3.8)
+collision_layer = 1
+collision_mask = 1
+floor_snap_length = 0.2
+
+[node name="Body" type="MeshInstance3D" parent="Gerald"]
+position = Vector3(0, 0.62, 0)
+scale = Vector3(1.0, 0.72, 1.25)
+mesh = SubResource("GeraldBodyMesh")
+
+[node name="Head" type="MeshInstance3D" parent="Gerald"]
+position = Vector3(0, 1.02, -0.22)
+mesh = SubResource("GeraldHeadMesh")
+
+[node name="WingLeft" type="MeshInstance3D" parent="Gerald"]
+position = Vector3(-0.43, 0.7, 0.08)
+rotation_degrees = Vector3(0, 0, -18)
+scale = Vector3(0.55, 0.10, 0.75)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("GeraldWingMaterial")
+
+[node name="WingRight" type="MeshInstance3D" parent="Gerald"]
+position = Vector3(0.43, 0.7, 0.08)
+rotation_degrees = Vector3(0, 0, 18)
+scale = Vector3(0.55, 0.10, 0.75)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("GeraldWingMaterial")
+
+[node name="Beak" type="MeshInstance3D" parent="Gerald"]
+position = Vector3(0, 1.0, -0.48)
+scale = Vector3(0.18, 0.12, 0.32)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("GeraldBeakMaterial")
+
+[node name="StateBubble" type="Label3D" parent="Gerald"]
+position = Vector3(0, 1.72, 0)
+text = "🐦"
+font_size = 26
+outline_size = 7
+billboard = 1
+no_depth_test = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Gerald"]
+position = Vector3(0, 0.55, 0)
+shape = SubResource("GeraldShape")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="Gerald"]
+path_desired_distance = 0.3
+target_desired_distance = 0.55
+path_max_distance = 2.0
+radius = 0.28
+height = 1.1
+max_speed = 2.0
+
+[node name="GeraldTargets" type="Node3D" parent="."]
+
+[node name="Roost" type="Marker3D" parent="GeraldTargets"]
+position = Vector3(-3.5, 0, -3.8)
+
+[node name="Beach" type="Marker3D" parent="GeraldTargets"]
+position = Vector3(-7.2, 0, 2.6)
+
+[node name="Camp" type="Marker3D" parent="GeraldTargets"]
+position = Vector3(0.8, 0, 1.1)
+
+[node name="Lookout" type="Marker3D" parent="GeraldTargets"]
+position = Vector3(7.0, 0, -4.0)
 
 [node name="Camera3D" type="Camera3D" parent="."]
-position = Vector3(0, 16.5, 13.5)
+position = Vector3(0, 17.8, 14.8)
 rotation_degrees = Vector3(-50, 0, 0)
 projection = 1
-size = 19.0
+size = 20.5
 current = true
 
 [node name="WorldProjection" type="Node" parent="."]
@@ -229,8 +556,8 @@ script = ExtResource("3_projection")
 [node name="Panel" type="PanelContainer" parent="DebugUI"]
 offset_left = 18.0
 offset_top = 18.0
-offset_right = 560.0
-offset_bottom = 225.0
+offset_right = 735.0
+offset_bottom = 250.0
 
 [node name="Margin" type="MarginContainer" parent="DebugUI/Panel"]
 theme_override_constants/margin_left = 12
@@ -242,7 +569,7 @@ theme_override_constants/margin_bottom = 10
 theme_override_constants/separation = 5
 
 [node name="Title" type="Label" parent="DebugUI/Panel/Margin/VBox"]
-text = "WILSON — LIVING SIMULATION / WEATHER CONTEXT"
+text = "WILSON — LIVING ISLAND PLAYGROUND"
 
 [node name="Status" type="Label" parent="DebugUI/Panel/Margin/VBox"]
 text = "Runtime: bootstrapping..."
@@ -251,16 +578,16 @@ text = "Runtime: bootstrapping..."
 text = "Intention: none"
 
 [node name="Drive" type="Label" parent="DebugUI/Panel/Margin/VBox"]
-text = "Hunger: -"
+text = "Needs: -"
 
 [node name="Project" type="Label" parent="DebugUI/Panel/Margin/VBox"]
-text = "Shelter project: -"
+text = "Shelter: -"
 
 [node name="Motion" type="Label" parent="DebugUI/Panel/Margin/VBox"]
 text = "Motion: -"
 
 [node name="Trace" type="Label" parent="DebugUI/Panel/Margin/VBox"]
-text = "Recent semantic traces: 0"
+text = "Semantic activity: -"
 
 [node name="CalibrationOverlay" type="CanvasLayer" parent="."]
 script = ExtResource("2_overlay")

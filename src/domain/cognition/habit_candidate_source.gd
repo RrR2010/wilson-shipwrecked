@@ -7,12 +7,20 @@ var _store
 var _active_cues: Array[StringName] = []
 var _max_contribution: float
 var _minimum_strength: float
+var _scope: int
 
 
-func _init(store, active_cues: Array, max_contribution: float = 0.35, minimum_strength: float = 0.2) -> void:
+func _init(
+	store,
+	active_cues: Array,
+	max_contribution: float = 0.35,
+	minimum_strength: float = 0.2,
+	scope: int = DecisionCandidate.Scope.INTENTIONAL
+) -> void:
 	assert(store != null, "HabitCandidateSource requires HabitStore")
 	assert(is_finite(max_contribution) and max_contribution >= 0.0 and max_contribution <= 1.0, "Habit max contribution must be within [0,1]")
 	assert(is_finite(minimum_strength) and minimum_strength >= 0.0 and minimum_strength <= 1.0, "Habit minimum strength must be within [0,1]")
+	assert(scope >= DecisionCandidate.Scope.TACTICAL and scope <= DecisionCandidate.Scope.IMMEDIATE_THREAT, "Habit candidate scope must be valid")
 	_store = store
 	for cue in active_cues:
 		assert(cue is StringName or cue is String, "Habit cues must be semantic names")
@@ -20,6 +28,7 @@ func _init(store, active_cues: Array, max_contribution: float = 0.35, minimum_st
 	_active_cues.sort_custom(func(a, b): return String(a) < String(b))
 	_max_contribution = max_contribution
 	_minimum_strength = minimum_strength
+	_scope = scope
 
 
 func generate() -> Array:
@@ -33,7 +42,7 @@ func generate() -> Array:
 		result.append(DecisionCandidate.new(
 			entry["intention_id"],
 			entry["bindings"].duplicate_binding(),
-			DecisionCandidate.Scope.INTENTIONAL,
+			_scope,
 			strength * _max_contribution,
 			0.0,
 			0.0,

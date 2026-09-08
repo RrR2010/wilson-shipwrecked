@@ -149,6 +149,18 @@ func _run() -> void:
 	_expect_equal(retarget_actions.interrupted, [&"project_exec_3"], "retarget interrupts old execution")
 	_expect_equal(retarget_commit.calls, 1, "retarget commits a fresh intention state")
 
+	var orphan_actions = ActionExecutionStub.new()
+	var orphan_commit = CommitStub.new()
+	var orphan = InterruptingDecisionCommitCoordinator.new(
+		ActivityStub.new(null, &"post_commit_tail"),
+		orphan_actions,
+		orphan_commit
+	)
+	var orphan_result = orphan.apply(DecisionStub.new(CandidateStub.new(cover, target_a)), &"fresh_after_grounded_completion")
+	_expect_true(orphan_result != null and orphan_result.ok, "cleared intention may be replaced while post-commit action tail is active")
+	_expect_equal(orphan_actions.interrupted, [&"post_commit_tail"], "orphan active execution interrupts before fresh commitment")
+	_expect_equal(orphan_commit.calls, 1, "fresh commitment runs after orphan action interruption")
+
 	var blocked_actions = ActionExecutionStub.new()
 	blocked_actions.interruptible = false
 	var blocked_commit = CommitStub.new()
@@ -161,6 +173,19 @@ func _run() -> void:
 	_expect_true(blocked_result != null and not blocked_result.ok, "uninterruptible execution refuses replacement")
 	_expect_equal(blocked_result.code, &"active_execution_not_interruptible", "refusal remains explicit")
 	_expect_equal(blocked_commit.calls, 0, "refused replacement does not mutate current intention")
+
+	var orphan_blocked_actions = ActionExecutionStub.new()
+	orphan_blocked_actions.interruptible = false
+	var orphan_blocked_commit = CommitStub.new()
+	var orphan_blocked = InterruptingDecisionCommitCoordinator.new(
+		ActivityStub.new(null, &"uninterruptible_post_commit_tail"),
+		orphan_blocked_actions,
+		orphan_blocked_commit
+	)
+	var orphan_blocked_result = orphan_blocked.apply(DecisionStub.new(CandidateStub.new(cover, target_a)), &"blocked_orphan_step")
+	_expect_true(orphan_blocked_result != null and not orphan_blocked_result.ok, "uninterruptible orphan execution blocks a fresh commitment")
+	_expect_equal(orphan_blocked_result.code, &"active_execution_not_interruptible", "orphan refusal remains explicit")
+	_expect_equal(orphan_blocked_commit.calls, 0, "blocked orphan replacement does not mutate current intention")
 
 
 func _expect_true(actual: bool, label: String) -> void:

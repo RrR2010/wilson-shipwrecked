@@ -21,6 +21,7 @@ const MotionPort = preload("res://src/application/simulation/motion_port.gd")
 
 const SCENARIO_NAME := &"shallow_actor_physical_locomotion"
 const MOVE_EPSILON := 0.75
+const MAX_NAVIGATION_SYNC_FRAMES := 120
 
 var _gerald_id
 var _gerald_ref
@@ -101,10 +102,41 @@ func _run() -> void:
 		_fail("Near-Wilson place binding failed")
 		return
 	_motion = GodotMotionAdapter.new(registry)
-	if not _motion.bind_actor(_gerald_ref, $Gerald, $Gerald/NavigationAgent3D, 3.0):
+	var navigation_agent: NavigationAgent3D = $Gerald/NavigationAgent3D
+	if not _motion.bind_actor(_gerald_ref, $Gerald, navigation_agent, 3.0):
 		_fail("Gerald motion binding failed")
 		return
 	_motion_coordinator = ShallowActorMotionCoordinator.new(_motion, _owners.entities)
+
+	var navigation_ready := false
+	var last_iteration_id := 0
+	var last_path_size := 0
+	for _frame in range(MAX_NAVIGATION_SYNC_FRAMES):
+		await get_tree().physics_frame
+		var navigation_map: RID = navigation_agent.get_navigation_map()
+		if not navigation_map.is_valid():
+			continue
+		last_iteration_id = NavigationServer3D.map_get_iteration_id(navigation_map)
+		if last_iteration_id <= 0:
+			continue
+		var probe_path: PackedVector3Array = NavigationServer3D.map_get_path(
+			navigation_map,
+			$Gerald.global_position,
+			$NearWilson.global_position,
+			true
+		)
+		last_path_size = probe_path.size()
+		if not probe_path.is_empty():
+			navigation_ready = true
+			break
+	if not navigation_ready:
+		_fail("Gerald navigation route did not synchronize before movement request (iteration=%d path_points=%d start=%s target=%s)" % [
+			last_iteration_id,
+			last_path_size,
+			str($Gerald.global_position),
+			str($NearWilson.global_position),
+		])
+		return
 
 	_start_position = $Gerald.global_position
 	checkpoint_reached.emit(&"BOOTSTRAPPED", _probes())

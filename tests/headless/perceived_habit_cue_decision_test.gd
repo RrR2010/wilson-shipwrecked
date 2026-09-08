@@ -101,7 +101,19 @@ func _run_slice() -> void:
 	_expect_equal(habit_candidates.size(), 1, "active perceived cue makes the learned habit a decision candidate")
 	if habit_candidates.size() == 1:
 		_expect_equal(habit_candidates[0].intention_id.sort_key(), protect_food.sort_key(), "habit recalls the learned intention")
+		_expect_equal(habit_candidates[0].scope, DecisionCandidate.Scope.INTENTIONAL, "habit candidate defaults to intentional scope")
 		_expect_equal(String(habit_candidates[0].provenance.get("source", "")), "habit", "candidate provenance remains explicit")
+
+	var tactical_candidates: Array = HabitCandidateSource.new(
+		habits,
+		active_cues,
+		1.0,
+		0.2,
+		DecisionCandidate.Scope.TACTICAL
+	).generate()
+	_expect_equal(tactical_candidates.size(), 1, "authored tactical habit produces one candidate")
+	if tactical_candidates.size() == 1:
+		_expect_equal(tactical_candidates[0].scope, DecisionCandidate.Scope.TACTICAL, "authored habit scope is preserved on candidate")
 
 	var neutral_bindings = RoleBinding.new()
 	var weak_alternative = DecisionCandidate.new(

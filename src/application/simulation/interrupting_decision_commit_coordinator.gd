@@ -13,6 +13,11 @@ const MutationResult = preload("res://src/domain/core/mutation_result.gd")
 ## terminal, active_execution_id() is empty and the same semantic intention may be
 ## committed again with a fresh selected_step_id so a repeated action cycle can
 ## begin without forking concurrent executions.
+##
+## Grounded intention completion may clear CurrentIntention at an action's commit
+## point while that action still has an active post-commit tail. Such an execution
+## is still actor activity and must be interrupted (when permitted) before a fresh
+## intention is committed; otherwise two actor-bound actions can overlap.
 
 var _activity_query
 var _action_execution
@@ -44,11 +49,15 @@ func apply(decision_result, step_id: StringName):
 			return MutationResult.success(&"current_intention_continued", current)
 		return _decision_commit.apply(decision_result, step_id)
 
-	if current != null and execution_id != &"":
+	# An active execution remains authoritative actor activity even if grounded
+	# completion already cleared CurrentIntention at its commit point. Any fresh
+	# commitment must therefore terminate the old execution first unless the exact
+	# same current intention was recognized as continuity above.
+	if execution_id != &"":
 		if not _action_execution.can_interrupt(execution_id):
 			return MutationResult.failure(
 				&"active_execution_not_interruptible",
-				["Cannot replace %s while execution %s is not interruptible" % [current.intention_id.sort_key(), String(execution_id)]] as Array[String]
+				["Cannot commit replacement while execution %s is not interruptible" % String(execution_id)] as Array[String]
 			)
 		if not _action_execution.interrupt(execution_id):
 			return MutationResult.failure(
