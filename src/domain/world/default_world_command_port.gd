@@ -10,8 +10,8 @@ const SemanticChange = preload("res://src/domain/world/semantic_change.gd")
 const SemanticChangeSet = preload("res://src/domain/world/semantic_change_set.gd")
 
 ## Owner-local mutation boundary for committed ActionOutcome effects.
-## Prevalidation simulates relation presence in effect order so the supported
-## mutation set is logically transactional without requiring generic rollback.
+## Prevalidation simulates relation presence and quantity values in effect order so
+## the supported mutation set is logically transactional without generic rollback.
 
 var _entities
 var _relations
@@ -30,8 +30,9 @@ func apply_outcome(outcome):
 	assert(outcome != null, "apply_outcome requires ActionOutcome")
 	var validation_errors: Array[String] = []
 	var relation_shadow: Dictionary = {}
+	var quantity_shadow: Dictionary = {}
 	for effect in outcome.effects:
-		_validate_effect(effect, outcome.bindings, validation_errors, relation_shadow)
+		_validate_effect(effect, outcome.bindings, validation_errors, relation_shadow, quantity_shadow)
 	if not validation_errors.is_empty():
 		return WorldCommitResult.new(false, [], [], validation_errors)
 
@@ -64,7 +65,8 @@ func _validate_effect(
 	effect,
 	bindings,
 	errors: Array[String],
-	relation_shadow: Dictionary
+	relation_shadow: Dictionary,
+	quantity_shadow: Dictionary
 ) -> void:
 	assert(effect != null, "ActionOutcome effects cannot contain null")
 	if not bindings.has(effect.subject_role):
@@ -103,6 +105,27 @@ func _validate_effect(
 					errors.append("Exact relation does not exist in sequential batch state: %s" % relation.sort_key())
 					return
 				relation_shadow[relation_key] = false
+		ActionEffect.Kind.CHANGE_QUANTITY:
+			if subject.kind != RuntimeWorldRef.Kind.ENTITY:
+				errors.append("CHANGE_QUANTITY subject must be an entity")
+				return
+			if not _entities.has_entity(subject.id):
+				errors.append("CHANGE_QUANTITY entity not found: %s" % subject.sort_key())
+				return
+			var quantity_key = subject.key()
+			var current: Variant
+			if quantity_shadow.has(quantity_key):
+				current = quantity_shadow[quantity_key]
+			else:
+				current = _entities.get_quantity(subject.id)
+			if not (current is int or current is float) or not is_finite(float(current)):
+				errors.append("CHANGE_QUANTITY subject does not track finite numeric quantity: %s" % subject.sort_key())
+				return
+			var next_quantity: Variant = current + effect.value
+			if not is_finite(float(next_quantity)) or float(next_quantity) < 0.0:
+				errors.append("Insufficient quantity for sequential batch state: %s" % subject.sort_key())
+				return
+			quantity_shadow[quantity_key] = next_quantity
 
 
 func _apply_effect(effect, bindings):
@@ -116,6 +139,8 @@ func _apply_effect(effect, bindings):
 			var relation = _relation_for_effect(effect, bindings)
 			var stored = _relations.get_relation(relation.key())
 			return _relations.remove_relation(stored)
+		ActionEffect.Kind.CHANGE_QUANTITY:
+			return _entities.change_quantity(subject.id, effect.value)
 	assert(false, "Unsupported ActionEffect kind")
 	return null
 
@@ -134,3 +159,5 @@ func _record_change(effect, bindings, change_set) -> void:
 		ActionEffect.Kind.CREATE_RELATION, ActionEffect.Kind.REMOVE_RELATION:
 			var object = bindings.get_subject(effect.object_role)
 			change_set.add(SemanticChange.relation_change(subject, effect.semantic_id, object))
+		ActionEffect.Kind.CHANGE_QUANTITY:
+			change_set.add(SemanticChange.quantity_change(subject))
