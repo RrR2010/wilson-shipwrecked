@@ -12,6 +12,7 @@ enum Kind {
 	PROPERTY,
 	RELATION,
 	EVENT,
+	QUANTITY,
 }
 
 var kind: int
@@ -25,7 +26,7 @@ var role_name: StringName = &""
 func _init(
 	p_kind: int,
 	p_subject,
-	p_semantic_id,
+	p_semantic_id = null,
 	p_value: Variant = null,
 	p_object = null,
 	p_role_name: StringName = &""
@@ -33,7 +34,6 @@ func _init(
 	assert(p_kind >= 0 and p_kind < Kind.size(), "Invalid EpistemicClaim kind")
 	assert(p_subject != null, "EpistemicClaim requires subject")
 	assert(p_subject is Object and p_subject.has_method("sort_key"), "EpistemicClaim subject requires stable semantic identity")
-	assert(p_semantic_id != null, "EpistemicClaim requires semantic id")
 	kind = p_kind
 	subject = p_subject
 	semantic_id = p_semantic_id
@@ -42,19 +42,28 @@ func _init(
 	role_name = p_role_name
 	match kind:
 		Kind.PROPERTY:
+			assert(semantic_id != null, "Property claim requires semantic id")
 			semantic_id.assert_kind(DomainId.Kind.PROPERTY)
 			assert(value != null, "Property claim requires value")
 			assert(SemanticValueKey.supports(value), "Property claim requires bounded semantic value")
 			assert(object == null and role_name == &"", "Property claim carries only subject/property/value")
 		Kind.RELATION:
+			assert(semantic_id != null, "Relation claim requires semantic id")
 			semantic_id.assert_kind(DomainId.Kind.RELATION_TYPE)
 			assert(object != null, "Relation claim requires object")
 			assert(object is Object and object.has_method("sort_key"), "Relation claim object requires stable semantic identity")
 			assert(value == null and role_name == &"", "Relation claim carries only subject/relation/object")
 		Kind.EVENT:
+			assert(semantic_id != null, "Event claim requires semantic id")
 			semantic_id.assert_kind(DomainId.Kind.EVENT_DEFINITION)
 			assert(role_name != &"", "Event claim requires perceived role")
 			assert(value == null and object == null, "Event claim carries only subject/event/role")
+		Kind.QUANTITY:
+			assert(semantic_id == null, "Quantity claim has no semantic id")
+			assert(value is int or value is float, "Quantity claim requires numeric value")
+			assert(not (value is float) or is_finite(value), "Quantity claim requires finite value")
+			assert(float(value) >= 0.0, "Quantity claim cannot be negative")
+			assert(object == null and role_name == &"", "Quantity claim carries only subject/value")
 
 
 static func property_claim(p_subject, property_id, p_value: Variant):
@@ -69,11 +78,16 @@ static func event_claim(p_subject, event_type, p_role_name: StringName):
 	return new(Kind.EVENT, p_subject, event_type, null, null, p_role_name)
 
 
+static func quantity_claim(p_subject, p_quantity: Variant):
+	return new(Kind.QUANTITY, p_subject, null, p_quantity)
+
+
 func tag() -> StringName:
 	match kind:
 		Kind.PROPERTY: return &"property_claim"
 		Kind.RELATION: return &"relation_claim"
 		Kind.EVENT: return &"event_claim"
+		Kind.QUANTITY: return &"quantity_claim"
 	return &"unknown_claim"
 
 
@@ -92,6 +106,8 @@ func key() -> StringName:
 			return StringName("relation|%s|%s|%s" % [subject.sort_key(), semantic_id.sort_key(), object.sort_key()])
 		Kind.EVENT:
 			return StringName("event|%s|%s|role:%s" % [subject.sort_key(), semantic_id.sort_key(), String(role_name)])
+		Kind.QUANTITY:
+			return StringName("quantity|%s|%s" % [subject.sort_key(), SemanticValueKey.canonical(value)])
 	assert(false, "Unsupported EpistemicClaim kind")
 	return &""
 

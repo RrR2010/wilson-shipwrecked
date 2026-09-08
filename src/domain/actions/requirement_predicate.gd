@@ -12,6 +12,7 @@ enum Kind {
 	HAS_CATEGORY,
 	PROPERTY_COMPARE,
 	HAS_RELATION,
+	QUANTITY_AT_LEAST,
 }
 
 enum CompareOp {
@@ -83,4 +84,13 @@ static func has_relation(p_subject_role: StringName, relation_type_id, p_object_
 	node.role_name = p_subject_role
 	node.other_role_name = p_object_role
 	node.semantic_id = relation_type_id
+	return node
+
+
+static func quantity_at_least(p_role_name: StringName, amount: Variant):
+	assert(amount is int or amount is float, "quantity_at_least requires numeric amount")
+	assert(is_finite(float(amount)) and float(amount) >= 0.0, "quantity_at_least requires finite non-negative amount")
+	var node = new(Kind.QUANTITY_AT_LEAST)
+	node.role_name = p_role_name
+	node.expected_value = amount
 	return node
