@@ -5,6 +5,8 @@ extends Node
 ## All inputs come from observation_snapshot(); mesh visibility, poses, lighting and
 ## communication bubbles never feed back into navigation or semantic authority.
 
+const MOTION_ARRIVED := 2
+
 var _simulation
 var _world_environment: WorldEnvironment
 var _sun: DirectionalLight3D
@@ -91,6 +93,7 @@ func _project_shelter(contributions: int) -> void:
 func _project_wilson(snapshot: Dictionary) -> void:
 	var intention := String(snapshot.get("intention_key", ""))
 	var raining := String(snapshot.get("weather", &"")) == "rain"
+	var arrived := int(snapshot.get("motion_status", -1)) == MOTION_ARRIVED
 	if _wilson_bubble != null:
 		match intention:
 			"SemanticIntentionId:seek_food":
@@ -111,13 +114,13 @@ func _project_wilson(snapshot: Dictionary) -> void:
 	_wilson_visual.position = Vector3.ZERO
 	_wilson_visual.rotation_degrees = Vector3.ZERO
 	_wilson_visual.scale = Vector3.ONE
-	if intention.contains("seek_rest"):
+	if intention.contains("seek_rest") and arrived:
 		_wilson_visual.position = Vector3(0.0, 0.30, 0.0)
 		_wilson_visual.rotation_degrees = Vector3(0.0, 0.0, -68.0)
 		_wilson_visual.scale = Vector3(1.0, 0.9, 1.0)
-	elif intention.contains("continue_shelter_project"):
+	elif intention.contains("continue_shelter_project") and arrived:
 		_wilson_visual.rotation_degrees = Vector3(0.0, 0.0, 8.0)
-	elif intention.contains("seek_stimulation"):
+	elif intention.contains("seek_stimulation") and arrived:
 		_wilson_visual.scale = Vector3(1.0, 1.06, 1.0)
 
 
