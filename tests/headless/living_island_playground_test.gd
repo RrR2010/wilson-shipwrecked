@@ -86,9 +86,9 @@ func _run() -> void:
 		var bubble: Label3D = scene.get_node_or_null("Wilson/ThoughtBubble") as Label3D
 		if bubble != null:
 			var bubble_text := String(bubble.text)
-			saw_build_bubble = saw_build_bubble or bubble_text.contains("BUILD")
-			saw_rest_bubble = saw_rest_bubble or bubble_text.contains("REST")
-			saw_explore_bubble = saw_explore_bubble or bubble_text.contains("EXPLORE")
+			saw_build_bubble = saw_build_bubble or bubble_text.contains("🔨")
+			saw_rest_bubble = saw_rest_bubble or bubble_text.contains("💤")
+			saw_explore_bubble = saw_explore_bubble or bubble_text.contains("🔎")
 
 		if float(final.get("simulation_time", 0.0)) >= target_time:
 			break
