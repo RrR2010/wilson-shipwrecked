@@ -1,6 +1,7 @@
 class_name PerceivedHabitCandidateSource
 extends RefCounted
 
+const DecisionCandidate = preload("res://src/domain/cognition/decision_candidate.gd")
 const HabitCandidateSource = preload("res://src/domain/cognition/habit_candidate_source.gd")
 
 ## Composes current Wilson-relative perception with durable HabitStore state.
@@ -11,22 +12,26 @@ var _cue_service
 var _habit_store
 var _max_contribution: float
 var _minimum_strength: float
+var _scope: int
 
 
 func _init(
 	cue_service,
 	habit_store,
 	max_contribution: float = 0.35,
-	minimum_strength: float = 0.2
+	minimum_strength: float = 0.2,
+	scope: int = DecisionCandidate.Scope.INTENTIONAL
 ) -> void:
 	assert(cue_service != null and cue_service.has_method("derive"), "PerceivedHabitCandidateSource requires cue service")
 	assert(habit_store != null and habit_store.has_method("entries"), "PerceivedHabitCandidateSource requires HabitStore")
 	assert(is_finite(max_contribution) and max_contribution >= 0.0 and max_contribution <= 1.0, "Habit max contribution must be within [0,1]")
 	assert(is_finite(minimum_strength) and minimum_strength >= 0.0 and minimum_strength <= 1.0, "Habit minimum strength must be within [0,1]")
+	assert(scope >= DecisionCandidate.Scope.TACTICAL and scope <= DecisionCandidate.Scope.IMMEDIATE_THREAT, "Perceived habit scope must be valid")
 	_cue_service = cue_service
 	_habit_store = habit_store
 	_max_contribution = max_contribution
 	_minimum_strength = minimum_strength
+	_scope = scope
 
 
 func generate(perception_result) -> Array:
@@ -36,5 +41,6 @@ func generate(perception_result) -> Array:
 		_habit_store,
 		active_cues,
 		_max_contribution,
-		_minimum_strength
+		_minimum_strength,
+		_scope
 	).generate()
