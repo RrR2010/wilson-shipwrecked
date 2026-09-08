@@ -1,14 +1,12 @@
 class_name LivingSimulationCalibrationOverlay
 extends CanvasLayer
 
-## Read-only operator projection for the living simulation tool.
-##
-## The overlay observes the same semantic snapshot used by headless tests. It does
-## not mutate simulation owners. Engine.time_scale is an execution/tooling control,
-## not gameplay state, and is reset when the overlay leaves the tree.
+## Read-only operator projection for the living-island playground.
+## The overlay consumes observation_snapshot() and never mutates simulation owners.
+## Engine.time_scale remains a tooling-only execution control.
 
 const ALLOWED_SPEEDS: Array[float] = [1.0, 4.0, 16.0]
-const MAX_RECENT_TRANSITIONS := 8
+const MAX_RECENT_TRANSITIONS := 10
 
 var _simulation
 var _speed_multiplier := 1.0
@@ -21,6 +19,7 @@ var _speed_label: Label
 var _runtime_label: Label
 var _behavior_label: Label
 var _environment_label: Label
+var _actor_label: Label
 var _health_label: Label
 var _recent_label: Label
 
@@ -68,10 +67,10 @@ func _build_ui() -> void:
 	panel.name = "CalibrationPanel"
 	panel.anchor_left = 1.0
 	panel.anchor_right = 1.0
-	panel.offset_left = -430.0
+	panel.offset_left = -455.0
 	panel.offset_right = -18.0
 	panel.offset_top = 18.0
-	panel.offset_bottom = 345.0
+	panel.offset_bottom = 505.0
 	add_child(panel)
 
 	var margin := MarginContainer.new()
@@ -86,7 +85,7 @@ func _build_ui() -> void:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "CALIBRATION / OBSERVABILITY"
+	title.text = "CALIBRATION / LIVING ISLAND"
 	vbox.add_child(title)
 
 	var controls := HBoxContainer.new()
@@ -113,6 +112,10 @@ func _build_ui() -> void:
 	_environment_label = Label.new()
 	vbox.add_child(_environment_label)
 
+	_actor_label = Label.new()
+	_actor_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(_actor_label)
+
 	_health_label = Label.new()
 	_health_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(_health_label)
@@ -138,11 +141,17 @@ func _render(snapshot: Dictionary) -> void:
 	var intention := String(snapshot.get("intention_key", ""))
 	if intention == "":
 		intention = "none"
-	_behavior_label.text = "Intention: %s\nHunger %.3f (band %d)   meals %d\nProject %d/100 active=%s   grounded work %d" % [
+	_behavior_label.text = "Intention: %s\nHunger %.2f [%d]   Energy %.2f [%d]   Stimulation %.2f [%d]\nMeals %d   rests %d   explores %d\nShelter %d/100 active=%s   grounded work %d" % [
 		intention,
 		float(snapshot.get("hunger", -1.0)),
 		int(snapshot.get("hunger_band", -1)),
+		float(snapshot.get("energy", -1.0)),
+		int(snapshot.get("energy_band", -1)),
+		float(snapshot.get("stimulation", -1.0)),
+		int(snapshot.get("stimulation_band", -1)),
 		int(snapshot.get("grounded_consumptions", 0)),
+		int(snapshot.get("grounded_rests", 0)),
+		int(snapshot.get("grounded_explorations", 0)),
 		int(snapshot.get("project_contributions", 0)),
 		str(bool(snapshot.get("project_active", false))),
 		int(snapshot.get("grounded_project_contributions", 0)),
@@ -154,11 +163,20 @@ func _render(snapshot: Dictionary) -> void:
 		int(snapshot.get("weather_transition_index", -1)),
 	]
 
-	var motion_status := int(snapshot.get("motion_status", -1))
+	_actor_label.text = "Gerald: mode=%s   place=%s\naffinity=%.2f   arrivals=%d   pending=%s" % [
+		String(snapshot.get("gerald_mode", &"")),
+		String(snapshot.get("gerald_place", "")),
+		float(snapshot.get("gerald_affinity", 0.0)),
+		int(snapshot.get("gerald_arrivals", 0)),
+		str(bool(snapshot.get("gerald_pending", false))),
+	]
+
+	var wilson_motion := int(snapshot.get("motion_status", -1))
+	var gerald_motion := int(snapshot.get("gerald_motion_status", -1))
 	var health := "Health: nominal"
-	if motion_status == 3:
+	if wilson_motion == 3 or gerald_motion == 3:
 		health = "Health: WARNING — motion BLOCKED"
-	elif motion_status == 4:
+	elif wilson_motion == 4 or gerald_motion == 4:
 		health = "Health: WARNING — motion ROUTE_INVALID"
 	_health_label.text = "%s   trace buffer=%d" % [health, int(snapshot.get("trace_count", 0))]
 
@@ -178,22 +196,37 @@ func _observe_transitions(snapshot: Dictionary) -> void:
 	var old_meals := int(_previous_snapshot.get("grounded_consumptions", 0))
 	var new_meals := int(snapshot.get("grounded_consumptions", 0))
 	if new_meals > old_meals:
-		_append_transition("grounded meal #%d   hunger=%.3f" % [new_meals, float(snapshot.get("hunger", -1.0))])
+		_append_transition("🍖 meal #%d   hunger=%.2f" % [new_meals, float(snapshot.get("hunger", -1.0))])
+
+	var old_rests := int(_previous_snapshot.get("grounded_rests", 0))
+	var new_rests := int(snapshot.get("grounded_rests", 0))
+	if new_rests > old_rests:
+		_append_transition("💤 rest #%d   energy=%.2f" % [new_rests, float(snapshot.get("energy", -1.0))])
+
+	var old_explores := int(_previous_snapshot.get("grounded_explorations", 0))
+	var new_explores := int(snapshot.get("grounded_explorations", 0))
+	if new_explores > old_explores:
+		_append_transition("🔎 explore #%d   stimulation=%.2f" % [new_explores, float(snapshot.get("stimulation", -1.0))])
 
 	var old_progress := int(_previous_snapshot.get("project_contributions", 0))
 	var new_progress := int(snapshot.get("project_contributions", 0))
 	if new_progress > old_progress and (new_progress == 1 or new_progress % 10 == 0):
-		_append_transition("shelter project reached %d/100" % new_progress)
+		_append_transition("🔨 shelter reached %d/100" % new_progress)
 
 	var old_active := bool(_previous_snapshot.get("project_active", false))
 	var new_active := bool(snapshot.get("project_active", false))
 	if old_active != new_active:
-		_append_transition("shelter project active → %s" % str(new_active))
+		_append_transition("shelter active → %s" % str(new_active))
+
+	var old_gerald_mode := String(_previous_snapshot.get("gerald_mode", &""))
+	var new_gerald_mode := String(snapshot.get("gerald_mode", &""))
+	if old_gerald_mode != new_gerald_mode:
+		_append_transition("🐦 Gerald: %s → %s" % [_display_none(old_gerald_mode), _display_none(new_gerald_mode)])
 
 	var old_motion := int(_previous_snapshot.get("motion_status", -1))
 	var new_motion := int(snapshot.get("motion_status", -1))
 	if new_motion != old_motion and (new_motion == 3 or new_motion == 4):
-		_append_transition("motion entered %s" % ("BLOCKED" if new_motion == 3 else "ROUTE_INVALID"))
+		_append_transition("Wilson motion entered %s" % ("BLOCKED" if new_motion == 3 else "ROUTE_INVALID"))
 
 	_observe_environment_transition(snapshot)
 
@@ -207,7 +240,7 @@ func _observe_environment_transition(snapshot: Dictionary) -> void:
 	var weather := String(snapshot.get("weather", &""))
 	var daylight := String(snapshot.get("daylight_phase", &""))
 	if _previous_weather != "" and weather != _previous_weather:
-		_append_transition("weather: %s → %s" % [_previous_weather, weather])
+		_append_transition("☔ weather: %s → %s" % [_previous_weather, weather])
 	if _previous_daylight != "" and daylight != _previous_daylight:
 		_append_transition("daylight: %s → %s" % [_previous_daylight, daylight])
 	_previous_weather = weather
