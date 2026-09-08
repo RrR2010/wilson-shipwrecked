@@ -2,9 +2,8 @@ extends SceneTree
 
 const SCENE_PATH := "res://tools/living_simulation/living_simulation.tscn"
 const MAX_BOOT_FRAMES := 180
-# Weather intentionally consumes a meaningful share of Wilson's available activity
-# time. Ten simulated minutes preserves the strong eventual-completion + post-
-# completion-liveness guard without calibrating project speed around this test.
+# Ten simulated minutes pressure recurring needs, weather, project continuity and
+# Gerald locomotion while remaining a bounded local 16x gate.
 const TARGET_SIMULATION_SECONDS := 600.0
 const MAX_OBSERVATION_FRAMES := 4800
 const MAX_CONSECUTIVE_BAD_MOTION_FRAMES := 120
@@ -61,6 +60,8 @@ func _run() -> void:
 	var previous: Dictionary = initial
 	var previous_project := int(initial.get("project_contributions", 0))
 	var previous_meals := int(initial.get("grounded_consumptions", 0))
+	var previous_rests := int(initial.get("grounded_rests", 0))
+	var previous_explores := int(initial.get("grounded_explorations", 0))
 	var previous_intention := String(initial.get("intention_key", ""))
 	var intention_transitions := 0
 	var bad_motion_frames := 0
@@ -88,9 +89,12 @@ func _run() -> void:
 			stalled_frames = 0
 		max_stalled_frames = maxi(max_stalled_frames, stalled_frames)
 
-		var hunger := float(final.get("hunger", -1.0))
-		if not is_finite(hunger) or hunger < -1.0e-6 or hunger > 1.0 + 1.0e-6:
-			_failures.append("Hunger escaped bounded finite range during long run: %s" % str(hunger))
+		for drive_key in [&"hunger", &"energy", &"stimulation"]:
+			var drive_value := float(final.get(String(drive_key), -1.0))
+			if not is_finite(drive_value) or drive_value < -1.0e-6 or drive_value > 1.0 + 1.0e-6:
+				_failures.append("Drive %s escaped bounded finite range: %s" % [String(drive_key), str(drive_value)])
+				break
+		if not _failures.is_empty():
 			break
 
 		var position: Vector3 = final.get("wilson_position", Vector3.ZERO)
@@ -100,9 +104,17 @@ func _run() -> void:
 		if absf(position.x) > 11.0 or absf(position.z) > 8.0:
 			_failures.append("Wilson escaped bounded island navigation area: %s" % str(position))
 			break
+		var gerald_position: Vector3 = final.get("gerald_position", Vector3.ZERO)
+		if not is_finite(gerald_position.x) or not is_finite(gerald_position.y) or not is_finite(gerald_position.z):
+			_failures.append("Gerald position became non-finite during long run")
+			break
+		if absf(gerald_position.x) > 11.0 or absf(gerald_position.z) > 8.0:
+			_failures.append("Gerald escaped bounded island navigation area: %s" % str(gerald_position))
+			break
 
 		var motion_status := int(final.get("motion_status", -1))
-		if motion_status == 3 or motion_status == 4:
+		var gerald_motion_status := int(final.get("gerald_motion_status", -1))
+		if motion_status == 3 or motion_status == 4 or gerald_motion_status == 3 or gerald_motion_status == 4:
 			bad_motion_frames += 1
 		else:
 			bad_motion_frames = 0
@@ -120,10 +132,14 @@ func _run() -> void:
 		previous_project = project_progress
 
 		var meals := int(final.get("grounded_consumptions", 0))
-		if meals < previous_meals:
-			_failures.append("Grounded meal count regressed during long run")
+		var rests := int(final.get("grounded_rests", 0))
+		var explores := int(final.get("grounded_explorations", 0))
+		if meals < previous_meals or rests < previous_rests or explores < previous_explores:
+			_failures.append("Grounded need activity count regressed during long run")
 			break
 		previous_meals = meals
+		previous_rests = rests
+		previous_explores = explores
 
 		var intention := String(final.get("intention_key", ""))
 		if intention != previous_intention:
@@ -145,7 +161,7 @@ func _run() -> void:
 	if max_stalled_frames > MAX_CONSECUTIVE_STALLED_FRAMES:
 		_failures.append("Semantic clock stalled for %d consecutive physics frames" % max_stalled_frames)
 	if max_bad_motion_frames > MAX_CONSECUTIVE_BAD_MOTION_FRAMES:
-		_failures.append("Motion remained BLOCKED/ROUTE_INVALID for %d consecutive frames" % max_bad_motion_frames)
+		_failures.append("Actor motion remained BLOCKED/ROUTE_INVALID for %d consecutive frames" % max_bad_motion_frames)
 	if not saw_project_progress:
 		_failures.append("Long run produced no persistent project progress")
 	if not project_completed:
@@ -153,13 +169,24 @@ func _run() -> void:
 	if int(final.get("project_contributions", 0)) != int(final.get("grounded_project_contributions", 0)):
 		_failures.append("Project owner progress diverged from grounded contribution count")
 	if not meals_after_project_completion:
-		_failures.append("Simulation did not continue grounded need behavior after project completion")
+		_failures.append("Simulation did not continue grounded hunger behavior after project completion")
+
 	var final_meals := int(final.get("grounded_consumptions", 0))
+	var final_rests := int(final.get("grounded_rests", 0))
+	var final_explores := int(final.get("grounded_explorations", 0))
 	if final_meals < 5:
-		_failures.append("Long run produced implausibly little grounded need activity: %d meals" % final_meals)
-	if final_meals > 160:
-		_failures.append("Long run produced likely duplicate/runaway grounded need activity: %d meals" % final_meals)
-	if intention_transitions > 300:
+		_failures.append("Long run produced implausibly little grounded hunger activity: %d meals" % final_meals)
+	if final_rests < 2:
+		_failures.append("Long run produced implausibly little grounded rest activity: %d rests" % final_rests)
+	if final_explores < 2:
+		_failures.append("Long run produced implausibly little grounded exploration activity: %d explores" % final_explores)
+	if final_meals > 160 or final_rests > 120 or final_explores > 120:
+		_failures.append("Long run produced likely duplicate/runaway need activity")
+	if int(final.get("gerald_arrivals", 0)) < 4:
+		_failures.append("Gerald produced too few deferred physical arrivals")
+	if float(final.get("gerald_affinity", 0.0)) <= 0.0:
+		_failures.append("Gerald relationship state was lost during long run")
+	if intention_transitions > 450:
 		_failures.append("Long run showed likely intention oscillation: %d transitions" % intention_transitions)
 	if int(final.get("trace_count", 0)) > 64:
 		_failures.append("Bounded trace projection grew beyond configured buffer")
