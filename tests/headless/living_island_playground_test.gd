@@ -43,7 +43,7 @@ func _run() -> void:
 		return
 
 	var initial: Dictionary = scene.observation_snapshot()
-	var target_time := float(initial.get("simulation_time", 0.0)) + TARGET_SIMULATION_SECONDS
+	var target_time: float = float(initial.get("simulation_time", 0.0)) + TARGET_SIMULATION_SECONDS
 	var initial_wilson_position: Vector3 = initial.get("wilson_position", Vector3.ZERO)
 	var initial_gerald_position: Vector3 = initial.get("gerald_position", Vector3.ZERO)
 	var max_wilson_displacement := 0.0
@@ -65,8 +65,10 @@ func _run() -> void:
 			_failures.append("Living-island runtime failed: %s" % scene.boot_error())
 			break
 		final = scene.observation_snapshot()
-		max_wilson_displacement = maxf(max_wilson_displacement, initial_wilson_position.distance_to(final.get("wilson_position", Vector3.ZERO)))
-		max_gerald_displacement = maxf(max_gerald_displacement, initial_gerald_position.distance_to(final.get("gerald_position", Vector3.ZERO)))
+		var current_wilson_position: Vector3 = final.get("wilson_position", Vector3.ZERO)
+		var current_gerald_position: Vector3 = final.get("gerald_position", Vector3.ZERO)
+		max_wilson_displacement = maxf(max_wilson_displacement, initial_wilson_position.distance_to(current_wilson_position))
+		max_gerald_displacement = maxf(max_gerald_displacement, initial_gerald_position.distance_to(current_gerald_position))
 
 		var energy := float(final.get("energy", -1.0))
 		var stimulation := float(final.get("stimulation", -1.0))
@@ -81,7 +83,7 @@ func _run() -> void:
 		previous_rests = rests
 		previous_explores = explores
 
-		var bubble = scene.get_node_or_null("Wilson/ThoughtBubble") as Label3D
+		var bubble: Label3D = scene.get_node_or_null("Wilson/ThoughtBubble") as Label3D
 		if bubble != null:
 			var bubble_text := String(bubble.text)
 			saw_build_bubble = saw_build_bubble or bubble_text.contains("BUILD")
