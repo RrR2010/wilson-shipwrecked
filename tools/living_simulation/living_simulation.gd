@@ -324,10 +324,12 @@ func _bootstrap_and_start() -> void:
 		PerceivedOpportunityDefinition.new(EpistemicClaim.Kind.PROPERTY, restful_property, seek_rest, DecisionCandidate.Scope.INTENTIONAL, 0.08),
 		PerceivedOpportunityDefinition.new(EpistemicClaim.Kind.PROPERTY, interesting_property, seek_stimulation, DecisionCandidate.Scope.INTENTIONAL, 0.06),
 	]
+	# Playground rates intentionally leave meaningful neutral windows for persistent
+	# work between recurring needs. The domain thresholds/consequences remain unchanged.
 	var drive_progression = DriveProgressionService.new(_owners.drives, {
-		DriveState.HUNGER: 0.04,
-		DriveState.ENERGY: 0.018,
-		DriveState.STIMULATION: 0.014,
+		DriveState.HUNGER: 0.012,
+		DriveState.ENERGY: 0.006,
+		DriveState.STIMULATION: 0.005,
 	})
 	var drive_source = DriveCandidateSource.new(_owners.drives, drive_definitions)
 	var grounded_opportunities = DriveBackedBelievedOpportunityCandidateSource.new(
