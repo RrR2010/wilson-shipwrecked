@@ -19,9 +19,9 @@ Wilson lives in a stylized shipwrecked world that continues to evolve whether th
 
 ## Intended experience
 
-Wilson wakes, explores, eats, works on projects, reacts to weather, discovers objects, develops habits and changes his environment. A player may watch for minutes without doing anything, click a world object to reveal currently valid interactions, give Wilson advice, or alter something in the environment. Wilson may accept, refuse or reinterpret suggestions according to his personality and relationship with the player.
+Wilson wakes, explores, eats, rests, works on projects, reacts to weather, discovers objects, develops habits and changes his environment. A player may watch for minutes without doing anything, click a world object to reveal currently valid interactions, give Wilson advice, or alter something in the environment. Wilson may accept, refuse or reinterpret suggestions according to his personality and relationship with the player.
 
-When the player returns after being away, elapsed time is simulated forward from the persisted state. The world should feel as though it continued to exist rather than restarting at the last visible frame.
+When the player returns after being away, elapsed time is simulated forward from persisted state. The world should feel as though it continued to exist rather than restarting at the last visible frame.
 
 ## Technology direction
 
@@ -43,40 +43,58 @@ Key entry points:
 
 | Area | Entry point |
 | --- | --- |
-| Current phase | [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md) |
-| Active runtime handoff | [`docs/handoffs/production-new-run-autonomy-baseline.md`](docs/handoffs/production-new-run-autonomy-baseline.md) |
+| Current phase / validated baseline | [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md) |
+| Active runtime handoff | [`docs/handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md`](docs/handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md) |
 | Product / player experience | [`docs/PRODUCT.md`](docs/PRODUCT.md) |
+| Wilson behavior | [`docs/BEHAVIORAL_MODEL.md`](docs/BEHAVIORAL_MODEL.md) |
 | Architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| Simulation orchestration | [`docs/SIMULATION_ORCHESTRATION.md`](docs/SIMULATION_ORCHESTRATION.md) |
 | Functional domain | [`docs/DOMAIN_MODEL.md`](docs/DOMAIN_MODEL.md) |
 | Cross-cutting modeled content | [`docs/asset-catalog/README.md`](docs/asset-catalog/README.md) |
 | Visual production | [`docs/art/README.md`](docs/art/README.md) |
 | Asset runtime/pipeline | [`docs/ASSET_SPEC.md`](docs/ASSET_SPEC.md), [`docs/ASSET_PIPELINE.md`](docs/ASSET_PIPELINE.md) |
 | Agent repository rules | [`AGENTS.md`](AGENTS.md) |
 
-## First milestone: the living diorama
+## Current living-diorama baseline
 
-Before building broad content, prove the production and simulation pipeline with one vertical slice:
+The repository now has a continuously running Godot calibration scene using the real simulation/runtime boundaries:
 
-- one small tropical island;
-- Wilson as a placeholder or first-pass character;
-- orthographic gameplay camera;
-- day/night and basic weather;
-- palms, rocks, vegetation, a crate, campfire and simple shelter;
-- navigation between interaction anchors;
-- a small set of needs and autonomous activities;
-- contextual player interactions;
-- persistent state and offline catch-up;
-- at least one multi-step goal solved through reusable actions;
-- one Blender-generated modular asset family imported successfully into Godot.
+```text
+tools/living_simulation/living_simulation.tscn
+```
 
-The milestone succeeds when the scene is pleasant to leave fullscreen, Wilson visibly acts without player input, and the same systems produce more than one plausible sequence of events.
+The validated scene currently demonstrates a small but coherent autonomous island loop with:
 
-## Non-goals for the first milestone
+- hunger and food seeking;
+- energy and rest;
+- stimulation and exploration;
+- persistent shelter construction with interruption/continuation;
+- recurring weather and tactical rain sheltering;
+- Gerald as an independently moving shallow actor;
+- primitive-shape world readability;
+- compact operator observability;
+- 1x / 4x / 16x time controls.
 
-Do not optimize for photorealism, a large map, multiplayer, a large handcrafted campaign, unrestricted LLM world generation, detailed survival simulation, or hundreds of unique animations. Depth should come from combinations, not raw content count.
+The structural/runtime foundation and this first observable-living-simulation milestone are complete.
+
+## Current focus: from functioning to entertaining
+
+The leading work is no longer another foundation proof. It is to make the living island produce more varied, understandable and memorable situations from the systems already present.
+
+Current pressure includes:
+
+- reduce inert idle through bounded Stimulation/boredom pressure rather than random behavior;
+- give Gerald at least one Wilson-visible consequence instead of only waypoint movement;
+- make a learned belief/association/habit visibly alter a later choice;
+- give completed projects more life after completion where existing environment/protection systems support it;
+- preserve compact causal readability while adding behavioral richness.
+
+See the active handoff for the exact next-stage acceptance criteria.
+
+## Non-goals
+
+Do not optimize for photorealism, a large handcrafted campaign, unrestricted LLM world generation, detailed survival simulation, multiplayer, or content breadth for its own sake. Depth should come from reusable interactions and persistent consequences.
 
 ## Status
 
-The structural runtime foundation, shared bootstrap/restore composition, Godot spatial/navigation/perception bridge, deterministic scenario harness, production-facing fresh-run bootstrap, and a representative autonomous perception → decision → motion → consume → grounded-consequence slice are implemented and locally validated.
-
-The next runtime work should build on that baseline rather than reopen foundation ownership. Current implementation status, strict test count, schema versions, known limitations and recommended verticals are maintained in [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md).
+Current implementation checkpoint, strict test count, schema versions, known limitations and calibration pressures are maintained in [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md).

@@ -10,93 +10,139 @@ This file records the **currently implemented and locally validated runtime base
 
 Strict external runner: **Godot 4.7.1**.
 
-Current integrated `main` checkpoint after PR #67:
+Current integrated `main` checkpoint after PR #74:
 
 ```text
-f9082e766a01b982a3caefdf6d7c6168a10da4d8
+e9cf01aab57a18520a4a2d0a52fa7f3a91a839dd
 ```
 
-Latest strict local validation reported for the merged feature head before squash integration:
+Latest operator-reported strict local validation before squash integration:
 
 ```text
-RESULT: 122 PASS / 122 TOTAL
-PASS headless_suite (122 tests)
+RESULT: 131 PASS / 131 TOTAL
+PASS headless_suite (131 tests)
 ```
 
-The squash merge changed Git history but not the validated feature content. No GitHub Actions status checks are currently configured for this runtime gate; the operator-reported strict local suite remains authoritative.
+No GitHub Actions status check currently replaces this runtime gate; the operator-run strict Godot suite remains authoritative.
 
-The structural/runtime-foundation phase remains closed. The leading work is now to turn the validated simulation breadth into an **observable, continuously running Godot living-diorama development experience**, using representative primitive geometry and debug/readability tooling before final assets are available.
+The structural/runtime-foundation phase is closed. The first observable continuous living-simulation phase is also closed: the repository now contains a real Godot living-island playground that runs the production-style runtime continuously, exposes 1x/4x/16x observation controls, and composes several autonomous pressures in one watchable scene.
+
+The leading phase is now **entertaining systemic-diorama calibration**: use the validated playground to create richer self-generated situations, reduce dead time, make shallow actors/environment/history matter more to visible behavior, and judge readability/surprise/comedy rather than adding foundation abstractions.
 
 ---
 
-# Validated causal breadth
+# Validated living-island slice
 
-The strict suite covers, among other lower-level regressions, these representative verticals:
+Current playable/calibration scene:
 
 ```text
-shared new-run / deterministic-fixture / snapshot owner bootstrap
-→ authoritative simulation owners
-→ reconstructible runtime composition
-
-passive perception
-→ Wilson learning
-→ drive/project/habit candidate pressure
-→ trigger-gated decision
-→ CurrentIntention
-→ Godot motion
-→ authored ActionExecution
-→ accepted World consequence
-→ grounded cross-owner consequences
-
-physical falling-body observation
-→ admitted falling event
-→ perception access
-→ PerceivedThreat
-→ immediate-threat routing
-→ committed defensive intention
-→ physical escape redirection
-
-ongoing ordinary intention
-→ immediate threat selected
-→ prior intention suspended
-→ defensive motion
-→ defense completes
-→ suspended intention restored
-→ original physical activity resumes
-
-World truth changes while Wilson is absent
-→ BeliefStore remains stale
-→ Wilson later perceives current property state
-→ new belief receives support
-→ mutually exclusive prior property belief is contradicted
-
-procedural weather
-→ elapsed regime segmentation
-→ generic environmental response
-→ assembly-slot target
-→ binding degradation
-→ transitive EffectivePhysicalProfile invalidation
-
-binding integrity degradation
-→ effective protection strength decreases
-→ ProtectionProjection worsens
-→ residual rain exposure increases
-
-binding integrity crosses authored failure threshold
-→ attached_to relation removed
-→ relation SemanticChange
-→ assembly-derived protection disappears
-
-wind response mutates binding integrity in production runtime
-→ same world advance evaluates authored relation failure
-→ combined PROPERTY + RELATION change set
+tools/living_simulation/living_simulation.tscn
 ```
+
+Validated continuous behavior includes:
+
+```text
+Hunger
+→ seek food
+→ physical movement
+→ grounded consume action
+→ bounded hunger relief
+
+Energy
+→ seek rest
+→ physical movement
+→ grounded rest action
+→ bounded energy relief
+
+Stimulation
+→ seek curiosity
+→ physical movement
+→ grounded inspection
+→ bounded stimulation relief
+
+persistent shelter project
+→ repeated grounded contributions
+→ interruption by stronger pressures
+→ later return to same project
+→ eventual completion
+
+clear ↔ rain weather
+→ ambient context transition
+→ perceived tactical rain response
+→ seek shelter cover
+→ response remains selectable after project completion / from idle
+
+Gerald shallow actor
+→ authored mode cycle
+→ deferred physical transit through GodotMotionAdapter
+→ semantic place commit only after arrival
+→ persisted actor→Wilson relationship baseline
+```
+
+Presentation remains non-authoritative:
+
+```text
+primitive island geometry
+staged shelter visuals
+weather lighting/rain projection
+Wilson intention bubbles/emojis
+compact calibration panel
+```
+
+The operator manually validated the final scene as coherent and increasingly interesting. Remaining flatness is now product/calibration pressure rather than proof that the runtime cannot sustain a living loop.
 
 ---
 
-# Major closed implementation gates
+# Important implementation refinements proven during the living-simulation phase
 
-The following capability families are implemented and regression-backed:
+The integrated scene exposed and closed several real orchestration gaps:
+
+## Active execution uniqueness
+
+A new intention must not create a second active `ActionExecution` for Wilson when an earlier interruptible execution still exists, including post-commit tails whose `CurrentIntention` has already been cleared.
+
+## Same-intention continuation
+
+```text
+same intention + same bindings + active execution
+→ continue current execution
+```
+
+but:
+
+```text
+same intention + previous execution terminal
+→ a fresh decision step may create the next sequential action
+```
+
+This allows persistent work such as repeated shelter contributions without duplicating active executions or freezing on an old terminal execution id.
+
+## Tactical routing from idle
+
+Routing precedence is now effectively:
+
+```text
+IMMEDIATE_THREAT
+→ TACTICAL
+→ INTENTIONAL
+→ NONE
+```
+
+A tactical response is not conditional on there already being a `CurrentIntention`. A context-local response such as `rain → seek_safer_cover` may begin from idle as well as interrupt/refine ongoing ordinary activity.
+
+## Weather context
+
+Weather transitions are produced through the production runtime composition and exposed through ordinary ambient perception/context trigger paths. The living scene does not own a weather-specific gameplay controller.
+
+## Time acceleration
+
+The living scene uses `Engine.time_scale` for operator 1x/4x/16x controls because the current Godot motion adapter relies on engine physics cadence. Semantic time remains explicit and the long-running headless gate verifies cadence stability under accelerated observation.
+
+---
+
+# Major closed capability families
+
+The following are implemented and regression-backed at the current baseline:
 
 ```text
 Structural World/runtime foundation                         PASS
@@ -109,34 +155,32 @@ Content-dependent ActionExecution reconstruction            PASS
 Godot spatial/query/navigation/motion bridge                PASS
 Passive spatial perception                                  PASS
 Grounded autonomous action causality                        PASS
-Drives / projects / habits / episodes                       PASS
-Belief learning / epistemic projection                      PASS
-Presence relationship learning                             PASS
+Drives: hunger / energy / comfort / stimulation foundation  PASS
+Projects with persistent grounded progress                  PASS
+Habits / episodes / belief learning                         PASS
 Environment / gradual dynamic processes                     PASS
-Procedural weather and coarse-step segmentation             PASS
+Procedural weather                                           PASS
 Protection / exposure                                       PASS
-Shared effective-property read boundary                     PASS
-Assembly-composed effective protection feedback             PASS
+Assembly-composed protection/degradation foundations        PASS
 Authored structural relation failure                        PASS
-Relation-failure production runtime composition             PASS
-Relation-failure content-pack authoring                     PASS
-Hazard projection kept separate from Wilson knowledge       PASS
-Perceived threat / immediate-threat routing                 PASS
-Intention interruption / suspension / physical resumption   PASS
+Hazard / perceived threat separation                        PASS
+Immediate-threat interruption/resumption                    PASS
+Tactical response from idle                                 PASS
 WilsonBody impact / injury / death causality                PASS
 Real RigidBody3D contact observation                        PASS
 Player intervention causal-window validation                PASS
-Shallow non-Wilson actor behavior / locomotion              PASS
+Presence relationship learning                              PASS
+Shallow non-Wilson actor behavior / physical locomotion     PASS
 ActorRelationshipStore authority                            PASS
 Director opportunity lifecycle                              PASS
 Player suggestions / bounded insistence                     PASS
 Run lifecycle / resurrection                                PASS
 PlayerProfile cross-run separation                          PASS
 Deterministic EngineScenarioHarness                         PASS
-Strict integrated feature suite                             PASS — 122 tests
+Continuous observable living-island playground              PASS
+10-minute accelerated living-simulation stress gate         PASS
+Strict integrated feature suite                             PASS — 131 tests
 ```
-
-This list is capability-oriented rather than a duplicate of every test name.
 
 ---
 
@@ -152,14 +196,14 @@ World
   shallow non-Wilson actor runtime state
   non-Wilson actor relationship state
 
-WilsonCognition
+Wilson Cognition
   drives / beliefs / associations / habits / episodes
   Presence relationship
   current intention
-  optional suspended prior intention during authored interruption
+  bounded suspended prior intention where authored
 
 Projects
-  project lifecycle
+  project lifecycle / progress
 
 ActionExecution
   execution lifecycle / committed outcomes
@@ -184,21 +228,12 @@ World truth
 != Wilson observation
 != Wilson belief
 != Wilson desirability
+!= non-Wilson relationship state
 != player-private intent
 != Director intent
 != derived physical projection
 != presentation
 ```
-
-Important proven refinements:
-
-- `HazardProjection` is authoritative future-risk projection, not Wilson knowledge. Wilson reacts through `PerceivedThreat` derived from accessible perceptual evidence.
-- current perceived context is not historical `HabitStore`; perceptual cues activate learned tendencies without becoming durable habit state.
-- player-private intent is never Presence evidence by itself; attribution starts from a perceived World consequence.
-- hidden World changes do not synchronize into `BeliefStore`; contradictory property values are reconciled only after accessible perceptual evidence arrives.
-- `EffectivePhysicalProfile`, `ProtectionProjection` and `ExposureResult` are reconstructible derived state, not authoritative copies of World truth.
-- shared effective-property reads use derived profile output when present and ordinary `WorldQuery` property truth otherwise.
-- relation-failure thresholds currently consume authoritative subject properties only; derived thresholds require an explicit mid-step invalidation boundary before admission.
 
 ---
 
@@ -222,49 +257,7 @@ simulation snapshot ──────┘
                       reconstructible runtime
 ```
 
-`RunRuntimeComposer` shares one effective-property resolver across action predicates, environmental susceptibility and protection projection.
-
-When environment/process owners are present, production world advancement composes:
-
-```text
-weather progression
-→ environmental responses
-→ authored relation-failure evaluation
-→ gradual dynamic-process advancement
-→ combined SemanticChangeSet
-```
-
-Derived invalidation remains application-layer work after the authoritative world advance returns its changes.
-
----
-
-# Environmental composition evidence
-
-The cloth-shelter weather fixture has regression-backed causal continuity through both degradation and structural failure:
-
-```text
-rain / moisture
-→ effective physical properties
-→ wind susceptibility
-→ binding stress
-→ binding integrity decreases
-→ effective rain protection decreases
-→ residual rain exposure increases
-```
-
-and:
-
-```text
-binding_integrity <= authored threshold
-→ attached_to removed
-→ assembly dependency invalidated
-→ derived protection disappears
-→ exposure rises to unprotected level
-```
-
-No `ShelterSystem`, entity-subtype callback, or weather-specific structural controller is required.
-
-A detached component does **not** automatically become a hazard. Moving dangerous geometry remains a later boundary expressed through ordinary dynamic-process/hazard semantics when warranted.
+The living-island scene uses the same authoritative owners/runtime composition and explicit semantic-to-Godot bindings; it is not a parallel dev-only simulation architecture.
 
 ---
 
@@ -280,9 +273,7 @@ ActionExecutionSnapshotService schema: v2
 ContentPackLoader schema:              v1
 ```
 
-The content schema remains v1 because the `relation_failures` field is additive and optional.
-
-Historical development-snapshot migration remains requirement-driven; current schema handling is intentionally strict.
+Historical development-snapshot migration remains requirement-driven.
 
 ---
 
@@ -297,55 +288,73 @@ SimulationBootstrapDefinition positional constructor cleanup
 drive hysteresis-band memory persistence
 Legacy-to-new-Wilson seeding policy
 generalized production scene-binding/host composition
-relationship decay/generalization/social-graph breadth
-broader production interaction producers for actor relationships
-effect-oriented stale player-intervention rejection beyond validated causal windows
 orientation/view-cone passive refresh
 negative/absence perceptual evidence
 habit disuse/decay/context-generalization producers
 route-memory acquisition/decay/generalization
 broader collision/grounding/fall consequence policies
-snapshot support for newly introduced suspended-intention semantics if product save pressure requires mid-interruption persistence guarantees
-derived component properties feeding assembly-slot derivations (currently slot reads raw component property)
-explicit mid-step invalidation if a future rule must consume freshly mutated derived state in the same world advance
-automatic detached-component dynamic-process creation only if a representative scene proves the need
+relationship decay/generalization/social-graph breadth
+broader production interaction producers for actor relationships
+snapshot guarantees for mid-interruption suspended intention
+derived component properties feeding assembly-slot derivations
+explicit mid-step invalidation for rules consuming freshly mutated derived state
+automatic detached-component dynamic-process creation
 ```
 
-Do not implement these merely to clear a backlog. The upcoming Godot living-simulation phase may legitimately pull `generalized production scene-binding/host composition` forward if repeated concrete scene wiring proves a stable composition boundary.
+Do not implement these merely to clear a backlog.
 
 ---
 
-# Current phase: observable Godot living simulation
+# Current calibration pressures
 
-The next stage should produce a development scene that can be opened and watched for minutes, not another isolated smoke demonstration.
+The validated playground exposed product-facing opportunities rather than foundation blockers.
+
+Most important next pressures:
+
+```text
+1. idle / boredom
+   stimulation should plausibly rise faster during genuine inactivity,
+   with bounded acceleration rather than random action injection
+
+2. post-project life
+   after shelter completion Wilson still needs optional routines/interests so the
+   scene does not collapse into eat / rest / occasional explore / idle
+
+3. Gerald meaning
+   Gerald currently proves independent shallow movement and relationship state,
+   but is mostly ambient; the next useful vertical should make his presence alter
+   a Wilson-visible situation without turning him into a second full Wilson
+
+4. history changing later choice
+   learning/habits/associations are implemented, but the playground should make at
+   least one acquired experience visibly change a later decision in the same run
+
+5. environmental consequence
+   weather changes behavior and presentation; protection/degradation foundations
+   are stronger than what the playground currently exposes visually/behaviorally
+
+6. player influence later
+   Presence/intervention foundations are available, but should be added only after
+   the autonomous scene is interesting enough to perturb rather than rescue
+```
+
+`BEHAVIORAL_MODEL.md` already treats stimulation/boredom as anti-stagnation pressure; do not add a separate generic `boredom` owner merely to implement idle acceleration.
+
+---
+
+# Current phase: entertaining systemic diorama
 
 Target question:
 
-> Can the operator watch Wilson live in a primitive-shape island, understand what he is doing and why, accelerate time, and observe coherent multi-system history emerge from the real runtime?
+> Can several minutes of autonomous play produce understandable situations that feel like small stories rather than a rotation through maintenance meters?
 
-The phase should compose existing foundations into a continuous player-visible loop involving a representative subset of:
-
-```text
-needs / routines / habits
-multi-step projects with persistent partial progress
-resource acquisition / transport / contribution
-interruption / resumption
-Gerald or another shallow actor
-weather/environment pressure
-constructed protection and degradation
-learning/history changing later decisions
-recent-event readability
-```
-
-Primitive geometry is presentation only. Use deliberately recognizable silhouettes and multi-primitive compositions where helpful; do not use scene nodes/transforms as semantic identity or authoritative World state.
-
-Because final facial animation is unavailable in this prototype, a Wilson-attached thought/speech bubble or emote surface may expose **presentation-level expression/readability**. It must project existing cognition/intent/emotion-like semantics rather than create hidden cognition or mutate simulation state. If it proves useful, it may survive into the product.
-
-The active runtime transition context is recorded in:
+The next active transition context is:
 
 ```text
-docs/handoffs/systemic-runtime-to-observable-godot-living-simulation.md
+docs/handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md
 ```
+
+The previous observable-living-simulation handoff is complete and historical.
 
 ---
 
@@ -353,4 +362,4 @@ docs/handoffs/systemic-runtime-to-observable-godot-living-simulation.md
 
 A runtime capability is marked PASS here only after the corresponding strict local Godot gate has been reported successful.
 
-Do not record inferred test counts, unexecuted smoke results, or architectural intent as validated runtime behavior.
+Do not record inferred test counts, unexecuted smoke results or architectural intent as validated runtime behavior.
