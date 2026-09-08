@@ -13,7 +13,8 @@ const PerceptionResult = preload("res://src/domain/cognition/perception_result.g
 ##
 ## Positive relation evidence is edge-driven. Quantity evidence is snapshot-driven:
 ## while a subject remains exposed, a changed authoritative quantity emits a new
-## observation on the next bounded refresh.
+## observation on the next bounded refresh. Semantic World changes can request that
+## refresh without directly injecting hidden truth into Wilson cognition.
 
 var _candidate_source
 var _spatial_query
@@ -57,6 +58,13 @@ func _init(
 	_confidence = confidence
 	_world_query = world_query
 	_exposure_resolver = exposure_resolver
+
+
+func notify_semantic_changes(change_set) -> void:
+	if change_set == null or change_set.is_empty():
+		return
+	if _candidate_source.has_method("request_refresh"):
+		_candidate_source.request_refresh()
 
 
 func collect(_step_context = null):
