@@ -76,12 +76,17 @@ func _run_slice() -> void:
 	var tactical_result = router.resolve([rest, investigate], current_id)
 	_expect_true(tactical_result.has_selection(), "router selects with active intention")
 	_expect_equal(String(tactical_result.regime), "tactical", "active intention keeps tactical regime")
-	_expect_equal(tactical_result.selected_candidate.intention_id.key(), investigate_id.key(), "high-scoring broad option does not displace local tactic")
+	_expect_equal(tactical_result.selected_candidate.intention_id.key(), investigate_id.key(), "high-scoring intentional option does not displace local tactic")
 
 	var no_current_result = router.resolve([rest, investigate], null)
-	_expect_true(no_current_result.has_selection(), "router selects intentional candidate without active intention")
-	_expect_equal(String(no_current_result.regime), "intentional", "no active intention routes broadly")
-	_expect_equal(no_current_result.selected_candidate.intention_id.key(), rest_id.key(), "intentional candidate selected")
+	_expect_true(no_current_result.has_selection(), "router selects tactical candidate from idle")
+	_expect_equal(String(no_current_result.regime), "tactical", "idle still honors tactical regime before intentional options")
+	_expect_equal(no_current_result.selected_candidate.intention_id.key(), investigate_id.key(), "tactical candidate can initiate behavior from idle")
+
+	var intentional_only_result = router.resolve([rest], null)
+	_expect_true(intentional_only_result.has_selection(), "router selects intentional candidate when no tactical candidate exists")
+	_expect_equal(String(intentional_only_result.regime), "intentional", "intentional regime remains fallback after tactical")
+	_expect_equal(intentional_only_result.selected_candidate.intention_id.key(), rest_id.key(), "intentional candidate selected when tactical is absent")
 
 	var threat = DecisionCandidate.new(evade_id, empty_binding, DecisionCandidate.Scope.IMMEDIATE_THREAT, -10.0)
 	var threat_result = router.resolve([rest, investigate, threat], current_id)
