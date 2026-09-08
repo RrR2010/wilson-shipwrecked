@@ -23,8 +23,9 @@ For substantial runtime/gameplay work:
 
 1. [`../README.md`](../README.md) — project thesis;
 2. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current validated implementation/test/schema baseline;
-3. [`handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md`](handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md) — **active stage-transition handoff**;
-4. then use the relevant canonical bundle below.
+3. [`DEVELOPMENT_STAGES.md`](DEVELOPMENT_STAGES.md) — canonical macro maturity map from systemic foundation through productization;
+4. [`handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md`](handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md) — **active stage-transition handoff**;
+5. then use the relevant canonical bundle below.
 
 ## Current phase
 
@@ -44,6 +45,8 @@ operator observability and time acceleration
 
 The leading work is now **entertaining systemic-diorama calibration**: reduce inert idle, make Gerald/environment/history create visible situations, and make prior experience change later behavior while preserving existing authority boundaries.
 
+`DEVELOPMENT_STAGES.md` owns the stable macro progression and stage gates. Handoffs own only the tactical implementation cut for the currently active transition.
+
 The previous handoff [`handoffs/systemic-runtime-to-observable-godot-living-simulation.md`](handoffs/systemic-runtime-to-observable-godot-living-simulation.md) is completed historical context.
 
 Primitive shapes, bubbles and debug overlays remain presentation projections over the real runtime. They are not semantic identity or a second World/cognition model.
@@ -61,6 +64,7 @@ Asset/modeling production remains a parallel workstream and is outside the activ
 - [`PRODUCT.md`](PRODUCT.md) — player experience, modes, God Power, progression and product rules.
 - [`BEHAVIORAL_MODEL.md`](BEHAVIORAL_MODEL.md) — Wilson functional cognition/behavior. In particular, Stimulation already owns anti-stagnation/boredom pressure; do not create a second generic boredom system without new evidence.
 - [`STATE_REQUIREMENTS.md`](STATE_REQUIREMENTS.md) — persistence, scope, lifetime, decay, offline and resurrection semantics.
+- [`DEVELOPMENT_STAGES.md`](DEVELOPMENT_STAGES.md) — macro product-development maturity stages and completion gates; not a feature backlog.
 
 ## Validation/background
 
@@ -191,14 +195,15 @@ The asset catalog owns modeled-content requirements/backlog; art docs own visual
 When documents appear to disagree:
 
 1. Product/behavior: `PRODUCT.md` + `BEHAVIORAL_MODEL.md` + `STATE_REQUIREMENTS.md`.
-2. Architecture/orchestration/authority: `ARCHITECTURE.md` + `SIMULATION_CONTRACTS.md` + `SIMULATION_ORCHESTRATION.md` + `MUTATION_AUTHORITY.md`.
-3. Functional semantics: core `DOMAIN_*` set and affected appendix.
-4. Operations: `DOMAIN_OPERATIONS.md`.
-5. Concrete implementation checkpoint: `DISCOVERY_STATUS.md` + source/tests.
-6. Asset/content requirements: `asset-catalog/`.
-7. Art: `VISUAL_GUIDE.md` + `art/`; technical production in `ASSET_SPEC.md` / `ASSET_PIPELINE.md`.
-8. Fixtures/regressions: evidence only.
-9. Brainstorming/handoffs/reviews: historical or operational context only.
+2. Macro development maturity/stage gates: `DEVELOPMENT_STAGES.md`.
+3. Architecture/orchestration/authority: `ARCHITECTURE.md` + `SIMULATION_CONTRACTS.md` + `SIMULATION_ORCHESTRATION.md` + `MUTATION_AUTHORITY.md`.
+4. Functional semantics: core `DOMAIN_*` set and affected appendix.
+5. Operations: `DOMAIN_OPERATIONS.md`.
+6. Concrete implementation checkpoint: `DISCOVERY_STATUS.md` + source/tests.
+7. Asset/content requirements: `asset-catalog/`.
+8. Art: `VISUAL_GUIDE.md` + `art/`; technical production in `ASSET_SPEC.md` / `ASSET_PIPELINE.md`.
+9. Fixtures/regressions: evidence only.
+10. Brainstorming/handoffs/reviews: historical or operational context only.
 
 If implementation evidence invalidates a canonical rule, update the owning document rather than creating a permanent override chain.
 
@@ -208,6 +213,7 @@ If implementation evidence invalidates a canonical rule, update the owning docum
 
 - prefer updating an existing canonical owner;
 - create a new canonical document only for a genuinely distinct authority/lifecycle;
+- keep `DEVELOPMENT_STAGES.md` macro-level; do not turn it into a feature backlog;
 - do not create permanent `*_REFINEMENTS`, `*_NOTES` or `*_V2` chains;
 - keep executable engine validation under `tests/`;
 - keep prototype modeling guidance under `prototyping/`;
