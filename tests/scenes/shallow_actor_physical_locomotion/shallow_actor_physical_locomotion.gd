@@ -109,14 +109,33 @@ func _run() -> void:
 	_motion_coordinator = ShallowActorMotionCoordinator.new(_motion, _owners.entities)
 
 	var navigation_ready := false
+	var last_iteration_id := 0
+	var last_path_size := 0
 	for _frame in range(MAX_NAVIGATION_SYNC_FRAMES):
 		await get_tree().physics_frame
 		var navigation_map: RID = navigation_agent.get_navigation_map()
-		if navigation_map.is_valid() and NavigationServer3D.map_get_iteration_id(navigation_map) > 0:
+		if not navigation_map.is_valid():
+			continue
+		last_iteration_id = NavigationServer3D.map_get_iteration_id(navigation_map)
+		if last_iteration_id <= 0:
+			continue
+		var probe_path: PackedVector3Array = NavigationServer3D.map_get_path(
+			navigation_map,
+			$Gerald.global_position,
+			$NearWilson.global_position,
+			true
+		)
+		last_path_size = probe_path.size()
+		if not probe_path.is_empty():
 			navigation_ready = true
 			break
 	if not navigation_ready:
-		_fail("Gerald navigation map did not synchronize before movement request")
+		_fail("Gerald navigation route did not synchronize before movement request (iteration=%d path_points=%d start=%s target=%s)" % [
+			last_iteration_id,
+			last_path_size,
+			str($Gerald.global_position),
+			str($NearWilson.global_position),
+		])
 		return
 
 	_start_position = $Gerald.global_position
