@@ -33,6 +33,32 @@ func has_entity(entity_id: DomainId) -> bool:
 	return _entities.has(entity_id.key())
 
 
+func get_quantity(entity_id: DomainId) -> Variant:
+	var entity := get_entity(entity_id)
+	return null if entity == null else entity.quantity
+
+
+func change_quantity(entity_id: DomainId, delta: Variant) -> MutationResult:
+	var entity := get_entity(entity_id)
+	if entity == null:
+		return MutationResult.failure(&"entity_not_found", [entity_id.sort_key()])
+	if not _is_finite_number(entity.quantity):
+		return MutationResult.failure(
+			&"quantity_not_tracked",
+			["Entity does not track numeric quantity: %s" % entity_id.sort_key()]
+		)
+	if not _is_finite_number(delta):
+		return MutationResult.failure(&"invalid_quantity_delta", ["Quantity delta must be finite and numeric"])
+	var next_quantity: Variant = entity.quantity + delta
+	if float(next_quantity) < 0.0:
+		return MutationResult.failure(
+			&"insufficient_quantity",
+			["Quantity cannot become negative for %s" % entity_id.sort_key()]
+		)
+	entity.quantity = next_quantity
+	return MutationResult.success(&"entity_quantity_changed", entity)
+
+
 func set_place(entity_id: DomainId, place_id: DomainId) -> MutationResult:
 	place_id.assert_kind(DomainId.Kind.PLACE)
 	var entity := get_entity(entity_id)
@@ -69,3 +95,9 @@ func entity_ids() -> Array[String]:
 	for entity in entities():
 		result.append(entity.id.sort_key())
 	return result
+
+
+func _is_finite_number(value: Variant) -> bool:
+	if value is int:
+		return true
+	return value is float and is_finite(value)
