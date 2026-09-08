@@ -27,6 +27,23 @@ The next problem is no longer “can the systems run together?” It is:
 
 The focus should be **behavioral richness from existing systems**, not foundational architecture expansion.
 
+## Stage-boundary note
+
+This handoff is one tactical cut inside **Stage 3 — Entertaining autonomous diorama** from `DEVELOPMENT_STAGES.md`.
+
+Completing this handoff does **not** by itself complete Stage 3 or authorize advancing to the player/Presence stage.
+
+After the pressures in this handoff are closed, Stage 3 still needs to demonstrate, in narrow living-scene form where not already proven:
+
+```text
+quiet preference / non-utility personal behavior
+physical experimentation / discovery
+embodied semantic action/reaction timing
+modest functional content alternatives
+```
+
+Those may be handled by one or more later finite Stage-3 handoffs. Stage 6 expands these families; it should not introduce the core vocabulary for the first time.
+
 ---
 
 # Starting checkpoint
@@ -62,6 +79,7 @@ Read the smallest bundle first:
 AGENTS.md
 docs/README.md
 docs/DISCOVERY_STATUS.md
+docs/DEVELOPMENT_STAGES.md
 this handoff
 
 docs/PRODUCT.md
@@ -95,6 +113,8 @@ docs/DOMAIN_MICRO_LOOP.md
 ## Scope exclusion
 
 Do not make this phase depend on final assets, Blender production or art/modeling pipeline work. Primitive presentation remains sufficient for behavioral calibration unless the operator explicitly changes scope.
+
+This does **not** mean presentation semantics can be postponed. Primitive animation/pose/gaze/timing is valid whenever needed to prove that a semantic action or reaction is legible.
 
 ---
 
@@ -156,6 +176,8 @@ world-space Wilson semantic bubble
 ```
 
 The operator preferred the compact UI to the earlier duplicate/debug-heavy presentation.
+
+Presentation is non-authoritative, but later Stage-3 work must preserve enough semantic time for important action/reaction beats to be visible. Do not infer from the current bubble-based readability that final action/reaction timing can be left entirely to the renderer.
 
 ---
 
@@ -344,7 +366,91 @@ Do not make incomplete shelter automatically count as full cover unless domain s
 
 ---
 
-# Player intervention / Presence — intentionally later in this phase
+# Stage-3 continuation pressure — Embodied semantic readability
+
+This is a **required Stage-3 pressure**, but it does not have to be implemented inside the same PR as idle/Gerald/history unless that PR naturally exposes the need.
+
+The problem to solve is temporal, not artistic:
+
+```text
+important semantic event
+→ Wilson notices / acts / reacts
+→ player must have time to perceive that meaning
+→ only then should unrelated visible behavior replace it
+```
+
+Examples:
+
+```text
+coconut falls / rolls
+→ Wilson orients
+→ brief surprise/confusion beat
+→ then continues or investigates
+```
+
+```text
+experiment fails
+→ frustration/inspection/recovery beat
+→ then next tactic begins
+```
+
+Keep distinct:
+
+```text
+presentation-only motion
+    blink / breathing / decorative idle variation
+    → renderer-owned, non-blocking
+
+semantic expression beat
+    orient / surprise / hesitation / recoil / celebration / frustration /
+    inspection / anticipation / recovery
+    → may occupy Wilson for authored semantic time
+```
+
+Do not make concrete animation completion authoritative. Preferred direction:
+
+```text
+semantic lifecycle / duration / checkpoints / interruption
+→ presentation adapter
+→ animation / pose / gaze / audio
+```
+
+A missing or replaced animation asset must not change the authoritative outcome or deadlock headless execution.
+
+Immediate threats may interrupt appropriate ordinary expression beats through explicit semantics.
+
+---
+
+# Stage-3 continuation pressure — One real experiment/discovery loop
+
+Before Stage 3 completes, the living simulation should contain at least one narrow uncertainty-driven physical investigation beyond generic known inspection.
+
+Desired causal shape:
+
+```text
+unresolved object/property/effect
+→ Wilson has reason to investigate
+→ grounded physical attempt
+→ meaningful result / partial progress / counterevidence
+→ expectation/belief update
+→ later tactic or preference may change
+```
+
+This is the first living proof of the `Scientific Method` phenomenon family, not a demand for broad content coverage in the current handoff.
+
+Avoid a hidden recipe script or a random discovery roll after an already-observed result.
+
+---
+
+# Stage-3 continuation pressure — Quiet personal behavior
+
+Before Stage 3 completes, prove at least one `Good Chair`-like low-stakes behavior attributable to Wilson's preference/history rather than direct need relief or project optimization.
+
+The point is not a specific chair/rock. The point is that Wilson can visibly choose something because **he** likes/values/does it, then later allow other pressures to interrupt or compete with that tendency.
+
+---
+
+# Player intervention / Presence — intentionally later in Stage 3
 
 The player-intervention and Presence-attribution foundations already exist.
 
@@ -352,17 +458,16 @@ Do not make them the first next feature.
 
 First make the autonomous island interesting enough that the player has something worth perturbing.
 
-Once the autonomous scene has:
+Once the autonomous scene has enough Stage-3 vocabulary, a small **risk probe** may be introduced before Stage 4 formally becomes active, for example:
 
 ```text
-idle recovery
-+ one meaningful Gerald interference
-+ one visible learned/history consequence
+Wilson establishes an expected arrangement
+→ player moves one supported object
+→ Wilson later encounters the mismatch
+→ reaction/search/attribution remains legible
 ```
 
-then a small player intervention can be introduced to ask:
-
-> Does adding the external Presence create a third causal participant, or merely override the simulation?
+Such a probe is allowed to expose integration risk. It does not mean Stage 4 has begun or that the autonomous Stage-3 gate is complete.
 
 Keep player-private intent separate from Wilson perception/attribution.
 
@@ -392,20 +497,21 @@ Deeper diagnostics can remain available through traces/tests or optional debug s
 
 ## Wilson bubble
 
-World-space bubble/emote remains useful.
+World-space bubble/emote remains useful as temporary calibration presentation.
 
 Rules:
 
 - large enough to read at gameplay camera distance;
 - project real semantic state/events;
 - do not invent hidden rationale;
-- strange choices may be funny, but should not look like silent AI failure simply because presentation gives no cue.
+- strange choices may be funny, but should not look like silent AI failure simply because presentation gives no cue;
+- do not use the bubble as a substitute for action/reaction timing that should eventually be embodied.
 
 Do not attach permanent text labels to every object.
 
 ---
 
-# Suggested implementation order
+# Suggested implementation order for this handoff
 
 The next agent may use multiple internal slices, but the operator does **not** want manual validation after each one. Use focused headless checks during implementation and ask for the full gate/manual observation only when the composed cut is ready.
 
@@ -419,7 +525,7 @@ Slice D — optional post-project maintenance/weather consequence if naturally s
 Slice E — compact presentation tweaks only where needed for readability
 ```
 
-Do not stop after each slice for operator approval unless a design decision genuinely cannot be resolved from existing product/domain guidance.
+Do not silently expand this handoff to implement all remaining Stage-3 continuation pressures. Once its completion condition is met, update the stage status evidence and prepare the next finite Stage-3 handoff rather than recursively extending the session.
 
 ---
 
@@ -476,13 +582,15 @@ The manual question is not “did every feature occur on cue?” It is:
 
 > Did several minutes produce understandable variation, interference and at least one moment that felt like a small story?
 
+Use the Stage-3 manual maturity vocabulary from `DEVELOPMENT_STAGES.md`; this handoff should move the playground from merely interesting toward recountable/memorable situations.
+
 ---
 
 # Completion condition for this handoff
 
 Do not finish merely because Stimulation gained another multiplier.
 
-This handoff is complete when the living island demonstrates all of the following in one coherent baseline:
+This **handoff** is complete when the living island demonstrates all of the following in one coherent baseline:
 
 1. **less dead idle** — inactivity creates bounded anti-stagnation pressure through existing Stimulation semantics;
 2. **meaningful Gerald presence** — Gerald causes at least one Wilson-visible consequence rather than only waypoint travel;
@@ -491,14 +599,16 @@ This handoff is complete when the living island demonstrates all of the followin
 5. **causal legibility** — the operator can see what changed without a large debug wall;
 6. **no authority leaks** — scene scripts/presentation do not become gameplay owners;
 7. **strict validation green** — focused tests and full strict suite pass;
-8. **manual observation accepted** — operator considers the resulting loop coherent/interesting enough to advance;
-9. **documentation updated** — record actual durable contract changes and prepare the next handoff only when another stage is truly beginning.
+8. **manual observation accepted** — operator considers the resulting loop coherent/interesting enough to continue Stage 3;
+9. **documentation updated** — record actual durable contract changes and create a next Stage-3 handoff if unresolved Stage-3 maturity pressures remain.
+
+Do **not** mark Stage 3 complete solely from this list. Stage completion is governed by `DEVELOPMENT_STAGES.md` and additionally requires the remaining Stage-3 vocabulary such as embodied semantic readability, a narrow experiment/discovery loop and quiet personal/non-utility behavior where not yet demonstrated.
 
 ---
 
 # Anti-goals
 
-Do not spend this phase on:
+Do not spend this handoff on:
 
 ```text
 new universal AI architecture
@@ -510,7 +620,7 @@ final UI art pass
 large content explosion
 Director-driven scripted stories as a substitute for systemic situations
 LLM-dependent behavior correctness
-player intervention before autonomous behavior is worth perturbing
+player intervention as primary novelty before autonomous behavior is worth perturbing
 rewriting established authority boundaries without representative evidence
 ```
 
@@ -527,6 +637,7 @@ These are intentionally not pre-decided:
 3. Should the first visible learned consequence be a belief, association or habit?
 4. Does a completed shelter need maintenance/repair immediately, or is richer optional behavior enough for the next cut?
 5. How much irrational/suboptimal behavior reads as character before it reads as a bug?
+6. Which next Stage-3 slice should come first after this handoff: embodied reaction timing, experiment/discovery, or quiet preference?
 
 Resolve these through representative scene pressure and bounded tests, not abstract subsystem design.
 

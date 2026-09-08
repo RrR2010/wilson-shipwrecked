@@ -6,41 +6,48 @@ Build Wilson Shipwrecked as a coherent systemic simulation and living 3D diorama
 
 ## Current project phase
 
-The **structural runtime foundation and its key causal boundaries are implemented and locally validated**. This includes common bootstrap/restore composition, production new-run generation, deterministic engine-scenario tooling, Godot spatial/navigation/perception/physics adapters, grounded autonomous action, learning/habits, projects, non-Wilson actor relationships/locomotion, physical accidents/threats, player intervention/Presence attribution, intention interruption/resumption, belief reconciliation after unseen World changes, procedural weather, configuration-relative protection/exposure and authored structural relation failure.
+The **structural runtime foundation and first observable living-simulation phase are implemented and locally validated**. The repository has a real continuously running Godot calibration scene composing needs, movement/actions, persistent shelter work, weather response, Gerald locomotion, compact observability and time acceleration.
 
 Current strict baseline is recorded only in `docs/DISCOVERY_STATUS.md`; do not duplicate test counts or schema versions here.
 
-The leading runtime phase is now:
+The leading product/runtime phase is now **Stage 3 — Entertaining autonomous diorama** from `docs/DEVELOPMENT_STAGES.md`:
 
 ```text
-observable Godot living simulation
-→ compose existing systemic runtime in one continuous scene
-→ use readable primitive presentation before final assets
-→ expose operator-facing causal readability / time controls
-→ discover real integration/calibration gaps
-→ add the smallest reusable primitive only when required
+observable living simulation
+→ reduce dead/flat behavior
+→ make actor/environment/history create visible consequences
+→ prove quiet personal behavior and physical experimentation
+→ make important actions/reactions temporally legible
+→ add modest functional content alternatives
+→ reach recountable small stories before player intervention becomes the main novelty source
 ```
 
-Primary goals:
+Primary goals are no longer raw subsystem coverage. Improve the living scene along player-visible dimensions such as:
 
 ```text
-1. a real continuously running Godot development scene
-2. readable primitive-shape composition for Wilson, actors, resources and projects
-3. coherent needs / routines / projects / weather / actor interference over time
-4. visible interruption, persistence and later resumption/history effects
-5. operator inspection of current intent/recent causes plus safe time acceleration
+legibility
+personality
+variation
+history
+discovery
+expressivity
+interference
+consequence
 ```
 
-Do not continue foundation architecture merely because another abstraction could be invented. Persistence/API cleanup and generalized infrastructure remain requirement-driven, although repeated concrete scene wiring may now justify a narrow reusable scene-binding/host composition boundary.
+Do not continue foundation architecture merely because another abstraction could be invented. Persistence/API cleanup and generalized infrastructure remain requirement-driven.
 
 Before substantial runtime work, read:
 
 1. [`docs/README.md`](docs/README.md) — documentation map and authority hierarchy;
 2. [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md) — concrete validated baseline and deferred pressures;
-3. [`docs/handoffs/systemic-runtime-to-observable-godot-living-simulation.md`](docs/handoffs/systemic-runtime-to-observable-godot-living-simulation.md) — active runtime transition context;
-4. only the canonical bundle relevant to the selected representative situation.
+3. [`docs/DEVELOPMENT_STAGES.md`](docs/DEVELOPMENT_STAGES.md) — macro stage/risk gate;
+4. [`docs/handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md`](docs/handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md) — active tactical transition context;
+5. only the canonical bundle relevant to the selected representative situation.
 
-Asset/modeling work proceeds in parallel. The active living-simulation handoff intentionally excludes art/asset/modeling documentation unless the operator later changes that scope. Primitive-shape presentation is a runtime readability scaffold, not asset production.
+Completing one handoff does not automatically complete the macro stage. If Stage-3 maturity pressures remain, prepare another finite Stage-3 handoff instead of jumping to player/Presence work or recursively extending one session.
+
+Asset/modeling work proceeds in parallel. Primitive-shape presentation remains sufficient for behavioral calibration, but **semantic action/reaction timing is not final asset polish**. Important behavior may require deterministic semantic occupancy/checkpoints so it is readable; concrete animation clips remain non-authoritative presentation assets.
 
 Do not reopen foundation ownership, replace established typed contracts with generic containers, or introduce a universal framework merely because one new scenario needs implementation.
 
@@ -98,9 +105,19 @@ docs/testing/SCENE_TESTS.md
 
 Then inspect relevant ports/tests before adding infrastructure adapters.
 
-For non-trivial Godot API behavior, **research before implementing**: verify the exact current API and lifecycle semantics in authoritative Godot documentation/references, inspect existing repository adapters, and use a small executable probe when timing/order behavior remains ambiguous. Do not guess navigation synchronization, physics/process ordering, transform-space behavior, scene-tree lifecycle, time scaling or UI/world projection semantics.
+For non-trivial Godot API behavior, **research before implementing**: verify the exact current API and lifecycle semantics in authoritative Godot documentation/references, inspect existing repository adapters, and use a small executable probe when timing/order behavior remains ambiguous. Do not guess navigation synchronization, physics/process ordering, transform-space behavior, scene-tree lifecycle, time scaling, animation callback ordering or UI/world projection semantics.
 
-During the current primitive living-simulation phase, follow the active handoff's explicit exclusion of art/asset/modeling documentation. That exclusion is phase-specific, not a change to the repository's general asset authority model.
+During the current primitive entertaining-diorama phase, final art/asset production remains outside the runtime handoff unless explicitly requested. That exclusion is phase-specific, not a change to the repository's general asset authority model.
+
+For action/reaction presentation, preserve:
+
+```text
+semantic meaning / duration / checkpoint / interruption
+!= concrete animation clip / blend / skeleton / facial asset
+!= decorative renderer-only motion
+```
+
+Never make `AnimationPlayer.animation_finished` authoritative proof of a World consequence or the only mechanism by which headless semantic execution can complete.
 
 ## Asset/content catalog
 
@@ -112,6 +129,8 @@ docs/asset-catalog/README.md
 ```
 
 `docs/asset-catalog/` is the cross-cutting source of truth for modeled-content requirements/backlog. `docs/art/` must not maintain a second object catalog.
+
+For gameplay-content planning, consider **systemic role coverage** as well as asset status. Prefer content that participates in multiple roles such as need relief, curiosity, tool use, projects, hazards, preference/attachment, actor interaction, player intervention, weather response and transformations.
 
 ## Visual / 3D production
 
@@ -165,7 +184,7 @@ A handoff should:
 6. separate open questions from accepted contracts;
 7. record the exact validated strict-test checkpoint.
 
-Only create a handoff when work is actually being transferred to another agent/stage.
+Only create a handoff when work is actually being transferred to another agent/stage or another finite block inside the same macro stage.
 
 ---
 
@@ -349,6 +368,24 @@ ActionExecution
 - `SemanticChangeSet` is invalidation, not a generic event bus.
 - cross-owner consequences occur only after accepted grounded commits through explicit services.
 
+## Semantic presentation timing
+
+Presentation remains non-authoritative, but some player-visible behavior may require semantic temporal occupancy.
+
+Keep distinct:
+
+```text
+semantic action/reaction phase
+→ deterministic duration/checkpoint/interruption semantics when behavior requires it
+
+presentation adapter
+→ maps phase to clip / pose / gaze / face / audio
+```
+
+A post-commit action/recovery tail cannot rewind committed truth. It may delay an incompatible new physical execution only when that occupancy is part of authored gameplay semantics, not merely to match an animation asset.
+
+Decorative animation never blocks gameplay. Missing presentation assets never change outcomes or deadlock headless execution. Immediate threats may interrupt ordinary semantic expression beats only through explicit interruption semantics.
+
 ## Perception / belief / learning
 
 - Perceptibility + runtime access determine accessible roles/modalities.
@@ -446,29 +483,37 @@ Development launchers/debug tooling are adapters over common bootstrap and norma
 
 # Representative-pressure workflow
 
-The next phase is explicitly scene-led.
+The active phase is explicitly scene-led.
 
 For each candidate feature:
 
 1. identify the player-visible situation requiring it;
 2. compose current owners/services first;
 3. identify the exact missing semantic gap;
-4. decide whether it is durable owner state or derived state;
+4. decide whether it is durable owner state or derived/transient semantic execution;
 5. implement the smallest reusable primitive;
 6. add focused regression;
 7. add an integrated scenario when multiple systems interact;
 8. run the strict suite;
-9. update canonical docs only if a durable contract actually changed.
+9. observe the living scene when the change affects player-visible behavior;
+10. update canonical docs only if a durable contract actually changed.
 
 Prefer connected living-world loops such as:
 
 ```text
-need / habit / project
+need / habit / preference / project / curiosity
 → action
 → actor or environment interference
 → consequence
 → learning/history
 → later changed choice
+```
+
+During Stage 3, substantial work should improve at least one observable product dimension:
+
+```text
+legibility / personality / variation / history /
+expressivity / interference / discovery / consequence
 ```
 
 Do not optimize for raw subsystem count.
@@ -497,6 +542,7 @@ Do not optimize for raw subsystem count.
 18. Stable semantic ordering precedes deterministic tie-break/seeded random selection.
 19. Reconstruct caches/indexes from authority after load/bootstrap.
 20. Fine spatial/nav/occlusion adapters refine semantic queries; they do not replace semantic placement/relations or become universal action-legality authority.
+21. Concrete animation completion never becomes authoritative gameplay causality; semantic timing must remain headless/deterministic when behavior needs temporal occupancy.
 
 ---
 
@@ -550,6 +596,8 @@ When adding tests:
 - include persistence/bootstrap reconstruction when durable state/causality is affected;
 - test rejection/failure branches where relevant;
 - never print PASS after an incomplete/erroring test body.
+
+For semantic presentation timing, tests should assert semantic phase/order/interruption rather than pixels or dependence on a particular clip duration.
 
 ---
 
@@ -624,6 +672,8 @@ catalog requirement
 - keep units/transforms/export orientation consistent with `ASSET_SPEC.md`;
 - do not leave temporary helpers/debris in runtime asset roots.
 
+Animation assets should map onto semantic action/reaction phases. Do not bake gameplay authority into clip names, exact frame counts or animation callbacks.
+
 ---
 
 # Definition of done
@@ -643,9 +693,11 @@ catalog requirement
 
 - starts from a player-visible situation, not an abstraction backlog;
 - composes existing owners/services before adding primitives;
-- Wilson behavior is attributable to accessible evidence/history/needs/projects;
+- Wilson behavior is attributable to accessible evidence/history/needs/projects/preferences/curiosity;
 - persistent consequences affect later behavior where expected;
 - cross-system causality has an integrated regression;
+- important action/reaction timing is player-legible when the scene depends on it;
+- manual observation improves at least one Stage-3 product dimension when relevant;
 - no scene-specific shortcut becomes a universal production contract.
 
 ## Spatial/presentation adapter change
@@ -654,7 +706,9 @@ catalog requirement
 - narrow port remains headlessly usable;
 - coarse semantic placement remains meaningful;
 - fine spatial behavior has deterministic adapter tests where practical;
-- Godot integration smoke tests validate mapping/anchors without making presentation authoritative.
+- Godot integration smoke tests validate mapping/anchors without making presentation authoritative;
+- animation/pose/audio maps semantic phases rather than deciding commits/outcomes;
+- missing presentation assets degrade gracefully rather than freezing semantic execution.
 
 ## Scenario/bootstrap change
 
@@ -668,7 +722,7 @@ catalog requirement
 ## Architecture/design-contract change
 
 - authority owner explicit;
-- durable vs derived state explicit;
+- durable vs derived/transient state explicit;
 - producer/consumer boundaries explicit;
 - representative scenes still fit without bespoke hacks;
 - guard/calibration implications considered;

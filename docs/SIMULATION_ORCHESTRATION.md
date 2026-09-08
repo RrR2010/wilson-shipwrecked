@@ -49,6 +49,20 @@ No belief/habit/project update occurs because an action was merely intended/expe
 
 Emergency response narrows candidate space; it is not a huge utility contribution.
 
+## Presentation is non-authoritative but temporal readability may be semantic
+
+Rendering assets, animation clips, blends, facial poses, particles and audio do not determine authoritative outcomes.
+
+However, some player-visible behavior requires Wilson to remain in an authored semantic phase long enough for the action/reaction to be legible. Such duration/checkpoint/interruption semantics belong to gameplay orchestration or ActionExecution-like lifecycle state, not to a renderer callback.
+
+Keep distinct:
+
+```text
+semantic meaning / duration / checkpoint / interruption
+!= concrete animation clip / blend / asset
+!= decorative presentation-only motion
+```
+
 ---
 
 # 2. Clock categories
@@ -109,7 +123,7 @@ Not every phase performs work every iteration, but relative causal ordering is:
 A. advance authoritative time
 B. advance due World/body/environment/dynamic processes
 C. invalidate affected derived state when World progression changed authority
-D. advance active ActionExecution
+D. advance active ActionExecution / admitted semantic expression execution
 E. if commit crossed: World owner validates/applies ActionOutcome effects
 F. consume SemanticChangeSet and invalidate/rebuild affected derived state
 G. apply explicit grounded cross-owner consequences from accepted outcomes
@@ -137,6 +151,7 @@ current committed intention may continue without broad reconsideration
 perception after authoritative consequence
 same-chain learning before next tactical choice when relevant
 selection before intentional-state mutation
+semantic expression timing may delay incompatible physical execution without changing past authority
 presentation after domain meaning is established
 ```
 
@@ -172,10 +187,10 @@ Canonical action lifecycle:
 
 ```text
 start after attemptability
-→ progress
+→ progress / anticipation
 → optional interruption before/after commit according to class
 → commit checkpoint emits ActionOutcome exactly once
-→ remaining execution tail
+→ remaining execution/recovery tail
 → completed or interrupted terminal state
 → explicit cleanup
 ```
@@ -193,6 +208,8 @@ ANYTIME
 - `ANYTIME` may terminate a post-commit tail, but cannot rewind the committed outcome.
 
 If future behavior needs semantic safe checkpoints distinct from commit, add explicit checkpoint semantics rather than relying on frame timing.
+
+An execution tail may exist partly to preserve meaningful physical/reaction readability after a commit. The duration is semantic only when starting an incompatible new physical behavior immediately would contradict the intended player-visible action lifecycle. Do not lengthen domain execution merely to match a particular clip frame-for-frame.
 
 ActionExecution does not mutate World. At commit it produces `ActionOutcome`; the World owner separately validates/applies the supported effect batch.
 
@@ -431,6 +448,8 @@ derive concrete action/binding or movement target
 
 Execution coordinators do not own durable gameplay truth. They derive requests/transitions from the current intention and explicit ports/authoritative action state.
 
+A newly selected intention does not imply that incompatible physical execution must start in the same instant. If Wilson is still inside a semantic action/reaction recovery or expression beat that is defined as occupying him, the next physical execution may remain pending until that phase completes or is validly interrupted. This is semantic scheduling, not renderer authority.
+
 The orchestrator must not spin indefinitely inside one macrocycle trying candidate after candidate. Retry/reconsideration is bounded and traceable.
 
 ---
@@ -499,13 +518,126 @@ Director does not command Wilson. Rare opportunities still respect action causal
 
 ---
 
-# 16. Presentation synchronization
+# 16. Presentation synchronization and semantic expression beats
 
 Presentation consumes current semantic state plus ordered transient projections.
 
 It may queue/collapse/interpolate visual events but cannot alter domain outcomes.
 
-Animation timing may reflect/request semantic timing through adapters, but animation completion is not authoritative proof of physical success.
+Animation timing may reflect semantic timing through adapters, but concrete animation completion is not authoritative proof of physical success, action commit, perception, learning or intention selection.
+
+## 16.1 Two presentation classes
+
+Distinguish ordinary decorative presentation from player-visible behavior that has semantic temporal meaning.
+
+### Presentation-only motion
+
+Examples:
+
+```text
+blink
+breathing
+small idle variation
+cloth sway
+ambient particles
+pure cosmetic anticipation/recovery that does not constrain behavior
+```
+
+These are presentation-owned and never block or schedule authoritative gameplay.
+
+### Semantic expression beat
+
+Examples where representative behavior may require Wilson to occupy time:
+
+```text
+orient toward an unexpected object
+surprise / confusion
+hesitation before a risky attempt
+recoil after impact
+frustration after failed experiment
+brief celebration
+inspection / looking between subject and tool
+recovery after a physical action
+```
+
+A semantic expression beat is admitted only when removing its temporal occupancy would make behavior materially different or player-visible causality unreadable.
+
+Do not create a durable `EmotionAnimationStore` or generic cinematic timeline merely because presentation needs timing. Prefer existing action/execution semantics or the smallest deterministic transient execution primitive proven necessary by representative scenes.
+
+## 16.2 Direction of authority
+
+Preferred direction:
+
+```text
+semantic event/action/reaction
+→ authored semantic phase/duration/checkpoint/interruption policy
+→ presentation projection
+→ animation / pose / gaze / facial / audio adapter
+```
+
+Forbidden dependency:
+
+```text
+AnimationPlayer.animation_finished
+→ decides whether World effect happened
+→ decides what Wilson perceived/learned
+→ becomes the only way semantic execution can complete
+```
+
+The domain/application layer may know that Wilson is still in an authored semantic phase. It must not depend on a particular clip name, frame count, skeleton or renderer callback.
+
+## 16.3 Commit and visual tail
+
+An action may commit before its player-visible execution is finished:
+
+```text
+anticipation
+→ commit
+→ authoritative consequence
+→ recovery / readable tail
+→ semantic completion
+```
+
+The tail cannot rewind the committed consequence. It may prevent an incompatible new physical action from visibly starting until completion if that occupancy is part of the authored action semantics.
+
+If the tail is purely cosmetic, it must not block gameplay.
+
+## 16.4 Reaction ordering
+
+A perceived event may produce both cognition and an embodied reaction.
+
+Conceptually:
+
+```text
+World consequence
+→ accessible perception
+→ learning / reconsideration as applicable
+→ admitted semantic reaction beat when needed for readability
+→ next physical execution starts when compatible
+```
+
+The next intention may be known before the expression beat ends, but do not introduce separate pre-planning/execution queues unless representative behavior proves that distinction necessary. The simplest valid implementation may treat Wilson as occupied by the beat.
+
+Immediate threat may interrupt an ordinary reaction beat when its explicit interruption semantics allow it.
+
+## 16.5 Determinism, time scale and fallback
+
+Semantic action/reaction ordering must remain equivalent under supported observation speed/time-scale changes.
+
+A missing, replaced or shorter animation asset must degrade presentation rather than change authoritative gameplay or deadlock the run.
+
+Headless simulation must be able to advance the same semantic lifecycle without an animation system present.
+
+Useful regressions include:
+
+```text
+same semantic action commits/completes deterministically without presentation
+post-commit recovery blocks incompatible physical execution only when authored semantic occupancy requires it
+important reaction beat completes without animation callbacks
+immediate threat can interrupt an admitted ordinary beat when allowed
+1x / accelerated observation preserves semantic ordering
+missing animation does not freeze semantic completion
+```
 
 ---
 
@@ -552,6 +684,8 @@ load immutable compatible authored content
 
 Restoring an already-started action does not rerun current attemptability against past history. A committed/completed execution never emits its outcome again after load.
 
+If a semantic expression beat becomes reconstructibly necessary for mid-beat save/load correctness, persist only the minimal semantic lifecycle cause required by its admitted contract. Never persist a concrete animation playback position as authoritative gameplay state.
+
 ---
 
 # 19. Offline catch-up
@@ -561,6 +695,8 @@ Offline uses the same semantic domain under conservative coarse policy.
 It may advance ordinary environment/drives/projects/learning where justified but suppresses forbidden classes such as death, rare spectacle consumption and opaque extreme relationship changes.
 
 Offline is not a second simulation architecture.
+
+Presentation-only timing is absent offline. A semantic action/reaction phase that is genuinely part of authoritative causal time may be coarsely advanced according to its semantic lifecycle, not by simulating animation frames.
 
 ---
 
@@ -580,6 +716,7 @@ simulation step
 → reconsideration trigger/regime
 → candidates/contributions
 → selection/intention transition
+→ semantic action/reaction phase when it delays incompatible physical execution
 ```
 
 Trace should make skipped due work and `NONE` reconsideration observable enough to diagnose cadence mistakes without turning those diagnostics into gameplay authority.

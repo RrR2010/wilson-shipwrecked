@@ -24,14 +24,14 @@ For substantial runtime/gameplay work:
 1. [`../README.md`](../README.md) — project thesis;
 2. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current validated implementation/test/schema baseline;
 3. [`DEVELOPMENT_STAGES.md`](DEVELOPMENT_STAGES.md) — canonical macro maturity map from systemic foundation through productization;
-4. [`handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md`](handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md) — **active stage-transition handoff**;
+4. [`handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md`](handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md) — **active tactical handoff**;
 5. then use the relevant canonical bundle below.
 
 ## Current phase
 
 The structural/runtime foundation and the first continuously observable Godot living-simulation phase are complete.
 
-The validated living island now composes real runtime behavior for:
+The validated living island composes real runtime behavior for:
 
 ```text
 hunger / food
@@ -43,13 +43,27 @@ Gerald shallow physical locomotion
 operator observability and time acceleration
 ```
 
-The leading work is now **entertaining systemic-diorama calibration**: reduce inert idle, make Gerald/environment/history create visible situations, and make prior experience change later behavior while preserving existing authority boundaries.
+The leading work is now **Stage 3 — Entertaining autonomous diorama**.
 
-`DEVELOPMENT_STAGES.md` owns the stable macro progression and stage gates. Handoffs own only the tactical implementation cut for the currently active transition.
+The target is no longer merely “more systems running together.” The living scene must increasingly demonstrate:
+
+```text
+quiet personal/non-utility behavior
+physical experimentation / discovery
+actor or environment interference
+history that visibly changes later behavior
+post-project life
+bounded anti-stagnation
+semantic action/reaction timing that remains visually legible
+```
+
+`DEVELOPMENT_STAGES.md` owns this macro maturity contract. The active handoff owns only the next bounded implementation cut.
 
 The previous handoff [`handoffs/systemic-runtime-to-observable-godot-living-simulation.md`](handoffs/systemic-runtime-to-observable-godot-living-simulation.md) is completed historical context.
 
 Primitive shapes, bubbles and debug overlays remain presentation projections over the real runtime. They are not semantic identity or a second World/cognition model.
+
+However, do not interpret “presentation is non-authoritative” as “presentation timing is irrelevant.” Important action/reaction phases may require semantic duration or interruption semantics so the player can actually perceive them. The concrete animation clip remains presentation-owned; the gameplay meaning/timing contract belongs in `SIMULATION_ORCHESTRATION.md`.
 
 Asset/modeling production remains a parallel workstream and is outside the active runtime handoff unless the operator explicitly changes scope.
 
@@ -72,6 +86,8 @@ Asset/modeling production remains a parallel workstream and is outside the activ
 - [`brainstorming/representative-scene-catalog.md`](brainstorming/representative-scene-catalog.md) — original scene-design evidence.
 - [`SIMULATION.md`](SIMULATION.md) — broad early vocabulary; newer stabilized behavior/domain docs win on conflicts.
 
+Stage 3 should prove a narrow example of several core phenomenon families before Stage 6 expands them. In particular, do not postpone all experimentation/discovery, quiet preference or history-dependent behavior until the breadth stage.
+
 ---
 
 # 3. Architecture and runtime authority
@@ -80,12 +96,22 @@ Asset/modeling production remains a parallel workstream and is outside the activ
 
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — owners, derived services, dependency direction, Godot/persistence and common bootstrap/restore boundaries.
 - [`SIMULATION_CONTRACTS.md`](SIMULATION_CONTRACTS.md) — semantic cross-system contracts.
-- [`SIMULATION_ORCHESTRATION.md`](SIMULATION_ORCHESTRATION.md) — semantic clocks, update ordering, commit/perception/learning/reconsideration/offline orchestration.
+- [`SIMULATION_ORCHESTRATION.md`](SIMULATION_ORCHESTRATION.md) — semantic clocks, update ordering, commit/perception/learning/reconsideration/offline orchestration **and semantic presentation timing boundaries**.
 - [`MUTATION_AUTHORITY.md`](MUTATION_AUTHORITY.md) — read/propose/mutate ownership matrix.
 - [`GUARDS_AND_CALIBRATION.md`](GUARDS_AND_CALIBRATION.md) — bounds, feedback-loop control and adaptive-policy constraints.
 - [`AI.md`](AI.md) — optional runtime LLM authority/fallback boundary.
 
 Current validated routing refinement: `TACTICAL` responses may begin from idle as well as refine/interrupt an active ordinary intention. Concrete checkpoint evidence lives in `DISCOVERY_STATUS.md` and tests.
+
+For action/reaction presentation work, preserve this split:
+
+```text
+semantic meaning / duration / checkpoints / interruption
+!= concrete animation clip / blend / facial pose / audio
+!= decorative renderer-only motion
+```
+
+Never make `animation_finished` authoritative proof that a World consequence occurred. Conversely, do not let an important semantic reaction be visually erased by starting unrelated physical behavior immediately when that reaction is supposed to occupy Wilson.
 
 ## Validation/history
 
@@ -154,6 +180,8 @@ tools/living_simulation/living_simulation.tscn
 
 It is a real runtime development/calibration surface, not a substitute for semantic headless tests.
 
+Manual observation now evaluates a different risk than the strict suite. Use the maturity vocabulary in `DEVELOPMENT_STAGES.md` (`works → legible → interesting → memorable → fun`) rather than treating test count as a proxy for entertainment.
+
 ---
 
 # 6. Asset/content and art workstreams
@@ -169,6 +197,10 @@ These remain valid repository authorities but are outside the active runtime han
 - `asset-catalog/SCENE_COVERAGE.md`
 - `asset-catalog/DIFFICULTY_INDEX.md`
 
+Content planning should increasingly consider **systemic role coverage**, not only modeled-asset count. Useful roles include need relief, curiosity, tool use, project participation, hazard, preference/attachment, actor interaction, player intervention, weather response and transformation/discovery.
+
+Prefer additions that create new cross-system combinations or functional alternatives over several visually distinct objects with identical simulation roles.
+
 ## Visual / 3D production
 
 - `VISUAL_GUIDE.md`
@@ -179,6 +211,8 @@ These remain valid repository authorities but are outside the active runtime han
 - `prototyping/`
 
 The asset catalog owns modeled-content requirements/backlog; art docs own visual direction; prototype geometry does not override product/domain semantics.
+
+Production animation assets may arrive later, but semantic action/reaction timing must be validated before final animation polish. Animation work should map authored clips onto existing semantic phases rather than silently define gameplay causality.
 
 ---
 
