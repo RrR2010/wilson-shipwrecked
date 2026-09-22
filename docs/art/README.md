@@ -10,7 +10,7 @@ Canonical owners:
 ../ASSET_SPEC.md                    technical asset invariants
 ../ASSET_PIPELINE.md                production sequence
 AGENT_ART_PRODUCTION.md             short artistic modeling/review loop
-reference/ + reference/visual/      family-specific written/visual references
+reference/<NN>/                     family-specific written references and visual sheets
 ```
 
 `art/` must not maintain a second asset backlog.
@@ -42,7 +42,7 @@ Open only when relevant:
 
 ## Reference pack
 
-Text references live under [`reference/`](reference/) and approved visual sheets under `reference/visual/`.
+Text references live under [`reference/`](reference/). Each approved visual sheet lives in the matching numbered subfolder, for example [`reference/02/`](reference/02/).
 
 Current sequence:
 
@@ -61,12 +61,41 @@ Current sequence:
 
 Use only the references relevant to the current asset. Visual sheets communicate shape intent; textual contracts win when generated imagery contains accidental details.
 
+## Reference asset naming
+
+Keep each reference family inside its numbered folder under `reference/<NN>/`.
+
+Use these filename patterns:
+
+```text
+REFERENCE_<NN>_<FAMILY_NAME>.md  # written reference
+REFERENCE_<NN>_<FAMILY_NAME>.png # canonical visual sheet
+INDIVIDUAL_<NN>_<ASSET_NAME>.png # individual asset reference image
+```
+
+For individual asset images:
+
+- `<NN>` is the two-digit reference family number, such as `03`.
+- `<ASSET_NAME>` uses the official English label from the canonical visual sheet.
+- Use uppercase `SNAKE_CASE`; do not use accents, spaces, dates or generated names.
+- Keep one identifiable asset or asset variant per file.
+- Preserve the canonical label instead of inventing a descriptive synonym. For example, use `INDIVIDUAL_03_RAISED_SHELF.png`, not `INDIVIDUAL_03_WOODEN_RACK.png`.
+
+Examples from the camp props family:
+
+```text
+reference/03/INDIVIDUAL_03_BOWL.png
+reference/03/INDIVIDUAL_03_CRATE.png
+reference/03/INDIVIDUAL_03_FIRE_RING.png
+reference/03/INDIVIDUAL_03_RAISED_SHELF.png
+```
+
 ## Normal modeling-agent reading path
 
 ```text
 matching asset-catalog row
 → ../VISUAL_GUIDE.md
-→ relevant REFERENCE_*.md + visual sheet
+→ relevant REFERENCE_*.md + matching numbered visual sheet
 → AGENT_ART_PRODUCTION.md
 ```
 

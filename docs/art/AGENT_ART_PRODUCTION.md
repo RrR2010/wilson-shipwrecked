@@ -41,7 +41,7 @@ Read only:
 1. the matching `../asset-catalog/` row;
 2. `../VISUAL_GUIDE.md`;
 3. the **relevant** textual reference under `reference/`;
-4. the corresponding approved visual sheet under `reference/visual/`;
+4. the corresponding approved visual sheet in the matching numbered `reference/<NN>/` folder;
 5. this file.
 
 Open `SHAPE_LANGUAGE.md`, `PALETTE_AND_MATERIALS.md`, `SCALE_CAMERA_AND_READABILITY.md` or an art brief only when the current asset needs that detail.
@@ -52,7 +52,7 @@ Canonical visual-reference directory, relative to the repository root:
 
 ```text
 docs/art/reference/
-docs/art/reference/visual/
+docs/art/reference/<NN>/
 ```
 
 Resolve these from the current repository root rather than depending on a machine-specific absolute path.
@@ -185,10 +185,10 @@ The gameplay view is the primary art test.
 
 The modeling agent should inspect the generated images itself. Do not delegate merely by habit.
 
-Compare the renders with the relevant sheets in:
+Compare the renders with the relevant sheet in its numbered folder under:
 
 ```text
-docs/art/reference/visual/
+docs/art/reference/<NN>/
 ```
 
 Then identify the **single highest-value correction**, modify the model and rerender.
@@ -208,9 +208,9 @@ Generated review images:
 <repo-root>/temp/blender-review/<asset_id>/<iteration>/
 
 Canonical visual references:
-<repo-root>/docs/art/reference/visual/
+<repo-root>/docs/art/reference/<NN>/
 Relevant textual reference:
-<repo-root>/docs/art/reference/<REFERENCE_FILE>.md
+<repo-root>/docs/art/reference/<NN>/<REFERENCE_FILE>.md
 
 Validate only the visible result against these criteria:
 1. silhouette/readability from gameplay 3/4;

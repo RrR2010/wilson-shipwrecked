@@ -6,7 +6,7 @@ Define the visual grammar for functional camp work areas and utility structures.
 
 Approved visual companion:
 
-- `visual/REFERENCE_11_WORKSTATIONS_UTILITIES.png`
+- `11/REFERENCE_11_WORKSTATIONS_UTILITIES.png`
 
 ---
 

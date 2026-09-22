@@ -42,7 +42,7 @@ The agent should spend most of the task **building and inspecting**, not summari
 matching docs/asset-catalog row
 docs/VISUAL_GUIDE.md
 docs/art/reference/<relevant reference>.md
-docs/art/reference/visual/<relevant sheet>.png
+docs/art/reference/<NN>/<relevant sheet>.png
 docs/art/AGENT_ART_PRODUCTION.md
 ```
 
@@ -56,7 +56,7 @@ Do not read brainstorming rounds by default.
 
 After every meaningful modeling pass, generate canonical previews with `tools/blender/review_asset.py`.
 
-If the active model can inspect images, it should review the renders itself against `docs/art/reference/visual/`.
+If the active model can inspect images, it should review the renders itself against the matching numbered folder under `docs/art/reference/<NN>/`.
 
 If it cannot inspect images, delegate the visual comparison to the dedicated `vs` subagent using the prompt contract in `docs/art/AGENT_ART_PRODUCTION.md`.
 
