@@ -1,5 +1,9 @@
 # Reference 03 camp props
 
+The cooking/storage continuation is documented in [DOMESTIC.md](DOMESTIC.md).
+Its six additional models reuse the construction helpers here and defer Godot
+integration at the operator's request.
+
 Deterministic Blender 5.2 source for the eight individual sheets in
 `docs/art/reference/03/`. Seed `3` is the authored production selection.
 

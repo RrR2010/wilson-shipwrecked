@@ -321,8 +321,8 @@ def invoke(module,args):
         sys.argv=previous
 
 
-def save_workbench(asset_ids):
-    name='WORKBENCH_reference_03'
+def save_workbench(asset_ids, workbench_id='reference_03'):
+    name='WORKBENCH_' + workbench_id
     old=bpy.data.scenes.get(name)
     if old:
         for obj in list(old.objects):
@@ -338,7 +338,7 @@ def save_workbench(asset_ids):
         scene.collection.objects.link(obj)
     if bpy.context.window:
         bpy.context.window.scene=scene
-    destination=REPO/'assets/generated/props/camp/reference_03_workbench.blend'
+    destination=REPO/('assets/generated/props/camp/' + workbench_id + '_workbench.blend')
     destination.parent.mkdir(parents=True,exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(destination))
 
