@@ -42,7 +42,7 @@ These observations are snapshots. Refresh against GitHub before any operation; a
 
 ## Immediate execution order
 
-1. Protect unknown local work: inventory working trees, untracked GLB/BLEND/generated outputs, and unpushed commits, without clean/reset.
+1. Local audit (2026-10-11): operator's `art/reference-03-camp-props` worktree is clean and tracking its remote; no untracked files or unpushed commits were reported. Four Blender files under `assets/generated/props/camp/` are ignored by the previous policy (two `.blend` sources and two `.blend1` backups). New policy tracks `.blend` sources, not backups. Operator must add the two `.blend` sources in a separate asset PR/commit after syncing, rather than mixing binary assets into this governance PR.
 2. Triage #78/#79 and both remote branches against current `main`; settle dependencies and acceptance criteria.
 3. Only then select the first Stage-3 vertical task; existing handoff remains useful as historical candidate/evidence, **not** an instruction to implement every slice.
 4. Resume runtime and art work in small isolated PRs following [WORKFLOW.md](WORKFLOW.md).
