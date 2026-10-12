@@ -41,12 +41,12 @@ func apply(decision_result, step_id: StringName):
 	assert(decision_result != null, "apply requires DecisionSelectionResult")
 	if not decision_result.has_selection():
 		var current = _activity_query.current_intention()
-		if _invalidate_unselected_intention_id == null or current == null 			or not current.intention_id.equals(_invalidate_unselected_intention_id):
+		if _invalidate_unselected_intention_id == null or current == null or not current.intention_id.equals(_invalidate_unselected_intention_id):
 			return null
 		var execution_id: StringName = _activity_query.active_execution_id()
 		if execution_id != &"":
 			if not _action_execution.can_interrupt(execution_id) or not _action_execution.interrupt(execution_id):
-				return MutationResult.failure(&"active_execution_not_interruptible")
+				return MutationResult.failure(&"active_execution_not_interruptible", ["Cannot cancel a non-interruptible food execution"])
 		return _decision_commit.clear_current()
 
 	var current = _activity_query.current_intention()
