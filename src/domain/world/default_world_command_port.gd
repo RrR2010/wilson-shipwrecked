@@ -103,11 +103,30 @@ func _validate_effect(
 				present = bool(relation_shadow[relation_key])
 			else:
 				present = _relations.get_relation(relation_key) != null
+			if effect.kind == ActionEffect.Kind.CREATE_RELATION and _is_exclusive_inventory_relation(effect.semantic_id):
+				for stored_relation in _relations.get_outgoing(subject):
+					if not _is_exclusive_inventory_relation(stored_relation.relation_type):
+						continue
+					if relation_shadow.get(stored_relation.key(), true):
+						errors.append("Item already has a physical inventory parent: %s" % subject.sort_key())
+						return
+				for shadow_key in relation_shadow.keys():
+					if not bool(relation_shadow[shadow_key]) or shadow_key == relation_key:
+						continue
+					# Existing relations are examined above; this captures an earlier CREATE in this batch.
+					if not _relations.get_relation(shadow_key) == null:
+						continue
+					var pending_relation = relation_shadow.get(String(shadow_key) + "|object", null)
+					if pending_relation != null and pending_relation.subject.equals(subject) and _is_exclusive_inventory_relation(pending_relation.relation_type):
+						errors.append("Item already has an inventory parent in the same batch: %s" % subject.sort_key())
+						return
 			if effect.kind == ActionEffect.Kind.CREATE_RELATION:
 				if present:
 					errors.append("Exact relation already exists in sequential batch state: %s" % relation.sort_key())
 					return
 				relation_shadow[relation_key] = true
+				if _is_exclusive_inventory_relation(effect.semantic_id):
+					relation_shadow[String(relation_key) + "|object"] = relation
 			else:
 				if not present:
 					errors.append("Exact relation does not exist in sequential batch state: %s" % relation.sort_key())
@@ -180,3 +199,7 @@ func _record_change(effect, outcome, change_set) -> void:
 			change_set.add(SemanticChange.relation_change(subject, effect.semantic_id, object))
 		ActionEffect.Kind.CHANGE_QUANTITY:
 			change_set.add(SemanticChange.quantity_change(subject))
+
+
+func _is_exclusive_inventory_relation(relation_type) -> bool:
+	return relation_type != null and (relation_type.value == &"inside" or relation_type.value == &"held_by" or relation_type.value == &"carried_by")
