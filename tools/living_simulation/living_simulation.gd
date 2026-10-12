@@ -609,10 +609,11 @@ func _update_debug_projection() -> void:
 		_owners.drives.band(DriveState.STIMULATION),
 	]
 	var project = _owners.projects.get_instance(_shelter_project_id)
-	_project_label.text = "Shelter: %d/%d   active=%s   meals=%d rests=%d explores=%d" % [
+	_project_label.text = "Shelter: %d/%d   active=%s   food=%s meals=%d rests=%d explores=%d" % [
 		0 if project == null else project.contribution_count,
 		SHELTER_REQUIRED_CONTRIBUTIONS,
 		false if project == null else project.is_active(),
+		str(_owners.entities.get_quantity(_food_ref.id)),
 		_trace_sink.grounded_consumptions,
 		_trace_sink.grounded_rests,
 		_trace_sink.grounded_explorations,
