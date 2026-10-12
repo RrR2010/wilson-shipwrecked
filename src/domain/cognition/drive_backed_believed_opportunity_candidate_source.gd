@@ -35,6 +35,8 @@ func generate() -> Array:
 		if entry == null or entry.proposition == null or entry.proposition.claim == null:
 			continue
 		var claim = entry.proposition.claim
+		if entry.confidence <= 0.0 or _believes_empty(claim.subject):
+			continue
 		for opportunity in _opportunity_definitions:
 			if opportunity == null or not opportunity.matches(claim):
 				continue
@@ -73,3 +75,19 @@ func _opportunity_target(claim):
 	if claim.kind == EpistemicClaim.Kind.RELATION:
 		return claim.object
 	return claim.subject
+
+
+## Consults Wilson-owned quantity beliefs, never World quantity.
+## A newer contradictory observation lowers prior quantity confidence; the strongest
+## remaining quantity belief is the currently supported expectation.
+func _believes_empty(subject) -> bool:
+	var strongest := -1.0
+	var expected: Variant = null
+	for entry in _belief_store.entries():
+		var claim = entry.proposition.claim
+		if claim.kind != EpistemicClaim.Kind.QUANTITY or not claim.subject.equals(subject):
+			continue
+		if entry.confidence > strongest:
+			strongest = entry.confidence
+			expected = claim.value
+	return expected != null and float(expected) <= 0.0
