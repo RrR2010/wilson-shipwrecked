@@ -13,25 +13,34 @@ var action_id
 var drive_id: StringName
 var delta: float
 var event_type
+var relief_property_id
+var target_role: StringName
 
 
 func _init(
 	p_action_id,
 	p_drive_id: StringName,
 	p_delta: float,
-	p_event_type = null
+	p_event_type = null,
+	p_relief_property_id = null,
+	p_target_role: StringName = &"target"
 ) -> void:
 	assert(p_action_id != null, "DriveConsequenceDefinition requires ActionId")
 	p_action_id.assert_kind(DomainId.Kind.ACTION)
 	assert(DriveState.DRIVE_IDS.has(p_drive_id), "DriveConsequenceDefinition requires known drive")
 	assert(is_finite(p_delta) and p_delta != 0.0, "Drive consequence delta must be finite and non-zero")
 	assert(p_delta >= -1.0 and p_delta <= 1.0, "Drive consequence delta must be within [-1,1]")
+	if p_relief_property_id != null:
+		p_relief_property_id.assert_kind(DomainId.Kind.PROPERTY)
+		assert(p_target_role != &"", "Resource relief requires a target role")
 	if p_event_type != null:
 		p_event_type.assert_kind(DomainId.Kind.EVENT_DEFINITION)
 	action_id = p_action_id
 	drive_id = p_drive_id
 	delta = p_delta
 	event_type = p_event_type
+	relief_property_id = p_relief_property_id
+	target_role = p_target_role
 
 
 func matches(outcome) -> bool:
@@ -42,4 +51,5 @@ func matches(outcome) -> bool:
 
 func stable_key() -> String:
 	var event_key: String = "*" if event_type == null else String(event_type.sort_key())
-	return "%s|%s|%s" % [action_id.sort_key(), event_key, String(drive_id)]
+	var property_key: String = "*" if relief_property_id == null else String(relief_property_id.sort_key())
+	return "%s|%s|%s|%s|%s" % [action_id.sort_key(), event_key, String(drive_id), property_key, String(target_role)]
