@@ -50,6 +50,8 @@ func _run() -> void:
 	var selected_intention := false
 	var max_hunger := float(initial.get("hunger", -1.0))
 	var hunger_after_first_meal := -1.0
+	var hunger_before_first_meal := -1.0
+	var previous_hunger := float(initial.get("hunger", -1.0))
 	var project_started := false
 	var project_progress_before_interruption := 0
 	var saw_food_interruption_after_work := false
@@ -73,7 +75,9 @@ func _run() -> void:
 		var project_progress := int(final.get("project_contributions", 0))
 		var intention_key := String(final.get("intention_key", ""))
 		if meals > 0 and hunger_after_first_meal < 0.0:
+			hunger_before_first_meal = previous_hunger
 			hunger_after_first_meal = float(final.get("hunger", -1.0))
+		previous_hunger = float(final.get("hunger", -1.0))
 		if project_progress > 0:
 			project_started = true
 		if project_started and meals < 2:
@@ -102,8 +106,8 @@ func _run() -> void:
 		_failures.append("Wilson did not physically move during bounded observation")
 	if hunger_after_first_meal < 0.0:
 		_failures.append("Wilson never produced the initial grounded food consumption")
-	elif hunger_after_first_meal >= max_hunger - 0.2:
-		_failures.append("Grounded food consumption did not materially reduce hunger")
+	elif hunger_before_first_meal - hunger_after_first_meal < 0.15:
+		_failures.append("First grounded food consumption must relieve at least 0.15 hunger (authored berries relief 0.20)")
 	if not project_started:
 		_failures.append("Wilson never produced grounded shelter project progress")
 	if project_progress_before_interruption <= 0:
