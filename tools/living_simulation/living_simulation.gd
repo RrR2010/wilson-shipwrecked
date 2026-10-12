@@ -68,7 +68,7 @@ const SCENARIO_NAME := &"living_island_playground"
 const GAMEPLAY_SEED := 61007
 const MAX_NAVIGATION_SYNC_FRAMES := 120
 const SHELTER_REQUIRED_CONTRIBUTIONS := 100
-const FOOD_INITIAL_QUANTITY := 24
+const FOOD_INITIAL_QUANTITY := 3
 const FOOD_VISIBILITY_RADIUS := 4.0
 const CLEAR_DURATION_SECONDS := 24.0
 const RAIN_DURATION_SECONDS := 12.0
@@ -461,6 +461,8 @@ func _bootstrap_and_start() -> void:
 	var context_trigger_source = PerceivedContextTransitionTriggerSource.new(content, true)
 	var spatial_query = GodotSpatialQueryAdapter.new(registry)
 	spatial_query.physics_space_state = get_world_3d().direct_space_state
+	spatial_query.visual_observer_height = 1.45
+	spatial_query.visual_target_height = 1.0
 	var exposed_food = PassiveSpatialPerceptionSource.new(
 		ExposedFoodCandidates.new(_food_ref),
 		spatial_query,
