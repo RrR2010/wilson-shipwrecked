@@ -1,3 +1,5 @@
+> **Delivery navigation (2026-10-11):** [docs/PROJECT_CONTROL.md](docs/PROJECT_CONTROL.md) owns current priorities and integration triage; [docs/WORKFLOW.md](docs/WORKFLOW.md) owns task format, SDD/TDD, verification levels, local-work protection and branch/PR delivery. The detailed technical invariants below remain binding. References below to an “active handoff” describe historical Stage-3 design context; **GitHub Issues now assign work**. Do not rewrite technical contracts solely to update task status.
+
 # AGENTS.md
 
 ## Mission
@@ -42,10 +44,10 @@ Before substantial runtime work, read:
 1. [`docs/README.md`](docs/README.md) — documentation map and authority hierarchy;
 2. [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md) — concrete validated baseline and deferred pressures;
 3. [`docs/DEVELOPMENT_STAGES.md`](docs/DEVELOPMENT_STAGES.md) — macro stage/risk gate;
-4. [`docs/handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md`](docs/handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md) — active tactical transition context;
-5. only the canonical bundle relevant to the selected representative situation.
+4. [docs/PROJECT_CONTROL.md](docs/PROJECT_CONTROL.md) and [docs/WORKFLOW.md](docs/WORKFLOW.md) — current work and operating protocol; use the old Stage-3 handoff only for historical design context;
+5. the assigned GitHub Issue and only the canonical bundle relevant to its representative situation.
 
-Completing one handoff does not automatically complete the macro stage. If Stage-3 maturity pressures remain, prepare another finite Stage-3 handoff instead of jumping to player/Presence work or recursively extending one session.
+Completing one task or EPIC does not automatically complete the macro stage. If Stage-3 maturity pressures remain, prepare another finite Stage-3 handoff instead of jumping to player/Presence work or recursively extending one session.
 
 Asset/modeling work proceeds in parallel. Primitive-shape presentation remains sufficient for behavioral calibration, but **semantic action/reaction timing is not final asset polish**. Important behavior may require deterministic semantic occupancy/checkpoints so it is readable; concrete animation clips remain non-authoritative presentation assets.
 

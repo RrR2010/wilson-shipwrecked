@@ -37,14 +37,14 @@ These are architectural defaults, not permission to couple simulation logic to G
 
 ## Documentation
 
-Start with [`docs/README.md`](docs/README.md). It separates canonical contracts, specialized appendices, validation evidence and historical material, and provides task-specific reading paths.
+Start with [`docs/PROJECT_CONTROL.md`](docs/PROJECT_CONTROL.md) for current priorities, then [`docs/README.md`](docs/README.md) for canonical technical reading. Delivery process: [`docs/WORKFLOW.md`](docs/WORKFLOW.md). It separates canonical contracts, specialized appendices, validation evidence and historical material, and provides task-specific reading paths.
 
 Key entry points:
 
 | Area | Entry point |
 | --- | --- |
 | Current phase / validated baseline | [`docs/DISCOVERY_STATUS.md`](docs/DISCOVERY_STATUS.md) |
-| Active runtime handoff | [`docs/handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md`](docs/handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md) |
+| Current execution/integration queue | [`docs/PROJECT_CONTROL.md`](docs/PROJECT_CONTROL.md) |
 | Product / player experience | [`docs/PRODUCT.md`](docs/PRODUCT.md) |
 | Wilson behavior | [`docs/BEHAVIORAL_MODEL.md`](docs/BEHAVIORAL_MODEL.md) |
 | Architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
@@ -89,7 +89,7 @@ Current pressure includes:
 - give completed projects more life after completion where existing environment/protection systems support it;
 - preserve compact causal readability while adding behavioral richness.
 
-See the active handoff for the exact next-stage acceptance criteria.
+See [`docs/DEVELOPMENT_STAGES.md`](docs/DEVELOPMENT_STAGES.md) for Stage-3 maturity gates and GitHub Issues for delegated slices. The former runtime handoff is retained as historical design evidence.
 
 ## Non-goals
 
