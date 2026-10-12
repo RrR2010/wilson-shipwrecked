@@ -4,9 +4,10 @@
 
 This file is the entry point for project documentation.
 
-Use four conceptual layers:
+Use five conceptual layers:
 
 ```text
+0. project control       — current priority/integration queue and agent delivery workflow
 1. canonical contracts    — current product/domain/architecture rules
 2. specialized appendices — narrow semantic detail
 3. validation evidence    — traces/fixtures/tests proving sufficiency
@@ -22,10 +23,12 @@ Read the smallest bundle sufficient for the task. Validation/history must not be
 For substantial runtime/gameplay work:
 
 1. [`../README.md`](../README.md) — project thesis;
-2. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current validated implementation/test/schema baseline;
-3. [`DEVELOPMENT_STAGES.md`](DEVELOPMENT_STAGES.md) — canonical macro maturity map from systemic foundation through productization;
-4. [`handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md`](handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md) — **active tactical handoff**;
-5. then use the relevant canonical bundle below.
+2. [`PROJECT_CONTROL.md`](PROJECT_CONTROL.md) — what is active, pending review or blocked;
+3. [`WORKFLOW.md`](WORKFLOW.md) — Issue / PR, SDD/TDD, verification and repository hygiene;
+4. [`DISCOVERY_STATUS.md`](DISCOVERY_STATUS.md) — current validated implementation/test/schema baseline;
+5. [`DEVELOPMENT_STAGES.md`](DEVELOPMENT_STAGES.md) — canonical macro maturity map from systemic foundation through productization;
+6. GitHub Issue for the assigned bounded TASK; the former [Stage-3 handoff](handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md) is historical candidate/evidence, **not active task authority**;
+7. then use the relevant canonical bundle below.
 
 ## Current phase
 
@@ -57,7 +60,7 @@ bounded anti-stagnation
 semantic action/reaction timing that remains visually legible
 ```
 
-`DEVELOPMENT_STAGES.md` owns this macro maturity contract. The active handoff owns only the next bounded implementation cut.
+`DEVELOPMENT_STAGES.md` owns this macro maturity contract. GitHub Issues own bounded implementation cuts; `PROJECT_CONTROL.md` owns current coordination.
 
 The previous handoff [`handoffs/systemic-runtime-to-observable-godot-living-simulation.md`](handoffs/systemic-runtime-to-observable-godot-living-simulation.md) is completed historical context.
 
@@ -65,9 +68,9 @@ Primitive shapes, bubbles and debug overlays remain presentation projections ove
 
 However, do not interpret “presentation is non-authoritative” as “presentation timing is irrelevant.” Important action/reaction phases may require semantic duration or interruption semantics so the player can actually perceive them. The concrete animation clip remains presentation-owned; the gameplay meaning/timing contract belongs in `SIMULATION_ORCHESTRATION.md`.
 
-Asset/modeling production remains a parallel workstream and is outside the active runtime handoff unless the operator explicitly changes scope.
+Asset/modeling production can proceed in independent branches; cross-system integration depends on explicit Issues and operator validation.
 
-`AGENTS.md` owns repository workflow/global invariants; `DISCOVERY_STATUS.md` owns concrete test/schema/checkpoint facts.
+`AGENTS.md` owns global invariants and routes delivery to `WORKFLOW.md`; `DISCOVERY_STATUS.md` owns concrete test/schema/checkpoint facts.
 
 ---
 
@@ -186,7 +189,7 @@ Manual observation now evaluates a different risk than the strict suite. Use the
 
 # 6. Asset/content and art workstreams
 
-These remain valid repository authorities but are outside the active runtime handoff unless explicitly requested.
+These remain valid repository authorities; each TASK scopes integration explicitly.
 
 ## Cross-cutting asset/content catalog
 
@@ -202,6 +205,9 @@ Content planning should increasingly consider **systemic role coverage**, not on
 Prefer additions that create new cross-system combinations or functional alternatives over several visually distinct objects with identical simulation roles.
 
 ## Visual / 3D production
+
+Parallel local Blender agent: read [`art/FUNCTIONAL_ASSET_FACTORY.md`](art/FUNCTIONAL_ASSET_FACTORY.md) first. Each model is individually briefed with Richard for likely future functionality and engine constraints; art completion does not require Godot integration.
+
 
 - `VISUAL_GUIDE.md`
 - `art/README.md`
@@ -220,7 +226,7 @@ Production animation assets may arrive later, but semantic action/reaction timin
 
 - `brainstorming/` — exploratory/historical evidence.
 - `design-reviews/` — temporary calibration/review evidence.
-- `handoffs/` — transition context, never durable design authority. Only the handoff explicitly identified in **Start here** is active.
+- `handoffs/` — transition context, never durable design authority. Work assignment is now via GitHub Issues; handoffs are historical until specifically reactivated for a true phase transition.
 
 ---
 
@@ -254,4 +260,5 @@ If implementation evidence invalidates a canonical rule, update the owning docum
 - keep cross-cutting modeled-content requirements under `asset-catalog/`;
 - keep exploratory breadth under `brainstorming/`;
 - keep transition instructions under `handoffs/`;
-- after a handoff completes, mark it completed and point this map at the next active transition.
+- use Issues for active slices and only create handoffs for exceptional stage transitions;
+- record active integration blockers in `PROJECT_CONTROL.md`, not domain documents.

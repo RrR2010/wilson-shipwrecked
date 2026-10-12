@@ -6,7 +6,7 @@ Define the visual grammar for containers and storage infrastructure while keepin
 
 Approved visual companion:
 
-- `visual/REFERENCE_10_STORAGE_CONTAINERS.png`
+- `10/REFERENCE_10_STORAGE_CONTAINERS.png`
 
 ---
 

@@ -2,6 +2,9 @@
 
 ## Purpose
 
+**Production lane:** [art/FUNCTIONAL_ASSET_FACTORY.md](art/FUNCTIONAL_ASSET_FACTORY.md) owns the individually modeled, operator-consulted, Godot-aware parallel asset workflow and prioritized queue. Asset modeling is not runtime integration; Godot import is optional evidence for art-only work.
+
+
 Define the production sequence and ownership boundaries for 3D assets without turning routine modeling into a documentation exercise.
 
 Canonical owners:
@@ -20,9 +23,9 @@ tools/blender/README.md         review/validation/export mechanics
 The normal modeling-agent loop is:
 
 ```text
-1. choose next ready asset from catalog
+1. choose next prioritized individual asset; draft functional states and obtain operator consultation
 2. read its catalog row + minimum visual references
-3. choose source ownership: asset | family | generator
+3. default to individual .blend + GLB; share generator helpers but keep deliverables independent
 4. model/generate a named AssetScope
 5. render canonical previews
 6. inspect the images
@@ -34,7 +37,7 @@ The normal modeling-agent loop is:
 12. update catalog status/notes
 ```
 
-The agent should spend most of the task **building and inspecting**, not summarizing documents.
+The agent should spend most of the task **building and inspecting**, not summarizing documents. Do not make Godot gameplay integration a completion requirement for art-only work.
 
 ## Minimum reading for an ordinary asset
 
@@ -42,7 +45,7 @@ The agent should spend most of the task **building and inspecting**, not summari
 matching docs/asset-catalog row
 docs/VISUAL_GUIDE.md
 docs/art/reference/<relevant reference>.md
-docs/art/reference/visual/<relevant sheet>.png
+docs/art/reference/<NN>/<relevant sheet>.png
 docs/art/AGENT_ART_PRODUCTION.md
 ```
 
@@ -56,7 +59,7 @@ Do not read brainstorming rounds by default.
 
 After every meaningful modeling pass, generate canonical previews with `tools/blender/review_asset.py`.
 
-If the active model can inspect images, it should review the renders itself against `docs/art/reference/visual/`.
+If the active model can inspect images, it should review the renders itself against the matching numbered folder under `docs/art/reference/<NN>/`.
 
 If it cannot inspect images, delegate the visual comparison to the dedicated `vs` subagent using the prompt contract in `docs/art/AGENT_ART_PRODUCTION.md`.
 
@@ -81,6 +84,8 @@ procedural reproducible family
 → source-mode=generator
 → generator/config + explicit seed are canonical source
 → optional one family workbench .blend
+
+**Repository retention policy:** commit meaningful editable `.blend` source files (including family workbenches under `assets/generated/`), even for generator-based assets when they are part of the production handoff. Ignore Blender autosave/backup files (`.blend1`, `.blend2`). A committed generator remains the reproducibility authority for procedural outputs; editable Blender sources complement it. Avoid committing disposable previews/caches/intermediates.
 ```
 
 One `.blend` per ordinary manual asset is preferred for isolation. One `.blend` per generated variant is specifically discouraged.
@@ -162,7 +167,7 @@ Exact commands and profile details live only in `tools/blender/README.md`.
 ```text
 assets/source/        manual/family Blender source
 assets/generators/    procedural source/config
-assets/generated/     reproducible intermediates
+assets/generated/     reproducible intermediates (ignored), except retained .blend workbench sources
 assets/previews/      deliberately retained preview artifacts
 assets/models/        runtime GLB imported by Godot
 ```

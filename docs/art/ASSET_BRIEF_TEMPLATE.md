@@ -116,9 +116,9 @@ primary_read: Thick wooden handle, oversized heavy stone head and one broad read
 
 references:
   textual:
-    - reference/REFERENCE_05_TOOL_GRAMMAR.md
+    - reference/05/REFERENCE_05_TOOL_GRAMMAR.md
   visual:
-    - reference/visual/REFERENCE_05_TOOL_GRAMMAR.png
+    - reference/05/REFERENCE_05_TOOL_GRAMMAR.png
 
 visual_scale:
   compare_against: Wilson hand

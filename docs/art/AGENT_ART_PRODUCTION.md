@@ -2,6 +2,9 @@
 
 ## Purpose
 
+**Parallel Blender production now follows [FUNCTIONAL_ASSET_FACTORY.md](FUNCTIONAL_ASSET_FACTORY.md)** for priority, pre-model operator consultation, individual .blend sources, anticipated function/states, and Godot-compatible structure. The short visual iteration guidance below remains applicable. Before modeling any asset, complete the functional consultation gate; do not use the older three-item visual brief alone as permission to begin.
+
+
 This is the execution-first artistic loop for production modeling agents.
 
 Use the smallest context necessary. The agent should spend more effort **modeling and inspecting renders** than rereading documentation.
@@ -15,8 +18,10 @@ Functional requirements come from `../asset-catalog/`. Blender/export mechanics 
 For each asset:
 
 ```text
-CHOOSE NEXT ASSET
+CHOOSE NEXT INDIVIDUAL ASSET
 → READ MINIMUM REFERENCES
+→ ANTICIPATE FUNCTION/STATES/ENGINE STRUCTURE
+→ CONSULT OPERATOR AND GET ANSWER
 → MODEL / GENERATE
 → RENDER CANONICAL PREVIEWS
 → INSPECT IMAGES
@@ -41,7 +46,7 @@ Read only:
 1. the matching `../asset-catalog/` row;
 2. `../VISUAL_GUIDE.md`;
 3. the **relevant** textual reference under `reference/`;
-4. the corresponding approved visual sheet under `reference/visual/`;
+4. the corresponding approved visual sheet in the matching numbered `reference/<NN>/` folder;
 5. this file.
 
 Open `SHAPE_LANGUAGE.md`, `PALETTE_AND_MATERIALS.md`, `SCALE_CAMERA_AND_READABILITY.md` or an art brief only when the current asset needs that detail.
@@ -52,7 +57,7 @@ Canonical visual-reference directory, relative to the repository root:
 
 ```text
 docs/art/reference/
-docs/art/reference/visual/
+docs/art/reference/<NN>/
 ```
 
 Resolve these from the current repository root rather than depending on a machine-specific absolute path.
@@ -77,7 +82,7 @@ RELATIVE SCALE: longer than Wilson's forearm, much thinner than a log
 PHYSICAL REST: naturally lying on the ground, not standing upright
 ```
 
-This is enough planning. Do not write a long prose design document before modeling.
+These three visual points are a subset of the required brief in FUNCTIONAL_ASSET_FACTORY.md; obtain operator input about meaningful functional/geometry decisions before modeling.
 
 ---
 
@@ -185,10 +190,10 @@ The gameplay view is the primary art test.
 
 The modeling agent should inspect the generated images itself. Do not delegate merely by habit.
 
-Compare the renders with the relevant sheets in:
+Compare the renders with the relevant sheet in its numbered folder under:
 
 ```text
-docs/art/reference/visual/
+docs/art/reference/<NN>/
 ```
 
 Then identify the **single highest-value correction**, modify the model and rerender.
@@ -208,9 +213,9 @@ Generated review images:
 <repo-root>/temp/blender-review/<asset_id>/<iteration>/
 
 Canonical visual references:
-<repo-root>/docs/art/reference/visual/
+<repo-root>/docs/art/reference/<NN>/
 Relevant textual reference:
-<repo-root>/docs/art/reference/<REFERENCE_FILE>.md
+<repo-root>/docs/art/reference/<NN>/<REFERENCE_FILE>.md
 
 Validate only the visible result against these criteria:
 1. silhouette/readability from gameplay 3/4;

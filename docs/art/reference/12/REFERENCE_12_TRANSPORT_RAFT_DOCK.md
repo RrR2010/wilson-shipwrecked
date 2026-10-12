@@ -6,7 +6,7 @@ Define the visual grammar for simple transport and shoreline access projects whi
 
 Approved visual companion:
 
-- `visual/REFERENCE_12_TRANSPORT_RAFT_DOCK.png`
+- `12/REFERENCE_12_TRANSPORT_RAFT_DOCK.png`
 
 ---
 
