@@ -81,6 +81,8 @@ procedural reproducible family
 → source-mode=generator
 → generator/config + explicit seed are canonical source
 → optional one family workbench .blend
+
+**Repository retention policy:** commit meaningful editable `.blend` source files (including family workbenches under `assets/generated/`), even for generator-based assets when they are part of the production handoff. Ignore Blender autosave/backup files (`.blend1`, `.blend2`). A committed generator remains the reproducibility authority for procedural outputs; editable Blender sources complement it. Avoid committing disposable previews/caches/intermediates.
 ```
 
 One `.blend` per ordinary manual asset is preferred for isolation. One `.blend` per generated variant is specifically discouraged.
@@ -162,7 +164,7 @@ Exact commands and profile details live only in `tools/blender/README.md`.
 ```text
 assets/source/        manual/family Blender source
 assets/generators/    procedural source/config
-assets/generated/     reproducible intermediates
+assets/generated/     reproducible intermediates (ignored), except retained .blend workbench sources
 assets/previews/      deliberately retained preview artifacts
 assets/models/        runtime GLB imported by Godot
 ```
