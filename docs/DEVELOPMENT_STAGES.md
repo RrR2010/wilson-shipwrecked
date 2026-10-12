@@ -7,7 +7,7 @@ This document is the canonical macro-level maturity map for Wilson Shipwrecked.
 It answers a different question from the active handoff:
 
 - `DEVELOPMENT_STAGES.md` defines the **large product-development stages**, their leading risk and the gate that proves each stage is mature enough to stop being the main risk;
-- `docs/handoffs/*` defines the **finite tactical work for the currently active transition**;
+- GitHub Issues (EPICs/TASKs) define **finite executable work**; `PROJECT_CONTROL.md` identifies the active integration queue; handoffs are historical transition context;
 - `DISCOVERY_STATUS.md` records the **concrete validated implementation checkpoint**.
 
 This is intentionally not a detailed feature backlog. The project remains scene-led and evidence-driven. A stage may require implementation cuts different from those anticipated here.
@@ -308,9 +308,9 @@ The exact stories are not requirements. Their causal families are.
 
 Automated validation should preserve deterministic semantic ordering, bounded long-run behavior and the absence of authority leaks. Manual validation judges legibility, timing, personality, variation and whether any moments approach fun.
 
-## Current tactical handoff
+## Current delivery ownership
 
-`handoffs/observable-living-simulation-to-entertaining-systemic-diorama.md`
+See `PROJECT_CONTROL.md` for integration priorities, `WORKFLOW.md` for task/PR policy, and linked GitHub Issues for executable slices. The previous Stage-3 handoff is retained as historical context.
 
 ## Anti-goals
 
