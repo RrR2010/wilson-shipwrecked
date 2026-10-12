@@ -23,6 +23,7 @@ const ActionEffect = preload("res://src/domain/actions/action_effect.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 const PerceptionService = preload("res://src/domain/cognition/perception_service.gd")
+const PerceptionResult = preload("res://src/domain/cognition/perception_result.gd")
 const BeliefLearningService = preload("res://src/domain/cognition/belief_learning_service.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const CurrentIntentionStore = preload("res://src/domain/cognition/current_intention_store.gd")
@@ -53,6 +54,17 @@ class RecordingLifecycleCoordinator:
 	func process(events: Array):
 		batches.append(events.duplicate())
 		return MutationResult.success(&"recorded_lifecycle_batch")
+
+
+class RecordingPassivePerceptionSource:
+	extends RefCounted
+	var semantic_refreshes: Array = []
+
+	func notify_semantic_changes(change_set) -> void:
+		semantic_refreshes.append(change_set)
+
+	func collect(_step = null):
+		return PerceptionResult.new()
 
 
 func _init() -> void:
@@ -127,11 +139,12 @@ func _run_slice() -> void:
 	var activity = DefaultSimulationActivityQuery.new(execution, intention_store)
 	var trace_sink = InMemoryTraceSink.new()
 	var lifecycle_coordinator = RecordingLifecycleCoordinator.new()
+	var passive_refresh = RecordingPassivePerceptionSource.new()
 	var orchestrator = SimulationOrchestrator.new(
 		StaticWorldAdvance.new(), execution, world_commands, derived_invalidator,
 		activity, access_resolver, perception, learning, opportunity_service,
 		belief_store, opportunity_definitions, router, decision_commit, trace_sink,
-		null, null, null, null, [], null, null, null, null, lifecycle_coordinator
+		null, null, null, null, [], null, null, passive_refresh, null, lifecycle_coordinator
 	)
 
 	var result = orchestrator.advance(SimulationStepContext.new(
@@ -150,6 +163,7 @@ func _run_slice() -> void:
 	_expect_equal(world_query.get_instance_property(crate, integrity), 2, "World mutation is visible after commit")
 	_expect_equal(result.world_commit.events.size(), 1, "World commit emits one event")
 	_expect_equal(result.world_commit.change_set.changes.size(), 1, "World commit reports one semantic change")
+	_expect_equal(passive_refresh.semantic_refreshes.size(), 1, "committed semantic change requests passive perceptual refresh")
 	_expect_equal(lifecycle_coordinator.batches.size(), 1, "lifecycle coordinator runs once after committed events are assembled")
 	if lifecycle_coordinator.batches.size() == 1:
 		_expect_equal(lifecycle_coordinator.batches[0].size(), 1, "lifecycle coordinator receives committed event batch")
@@ -174,6 +188,7 @@ func _run_slice() -> void:
 		_expect_true(quiet_step.decision == null, "quiet semantic step skips decision routing")
 		_expect_true(quiet_step.intention_commit == null, "quiet semantic step does not rewrite intention")
 	_expect_equal(lifecycle_coordinator.batches.size(), 2, "lifecycle coordinator runs at each committed-event boundary")
+	_expect_equal(passive_refresh.semantic_refreshes.size(), 1, "quiet step does not fabricate semantic refreshes")
 	if lifecycle_coordinator.batches.size() == 2:
 		_expect_equal(lifecycle_coordinator.batches[1].size(), 0, "quiet semantic step forwards an empty committed-event batch")
 	_expect_equal(intention_store.current().intention_id.key(), investigate.key(), "quiet semantic step preserves current intention")
