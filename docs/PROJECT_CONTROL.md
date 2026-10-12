@@ -22,10 +22,10 @@ Can a short autonomous run yield legible, memorable causal situations, including
 
 | Work | State at 2026-10-11 | Next action |
 | --- | --- | --- |
-| [PR #79](https://github.com/RrR2010/wilson-shipwrecked/pull/79) camp props | Open; claims Blender reviews, six additions deferred from Godot integration | Inspect asset scope/catalog, compare to main, operator visual/import acceptance, then decide merge |
-| [PR #78](https://github.com/RrR2010/wilson-shipwrecked/pull/78) quantities/perceptual containment | Draft; runtime change with pending integration and tests | Reassess scope and revalidate against latest main; do not merge as-is |
-| `runtime/representative-gameplay-semantics` | Remote branch with no open PR observed | Inspect diff, owner, test evidence; retain/archive only after checking local dependencies |
-| `assets/modeling-pilot-batch-01` | Remote branch with no open PR observed | Inspect diff, generated assets and ownership; avoid deleting without local check |
+| [PR #79](https://github.com/RrR2010/wilson-shipwrecked/pull/79) camp props | Open; 2 commits ahead, 0 behind; 14 GLBs and generator/catalog/review changes; six additions deferred from Godot import | Operator visual/import acceptance for required asset scope, then decide merge |
+| [PR #78](https://github.com/RrR2010/wilson-shipwrecked/pull/78) quantities/perceptual containment | Draft; 15 commits ahead and 1 behind `main` (14 changed GDScript/test files) | Complete composition and strict validation on updated main; do not merge as-is |
+| `runtime/representative-gameplay-semantics` | Remote branch: 0 commits ahead, 26 behind `main`; no open PR | Likely obsolete remotely; check any local work before deletion |
+| `assets/modeling-pilot-batch-01` | Remote branch: 2 commits ahead, 27 behind `main`, changing Blender review tooling | Inspect two tooling edits for applicability before cherry-pick/rewrite; avoid deleting without local check |
 | Local uncommitted or unpushed work | UNKNOWN: GitHub cannot see operator filesystem | Run read-only local audit (below); decide explicitly what to commit/push |
 
 These observations are snapshots. Refresh against GitHub before any operation; avoid maintaining a second manual running issue tracker in this file.
