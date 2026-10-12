@@ -31,7 +31,7 @@ func _init(world, beliefs, tool, actor, target, known_tool, known_target, held_r
 	_held_relation = held_relation
 	_inspection_receipt = inspection_receipt
 	_pickup_intention = pickup_intention
-	_use_intention
+	_use_intention = use_intention
 
 
 func generate() -> Array:
