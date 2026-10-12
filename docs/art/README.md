@@ -10,6 +10,7 @@ Canonical owners:
 ../ASSET_SPEC.md                    technical asset invariants
 ../ASSET_PIPELINE.md                production sequence
 AGENT_ART_PRODUCTION.md             short artistic modeling/review loop
+FUNCTIONAL_ASSET_FACTORY.md         parallel local agent, per-asset functional consultation, priorities
 reference/<NN>/                     family-specific written references and visual sheets
 ```
 
