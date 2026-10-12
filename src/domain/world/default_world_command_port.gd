@@ -30,9 +30,10 @@ func apply_outcome(outcome):
 	assert(outcome != null, "apply_outcome requires ActionOutcome")
 	var validation_errors: Array[String] = []
 	var relation_shadow: Dictionary = {}
+	var relation_pending: Dictionary = {}
 	var quantity_shadow: Dictionary = {}
 	for effect in outcome.effects:
-		_validate_effect(effect, outcome, validation_errors, relation_shadow, quantity_shadow)
+		_validate_effect(effect, outcome, validation_errors, relation_shadow, relation_pending, quantity_shadow)
 	if not validation_errors.is_empty():
 		return WorldCommitResult.new(false, [], [], validation_errors)
 
@@ -66,6 +67,7 @@ func _validate_effect(
 	outcome,
 	errors: Array[String],
 	relation_shadow: Dictionary,
+	relation_pending: Dictionary,
 	quantity_shadow: Dictionary
 ) -> void:
 	assert(effect != null, "ActionOutcome effects cannot contain null")
@@ -110,14 +112,9 @@ func _validate_effect(
 					if relation_shadow.get(stored_relation.key(), true):
 						errors.append("Item already has a physical inventory parent: %s" % subject.sort_key())
 						return
-				for shadow_key in relation_shadow.keys():
-					if not bool(relation_shadow[shadow_key]) or shadow_key == relation_key:
-						continue
-					# Existing relations are examined above; this captures an earlier CREATE in this batch.
-					if not _relations.get_relation(shadow_key) == null:
-						continue
-					var pending_relation = relation_shadow.get(String(shadow_key) + "|object", null)
-					if pending_relation != null and pending_relation.subject.equals(subject) and _is_exclusive_inventory_relation(pending_relation.relation_type):
+				for pending_key in relation_pending.keys():
+					var pending_relation = relation_pending[pending_key]
+					if bool(relation_shadow.get(pending_key, false)) and pending_relation.subject.equals(subject) and _is_exclusive_inventory_relation(pending_relation.relation_type):
 						errors.append("Item already has an inventory parent in the same batch: %s" % subject.sort_key())
 						return
 			if effect.kind == ActionEffect.Kind.CREATE_RELATION:
@@ -126,7 +123,7 @@ func _validate_effect(
 					return
 				relation_shadow[relation_key] = true
 				if _is_exclusive_inventory_relation(effect.semantic_id):
-					relation_shadow[String(relation_key) + "|object"] = relation
+					relation_pending[relation_key] = relation
 			else:
 				if not present:
 					errors.append("Exact relation does not exist in sequential batch state: %s" % relation.sort_key())
