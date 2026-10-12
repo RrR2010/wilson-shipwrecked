@@ -79,7 +79,7 @@ func collect(_step_context = null):
 	for subject in candidates:
 		if subject == null or subject.equals(_observer):
 			continue
-		var key = subject.key()
+		var key: StringName = subject.key()
 		active_keys[key] = true
 
 		var distance: float = _spatial_query.metric_distance(_observer, subject)
