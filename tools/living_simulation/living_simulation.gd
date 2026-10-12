@@ -55,6 +55,11 @@ const SemanticDueScheduler = preload("res://src/application/simulation/semantic_
 const DueElapsedGate = preload("res://src/application/simulation/due_elapsed_gate.gd")
 const ShallowActorMotionCoordinator = preload("res://src/application/simulation/shallow_actor_motion_coordinator.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
+const PassiveSpatialPerceptionSource = preload("res://src/application/simulation/passive_spatial_perception_source.gd")
+const GodotSpatialQueryAdapter = preload("res://src/infrastructure/spatial/godot_spatial_query_adapter.gd")
+const BeliefLearningService = preload("res://src/domain/cognition/belief_learning_service.gd")
+const BeliefReconciliationService = preload("res://src/domain/cognition/belief_reconciliation_service.gd")
+const BeliefLearningCoordinator = preload("res://src/application/simulation/belief_learning_coordinator.gd")
 const GodotSceneSpatialRegistry = preload("res://src/infrastructure/spatial/godot_scene_spatial_registry.gd")
 const GodotMotionAdapter = preload("res://src/infrastructure/spatial/godot_motion_adapter.gd")
 const GodotSimulationHost = preload("res://src/infrastructure/spatial/godot_simulation_host.gd")
@@ -64,6 +69,7 @@ const GAMEPLAY_SEED := 61007
 const MAX_NAVIGATION_SYNC_FRAMES := 120
 const SHELTER_REQUIRED_CONTRIBUTIONS := 100
 const FOOD_INITIAL_QUANTITY := 24
+const FOOD_VISIBILITY_RADIUS := 4.0
 const CLEAR_DURATION_SECONDS := 24.0
 const RAIN_DURATION_SECONDS := 12.0
 
@@ -122,6 +128,21 @@ class TraceSink:
 			grounded_project_contributions += project_result.get("applied", []).size()
 		if traces.size() > 64:
 			traces.pop_front()
+
+
+## Bounded broadphase of the one authored exposed food source.
+## Metric distance and line-of-sight remain validated by SpatialQueryPort.
+class ExposedFoodCandidates:
+	extends RefCounted
+	var food
+	func _init(p_food) -> void:
+		food = p_food
+	func has_pending_refresh() -> bool:
+		return true
+	func consume_refresh_candidates() -> Array:
+		return [food]
+	func request_refresh() -> void:
+		pass
 
 
 func _ready() -> void:
@@ -333,7 +354,8 @@ func _bootstrap_and_start() -> void:
 		DriveState.ENERGY: 0.006,
 		DriveState.STIMULATION: 0.005,
 	})
-	var drive_source = DriveCandidateSource.new(_owners.drives, drive_definitions)
+	# Hunger needs a believed food target; never route an unbound food intention.
+	var drive_source = DriveCandidateSource.new(_owners.drives, [energy_definition, stimulation_definition])
 	var grounded_opportunities = DriveBackedBelievedOpportunityCandidateSource.new(
 		_owners.drives,
 		_owners.beliefs,
@@ -436,7 +458,25 @@ func _bootstrap_and_start() -> void:
 		0.2,
 		DecisionCandidate.Scope.TACTICAL
 	)
-	var context_trigger_source = PerceivedContextTransitionTriggerSource.new(content)
+	var context_trigger_source = PerceivedContextTransitionTriggerSource.new(content, true)
+	var spatial_query = GodotSpatialQueryAdapter.new(registry)
+	spatial_query.physics_space_state = get_world_3d().direct_space_state
+	var exposed_food = PassiveSpatialPerceptionSource.new(
+		ExposedFoodCandidates.new(_food_ref),
+		spatial_query,
+		_wilson_ref,
+		DomainId.relation_type(&"perceptibly_near"),
+		FOOD_VISIBILITY_RADIUS,
+		&"vision",
+		0.95,
+		runtime.world_query
+	)
+	var belief_learner = BeliefLearningService.new()
+	var perceptual_learning = BeliefLearningCoordinator.new(
+		belief_learner,
+		_owners.beliefs,
+		BeliefReconciliationService.new(belief_learner)
+	)
 	var base_decision_commit = DecisionCommitCoordinator.new(_owners.current_intention)
 	var decision_commit = InterruptingDecisionCommitCoordinator.new(
 		runtime.activity_query,
@@ -451,7 +491,7 @@ func _bootstrap_and_start() -> void:
 		runtime.activity_query,
 		runtime.perception_access,
 		runtime.perception,
-		runtime.learning,
+		perceptual_learning,
 		PerceivedOpportunityService.new(),
 		_owners.beliefs,
 		[],
@@ -465,7 +505,7 @@ func _bootstrap_and_start() -> void:
 		[grounded_opportunities],
 		null,
 		null,
-		null,
+		exposed_food,
 		context_trigger_source,
 		null,
 		executor,
