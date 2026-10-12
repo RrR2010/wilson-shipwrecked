@@ -7,7 +7,7 @@
 - **Task agent:** investigates edge cases, proposes implementation, maintains tests and evidence, and raises consequential decisions instead of expanding scope autonomously.
 - **Parallel Blender agent:** uses `art/FUNCTIONAL_ASSET_FACTORY.md`, including the pre-model consultation; runtime and Blender work must not conflict.
 
-After each PR/task, operator tells macro architect what was delivered, which tests ran, and what was observed. Architect reviews open follow-ups and supplies a brief prompt pointing to the chosen Issue. A short prompt is a **routing instruction**, not a duplicate specification.
+After each PR/task, operator tells macro architect what was delivered, which tests ran, and what was observed. Architect reviews Stage priorities, unfinished subsystems, dependencies and open follow-ups, then chooses the highest-value next slice; **new issues are candidates, not a FIFO queue, and their originating PR does not grant immediate priority**. The architect may defer an issue, split it, or commission a prerequisite only where a concrete acceptance case proves the existing architecture insufficient. Then the architect supplies a brief prompt pointing to the chosen Issue. A short prompt is a **routing instruction**, not a duplicate specification.
 
 ## Mandatory initial workflow
 
