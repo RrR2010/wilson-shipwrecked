@@ -14,6 +14,11 @@ const ContentRegistry = preload("res://src/domain/content/content_registry.gd")
 const RequirementPredicate = preload("res://src/domain/actions/requirement_predicate.gd")
 const RequirementPredicateEvaluator = preload("res://src/domain/actions/requirement_predicate_evaluator.gd")
 
+class UnusedPropertyResolver:
+	extends RefCounted
+	func get_value(_subject, _property_id):
+		return null
+
 var failures: Array[String] = []
 
 func _init() -> void:
@@ -36,16 +41,18 @@ func _init() -> void:
 		ActionEffect.new(ActionEffect.Kind.REMOVE_RELATION, &"tool", held_by, null, &"actor")
 	], DomainId.event_definition(&"tool_released"))
 	var inspect_requires_tool = RequirementPredicate.has_relation(&"tool", held_by, &"actor")
-	# The World predicate is a generic eligibility contract; an unheld tool cannot be used.
+	var evaluator = RequirementPredicateEvaluator.new(query, RefCounted.new(), UnusedPropertyResolver.new())
+	_check(not evaluator.evaluate(inspect_requires_tool, binding).passed, "tool use denied before pickup")
 	_check(query.find_relations(held_by, spyglass, wilson).is_empty(), "tool is unheld initially")
-	_check(not query.find_relations(held_by, spyglass, wilson).size() > 0, "unheld tool cannot satisfy held relation")
 	var first = commands.apply_outcome(pickup)
 	_check(first.ok, "pick-up commits a held relation")
 	_check(query.get_held_items(wilson, held_by).size() == 1, "World query sees spyglass held by Wilson")
+	_check(evaluator.evaluate(inspect_requires_tool, binding).passed, "held tool permits tool-gated action")
 	_check(not commands.apply_outcome(pickup).ok, "duplicate pick-up rejected")
 	_check(query.get_held_items(wilson, held_by).size() == 1, "duplicate cannot create second item")
 	_check(commands.apply_outcome(release).ok, "release commits removal")
 	_check(query.get_held_items(wilson, held_by).is_empty(), "World query sees no tool after release")
+	_check(not evaluator.evaluate(inspect_requires_tool, binding).passed, "released tool no longer satisfies requirement")
 	_check(not commands.apply_outcome(release).ok, "duplicate release rejected")
 	_check(inspect_requires_tool.semantic_id.equals(held_by), "tool requirement is relation-based")
 	if failures.is_empty():
