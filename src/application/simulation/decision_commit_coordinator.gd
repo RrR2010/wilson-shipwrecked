@@ -26,3 +26,9 @@ func apply(decision_result, step_id: StringName):
 		if not suspend_result.ok:
 			return suspend_result
 	return _intention_store.select(selected.intention_id, selected.bindings, step_id)
+
+
+## Named owner-local cancellation for an observed invalid intention. Selection
+## still belongs to cognition; the application coordinator does not read World.
+func clear_current():
+	return _intention_store.clear()
