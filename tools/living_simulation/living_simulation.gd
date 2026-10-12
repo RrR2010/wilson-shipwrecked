@@ -5,6 +5,7 @@ const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const ContentRegistry = preload("res://src/domain/content/content_registry.gd")
 const EventDefinition = preload("res://src/domain/content/event_definition.gd")
+const PropertyDefinition = preload("res://src/domain/content/property_definition.gd")
 const EntityBootstrapSeed = preload("res://src/application/bootstrap/entity_bootstrap_seed.gd")
 const BeliefBootstrapSeed = preload("res://src/application/bootstrap/belief_bootstrap_seed.gd")
 const ProjectBootstrapSeed = preload("res://src/application/bootstrap/project_bootstrap_seed.gd")
@@ -163,7 +164,9 @@ func _bootstrap_and_start() -> void:
 	var content = ContentRegistry.new()
 	var weather_worsened = DomainId.event_definition(&"weather_worsened")
 	var weather_improved = DomainId.event_definition(&"weather_improved")
+	var hunger_relief_property = DomainId.property(&"hunger_relief")
 	var authored_results: Array = [
+		content.register_property_definition(PropertyDefinition.new(hunger_relief_property, PropertyDefinition.ValueFamily.NUMBER, 0.0, 1.0)),
 		content.register_event_definition(EventDefinition.new(
 			weather_worsened,
 			[] as Array[StringName],
@@ -258,8 +261,8 @@ func _bootstrap_and_start() -> void:
 	var simulation = SimulationBootstrapDefinition.new(
 		island_place_id,
 		[
-			EntityBootstrapSeed.new(food_entity_id, DomainId.entity_type(&"food_patch"), island_place_id, 0, {edible_property.key(): true}, FOOD_INITIAL_QUANTITY),
-			EntityBootstrapSeed.new(second_food_entity_id, DomainId.entity_type(&"food_patch"), island_place_id, 0, {edible_property.key(): true}, SECOND_FOOD_INITIAL_QUANTITY),
+			EntityBootstrapSeed.new(food_entity_id, DomainId.entity_type(&"food_patch"), island_place_id, 0, {edible_property.key(): true, hunger_relief_property.key(): 0.20}, FOOD_INITIAL_QUANTITY),
+			EntityBootstrapSeed.new(second_food_entity_id, DomainId.entity_type(&"food_patch"), island_place_id, 0, {edible_property.key(): true, hunger_relief_property.key(): 0.45}, SECOND_FOOD_INITIAL_QUANTITY),
 			EntityBootstrapSeed.new(shelter_entity_id, DomainId.entity_type(&"shelter"), island_place_id),
 			EntityBootstrapSeed.new(rest_entity_id, DomainId.entity_type(&"rest_spot"), island_place_id, 0, {restful_property.key(): true}),
 			EntityBootstrapSeed.new(curiosity_entity_id, DomainId.entity_type(&"shipwreck_relic"), island_place_id, 0, {interesting_property.key(): true}),
@@ -431,10 +434,11 @@ func _bootstrap_and_start() -> void:
 	var drive_consequence = GroundedDriveConsequenceService.new(
 		_owners.drives,
 		[
-			DriveConsequenceDefinition.new(consume_food, DriveState.HUNGER, -0.45, food_consumed),
+			DriveConsequenceDefinition.new(consume_food, DriveState.HUNGER, -0.45, food_consumed, hunger_relief_property),
 			DriveConsequenceDefinition.new(rest_action, DriveState.ENERGY, -0.62, rest_completed),
 			DriveConsequenceDefinition.new(inspect_curiosity, DriveState.STIMULATION, -0.58, curiosity_inspected),
-		]
+		],
+		runtime.world_query
 	)
 	var intention_completion = GroundedIntentionCompletionService.new(
 		_owners.current_intention,
