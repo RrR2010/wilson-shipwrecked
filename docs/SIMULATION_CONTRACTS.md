@@ -120,9 +120,10 @@ Current claim algebra:
 PROPERTY(subject, PropertyId, PropertyValue)
 RELATION(subject, RelationTypeId, object)
 EVENT(subject, EventDefinitionId, perceived_role)
+QUANTITY(subject, NonNegativeFiniteNumber)
 ```
 
-Static property/relation evidence may arise without a fake WorldEvent.
+Static property/relation/quantity evidence may arise without a fake WorldEvent when current perceptual access justifies it.
 
 ## PerceptionResult
 
@@ -314,7 +315,7 @@ World commit
 
 ## EpistemicClaim
 
-Closed typed semantic identity for durable belief propositions. Current foundation supports PROPERTY / RELATION / EVENT.
+Closed typed semantic identity for durable belief propositions. Current foundation supports PROPERTY / RELATION / EVENT / QUANTITY.
 
 Future causal/danger/expectation claim families require explicit typed admission rather than a return to generic `predicate + arbitrary arguments` identity.
 
