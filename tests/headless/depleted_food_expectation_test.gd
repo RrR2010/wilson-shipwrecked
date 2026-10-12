@@ -37,18 +37,20 @@ class ContentStub:
 
 func _init() -> void:
 	var food = RuntimeWorldRef.entity(DomainId.entity(&"exposed_berries"))
+	var second_food = RuntimeWorldRef.entity(DomainId.entity(&"distant_berries"))
 	var edible = DomainId.property(&"edible")
 	var seek = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"seek_food")
 	var beliefs = BeliefStore.new()
 	beliefs.apply_evidence(BeliefEvidence.new(BeliefProposition.new(EpistemicClaim.property_claim(food, edible, true)), true, 0.9, &"seed", &"memory"))
+	beliefs.apply_evidence(BeliefEvidence.new(BeliefProposition.new(EpistemicClaim.property_claim(second_food, edible, true)), true, 0.7, &"seed_far", &"memory"))
 	var source = DriveBackedBelievedOpportunityCandidateSource.new(
 		DriveStub.new(), beliefs,
 		[DriveCandidateDefinition.new(DriveState.HUNGER, seek, 0.1)],
 		[PerceivedOpportunityDefinition.new(EpistemicClaim.Kind.PROPERTY, edible, seek, DecisionCandidate.Scope.INTENTIONAL, 0.1)]
 	)
-	_check(source.generate().size() == 1, "stale edible belief supports initial visit")
+	_check(source.generate().size() == 2, "two remembered edible sources support initial choice")
 	# Hidden depletion cannot alter Wilson's belief before perceptual access.
-	_check(source.generate().size() == 1, "unobserved depletion preserves original candidate")
+	_check(source.generate().size() == 2, "unobserved depletion preserves original candidates")
 	var learner = BeliefLearningService.new()
 	var coordinator = BeliefLearningCoordinator.new(learner, beliefs, BeliefReconciliationService.new(learner))
 	var empty_observation = PerceptionResult.new([], [PerceptualEvidence.new(EpistemicClaim.quantity_claim(food, 0), 0.9, &"visual_empty", &"vision")])
@@ -56,9 +58,12 @@ func _init() -> void:
 	_check(reconsider.derive(empty_observation).has(ReconsiderationGate.Trigger.ACTION_INVALIDATION), "observed empty quantity requests reconsideration")
 	_check(reconsider.derive(PerceptionResult.new()).is_empty(), "no observation cannot trigger reconsideration")
 	coordinator.process(empty_observation)
-	_check(source.generate().is_empty(), "observed zero suppresses known-empty food opportunity")
+	var after_empty: Array = source.generate()
+	_check(after_empty.size() == 1, "observed empty first source leaves only distant food")
+	if after_empty.size() == 1:
+		_check(after_empty[0].bindings.get_subject(&"target").equals(second_food), "Wilson targets distant food after empty local patch")
 	coordinator.process(PerceptionResult.new([], [PerceptualEvidence.new(EpistemicClaim.quantity_claim(food, 4), 0.9, &"visual_restock", &"vision")]))
-	_check(source.generate().size() == 1, "observed restock restores food candidate")
+	_check(source.generate().size() == 2, "observed restock restores local food candidate")
 	if failures.is_empty():
 		print("PASS depleted_food_expectation_test")
 		quit(0)
