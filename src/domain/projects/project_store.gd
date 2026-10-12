@@ -36,6 +36,19 @@ func apply_contribution(project_id, required_contributions: int) -> bool:
 	return true
 
 
+func reconcile_receipt_count(project_id, receipt_count: int, required_contributions: int) -> bool:
+	assert(receipt_count >= 0, "Receipt count cannot be negative")
+	var instance = get_instance(project_id)
+	if instance == null or instance.lifecycle == ProjectInstance.Lifecycle.ABANDONED:
+		return false
+	if receipt_count <= instance.contribution_count:
+		return false
+	instance.contribution_count = receipt_count
+	if instance.contribution_count >= required_contributions:
+		instance.lifecycle = ProjectInstance.Lifecycle.COMPLETED
+	return true
+
+
 func set_lifecycle(project_id, lifecycle: int) -> bool:
 	var instance = get_instance(project_id)
 	if instance == null:
