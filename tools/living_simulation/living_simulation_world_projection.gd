@@ -69,8 +69,22 @@ func _process(_delta: float) -> void:
 	var snapshot: Dictionary = _simulation.observation_snapshot()
 	_project_weather(String(snapshot.get("weather", &"")))
 	_project_shelter(int(snapshot.get("project_contributions", 0)))
+	_project_exposed_food("FoodPatch", int(snapshot.get("near_food_quantity", 0)))
+	_project_exposed_food("FoodPatchFar", int(snapshot.get("far_food_quantity", 0)))
 	_project_wilson(snapshot)
 	_project_gerald(snapshot)
+
+
+## Visual only: the fruit props reflect World quantity but never grant perception.
+## Wilson learns through passive spatial evidence, not this mesh projection.
+func _project_exposed_food(patch_name: String, quantity: int) -> void:
+	var patch = _simulation.get_node_or_null(patch_name)
+	if patch == null:
+		return
+	for fruit_name in ["FruitA", "FruitB", "FruitC"]:
+		var fruit = patch.get_node_or_null(fruit_name)
+		if fruit != null:
+			fruit.visible = quantity > 0
 
 
 func _project_weather(weather: String) -> void:
