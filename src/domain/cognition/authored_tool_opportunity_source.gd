@@ -6,6 +6,8 @@ const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 
 ## A bounded authored opportunity: pick up a known tool, then inspect a known
 ## target while held. World owns possession; cognition owns discovery.
+## Optional tool opportunities are deliberately below ongoing shelter work (0.35)
+## so curiosity does not starve an existing survival project.
 var _world
 var _beliefs
 var _tool
@@ -47,10 +49,10 @@ func generate() -> Array:
 	bindings.bind(&"tool", _tool)
 	if not held:
 		bindings.bind(&"target", _tool)
-		return [DecisionCandidate.new(_pickup_intention, bindings, DecisionCandidate.Scope.INTENTIONAL, 0.65, 0.0, 0.0, 0.0, 0.0, {"source": "known_tool"})]
+		return [DecisionCandidate.new(_pickup_intention, bindings, DecisionCandidate.Scope.INTENTIONAL, 0.32, 0.0, 0.0, 0.0, 0.0, {"source": "known_tool"})]
 	if _beliefs.get_entry(_known_target) == null:
 		return []
 	if not _world.find_relations(_inspection_receipt, _target, _target).is_empty():
 		return []
 	bindings.bind(&"target", _target)
-	return [DecisionCandidate.new(_use_intention, bindings, DecisionCandidate.Scope.INTENTIONAL, 0.56, 0.0, 0.0, 0.0, 0.0, {"source": "held_tool_exploration"})]
+	return [DecisionCandidate.new(_use_intention, bindings, DecisionCandidate.Scope.INTENTIONAL, 0.30, 0.0, 0.0, 0.0, 0.0, {"source": "held_tool_exploration"})]
