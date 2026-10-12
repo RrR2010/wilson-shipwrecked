@@ -602,6 +602,7 @@ func observation_snapshot() -> Dictionary:
 		"trace_count": _trace_sink.traces.size(),
 		"grounded_consumptions": _trace_sink.grounded_consumptions,
 		"food_quantity": null if _owners == null else _owners.entities.get_quantity(_food_ref.id),
+		"observed_food_empty_confidence": _empty_food_belief_confidence(),
 		"grounded_rests": _trace_sink.grounded_rests,
 		"grounded_explorations": _trace_sink.grounded_explorations,
 		"grounded_intention_completions": _trace_sink.grounded_intention_completions,
@@ -620,6 +621,14 @@ func observation_snapshot() -> Dictionary:
 		"gerald_motion_requests": _gerald_motion_requests,
 		"gerald_arrivals": _gerald_arrivals,
 	}
+
+
+func _empty_food_belief_confidence() -> float:
+	if _owners == null or _food_ref == null:
+		return 0.0
+	var claim = BeliefProposition.new(EpistemicClaim.quantity_claim(_food_ref, 0))
+	var entry = _owners.beliefs.get_entry(claim)
+	return 0.0 if entry == null else entry.confidence
 
 
 func _update_debug_projection() -> void:
