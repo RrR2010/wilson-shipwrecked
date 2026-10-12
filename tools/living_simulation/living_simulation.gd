@@ -22,6 +22,7 @@ const RequirementPredicate = preload("res://src/domain/actions/requirement_predi
 const BeliefProposition = preload("res://src/domain/cognition/belief_proposition.gd")
 const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 const DecisionCandidate = preload("res://src/domain/cognition/decision_candidate.gd")
+const AuthoredToolOpportunitySource = preload("res://src/domain/cognition/authored_tool_opportunity_source.gd")
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
 const DriveProgressionService = preload("res://src/domain/cognition/drive_progression_service.gd")
 const DriveCandidateDefinition = preload("res://src/domain/cognition/drive_candidate_definition.gd")
@@ -85,6 +86,8 @@ var _second_food_ref
 var _shelter_ref
 var _rest_ref
 var _curiosity_ref
+var _spyglass_ref
+var _tool_world_query
 var _gerald_ref
 var _shelter_project_id
 var _gerald_service
@@ -134,9 +137,9 @@ class TraceSink:
 			traces.pop_front()
 
 
-## Bounded broadphase of the one authored exposed food source.
+## Bounded broadphase of authored exposed objects, including portable tools.
 ## Metric distance and line-of-sight remain validated by SpatialQueryPort.
-class ExposedFoodCandidates:
+class ExposedWorldCandidates:
 	extends RefCounted
 	var foods: Array
 	func _init(p_foods: Array) -> void:
@@ -207,6 +210,10 @@ func _bootstrap_and_start() -> void:
 	var receipt_relation_type = DomainId.relation_type(&"project_placement_receipt")
 	var rest_entity_id = DomainId.entity(&"rest_mat_001")
 	var curiosity_entity_id = DomainId.entity(&"shipwreck_relic_001")
+	var spyglass_entity_id = DomainId.entity(&"spyglass_001")
+	var collectible_property = DomainId.property(&"collectible")
+	var held_by_relation = DomainId.relation_type(&"held_by")
+	var explored_with_tool_receipt = DomainId.relation_type(&"tool_exploration_receipt")
 	var gerald_entity_id = DomainId.entity(&"gerald")
 	var gerald_roost = DomainId.place(&"gerald_roost")
 	var gerald_beach = DomainId.place(&"gerald_beach")
@@ -221,10 +228,16 @@ func _bootstrap_and_start() -> void:
 	var seek_stimulation = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"seek_stimulation")
 	var continue_shelter = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"continue_shelter_project")
 	var seek_cover = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"seek_safer_cover")
+	var collect_tool = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"collect_spyglass")
+	var investigate_with_tool = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"investigate_with_spyglass")
 	var consume_food = DomainId.action(&"consume_food")
 	var rest_action = DomainId.action(&"rest")
 	var inspect_curiosity = DomainId.action(&"inspect_curiosity")
 	var contribute_shelter = DomainId.action(&"contribute_shelter")
+	var pick_up_tool = DomainId.action(&"pick_up_tool")
+	var use_spyglass = DomainId.action(&"use_spyglass")
+	var tool_picked_up = DomainId.event_definition(&"tool_picked_up")
+	var tool_inspected = DomainId.event_definition(&"tool_inspected")
 	var food_consumed = DomainId.event_definition(&"food_consumed")
 	var rest_completed = DomainId.event_definition(&"rest_completed")
 	var curiosity_inspected = DomainId.event_definition(&"curiosity_inspected")
@@ -237,12 +250,14 @@ func _bootstrap_and_start() -> void:
 	_shelter_ref = RuntimeWorldRef.entity(shelter_entity_id)
 	_rest_ref = RuntimeWorldRef.entity(rest_entity_id)
 	_curiosity_ref = RuntimeWorldRef.entity(curiosity_entity_id)
+	_spyglass_ref = RuntimeWorldRef.entity(spyglass_entity_id)
 	_gerald_ref = RuntimeWorldRef.entity(gerald_entity_id)
 
 	var known_food = BeliefProposition.new(EpistemicClaim.property_claim(_food_ref, edible_property, true))
 	var known_second_food = BeliefProposition.new(EpistemicClaim.property_claim(_second_food_ref, edible_property, true))
 	var known_rest = BeliefProposition.new(EpistemicClaim.property_claim(_rest_ref, restful_property, true))
 	var known_curiosity = BeliefProposition.new(EpistemicClaim.property_claim(_curiosity_ref, interesting_property, true))
+	var known_spyglass = BeliefProposition.new(EpistemicClaim.relation_claim(_wilson_ref, DomainId.relation_type(&"perceptibly_near"), _spyglass_ref))
 	var shelter_project_bindings = RoleBinding.new()
 	shelter_project_bindings.bind(&"target", _shelter_ref)
 	shelter_project_bindings.bind(&"planks", RuntimeWorldRef.entity(plank_entity_id))
@@ -274,6 +289,7 @@ func _bootstrap_and_start() -> void:
 			EntityBootstrapSeed.new(fiber_entity_id, DomainId.entity_type(&"fiber_bundle"), island_place_id, 0, {}, SHELTER_RESOURCE_QUANTITY),
 			EntityBootstrapSeed.new(rest_entity_id, DomainId.entity_type(&"rest_spot"), island_place_id, 0, {restful_property.key(): true}),
 			EntityBootstrapSeed.new(curiosity_entity_id, DomainId.entity_type(&"shipwreck_relic"), island_place_id, 0, {interesting_property.key(): true}),
+			EntityBootstrapSeed.new(spyglass_entity_id, DomainId.entity_type(&"spyglass"), island_place_id, 0, {collectible_property.key(): true}),
 			EntityBootstrapSeed.new(gerald_entity_id, DomainId.entity_type(&"seagull"), gerald_roost),
 		],
 		[],
@@ -317,6 +333,10 @@ func _bootstrap_and_start() -> void:
 	var wilson_navigation_agent: NavigationAgent3D = $Wilson/NavigationAgent3D
 	var gerald_body: CharacterBody3D = $Gerald
 	var gerald_navigation_agent: NavigationAgent3D = $Gerald/NavigationAgent3D
+	var spyglass_marker = Marker3D.new()
+	spyglass_marker.name = "SpyglassLocation"
+	add_child(spyglass_marker)
+	spyglass_marker.global_position = $CuriositySpot.global_position + Vector3(1.5, 0.0, 0.0)
 	var spatial_bindings: Array = [
 		[_wilson_ref, wilson_body],
 		[_food_ref, $FoodPatch],
@@ -324,6 +344,7 @@ func _bootstrap_and_start() -> void:
 		[_shelter_ref, $Shelter],
 		[_rest_ref, $RestSpot],
 		[_curiosity_ref, $CuriositySpot],
+		[_spyglass_ref, spyglass_marker],
 		[_gerald_ref, gerald_body],
 		[RuntimeWorldRef.place(gerald_roost), $GeraldTargets/Roost],
 		[RuntimeWorldRef.place(gerald_beach), $GeraldTargets/Beach],
@@ -434,12 +455,38 @@ func _bootstrap_and_start() -> void:
 		shelter_contribution,
 		&"contribute_shelter_default"
 	)
+	var pickup_definition = ActionDefinition.new(
+		pick_up_tool,
+		[&"actor", &"target", &"tool"] as Array[StringName],
+		RequirementPredicate.negate(RequirementPredicate.has_relation(&"tool", held_by_relation, &"actor")),
+		ActionDefinition.InterruptionClass.ANYTIME
+	)
+	var pickup_resolution = ActionResolutionDefinition.new(
+		pick_up_tool, 1.0, 0.55,
+		[ActionEffect.new(ActionEffect.Kind.CREATE_RELATION, &"tool", held_by_relation, null, &"actor")],
+		tool_picked_up, &"pickup_spyglass"
+	)
+	var use_tool_definition = ActionDefinition.new(
+		use_spyglass,
+		[&"actor", &"target", &"tool"] as Array[StringName],
+		RequirementPredicate.has_relation(&"tool", held_by_relation, &"actor"),
+		ActionDefinition.InterruptionClass.ANYTIME
+	)
+	var use_tool_resolution = ActionResolutionDefinition.new(
+		use_spyglass, 2.0, 0.65,
+		[ActionEffect.record_execution_receipt(&"target", explored_with_tool_receipt)],
+		tool_inspected, &"inspect_with_spyglass"
+	)
+	var pickup_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, collect_tool, pickup_definition, pickup_resolution)
+	var tool_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, investigate_with_tool, use_tool_definition, use_tool_resolution)
 	var food_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, seek_food, consume_definition, consume_resolution)
 	var rest_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, seek_rest, rest_definition, rest_resolution)
 	var explore_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, seek_stimulation, explore_definition, explore_resolution)
 	var project_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, continue_shelter, shelter_action_definition, shelter_action_resolution)
 	var cover_executor = DirectTargetMotionExecutionCoordinator.new(_motion, _wilson_ref, [seek_cover])
 	var executor = CompositeSelectedIntentionExecutor.new([
+		pickup_executor,
+		tool_executor,
 		food_executor,
 		rest_executor,
 		explore_executor,
@@ -452,6 +499,7 @@ func _bootstrap_and_start() -> void:
 			DriveConsequenceDefinition.new(consume_food, DriveState.HUNGER, -0.45, food_consumed, hunger_relief_property),
 			DriveConsequenceDefinition.new(rest_action, DriveState.ENERGY, -0.62, rest_completed),
 			DriveConsequenceDefinition.new(inspect_curiosity, DriveState.STIMULATION, -0.58, curiosity_inspected),
+			DriveConsequenceDefinition.new(use_spyglass, DriveState.STIMULATION, -0.36, tool_inspected),
 		],
 		runtime.world_query
 	)
@@ -461,6 +509,8 @@ func _bootstrap_and_start() -> void:
 			IntentionCompletionDefinition.new(seek_food, consume_food, food_consumed),
 			IntentionCompletionDefinition.new(seek_rest, rest_action, rest_completed),
 			IntentionCompletionDefinition.new(seek_stimulation, inspect_curiosity, curiosity_inspected),
+			IntentionCompletionDefinition.new(collect_tool, pick_up_tool, tool_picked_up),
+			IntentionCompletionDefinition.new(investigate_with_tool, use_spyglass, tool_inspected),
 		]
 	)
 	var shelter_project_definition = ProjectDefinition.new(
@@ -492,7 +542,7 @@ func _bootstrap_and_start() -> void:
 	spatial_query.visual_observer_height = 1.45
 	spatial_query.visual_target_height = 1.0
 	var exposed_food = PassiveSpatialPerceptionSource.new(
-		ExposedFoodCandidates.new([_food_ref, _second_food_ref]),
+		ExposedWorldCandidates.new([_food_ref, _second_food_ref, _spyglass_ref]),
 		spatial_query,
 		_wilson_ref,
 		DomainId.relation_type(&"perceptibly_near"),
@@ -514,6 +564,8 @@ func _bootstrap_and_start() -> void:
 		base_decision_commit,
 		seek_food
 	)
+	var spyglass_opportunities = AuthoredToolOpportunitySource.new(runtime.world_query, _owners.beliefs, _spyglass_ref, _wilson_ref, _curiosity_ref, known_spyglass, known_curiosity, held_by_relation, explored_with_tool_receipt, collect_tool, investigate_with_tool)
+	_tool_world_query = runtime.world_query
 	var orchestrator = SimulationOrchestrator.new(
 		runtime.world_advance,
 		runtime.action_execution,
@@ -533,7 +585,7 @@ func _bootstrap_and_start() -> void:
 		drive_source,
 		project_contribution,
 		project_source,
-		[grounded_opportunities],
+		[grounded_opportunities, spyglass_opportunities],
 		null,
 		null,
 		exposed_food,
@@ -615,7 +667,9 @@ func observation_snapshot() -> Dictionary:
 		gerald_affinity = _owners.actor_relationships.affinity(_gerald_ref, _wilson_ref)
 	var intention_key := ""
 	if _owners != null and _owners.current_intention.has_current():
-		intention_key = _owners.current_intention.current().intention_id.sort_key()
+		var selected = _owners.current_intention.current()
+		if selected != null and selected.intention_id != null:
+			intention_key = selected.intention_id.sort_key()
 	return {
 		"live": is_live(),
 		"simulation_time": -1.0 if _host == null else _host.simulation_time(),
@@ -638,6 +692,7 @@ func observation_snapshot() -> Dictionary:
 		"observed_food_empty_confidence": _empty_food_belief_confidence(),
 		"grounded_rests": _trace_sink.grounded_rests,
 		"grounded_explorations": _trace_sink.grounded_explorations,
+		"spyglass_held": false if _tool_world_query == null else not _tool_world_query.get_held_items(_wilson_ref, DomainId.relation_type(&"held_by")).is_empty(),
 		"grounded_intention_completions": _trace_sink.grounded_intention_completions,
 		"project_contributions": 0 if project == null else project.contribution_count,
 		"project_active": false if project == null else project.is_active(),
@@ -677,10 +732,12 @@ func _update_debug_projection() -> void:
 	var target := ""
 	if _owners.current_intention.has_current():
 		var current = _owners.current_intention.current()
-		intention = current.intention_id.sort_key()
-		var current_target = current.bindings.get_subject(&"target")
-		if current_target != null:
-			target = " → %s" % current_target.sort_key()
+		if current != null and current.intention_id != null:
+			intention = current.intention_id.sort_key()
+		if current != null and current.bindings != null:
+			var current_target = current.bindings.get_subject(&"target")
+			if current_target != null:
+				target = " → %s" % current_target.sort_key()
 	_intention_label.text = "Intention: %s%s" % [intention, target]
 	_drive_label.text = "Needs — hunger %.2f [%d]   energy %.2f [%d]   stimulation %.2f [%d]" % [
 		_owners.drives.value(DriveState.HUNGER),
@@ -707,10 +764,11 @@ func _update_debug_projection() -> void:
 		_motion_status_name(_motion.get_status(_gerald_ref)),
 		_gerald_arrivals,
 	]
-	_trace_label.text = "Weather=%s   recent traces=%d   grounded work=%d" % [
+	_trace_label.text = "Weather=%s   recent traces=%d   grounded work=%d   carrying=%s" % [
 		String(_owners.environment.weather),
 		_trace_sink.traces.size(),
 		_trace_sink.grounded_project_contributions,
+		"Spyglass" if _tool_world_query != null and not _tool_world_query.get_held_items(_wilson_ref, DomainId.relation_type(&"held_by")).is_empty() else "nothing",
 	]
 
 
