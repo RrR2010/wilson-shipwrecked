@@ -137,9 +137,9 @@ class TraceSink:
 			traces.pop_front()
 
 
-## Bounded broadphase of the one authored exposed food source.
+## Bounded broadphase of authored exposed objects, including portable tools.
 ## Metric distance and line-of-sight remain validated by SpatialQueryPort.
-class ExposedFoodCandidates:
+class ExposedWorldCandidates:
 	extends RefCounted
 	var foods: Array
 	func _init(p_foods: Array) -> void:
@@ -257,7 +257,7 @@ func _bootstrap_and_start() -> void:
 	var known_second_food = BeliefProposition.new(EpistemicClaim.property_claim(_second_food_ref, edible_property, true))
 	var known_rest = BeliefProposition.new(EpistemicClaim.property_claim(_rest_ref, restful_property, true))
 	var known_curiosity = BeliefProposition.new(EpistemicClaim.property_claim(_curiosity_ref, interesting_property, true))
-	var known_spyglass = BeliefProposition.new(EpistemicClaim.property_claim(_spyglass_ref, collectible_property, true))
+	var known_spyglass = BeliefProposition.new(EpistemicClaim.relation_claim(_wilson_ref, DomainId.relation_type(&"perceptibly_near"), _spyglass_ref))
 	var shelter_project_bindings = RoleBinding.new()
 	shelter_project_bindings.bind(&"target", _shelter_ref)
 	shelter_project_bindings.bind(&"planks", RuntimeWorldRef.entity(plank_entity_id))
@@ -298,7 +298,6 @@ func _bootstrap_and_start() -> void:
 			BeliefBootstrapSeed.new(known_second_food, 0.75, 1, &"new_run_seed", &"memory"),
 			BeliefBootstrapSeed.new(known_rest, 0.9, 1, &"new_run_seed", &"memory"),
 			BeliefBootstrapSeed.new(known_curiosity, 0.85, 1, &"new_run_seed", &"memory"),
-			BeliefBootstrapSeed.new(known_spyglass, 0.75, 1, &"nearby_tool_seed", &"vision"),
 		],
 		null,
 		1.0,
@@ -543,7 +542,7 @@ func _bootstrap_and_start() -> void:
 	spatial_query.visual_observer_height = 1.45
 	spatial_query.visual_target_height = 1.0
 	var exposed_food = PassiveSpatialPerceptionSource.new(
-		ExposedFoodCandidates.new([_food_ref, _second_food_ref]),
+		ExposedWorldCandidates.new([_food_ref, _second_food_ref, _spyglass_ref]),
 		spatial_query,
 		_wilson_ref,
 		DomainId.relation_type(&"perceptibly_near"),
