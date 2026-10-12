@@ -29,11 +29,13 @@ class CandidateSourceStub:
 
 class SpatialQueryStub:
 	extends RefCounted
+	var distance := 2.0
+	var visible := true
 	func metric_distance(_observer, _subject) -> float:
-		return 2.0
+		return distance
 
 	func has_line_of_sight(_observer, _subject) -> bool:
-		return true
+		return visible
 
 
 class RelationStub:
@@ -95,9 +97,10 @@ func _run_slice() -> void:
 		occluding_container,
 		open_property
 	)
+	var spatial = SpatialQueryStub.new()
 	var source = PassiveSpatialPerceptionSource.new(
 		candidates,
-		SpatialQueryStub.new(),
+		spatial,
 		wilson_ref,
 		nearby_relation,
 		8.0,
@@ -106,6 +109,16 @@ func _run_slice() -> void:
 		world,
 		exposure
 	)
+
+	# Pure distance and occlusion gates precede even quantity=0 discovery.
+	spatial.distance = 9.0
+	_expect_equal(source.collect().evidence.size(), 0, "out of visual radius reveals nothing")
+	spatial.distance = 2.0
+	spatial.visible = false
+	candidates.request_refresh()
+	_expect_equal(source.collect().evidence.size(), 0, "occluded food reveals nothing")
+	spatial.visible = true
+	candidates.request_refresh()
 
 	# Exposed food behaves like food on a table: Wilson learns presence and quantity.
 	var visible = source.collect()
