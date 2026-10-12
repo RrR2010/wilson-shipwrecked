@@ -16,6 +16,8 @@ This document owns repository **delivery process**, not game-domain architecture
 
 Runtime integration stays serial where contracts overlap. Blender production is the explicitly allowed parallel lane, led by a local Blender-capable agent, operating on independent art branches/PRs. The art EPIC may be continuous but each model is a bounded individually consulted unit. See [art/FUNCTIONAL_ASSET_FACTORY.md](art/FUNCTIONAL_ASSET_FACTORY.md). Art PR completion does **not** imply Godot/runtime integration. Reuse V-level evidence as actually performed; operator consultation occurs **before** the model is created.
 
+For operator interviews, handoff cadence, agent autonomy and architect escalation, follow [AGENT_TASK_PROTOCOL.md](AGENT_TASK_PROTOCOL.md). GitHub Issue templates under `.github/ISSUE_TEMPLATE/` are the task's living spec/evidence log; create separate design documents only when the canonical contract or complex discovery needs them.
+
 ## EPIC → TASK → PR
 
 **EPIC**: bounded product/technical risk, observable outcome, exit gate, dependencies; no implementation checklist masquerading as a stage.
