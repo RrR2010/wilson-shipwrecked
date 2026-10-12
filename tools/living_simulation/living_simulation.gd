@@ -668,7 +668,9 @@ func observation_snapshot() -> Dictionary:
 		gerald_affinity = _owners.actor_relationships.affinity(_gerald_ref, _wilson_ref)
 	var intention_key := ""
 	if _owners != null and _owners.current_intention.has_current():
-		intention_key = _owners.current_intention.current().intention_id.sort_key()
+		var selected = _owners.current_intention.current()
+		if selected != null and selected.intention_id != null:
+			intention_key = selected.intention_id.sort_key()
 	return {
 		"live": is_live(),
 		"simulation_time": -1.0 if _host == null else _host.simulation_time(),
@@ -731,10 +733,12 @@ func _update_debug_projection() -> void:
 	var target := ""
 	if _owners.current_intention.has_current():
 		var current = _owners.current_intention.current()
-		intention = current.intention_id.sort_key()
-		var current_target = current.bindings.get_subject(&"target")
-		if current_target != null:
-			target = " → %s" % current_target.sort_key()
+		if current != null and current.intention_id != null:
+			intention = current.intention_id.sort_key()
+		if current != null and current.bindings != null:
+			var current_target = current.bindings.get_subject(&"target")
+			if current_target != null:
+				target = " → %s" % current_target.sort_key()
 	_intention_label.text = "Intention: %s%s" % [intention, target]
 	_drive_label.text = "Needs — hunger %.2f [%d]   energy %.2f [%d]   stimulation %.2f [%d]" % [
 		_owners.drives.value(DriveState.HUNGER),
