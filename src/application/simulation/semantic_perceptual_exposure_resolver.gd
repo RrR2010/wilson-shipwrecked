@@ -40,7 +40,7 @@ func is_exposed(subject) -> bool:
 		var node: Dictionary = frontier.pop_back()
 		var current = node["subject"]
 		var depth := int(node["depth"])
-		var key := current.sort_key()
+		var key: String = current.sort_key()
 		if visited.has(key):
 			continue
 		visited[key] = true
