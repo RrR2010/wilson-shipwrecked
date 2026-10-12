@@ -61,6 +61,12 @@ func _run() -> void:
 	var initial_food_quantity := int(initial.get("food_quantity", -1))
 	if initial_food_quantity <= 0:
 		_failures.append("Long-run food stock did not bootstrap with finite positive quantity")
+	var initial_near_food := int(initial.get("near_food_quantity", -1))
+	var initial_far_food := int(initial.get("far_food_quantity", -1))
+	var saw_near_empty_belief := false
+	var saw_far_food_consumed := false
+	if initial_near_food != 3 or initial_far_food != 8:
+		_failures.append("Two-source smoke baseline must be near=3 far=8")
 	var previous_project := int(initial.get("project_contributions", 0))
 	var previous_meals := int(initial.get("grounded_consumptions", 0))
 	var previous_rests := int(initial.get("grounded_rests", 0))
@@ -134,6 +140,10 @@ func _run() -> void:
 			saw_project_progress = true
 		previous_project = project_progress
 
+		if int(final.get("near_food_quantity", -1)) == 0 and float(final.get("observed_food_empty_confidence", 0.0)) > 0.5:
+			saw_near_empty_belief = true
+		if int(final.get("far_food_quantity", -1)) < initial_far_food:
+			saw_far_food_consumed = true
 		var meals := int(final.get("grounded_consumptions", 0))
 		var rests := int(final.get("grounded_rests", 0))
 		var explores := int(final.get("grounded_explorations", 0))
@@ -192,6 +202,10 @@ func _run() -> void:
 
 	var final_meals := int(final.get("grounded_consumptions", 0))
 	var final_food_quantity := int(final.get("food_quantity", -1))
+	if not saw_near_empty_belief:
+		_failures.append("Wilson never learned the close exposed food source was empty")
+	if not saw_far_food_consumed:
+		_failures.append("Wilson did not switch to the distant food source after local depletion")
 	if final_food_quantity < 0:
 		_failures.append("Finite food quantity became negative during long run")
 	if initial_food_quantity > 0 and final_food_quantity != initial_food_quantity - final_meals:
