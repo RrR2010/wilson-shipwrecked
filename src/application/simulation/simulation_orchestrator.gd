@@ -160,6 +160,7 @@ func advance(step):
 	if world_advance_result.change_set != null and not world_advance_result.change_set.is_empty():
 		var world_invalidation_result = _derived_invalidator.apply(world_advance_result.change_set)
 		trace.record_result(&"world_derived_invalidation", world_invalidation_result)
+		_notify_passive_semantic_changes(world_advance_result.change_set)
 
 	var action_progress = null
 	var commit_result = null
@@ -176,6 +177,7 @@ func advance(step):
 			if commit_result.ok:
 				var invalidation_result = _derived_invalidator.apply(commit_result.change_set)
 				trace.record_result(&"derived_invalidation", invalidation_result)
+				_notify_passive_semantic_changes(commit_result.change_set)
 			if _grounded_drive_consequence != null:
 				drive_consequence_result = _grounded_drive_consequence.apply_grounded(action_progress.new_outcome, commit_result)
 				trace.record_result(&"drive_consequence", drive_consequence_result)
@@ -288,6 +290,13 @@ func advance(step):
 	trace.complete(result)
 	_trace_sink.record(trace)
 	return result
+
+
+func _notify_passive_semantic_changes(change_set) -> void:
+	if _passive_perception_source == null or change_set == null or change_set.is_empty():
+		return
+	if _passive_perception_source.has_method("notify_semantic_changes"):
+		_passive_perception_source.notify_semantic_changes(change_set)
 
 
 func _merge_perception(first, second):
