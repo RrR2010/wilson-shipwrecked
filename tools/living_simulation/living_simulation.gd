@@ -823,11 +823,14 @@ func _update_debug_projection() -> void:
 		_motion_status_name(_motion.get_status(_gerald_ref)),
 		_gerald_arrivals,
 	]
-	_trace_label.text = "Weather=%s   recent traces=%d   grounded work=%d   carrying=%s" % [
+	_trace_label.text = "Weather=%s   recent traces=%d   grounded work=%d   carrying=%s   chest=%s / known=%s / held=%s" % [
 		String(_owners.environment.weather),
 		_trace_sink.traces.size(),
 		_trace_sink.grounded_project_contributions,
 		"Spyglass" if _tool_world_query != null and not _tool_world_query.get_held_items(_wilson_ref, DomainId.relation_type(&"held_by")).is_empty() else "nothing",
+		"open" if _tool_world_query != null and _tool_world_query.get_instance_property(_chest_ref, DomainId.property(&"chest_open")) == true else "closed",
+		"yes" if _owners.beliefs.get_entry(BeliefProposition.new(EpistemicClaim.relation_claim(_chest_item_ref, DomainId.relation_type(&"inside"), _chest_ref))) != null else "no",
+		"yes" if _tool_world_query != null and not _tool_world_query.find_relations(DomainId.relation_type(&"held_by"), _chest_item_ref, _wilson_ref).is_empty() else "no",
 	]
 
 
