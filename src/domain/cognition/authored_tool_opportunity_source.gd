@@ -18,7 +18,9 @@ var _inspection_receipt
 var _pickup_intention
 var _use_intention
 
+
 func _init(world, beliefs, tool, actor, target, known_tool, known_target, held_relation, inspection_receipt, pickup_intention, use_intention) -> void:
+	assert(pickup_intention != null and use_intention != null, "AuthoredToolOpportunitySource requires both semantic intention ids")
 	_world = world
 	_beliefs = beliefs
 	_tool = tool
@@ -31,7 +33,11 @@ func _init(world, beliefs, tool, actor, target, known_tool, known_target, held_r
 	_pickup_intention = pickup_intention
 	_use_intention
 
+
 func generate() -> Array:
+	# Never emit a candidate that would violate CurrentIntentionStore's invariant.
+	if _pickup_intention == null or _use_intention == null:
+		return []
 	var known = _beliefs.get_entry(_known_tool)
 	if known == null or known.confidence < 0.5:
 		return []
