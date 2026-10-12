@@ -23,7 +23,7 @@ class Candidates:
 	func request_refresh() -> void:
 		pass
 
-class WorldQuery:
+class WorldQueryStub:
 	extends RefCounted
 	func find_relations(_type, _subject = null, _object = null) -> Array:
 		return []
@@ -40,7 +40,7 @@ func _init() -> void:
 	var target_claim = BeliefProposition.new(EpistemicClaim.property_claim(target, DomainId.property(&"interesting"), true))
 	var beliefs = BeliefStore.new()
 	beliefs.restore_entry(target_claim, 0.9, 1)
-	var world = WorldQuery.new()
+	var world = WorldQueryStub.new()
 	var source = AuthoredToolOpportunitySource.new(world, beliefs, spyglass, wilson, target, tool_claim, target_claim, held, DomainId.relation_type(&"tool_exploration_receipt"), DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"collect_spyglass"), DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"investigate_with_spyglass"))
 	_check(source.generate().is_empty(), "Without observation, no pickup candidate is allowed")
 	var spatial = FakeSpatialQueryPort.new()
