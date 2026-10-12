@@ -578,6 +578,7 @@ Current closed structural claim algebra:
 PROPERTY(subject, PropertyId, PropertyValue)
 RELATION(subject, RelationTypeId, object)
 EVENT(subject, EventDefinitionId, perceived_role)
+QUANTITY(subject, NonNegativeFiniteNumber)
 ```
 
 Durable identity must be deterministic/persistence-stable and cannot fall back to arbitrary `predicate + Variant arguments` serialization.
@@ -645,7 +646,7 @@ PerceptualEvidence
 
 Only accessible roles/semantics enter claims. Hidden bindings/provenance do not leak into cognition.
 
-Static property/relation discovery may create typed claims directly through future modality/evidence rules without fake WorldEvents.
+Static property/relation/quantity discovery may create typed claims directly when current perceptual access justifies the observation, without fabricating WorldEvents.
 
 ---
 

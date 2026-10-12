@@ -41,6 +41,23 @@ func get_instance_property(subject, property_id) -> Variant:
 	return null if definition == null else definition.get_base_property(property_id)
 
 
+func get_quantity(subject) -> Variant:
+	assert(subject != null, "get_quantity requires RuntimeWorldRef")
+	if subject.kind != RuntimeWorldRef.Kind.ENTITY:
+		return null
+	return _entities.get_quantity(subject.id)
+
+
+func has_available_quantity(subject, amount: float = 1.0) -> bool:
+	assert(is_finite(amount) and amount >= 0.0, "amount must be finite and non-negative")
+	var quantity = get_quantity(subject)
+	if quantity == null:
+		return false
+	if not (quantity is int or quantity is float):
+		return false
+	return float(quantity) >= amount
+
+
 func get_property_definition(property_id):
 	assert(property_id != null, "get_property_definition requires PropertyId")
 	property_id.assert_kind(DomainId.Kind.PROPERTY)
@@ -123,6 +140,30 @@ func get_outgoing_relations(subject, relation_type = null) -> Array:
 
 func get_incoming_relations(object, relation_type = null) -> Array:
 	return _relations.get_incoming(object, relation_type)
+
+
+func get_container_contents(container, inside_relation_type) -> Array:
+	assert(container != null, "get_container_contents requires container")
+	assert(inside_relation_type != null, "get_container_contents requires inside relation type")
+	inside_relation_type.assert_kind(DomainId.Kind.RELATION_TYPE)
+	var result: Array = []
+	for relation in _relations.find_relations(inside_relation_type, null, container):
+		if is_live_subject(relation.subject):
+			result.append(relation.subject)
+	result.sort_custom(func(a, b): return a.sort_key() < b.sort_key())
+	return result
+
+
+func get_held_items(holder, held_by_relation_type) -> Array:
+	assert(holder != null, "get_held_items requires holder")
+	assert(held_by_relation_type != null, "get_held_items requires held_by relation type")
+	held_by_relation_type.assert_kind(DomainId.Kind.RELATION_TYPE)
+	var result: Array = []
+	for relation in _relations.find_relations(held_by_relation_type, null, holder):
+		if is_live_subject(relation.subject):
+			result.append(relation.subject)
+	result.sort_custom(func(a, b): return a.sort_key() < b.sort_key())
+	return result
 
 
 func traverse_relations(

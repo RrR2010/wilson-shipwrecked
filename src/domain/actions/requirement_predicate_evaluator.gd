@@ -118,6 +118,26 @@ func _evaluate_node(predicate, bindings):
 				]]
 			)
 
+		RequirementPredicate.Kind.QUANTITY_AT_LEAST:
+			var quantity_subject = _require_role(bindings, predicate.role_name)
+			if quantity_subject == null:
+				return PredicateEvaluationResult.failure(["missing role %s" % String(predicate.role_name)])
+			var quantity = _world_query.get_quantity(quantity_subject)
+			if not (quantity is int or quantity is float) or not is_finite(float(quantity)):
+				return PredicateEvaluationResult.failure([
+					"%s quantity absent" % String(predicate.role_name)
+				])
+			var enough := float(quantity) >= float(predicate.expected_value)
+			return PredicateEvaluationResult.new(
+				enough,
+				["%s quantity >= %s => %s (actual=%s)" % [
+					String(predicate.role_name),
+					predicate.expected_value,
+					enough,
+					quantity,
+				]]
+			)
+
 		_:
 			assert(false, "Unsupported RequirementPredicate kind")
 			return PredicateEvaluationResult.failure(["unsupported predicate"])

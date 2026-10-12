@@ -80,6 +80,8 @@ Unordered semantic results are normalized to stable semantic ordering before det
 
 ```text
 GetInstanceProperty(subject, property_id) → PropertyValue?
+GetQuantity(subject) → NonNegativeFiniteNumber?
+HasAvailableQuantity(subject, amount) → bool
 HasAuthoredCapability(subject, capability_id) → bool
 HasCategory(subject, category_id) → bool
 GetPlace(subject) → PlaceId?
@@ -187,7 +189,7 @@ EvaluatePredicate(predicate, EvaluationContext)
 → PredicateEvaluationResult
 ```
 
-Property comparisons validate value-family compatibility before ordering/equality operations.
+Property comparisons validate value-family compatibility before ordering/equality operations. Quantity predicates read authoritative World quantity and admit only finite non-negative thresholds.
 
 ```text
 MatchSemanticPattern(pattern, FactProjection, MatchScope)
@@ -412,6 +414,7 @@ Current typed claim kinds:
 PROPERTY(subject, PropertyId, PropertyValue)
 RELATION(subject, RelationTypeId, object)
 EVENT(subject, EventDefinitionId, perceived_role)
+QUANTITY(subject, NonNegativeFiniteNumber)
 ```
 
 Static property/relation discovery need not fabricate a WorldEvent; richer evidence rules may produce the corresponding typed claim directly when those modalities are implemented.

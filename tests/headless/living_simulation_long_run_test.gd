@@ -58,6 +58,9 @@ func _run() -> void:
 	var initial: Dictionary = scene.observation_snapshot()
 	var target_time := float(initial.get("simulation_time", 0.0)) + TARGET_SIMULATION_SECONDS
 	var previous: Dictionary = initial
+	var initial_food_quantity := int(initial.get("food_quantity", -1))
+	if initial_food_quantity <= 0:
+		_failures.append("Long-run food stock did not bootstrap with finite positive quantity")
 	var previous_project := int(initial.get("project_contributions", 0))
 	var previous_meals := int(initial.get("grounded_consumptions", 0))
 	var previous_rests := int(initial.get("grounded_rests", 0))
@@ -188,6 +191,13 @@ func _run() -> void:
 		)
 
 	var final_meals := int(final.get("grounded_consumptions", 0))
+	var final_food_quantity := int(final.get("food_quantity", -1))
+	if final_food_quantity < 0:
+		_failures.append("Finite food quantity became negative during long run")
+	if initial_food_quantity > 0 and final_food_quantity != initial_food_quantity - final_meals:
+		_failures.append("Long-run authoritative food quantity diverged from grounded consumption count")
+	if initial_food_quantity > 0 and final_meals > initial_food_quantity:
+		_failures.append("Grounded consumption exceeded finite bootstrapped food stock")
 	var final_rests := int(final.get("grounded_rests", 0))
 	var final_explores := int(final.get("grounded_explorations", 0))
 	if final_meals < 5:
