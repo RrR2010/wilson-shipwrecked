@@ -154,6 +154,10 @@ func advance(step):
 	trace.record_input(&"elapsed", step.elapsed)
 	trace.record_input(&"simulation_time", step.simulation_time)
 
+	# Replay-safe projection after restore or a missed post-commit Projects delivery.
+	if _project_contribution != null and _project_contribution.has_method("reconcile"):
+		trace.record_result(&"project_receipt_reconciliation", _project_contribution.reconcile())
+
 	var world_advance_result = _world_advance.advance(step.elapsed, step)
 	assert(world_advance_result != null, "world advance must return WorldAdvanceResult")
 	trace.record_result(&"world_advance", world_advance_result)

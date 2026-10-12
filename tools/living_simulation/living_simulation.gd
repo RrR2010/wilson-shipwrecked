@@ -71,6 +71,7 @@ const MAX_NAVIGATION_SYNC_FRAMES := 120
 const SHELTER_REQUIRED_CONTRIBUTIONS := 100
 const FOOD_INITIAL_QUANTITY := 3
 const SECOND_FOOD_INITIAL_QUANTITY := 8
+const SHELTER_RESOURCE_QUANTITY := 100
 const FOOD_VISIBILITY_RADIUS := 4.0
 const CLEAR_DURATION_SECONDS := 24.0
 const RAIN_DURATION_SECONDS := 12.0
@@ -201,6 +202,9 @@ func _bootstrap_and_start() -> void:
 	var food_entity_id = DomainId.entity(&"food_patch_001")
 	var second_food_entity_id = DomainId.entity(&"food_patch_002")
 	var shelter_entity_id = DomainId.entity(&"shelter_001")
+	var plank_entity_id = DomainId.entity(&"plank_stack_001")
+	var fiber_entity_id = DomainId.entity(&"fiber_bundle_001")
+	var receipt_relation_type = DomainId.relation_type(&"project_placement_receipt")
 	var rest_entity_id = DomainId.entity(&"rest_mat_001")
 	var curiosity_entity_id = DomainId.entity(&"shipwreck_relic_001")
 	var gerald_entity_id = DomainId.entity(&"gerald")
@@ -241,6 +245,8 @@ func _bootstrap_and_start() -> void:
 	var known_curiosity = BeliefProposition.new(EpistemicClaim.property_claim(_curiosity_ref, interesting_property, true))
 	var shelter_project_bindings = RoleBinding.new()
 	shelter_project_bindings.bind(&"target", _shelter_ref)
+	shelter_project_bindings.bind(&"planks", RuntimeWorldRef.entity(plank_entity_id))
+	shelter_project_bindings.bind(&"fiber", RuntimeWorldRef.entity(fiber_entity_id))
 	var project_seed = ProjectBootstrapSeed.new(
 		_shelter_project_id,
 		shelter_project_definition_id,
@@ -264,6 +270,8 @@ func _bootstrap_and_start() -> void:
 			EntityBootstrapSeed.new(food_entity_id, DomainId.entity_type(&"food_patch"), island_place_id, 0, {edible_property.key(): true, hunger_relief_property.key(): 0.20}, FOOD_INITIAL_QUANTITY),
 			EntityBootstrapSeed.new(second_food_entity_id, DomainId.entity_type(&"food_patch"), island_place_id, 0, {edible_property.key(): true, hunger_relief_property.key(): 0.45}, SECOND_FOOD_INITIAL_QUANTITY),
 			EntityBootstrapSeed.new(shelter_entity_id, DomainId.entity_type(&"shelter"), island_place_id),
+			EntityBootstrapSeed.new(plank_entity_id, DomainId.entity_type(&"plank_stack"), island_place_id, 0, {}, SHELTER_RESOURCE_QUANTITY),
+			EntityBootstrapSeed.new(fiber_entity_id, DomainId.entity_type(&"fiber_bundle"), island_place_id, 0, {}, SHELTER_RESOURCE_QUANTITY),
 			EntityBootstrapSeed.new(rest_entity_id, DomainId.entity_type(&"rest_spot"), island_place_id, 0, {restful_property.key(): true}),
 			EntityBootstrapSeed.new(curiosity_entity_id, DomainId.entity_type(&"shipwreck_relic"), island_place_id, 0, {interesting_property.key(): true}),
 			EntityBootstrapSeed.new(gerald_entity_id, DomainId.entity_type(&"seagull"), gerald_roost),
@@ -407,15 +415,22 @@ func _bootstrap_and_start() -> void:
 	var explore_resolution = ActionResolutionDefinition.new(inspect_curiosity, 1.8, 0.6, [], curiosity_inspected, &"inspect_curiosity_default")
 	var shelter_action_definition = ActionDefinition.new(
 		contribute_shelter,
-		[&"actor", &"target"] as Array[StringName],
-		RequirementPredicate.all_of([]),
+		[&"actor", &"target", &"planks", &"fiber"] as Array[StringName],
+		RequirementPredicate.all_of([
+			RequirementPredicate.quantity_at_least(&"planks", 1),
+			RequirementPredicate.quantity_at_least(&"fiber", 1),
+		]),
 		ActionDefinition.InterruptionClass.ANYTIME
 	)
 	var shelter_action_resolution = ActionResolutionDefinition.new(
 		contribute_shelter,
 		0.8,
 		0.5,
-		[],
+		[
+			ActionEffect.change_quantity(&"planks", -1),
+			ActionEffect.change_quantity(&"fiber", -1),
+			ActionEffect.record_execution_receipt(&"target", receipt_relation_type),
+		],
 		shelter_contribution,
 		&"contribute_shelter_default"
 	)
@@ -456,9 +471,10 @@ func _bootstrap_and_start() -> void:
 		&"target",
 		continue_shelter,
 		SHELTER_REQUIRED_CONTRIBUTIONS,
-		0.35
+		0.35,
+		receipt_relation_type
 	)
-	var project_contribution = ProjectContributionService.new(_owners.projects, [shelter_project_definition])
+	var project_contribution = ProjectContributionService.new(_owners.projects, [shelter_project_definition], runtime.world_query)
 	var project_source = ProjectCandidateSource.new(_owners.projects, [shelter_project_definition])
 	var weather_cues = PerceivedCueService.new([
 		ObservedEventCueRule.new(weather_worsened, &"dangerous_weather", &"hearing")

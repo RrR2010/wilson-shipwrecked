@@ -11,6 +11,7 @@ var action_subject_role: StringName
 var intention_id
 var required_contributions: int
 var candidate_base_score: float
+var receipt_relation_type
 
 
 func _init(
@@ -21,7 +22,8 @@ func _init(
 	p_action_subject_role: StringName,
 	p_intention_id,
 	p_required_contributions: int,
-	p_candidate_base_score: float = 0.25
+	p_candidate_base_score: float = 0.25,
+	p_receipt_relation_type = null
 ) -> void:
 	assert(p_id != null, "ProjectDefinition requires id")
 	p_id.assert_kind(DomainId.Kind.PROJECT_DEFINITION)
@@ -35,6 +37,8 @@ func _init(
 	assert(p_required_contributions > 0, "ProjectDefinition required contributions must be positive")
 	assert(is_finite(p_candidate_base_score), "Project candidate score must be finite")
 	assert(p_candidate_base_score >= 0.0 and p_candidate_base_score <= 1.0, "Project candidate score must be within [0,1]")
+	if p_receipt_relation_type != null:
+		p_receipt_relation_type.assert_kind(DomainId.Kind.RELATION_TYPE)
 	id = p_id
 	contribution_action_id = p_contribution_action_id
 	contribution_event_type = p_contribution_event_type
@@ -43,3 +47,4 @@ func _init(
 	intention_id = p_intention_id
 	required_contributions = p_required_contributions
 	candidate_base_score = p_candidate_base_score
+	receipt_relation_type = p_receipt_relation_type
