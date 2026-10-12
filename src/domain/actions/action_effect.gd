@@ -12,6 +12,7 @@ enum Kind {
 	CREATE_RELATION,
 	REMOVE_RELATION,
 	CHANGE_QUANTITY,
+	RECORD_EXECUTION_RECEIPT,
 }
 
 var kind: int
@@ -44,6 +45,11 @@ func _init(
 			semantic_id.assert_kind(DomainId.Kind.RELATION_TYPE)
 			assert(object_role != &"", "Relation effect requires object role")
 			assert(SemanticValueKey.supports(value), "Relation effect qualifier must be a bounded semantic value")
+		Kind.RECORD_EXECUTION_RECEIPT:
+			assert(semantic_id != null, "Receipt requires a relation type")
+			semantic_id.assert_kind(DomainId.Kind.RELATION_TYPE)
+			assert(object_role == &"", "Receipt is anchored on a single subject")
+			assert(value == null, "Receipt qualifier comes from committed execution id")
 		Kind.CHANGE_QUANTITY:
 			assert(semantic_id == null, "CHANGE_QUANTITY does not use semantic id")
 			assert(object_role == &"", "CHANGE_QUANTITY does not use object role")
@@ -53,3 +59,7 @@ func _init(
 
 static func change_quantity(p_subject_role: StringName, delta: Variant):
 	return new(Kind.CHANGE_QUANTITY, p_subject_role, null, delta)
+
+
+static func record_execution_receipt(p_subject_role: StringName, relation_type):
+	return new(Kind.RECORD_EXECUTION_RECEIPT, p_subject_role, relation_type)
