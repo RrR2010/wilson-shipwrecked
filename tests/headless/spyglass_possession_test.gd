@@ -56,8 +56,12 @@ func _init() -> void:
 	var collect_intention = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"collect_spyglass")
 	var explore_intention = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"investigate_with_spyglass")
 	var opportunities = AuthoredToolOpportunitySource.new(query, beliefs, spyglass, wilson, spyglass, known, target_known, held_by, DomainId.relation_type(&"tool_exploration_receipt"), collect_intention, explore_intention)
+	var stored_tool = beliefs.get_entry(known)
+	var stored_target = beliefs.get_entry(target_known)
+	_check(stored_tool != null, "known tool belief was restored")
+	_check(stored_target != null, "known exploration target belief was restored")
 	var before = opportunities.generate()
-	_check(before.size() == 1 and before[0].intention_id != null, "pickup opportunity has non-null intent")
+	_check(before.size() == 1 and before[0].intention_id != null, "pickup opportunity has non-null intent (count=%d; belief=%s)" % [before.size(), str(null if stored_tool == null else stored_tool.confidence)])
 	if before.size() == 1 and before[0].intention_id != null:
 		_check(before[0].intention_id.equals(collect_intention), "known unheld tool prompts pickup")
 	var first = commands.apply_outcome(pickup)
@@ -65,7 +69,7 @@ func _init() -> void:
 	_check(query.get_held_items(wilson, held_by).size() == 1, "World query sees spyglass held by Wilson")
 	_check(evaluator.evaluate(inspect_requires_tool, binding).passed, "held tool permits tool-gated action")
 	var after = opportunities.generate()
-	_check(after.size() == 1 and after[0].intention_id != null, "tool-use opportunity has non-null intent")
+	_check(after.size() == 1 and after[0].intention_id != null, "tool-use opportunity has non-null intent (count=%d; held=%d; target-belief=%s)" % [after.size(), query.find_relations(held_by, spyglass, wilson).size(), str(null if stored_target == null else stored_target.confidence)])
 	if after.size() == 1 and after[0].intention_id != null:
 		_check(after[0].intention_id.equals(explore_intention), "held tool prompts exploration")
 	_check(not commands.apply_outcome(pickup).ok, "duplicate pick-up rejected")
