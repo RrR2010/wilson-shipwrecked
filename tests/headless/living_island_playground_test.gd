@@ -45,6 +45,9 @@ func _run() -> void:
 	var initial: Dictionary = scene.observation_snapshot()
 	var target_time: float = float(initial.get("simulation_time", 0.0)) + TARGET_SIMULATION_SECONDS
 	var initial_wilson_position: Vector3 = initial.get("wilson_position", Vector3.ZERO)
+	var initial_food_quantity := int(initial.get("food_quantity", -1))
+	if initial_food_quantity <= 0:
+		_failures.append("Living-island food stock did not bootstrap with finite positive quantity")
 	var initial_gerald_position: Vector3 = initial.get("gerald_position", Vector3.ZERO)
 	var max_wilson_displacement := 0.0
 	var max_gerald_displacement := 0.0
@@ -97,8 +100,14 @@ func _run() -> void:
 		_failures.append("Playground did not reach %.1f simulated seconds" % TARGET_SIMULATION_SECONDS)
 	if max_wilson_displacement < 2.0:
 		_failures.append("Wilson did not traverse the diverse island")
-	if int(final.get("grounded_consumptions", 0)) < 2:
+	var final_meals := int(final.get("grounded_consumptions", 0))
+	var final_food_quantity := int(final.get("food_quantity", -1))
+	if final_meals < 2:
 		_failures.append("Playground produced too little grounded hunger activity")
+	if final_food_quantity < 0:
+		_failures.append("Finite food quantity became negative")
+	if initial_food_quantity > 0 and final_food_quantity != initial_food_quantity - final_meals:
+		_failures.append("Authoritative food quantity did not match grounded consumption count")
 	if int(final.get("grounded_rests", 0)) < 1 or not rest_drop_observed:
 		_failures.append("Energy/rest loop did not ground and materially reduce energy")
 	if int(final.get("grounded_explorations", 0)) < 1 or not stimulation_drop_observed:
