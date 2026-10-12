@@ -17,7 +17,7 @@ Direct `.blend` import is acceptable for local experiments; runtime model assets
 
 # Source ownership
 
-Do **not** treat "one `.blend` per asset" as universal. Choose the source unit by editing lifecycle.
+**Current default for new production is one editable `.blend` and one GLB per individually modeled asset**, with shared script helpers permitted. See `../docs/art/FUNCTIONAL_ASSET_FACTORY.md`. Exceptions for genuinely shared rigs or generators must be justified; historical family workbenches remain valid.
 
 ## Independent manual asset
 

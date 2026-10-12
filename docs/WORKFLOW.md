@@ -12,6 +12,10 @@ This document owns repository **delivery process**, not game-domain architecture
 - Current integration priorities: `PROJECT_CONTROL.md`.
 - Review/handoff: temporary context; never override a canonical source.
 
+## Parallel art exception
+
+Runtime integration stays serial where contracts overlap. Blender production is the explicitly allowed parallel lane, led by a local Blender-capable agent, operating on independent art branches/PRs. The art EPIC may be continuous but each model is a bounded individually consulted unit. See [art/FUNCTIONAL_ASSET_FACTORY.md](art/FUNCTIONAL_ASSET_FACTORY.md). Art PR completion does **not** imply Godot/runtime integration. Reuse V-level evidence as actually performed; operator consultation occurs **before** the model is created.
+
 ## EPIC → TASK → PR
 
 **EPIC**: bounded product/technical risk, observable outcome, exit gate, dependencies; no implementation checklist masquerading as a stage.

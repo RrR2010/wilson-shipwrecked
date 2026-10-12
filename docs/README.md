@@ -206,6 +206,9 @@ Prefer additions that create new cross-system combinations or functional alterna
 
 ## Visual / 3D production
 
+Parallel local Blender agent: read [`art/FUNCTIONAL_ASSET_FACTORY.md`](art/FUNCTIONAL_ASSET_FACTORY.md) first. Each model is individually briefed with Richard for likely future functionality and engine constraints; art completion does not require Godot integration.
+
+
 - `VISUAL_GUIDE.md`
 - `art/README.md`
 - `ASSET_SPEC.md`

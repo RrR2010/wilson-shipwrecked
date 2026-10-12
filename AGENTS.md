@@ -49,7 +49,7 @@ Before substantial runtime work, read:
 
 Completing one task or EPIC does not automatically complete the macro stage. If Stage-3 maturity pressures remain, prepare another finite Stage-3 handoff instead of jumping to player/Presence work or recursively extending one session.
 
-Asset/modeling work proceeds in parallel. Primitive-shape presentation remains sufficient for behavioral calibration, but **semantic action/reaction timing is not final asset polish**. Important behavior may require deterministic semantic occupancy/checkpoints so it is readable; concrete animation clips remain non-authoritative presentation assets.
+Asset/modeling work proceeds in the **one explicitly parallel local Blender lane** under [docs/art/FUNCTIONAL_ASSET_FACTORY.md](docs/art/FUNCTIONAL_ASSET_FACTORY.md): individual .blend/GLB per new asset, pre-model operator consultation about future function, and no mandatory Godot integration. Primitive-shape presentation remains sufficient for behavioral calibration, but **semantic action/reaction timing is not final asset polish**. Important behavior may require deterministic semantic occupancy/checkpoints so it is readable; concrete animation clips remain non-authoritative presentation assets.
 
 Do not reopen foundation ownership, replace established typed contracts with generic containers, or introduce a universal framework merely because one new scenario needs implementation.
 
@@ -142,7 +142,8 @@ docs/asset-catalog/<relevant row>
 → docs/art/README.md + relevant references
 → docs/ASSET_SPEC.md
 → docs/ASSET_PIPELINE.md
-→ docs/art/AGENT_ART_PRODUCTION.md
+→ docs/art/FUNCTIONAL_ASSET_FACTORY.md
+docs/art/AGENT_ART_PRODUCTION.md
 ```
 
 Brainstorming asset rounds are historical breadth evidence, not normal production authority.

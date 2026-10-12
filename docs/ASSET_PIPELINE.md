@@ -2,6 +2,9 @@
 
 ## Purpose
 
+**Production lane:** [art/FUNCTIONAL_ASSET_FACTORY.md](art/FUNCTIONAL_ASSET_FACTORY.md) owns the individually modeled, operator-consulted, Godot-aware parallel asset workflow and prioritized queue. Asset modeling is not runtime integration; Godot import is optional evidence for art-only work.
+
+
 Define the production sequence and ownership boundaries for 3D assets without turning routine modeling into a documentation exercise.
 
 Canonical owners:
@@ -20,9 +23,9 @@ tools/blender/README.md         review/validation/export mechanics
 The normal modeling-agent loop is:
 
 ```text
-1. choose next ready asset from catalog
+1. choose next prioritized individual asset; draft functional states and obtain operator consultation
 2. read its catalog row + minimum visual references
-3. choose source ownership: asset | family | generator
+3. default to individual .blend + GLB; share generator helpers but keep deliverables independent
 4. model/generate a named AssetScope
 5. render canonical previews
 6. inspect the images
@@ -34,7 +37,7 @@ The normal modeling-agent loop is:
 12. update catalog status/notes
 ```
 
-The agent should spend most of the task **building and inspecting**, not summarizing documents.
+The agent should spend most of the task **building and inspecting**, not summarizing documents. Do not make Godot gameplay integration a completion requirement for art-only work.
 
 ## Minimum reading for an ordinary asset
 
