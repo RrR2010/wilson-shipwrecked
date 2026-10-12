@@ -64,6 +64,7 @@ func _init() -> void:
 	_check(before.size() == 1 and before[0].intention_id != null, "pickup opportunity has non-null intent (count=%d; belief=%s)" % [before.size(), str(null if stored_tool == null else stored_tool.confidence)])
 	if before.size() == 1 and before[0].intention_id != null:
 		_check(before[0].intention_id.equals(collect_intention), "known unheld tool prompts pickup")
+		_check(before[0].total_score() < 0.35, "optional pickup must not displace ongoing shelter work")
 	var first = commands.apply_outcome(pickup)
 	_check(first.ok, "pick-up commits a held relation")
 	_check(query.get_held_items(wilson, held_by).size() == 1, "World query sees spyglass held by Wilson")
@@ -72,6 +73,7 @@ func _init() -> void:
 	_check(after.size() == 1 and after[0].intention_id != null, "tool-use opportunity has non-null intent (count=%d; held=%d; target-belief=%s)" % [after.size(), query.find_relations(held_by, spyglass, wilson).size(), str(null if stored_target == null else stored_target.confidence)])
 	if after.size() == 1 and after[0].intention_id != null:
 		_check(after[0].intention_id.equals(explore_intention), "held tool prompts exploration")
+		_check(after[0].total_score() < 0.35, "optional tool use must not displace ongoing shelter work")
 	_check(not commands.apply_outcome(pickup).ok, "duplicate pick-up rejected")
 	_check(query.get_held_items(wilson, held_by).size() == 1, "duplicate cannot create second item")
 	_check(commands.apply_outcome(release).ok, "release commits removal")
