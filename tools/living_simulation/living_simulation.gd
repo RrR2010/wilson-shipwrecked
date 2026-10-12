@@ -15,6 +15,7 @@ const SimulationBootstrapDefinition = preload("res://src/application/bootstrap/s
 const DeterministicScenarioDefinition = preload("res://src/application/bootstrap/deterministic_scenario_definition.gd")
 const DeterministicScenarioBootstrapService = preload("res://src/application/bootstrap/deterministic_scenario_bootstrap_service.gd")
 const ActionDefinition = preload("res://src/domain/actions/action_definition.gd")
+const ActionEffect = preload("res://src/domain/actions/action_effect.gd")
 const ActionResolutionDefinition = preload("res://src/domain/actions/action_resolution_definition.gd")
 const RequirementPredicate = preload("res://src/domain/actions/requirement_predicate.gd")
 const BeliefProposition = preload("res://src/domain/cognition/belief_proposition.gd")
@@ -62,6 +63,7 @@ const SCENARIO_NAME := &"living_island_playground"
 const GAMEPLAY_SEED := 61007
 const MAX_NAVIGATION_SYNC_FRAMES := 120
 const SHELTER_REQUIRED_CONTRIBUTIONS := 100
+const FOOD_INITIAL_QUANTITY := 24
 const CLEAR_DURATION_SECONDS := 24.0
 const RAIN_DURATION_SECONDS := 12.0
 
@@ -230,7 +232,7 @@ func _bootstrap_and_start() -> void:
 	var simulation = SimulationBootstrapDefinition.new(
 		island_place_id,
 		[
-			EntityBootstrapSeed.new(food_entity_id, DomainId.entity_type(&"food_patch"), island_place_id, 0, {edible_property.key(): true}),
+			EntityBootstrapSeed.new(food_entity_id, DomainId.entity_type(&"food_patch"), island_place_id, 0, {edible_property.key(): true}, FOOD_INITIAL_QUANTITY),
 			EntityBootstrapSeed.new(shelter_entity_id, DomainId.entity_type(&"shelter"), island_place_id),
 			EntityBootstrapSeed.new(rest_entity_id, DomainId.entity_type(&"rest_spot"), island_place_id, 0, {restful_property.key(): true}),
 			EntityBootstrapSeed.new(curiosity_entity_id, DomainId.entity_type(&"shipwreck_relic"), island_place_id, 0, {interesting_property.key(): true}),
@@ -345,10 +347,17 @@ func _bootstrap_and_start() -> void:
 	var consume_definition = ActionDefinition.new(
 		consume_food,
 		[&"actor", &"target"] as Array[StringName],
-		RequirementPredicate.all_of([]),
+		RequirementPredicate.quantity_at_least(&"target", 1),
 		ActionDefinition.InterruptionClass.ANYTIME
 	)
-	var consume_resolution = ActionResolutionDefinition.new(consume_food, 0.8, 0.5, [], food_consumed, &"consume_food_default")
+	var consume_resolution = ActionResolutionDefinition.new(
+		consume_food,
+		0.8,
+		0.5,
+		[ActionEffect.change_quantity(&"target", -1)],
+		food_consumed,
+		&"consume_food_default"
+	)
 	var rest_definition = ActionDefinition.new(
 		rest_action,
 		[&"actor", &"target"] as Array[StringName],
@@ -552,6 +561,7 @@ func observation_snapshot() -> Dictionary:
 		"wilson_position": $Wilson.global_position,
 		"trace_count": _trace_sink.traces.size(),
 		"grounded_consumptions": _trace_sink.grounded_consumptions,
+		"food_quantity": null if _owners == null else _owners.entities.get_quantity(_food_ref.id),
 		"grounded_rests": _trace_sink.grounded_rests,
 		"grounded_explorations": _trace_sink.grounded_explorations,
 		"grounded_intention_completions": _trace_sink.grounded_intention_completions,
