@@ -48,6 +48,7 @@ var _drive_due_gate
 var _grounded_drive_consequence
 var _perceived_habit_candidate_source
 var _grounded_intention_completion
+var _malformed_candidate_reported := false
 
 
 func _init(
@@ -265,6 +266,16 @@ func advance(step):
 			var habit_candidates: Array = _perceived_habit_candidate_source.generate(perception_result)
 			candidates.append_array(habit_candidates)
 			trace.record_result(&"perceived_habit_candidates", habit_candidates)
+		# A malformed producer must not poison DecisionRouter or CurrentIntentionStore.
+		var valid_candidates: Array = []
+		for candidate in candidates:
+			if candidate == null or candidate.intention_id == null or candidate.bindings == null:
+				if not _malformed_candidate_reported:
+					push_error("Malformed decision candidate from source: %s" % (str(candidate.provenance) if candidate != null else "null candidate"))
+					_malformed_candidate_reported = true
+				continue
+			valid_candidates.append(candidate)
+		candidates = valid_candidates
 		candidates.sort_custom(func(a, b): return a.stable_key() < b.stable_key())
 		trace.record_result(&"decision_candidates", candidates)
 		decision_result = _decision_router.resolve(candidates, _activity_query.current_intention())
