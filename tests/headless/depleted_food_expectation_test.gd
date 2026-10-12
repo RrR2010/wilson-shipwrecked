@@ -12,6 +12,8 @@ const BeliefLearningCoordinator = preload("res://src/application/simulation/beli
 const PerceptualEvidence = preload("res://src/domain/cognition/perceptual_evidence.gd")
 const PerceptionResult = preload("res://src/domain/cognition/perception_result.gd")
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
+const PerceivedContextTransitionTriggerSource = preload("res://src/application/simulation/perceived_context_transition_trigger_source.gd")
+const ReconsiderationGate = preload("res://src/application/simulation/reconsideration_gate.gd")
 const DriveCandidateDefinition = preload("res://src/domain/cognition/drive_candidate_definition.gd")
 const PerceivedOpportunityDefinition = preload("res://src/domain/cognition/perceived_opportunity_definition.gd")
 const DriveBackedBelievedOpportunityCandidateSource = preload("res://src/domain/cognition/drive_backed_believed_opportunity_candidate_source.gd")
@@ -22,11 +24,16 @@ var failures: Array[String] = []
 class DriveStub:
 	extends RefCounted
 	func band(_id) -> int:
-		return 3
+		return 2
 	func urgency(_id) -> float:
 		return 1.0
 	func value(_id) -> float:
 		return 1.0
+
+class ContentStub:
+	extends RefCounted
+	func get_event_definition(_id):
+		return null
 
 func _init() -> void:
 	var food = RuntimeWorldRef.entity(DomainId.entity(&"exposed_berries"))
@@ -44,7 +51,11 @@ func _init() -> void:
 	_check(source.generate().size() == 1, "unobserved depletion preserves original candidate")
 	var learner = BeliefLearningService.new()
 	var coordinator = BeliefLearningCoordinator.new(learner, beliefs, BeliefReconciliationService.new(learner))
-	coordinator.process(PerceptionResult.new([], [PerceptualEvidence.new(EpistemicClaim.quantity_claim(food, 0), 0.9, &"visual_empty", &"vision")]))
+	var empty_observation = PerceptionResult.new([], [PerceptualEvidence.new(EpistemicClaim.quantity_claim(food, 0), 0.9, &"visual_empty", &"vision")])
+	var reconsider = PerceivedContextTransitionTriggerSource.new(ContentStub.new(), true)
+	_check(reconsider.derive(empty_observation).has(ReconsiderationGate.Trigger.ACTION_INVALIDATION), "observed empty quantity requests reconsideration")
+	_check(reconsider.derive(PerceptionResult.new()).is_empty(), "no observation cannot trigger reconsideration")
+	coordinator.process(empty_observation)
 	_check(source.generate().is_empty(), "observed zero suppresses known-empty food opportunity")
 	coordinator.process(PerceptionResult.new([], [PerceptualEvidence.new(EpistemicClaim.quantity_claim(food, 4), 0.9, &"visual_restock", &"vision")]))
 	_check(source.generate().size() == 1, "observed restock restores food candidate")
