@@ -491,7 +491,8 @@ func _bootstrap_and_start() -> void:
 	var decision_commit = InterruptingDecisionCommitCoordinator.new(
 		runtime.activity_query,
 		runtime.action_execution,
-		base_decision_commit
+		base_decision_commit,
+		seek_food
 	)
 	var orchestrator = SimulationOrchestrator.new(
 		runtime.world_advance,
