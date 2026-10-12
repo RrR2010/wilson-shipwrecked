@@ -32,17 +32,17 @@ func apply_outcome(outcome):
 	var relation_shadow: Dictionary = {}
 	var quantity_shadow: Dictionary = {}
 	for effect in outcome.effects:
-		_validate_effect(effect, outcome.bindings, validation_errors, relation_shadow, quantity_shadow)
+		_validate_effect(effect, outcome, validation_errors, relation_shadow, quantity_shadow)
 	if not validation_errors.is_empty():
 		return WorldCommitResult.new(false, [], [], validation_errors)
 
 	var mutation_results: Array = []
 	var change_set = SemanticChangeSet.new()
 	for effect in outcome.effects:
-		var result = _apply_effect(effect, outcome.bindings)
+		var result = _apply_effect(effect, outcome)
 		mutation_results.append(result)
 		if result.ok:
-			_record_change(effect, outcome.bindings, change_set)
+			_record_change(effect, outcome, change_set)
 		if not result.ok:
 			return WorldCommitResult.new(
 				false,
@@ -63,12 +63,13 @@ func apply_outcome(outcome):
 
 func _validate_effect(
 	effect,
-	bindings,
+	outcome,
 	errors: Array[String],
 	relation_shadow: Dictionary,
 	quantity_shadow: Dictionary
 ) -> void:
 	assert(effect != null, "ActionOutcome effects cannot contain null")
+	var bindings = outcome.bindings
 	if not bindings.has(effect.subject_role):
 		errors.append("Missing effect subject role: %s" % String(effect.subject_role))
 		return
@@ -84,6 +85,13 @@ func _validate_effect(
 			if _property_schema_query != null and _property_schema_query.has_method("validate_property_value"):
 				if not _property_schema_query.validate_property_value(effect.semantic_id, effect.value):
 					errors.append("Invalid property value for %s" % effect.semantic_id.sort_key())
+		ActionEffect.Kind.RECORD_EXECUTION_RECEIPT:
+			var receipt = _receipt_for_effect(effect, outcome)
+			var receipt_key = receipt.key()
+			if relation_shadow.get(receipt_key, _relations.get_relation(receipt_key) != null):
+				errors.append("Execution receipt already committed: %s" % receipt.sort_key())
+			else:
+				relation_shadow[receipt_key] = true
 		ActionEffect.Kind.CREATE_RELATION, ActionEffect.Kind.REMOVE_RELATION:
 			if not bindings.has(effect.object_role):
 				errors.append("Missing effect object role: %s" % String(effect.object_role))
@@ -128,11 +136,14 @@ func _validate_effect(
 			quantity_shadow[quantity_key] = next_quantity
 
 
-func _apply_effect(effect, bindings):
+func _apply_effect(effect, outcome):
+	var bindings = outcome.bindings
 	var subject = bindings.get_subject(effect.subject_role)
 	match effect.kind:
 		ActionEffect.Kind.SET_PROPERTY:
 			return _entities.set_property_override(subject.id, effect.semantic_id, effect.value)
+		ActionEffect.Kind.RECORD_EXECUTION_RECEIPT:
+			return _relations.add_relation(_receipt_for_effect(effect, outcome))
 		ActionEffect.Kind.CREATE_RELATION:
 			return _relations.add_relation(_relation_for_effect(effect, bindings))
 		ActionEffect.Kind.REMOVE_RELATION:
@@ -151,11 +162,19 @@ func _relation_for_effect(effect, bindings):
 	return WorldRelation.new(effect.semantic_id, subject, object, effect.value)
 
 
-func _record_change(effect, bindings, change_set) -> void:
+func _receipt_for_effect(effect, outcome):
+	var subject = outcome.bindings.get_subject(effect.subject_role)
+	return WorldRelation.new(effect.semantic_id, subject, subject, outcome.execution_id)
+
+
+func _record_change(effect, outcome, change_set) -> void:
+	var bindings = outcome.bindings
 	var subject = bindings.get_subject(effect.subject_role)
 	match effect.kind:
 		ActionEffect.Kind.SET_PROPERTY:
 			change_set.add(SemanticChange.property_change(subject, effect.semantic_id))
+		ActionEffect.Kind.RECORD_EXECUTION_RECEIPT:
+			change_set.add(SemanticChange.relation_change(subject, effect.semantic_id, subject))
 		ActionEffect.Kind.CREATE_RELATION, ActionEffect.Kind.REMOVE_RELATION:
 			var object = bindings.get_subject(effect.object_role)
 			change_set.add(SemanticChange.relation_change(subject, effect.semantic_id, object))
