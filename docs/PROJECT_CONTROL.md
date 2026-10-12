@@ -18,11 +18,16 @@ Can a short autonomous run yield legible, memorable causal situations, including
 - **Evidence:** PR validation record and operator smoke outcome, using [WORKFLOW.md](WORKFLOW.md).
 - **Handoffs/reviews:** historical context and bounded transitions, not active backlog or competing authority.
 
+## Two permitted delivery lanes
+
+- **Runtime:** staged, integration-controlled tasks; only one owner per conflicting contract/scene hotspot.
+- **Asset Factory:** separate parallel Blender-capable local agent, **individual asset modeling**, each preceded by Richard's brief functional consultation; a bounded art PR may combine individually accepted assets. No mandatory Godot import/gameplay integration. Priority queue, state tracking and acceptance live in [art/FUNCTIONAL_ASSET_FACTORY.md](art/FUNCTIONAL_ASSET_FACTORY.md).
+
 ## Integration queue (triage required, not permission to merge)
 
 | Work | State at 2026-10-11 | Next action |
 | --- | --- | --- |
-| [PR #79](https://github.com/RrR2010/wilson-shipwrecked/pull/79) camp props | Open; 2 commits ahead, 0 behind; 14 GLBs and generator/catalog/review changes; six additions deferred from Godot import | Operator visual/import acceptance for required asset scope, then decide merge |
+| [PR #79](https://github.com/RrR2010/wilson-shipwrecked/pull/79) camp props | Open; 2 commits ahead, 0 behind; 14 GLBs and generator/catalog/review changes; six additions deferred from Godot import | Accept as art-library scope after visual confirmation; Godot integration is intentionally deferred until runtime demand |
 | [PR #78](https://github.com/RrR2010/wilson-shipwrecked/pull/78) quantities/perceptual containment | Draft; 15 commits ahead and 1 behind `main` (14 changed GDScript/test files) | Complete composition and strict validation on updated main; do not merge as-is |
 | `runtime/representative-gameplay-semantics` | Remote branch: 0 commits ahead, 26 behind `main`; no open PR | Likely obsolete remotely; check any local work before deletion |
 | `assets/modeling-pilot-batch-01` | Remote branch: 2 commits ahead, 27 behind `main`, changing Blender review tooling | Inspect two tooling edits for applicability before cherry-pick/rewrite; avoid deleting without local check |
