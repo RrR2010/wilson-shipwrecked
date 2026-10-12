@@ -125,6 +125,8 @@ QUANTITY(subject, NonNegativeFiniteNumber)
 
 Static property/relation/quantity evidence may arise without a fake WorldEvent when current perceptual access justifies it.
 
+For exposed finite resources, a fresh quantity observation (including zero) requires validated perceptual exposure, metric range, and line of sight. A hidden World quantity mutation is only an invalidation opportunity, never belief evidence or direct decision input. A subsequent accessible observation can reconcile Wilson's former quantity belief and re-enable a previously empty resource after restocking. Closed opaque containment remains concealed until a separately authored interaction justifies access; proximity alone grants no access to the interior.
+
 ## PerceptionResult
 
 Bounded Wilson-accessible context for learning/reconsideration, conceptually aggregating:
