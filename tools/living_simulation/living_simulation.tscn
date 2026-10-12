@@ -366,6 +366,41 @@ scale = Vector3(0.18, 0.18, 0.18)
 mesh = SubResource("SmallBoxMesh")
 material_override = SubResource("FoodMaterial")
 
+[node name="FoodPatchFar" type="Node3D" parent="."]
+position = Vector3(-7, 0, -4)
+
+[node name="Stem" type="MeshInstance3D" parent="FoodPatchFar"]
+position = Vector3(0, 0.45, 0)
+scale = Vector3(0.18, 0.9, 0.18)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("PlantMaterial")
+
+[node name="LeafLeft" type="MeshInstance3D" parent="FoodPatchFar"]
+position = Vector3(-0.38, 0.72, 0)
+rotation_degrees = Vector3(0, 0, -25)
+scale = Vector3(0.55, 0.12, 0.32)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("PlantMaterial")
+
+[node name="LeafRight" type="MeshInstance3D" parent="FoodPatchFar"]
+position = Vector3(0.38, 0.68, 0.05)
+rotation_degrees = Vector3(0, 0, 25)
+scale = Vector3(0.55, 0.12, 0.32)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("PlantMaterial")
+
+[node name="FruitA" type="MeshInstance3D" parent="FoodPatchFar"]
+position = Vector3(-0.22, 0.98, -0.18)
+scale = Vector3(0.22, 0.22, 0.22)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("FoodMaterial")
+
+[node name="FruitB" type="MeshInstance3D" parent="FoodPatchFar"]
+position = Vector3(0.12, 1.08, 0.02)
+scale = Vector3(0.2, 0.2, 0.2)
+mesh = SubResource("SmallBoxMesh")
+material_override = SubResource("FoodMaterial")
+
 [node name="Shelter" type="Node3D" parent="."]
 position = Vector3(3.2, 0, 4.5)
 
