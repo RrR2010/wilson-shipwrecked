@@ -12,6 +12,8 @@ var registry: SceneSpatialRegistry
 var navigation_map: RID = RID()
 var physics_space_state: PhysicsDirectSpaceState3D
 var interaction_reach_distance: float = 1.5
+var visual_observer_height: float = 0.0
+var visual_target_height: float = 0.0
 
 func _init(p_registry: SceneSpatialRegistry) -> void:
 	assert(p_registry != null)
@@ -43,7 +45,10 @@ func has_line_of_sight(observer_ref: RuntimeWorldRef, target_ref: RuntimeWorldRe
 	var target: Node3D = registry.resolve(target_ref)
 	if observer == null or target == null:
 		return false
-	var query := PhysicsRayQueryParameters3D.create(observer.global_position, target.global_position)
+	var query := PhysicsRayQueryParameters3D.create(
+		observer.global_position + Vector3.UP * visual_observer_height,
+		target.global_position + Vector3.UP * visual_target_height
+	)
 	_exclude_collision_subject(query, observer)
 	var hit := physics_space_state.intersect_ray(query)
 	if hit.is_empty():

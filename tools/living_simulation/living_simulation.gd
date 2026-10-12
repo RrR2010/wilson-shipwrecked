@@ -55,6 +55,11 @@ const SemanticDueScheduler = preload("res://src/application/simulation/semantic_
 const DueElapsedGate = preload("res://src/application/simulation/due_elapsed_gate.gd")
 const ShallowActorMotionCoordinator = preload("res://src/application/simulation/shallow_actor_motion_coordinator.gd")
 const SimulationOrchestrator = preload("res://src/application/simulation/simulation_orchestrator.gd")
+const PassiveSpatialPerceptionSource = preload("res://src/application/simulation/passive_spatial_perception_source.gd")
+const GodotSpatialQueryAdapter = preload("res://src/infrastructure/spatial/godot_spatial_query_adapter.gd")
+const BeliefLearningService = preload("res://src/domain/cognition/belief_learning_service.gd")
+const BeliefReconciliationService = preload("res://src/domain/cognition/belief_reconciliation_service.gd")
+const BeliefLearningCoordinator = preload("res://src/application/simulation/belief_learning_coordinator.gd")
 const GodotSceneSpatialRegistry = preload("res://src/infrastructure/spatial/godot_scene_spatial_registry.gd")
 const GodotMotionAdapter = preload("res://src/infrastructure/spatial/godot_motion_adapter.gd")
 const GodotSimulationHost = preload("res://src/infrastructure/spatial/godot_simulation_host.gd")
@@ -63,7 +68,9 @@ const SCENARIO_NAME := &"living_island_playground"
 const GAMEPLAY_SEED := 61007
 const MAX_NAVIGATION_SYNC_FRAMES := 120
 const SHELTER_REQUIRED_CONTRIBUTIONS := 100
-const FOOD_INITIAL_QUANTITY := 24
+const FOOD_INITIAL_QUANTITY := 3
+const SECOND_FOOD_INITIAL_QUANTITY := 8
+const FOOD_VISIBILITY_RADIUS := 4.0
 const CLEAR_DURATION_SECONDS := 24.0
 const RAIN_DURATION_SECONDS := 12.0
 
@@ -72,6 +79,7 @@ var _motion
 var _host
 var _wilson_ref
 var _food_ref
+var _second_food_ref
 var _shelter_ref
 var _rest_ref
 var _curiosity_ref
@@ -124,6 +132,21 @@ class TraceSink:
 			traces.pop_front()
 
 
+## Bounded broadphase of the one authored exposed food source.
+## Metric distance and line-of-sight remain validated by SpatialQueryPort.
+class ExposedFoodCandidates:
+	extends RefCounted
+	var foods: Array
+	func _init(p_foods: Array) -> void:
+		foods = p_foods.duplicate()
+	func has_pending_refresh() -> bool:
+		return true
+	func consume_refresh_candidates() -> Array:
+		return foods.duplicate()
+	func request_refresh() -> void:
+		pass
+
+
 func _ready() -> void:
 	call_deferred("_bootstrap_and_start")
 
@@ -173,6 +196,7 @@ func _bootstrap_and_start() -> void:
 
 	var island_place_id = DomainId.place(&"living_island")
 	var food_entity_id = DomainId.entity(&"food_patch_001")
+	var second_food_entity_id = DomainId.entity(&"food_patch_002")
 	var shelter_entity_id = DomainId.entity(&"shelter_001")
 	var rest_entity_id = DomainId.entity(&"rest_mat_001")
 	var curiosity_entity_id = DomainId.entity(&"shipwreck_relic_001")
@@ -202,12 +226,14 @@ func _bootstrap_and_start() -> void:
 	_shelter_project_id = DomainId.new(DomainId.Kind.PROJECT_INSTANCE, &"build_shelter_001")
 	_wilson_ref = RuntimeWorldRef.wilson()
 	_food_ref = RuntimeWorldRef.entity(food_entity_id)
+	_second_food_ref = RuntimeWorldRef.entity(second_food_entity_id)
 	_shelter_ref = RuntimeWorldRef.entity(shelter_entity_id)
 	_rest_ref = RuntimeWorldRef.entity(rest_entity_id)
 	_curiosity_ref = RuntimeWorldRef.entity(curiosity_entity_id)
 	_gerald_ref = RuntimeWorldRef.entity(gerald_entity_id)
 
 	var known_food = BeliefProposition.new(EpistemicClaim.property_claim(_food_ref, edible_property, true))
+	var known_second_food = BeliefProposition.new(EpistemicClaim.property_claim(_second_food_ref, edible_property, true))
 	var known_rest = BeliefProposition.new(EpistemicClaim.property_claim(_rest_ref, restful_property, true))
 	var known_curiosity = BeliefProposition.new(EpistemicClaim.property_claim(_curiosity_ref, interesting_property, true))
 	var shelter_project_bindings = RoleBinding.new()
@@ -233,6 +259,7 @@ func _bootstrap_and_start() -> void:
 		island_place_id,
 		[
 			EntityBootstrapSeed.new(food_entity_id, DomainId.entity_type(&"food_patch"), island_place_id, 0, {edible_property.key(): true}, FOOD_INITIAL_QUANTITY),
+			EntityBootstrapSeed.new(second_food_entity_id, DomainId.entity_type(&"food_patch"), island_place_id, 0, {edible_property.key(): true}, SECOND_FOOD_INITIAL_QUANTITY),
 			EntityBootstrapSeed.new(shelter_entity_id, DomainId.entity_type(&"shelter"), island_place_id),
 			EntityBootstrapSeed.new(rest_entity_id, DomainId.entity_type(&"rest_spot"), island_place_id, 0, {restful_property.key(): true}),
 			EntityBootstrapSeed.new(curiosity_entity_id, DomainId.entity_type(&"shipwreck_relic"), island_place_id, 0, {interesting_property.key(): true}),
@@ -241,6 +268,7 @@ func _bootstrap_and_start() -> void:
 		[],
 		[
 			BeliefBootstrapSeed.new(known_food, 0.9, 1, &"new_run_seed", &"memory"),
+			BeliefBootstrapSeed.new(known_second_food, 0.75, 1, &"new_run_seed", &"memory"),
 			BeliefBootstrapSeed.new(known_rest, 0.9, 1, &"new_run_seed", &"memory"),
 			BeliefBootstrapSeed.new(known_curiosity, 0.85, 1, &"new_run_seed", &"memory"),
 		],
@@ -281,6 +309,7 @@ func _bootstrap_and_start() -> void:
 	var spatial_bindings: Array = [
 		[_wilson_ref, wilson_body],
 		[_food_ref, $FoodPatch],
+		[_second_food_ref, $FoodPatchFar],
 		[_shelter_ref, $Shelter],
 		[_rest_ref, $RestSpot],
 		[_curiosity_ref, $CuriositySpot],
@@ -333,7 +362,8 @@ func _bootstrap_and_start() -> void:
 		DriveState.ENERGY: 0.006,
 		DriveState.STIMULATION: 0.005,
 	})
-	var drive_source = DriveCandidateSource.new(_owners.drives, drive_definitions)
+	# Hunger needs a believed food target; never route an unbound food intention.
+	var drive_source = DriveCandidateSource.new(_owners.drives, [energy_definition, stimulation_definition])
 	var grounded_opportunities = DriveBackedBelievedOpportunityCandidateSource.new(
 		_owners.drives,
 		_owners.beliefs,
@@ -436,12 +466,33 @@ func _bootstrap_and_start() -> void:
 		0.2,
 		DecisionCandidate.Scope.TACTICAL
 	)
-	var context_trigger_source = PerceivedContextTransitionTriggerSource.new(content)
+	var context_trigger_source = PerceivedContextTransitionTriggerSource.new(content, true)
+	var spatial_query = GodotSpatialQueryAdapter.new(registry)
+	spatial_query.physics_space_state = get_world_3d().direct_space_state
+	spatial_query.visual_observer_height = 1.45
+	spatial_query.visual_target_height = 1.0
+	var exposed_food = PassiveSpatialPerceptionSource.new(
+		ExposedFoodCandidates.new([_food_ref, _second_food_ref]),
+		spatial_query,
+		_wilson_ref,
+		DomainId.relation_type(&"perceptibly_near"),
+		FOOD_VISIBILITY_RADIUS,
+		&"vision",
+		0.95,
+		runtime.world_query
+	)
+	var belief_learner = BeliefLearningService.new()
+	var perceptual_learning = BeliefLearningCoordinator.new(
+		belief_learner,
+		_owners.beliefs,
+		BeliefReconciliationService.new(belief_learner)
+	)
 	var base_decision_commit = DecisionCommitCoordinator.new(_owners.current_intention)
 	var decision_commit = InterruptingDecisionCommitCoordinator.new(
 		runtime.activity_query,
 		runtime.action_execution,
-		base_decision_commit
+		base_decision_commit,
+		seek_food
 	)
 	var orchestrator = SimulationOrchestrator.new(
 		runtime.world_advance,
@@ -451,7 +502,7 @@ func _bootstrap_and_start() -> void:
 		runtime.activity_query,
 		runtime.perception_access,
 		runtime.perception,
-		runtime.learning,
+		perceptual_learning,
 		PerceivedOpportunityService.new(),
 		_owners.beliefs,
 		[],
@@ -465,7 +516,7 @@ func _bootstrap_and_start() -> void:
 		[grounded_opportunities],
 		null,
 		null,
-		null,
+		exposed_food,
 		context_trigger_source,
 		null,
 		executor,
@@ -561,7 +612,10 @@ func observation_snapshot() -> Dictionary:
 		"wilson_position": $Wilson.global_position,
 		"trace_count": _trace_sink.traces.size(),
 		"grounded_consumptions": _trace_sink.grounded_consumptions,
-		"food_quantity": null if _owners == null else _owners.entities.get_quantity(_food_ref.id),
+		"food_quantity": null if _owners == null else int(_owners.entities.get_quantity(_food_ref.id)) + int(_owners.entities.get_quantity(_second_food_ref.id)),
+		"near_food_quantity": null if _owners == null else _owners.entities.get_quantity(_food_ref.id),
+		"far_food_quantity": null if _owners == null else _owners.entities.get_quantity(_second_food_ref.id),
+		"observed_food_empty_confidence": _empty_food_belief_confidence(),
 		"grounded_rests": _trace_sink.grounded_rests,
 		"grounded_explorations": _trace_sink.grounded_explorations,
 		"grounded_intention_completions": _trace_sink.grounded_intention_completions,
@@ -580,6 +634,14 @@ func observation_snapshot() -> Dictionary:
 		"gerald_motion_requests": _gerald_motion_requests,
 		"gerald_arrivals": _gerald_arrivals,
 	}
+
+
+func _empty_food_belief_confidence() -> float:
+	if _owners == null or _food_ref == null:
+		return 0.0
+	var claim = BeliefProposition.new(EpistemicClaim.quantity_claim(_food_ref, 0))
+	var entry = _owners.beliefs.get_entry(claim)
+	return 0.0 if entry == null else entry.confidence
 
 
 func _update_debug_projection() -> void:
@@ -613,7 +675,7 @@ func _update_debug_projection() -> void:
 		0 if project == null else project.contribution_count,
 		SHELTER_REQUIRED_CONTRIBUTIONS,
 		false if project == null else project.is_active(),
-		str(_owners.entities.get_quantity(_food_ref.id)),
+		str(int(_owners.entities.get_quantity(_food_ref.id)) + int(_owners.entities.get_quantity(_second_food_ref.id))),
 		_trace_sink.grounded_consumptions,
 		_trace_sink.grounded_rests,
 		_trace_sink.grounded_explorations,

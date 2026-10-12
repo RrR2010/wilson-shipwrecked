@@ -29,11 +29,13 @@ class CandidateSourceStub:
 
 class SpatialQueryStub:
 	extends RefCounted
+	var distance := 2.0
+	var visible := true
 	func metric_distance(_observer, _subject) -> float:
-		return 2.0
+		return distance
 
 	func has_line_of_sight(_observer, _subject) -> bool:
-		return true
+		return visible
 
 
 class RelationStub:
@@ -95,9 +97,10 @@ func _run_slice() -> void:
 		occluding_container,
 		open_property
 	)
+	var spatial = SpatialQueryStub.new()
 	var source = PassiveSpatialPerceptionSource.new(
 		candidates,
-		SpatialQueryStub.new(),
+		spatial,
 		wilson_ref,
 		nearby_relation,
 		8.0,
@@ -107,10 +110,37 @@ func _run_slice() -> void:
 		exposure
 	)
 
+	# Pure distance and occlusion gates precede even quantity=0 discovery.
+	spatial.distance = 9.0
+	_expect_equal(source.collect().evidence.size(), 0, "out of visual radius reveals nothing")
+	spatial.distance = 2.0
+	spatial.visible = false
+	candidates.request_refresh()
+	_expect_equal(source.collect().evidence.size(), 0, "occluded food reveals nothing")
+	spatial.visible = true
+	candidates.request_refresh()
+
 	# Exposed food behaves like food on a table: Wilson learns presence and quantity.
 	var visible = source.collect()
 	_expect_equal(visible.evidence.size(), 2, "exposed quantified item emits presence and quantity evidence")
 	_expect_true(_has_quantity(visible.evidence, food_ref, 3), "visible item reveals available quantity")
+
+	# A later hidden change does not produce knowledge merely because it occurs.
+	world.quantities[food_ref.key()] = 0
+	world.containers[food_ref.key()] = chest_ref
+	world.occluding[chest_ref.key()] = true
+	world.open_by_key[chest_ref.key()] = false
+	source.notify_semantic_changes(_quantity_change(food_ref))
+	var hidden_depletion = source.collect()
+	_expect_equal(hidden_depletion.evidence.size(), 0, "hidden depletion never becomes quantity evidence")
+	# Restoring exposed access makes zero visible without requiring a fake WorldEvent.
+	world.containers.erase(food_ref.key())
+	source.notify_semantic_changes(_property_change(chest_ref, open_property))
+	var visible_empty = source.collect()
+	_expect_true(_has_quantity(visible_empty.evidence, food_ref, 0), "reexposed empty stock produces zero evidence")
+	world.quantities[food_ref.key()] = 3
+	source.notify_semantic_changes(_quantity_change(food_ref))
+	_expect_true(_has_quantity(source.collect().evidence, food_ref, 3), "visible restock produces fresh quantity evidence")
 
 	# Moving the same item inside a closed occluding chest removes perceptual access.
 	world.containers[food_ref.key()] = chest_ref
