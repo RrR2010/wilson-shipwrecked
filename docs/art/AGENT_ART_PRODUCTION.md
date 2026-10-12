@@ -2,6 +2,9 @@
 
 ## Purpose
 
+**Parallel Blender production now follows [FUNCTIONAL_ASSET_FACTORY.md](FUNCTIONAL_ASSET_FACTORY.md)** for priority, pre-model operator consultation, individual .blend sources, anticipated function/states, and Godot-compatible structure. The short visual iteration guidance below remains applicable. Before modeling any asset, complete the functional consultation gate; do not use the older three-item visual brief alone as permission to begin.
+
+
 This is the execution-first artistic loop for production modeling agents.
 
 Use the smallest context necessary. The agent should spend more effort **modeling and inspecting renders** than rereading documentation.
@@ -15,8 +18,10 @@ Functional requirements come from `../asset-catalog/`. Blender/export mechanics 
 For each asset:
 
 ```text
-CHOOSE NEXT ASSET
+CHOOSE NEXT INDIVIDUAL ASSET
 → READ MINIMUM REFERENCES
+→ ANTICIPATE FUNCTION/STATES/ENGINE STRUCTURE
+→ CONSULT OPERATOR AND GET ANSWER
 → MODEL / GENERATE
 → RENDER CANONICAL PREVIEWS
 → INSPECT IMAGES
@@ -77,7 +82,7 @@ RELATIVE SCALE: longer than Wilson's forearm, much thinner than a log
 PHYSICAL REST: naturally lying on the ground, not standing upright
 ```
 
-This is enough planning. Do not write a long prose design document before modeling.
+These three visual points are a subset of the required brief in FUNCTIONAL_ASSET_FACTORY.md; obtain operator input about meaningful functional/geometry decisions before modeling.
 
 ---
 
