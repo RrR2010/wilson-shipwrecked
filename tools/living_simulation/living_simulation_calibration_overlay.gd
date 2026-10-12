@@ -143,8 +143,11 @@ func _render(snapshot: Dictionary) -> void:
 		int(snapshot.get("grounded_rests", 0)),
 		int(snapshot.get("grounded_explorations", 0)),
 	]
-	_world_label.text = "🍎 food %d remaining\n🏠 shelter %d/100%s\n🐦 Gerald · ambient · %s · arrivals %d" % [
+	_world_label.text = "🍎 food %d total · near %d · far %d\n👁 empty-near confidence %.2f\n🏠 shelter %d/100%s\n🐦 Gerald · ambient · %s · arrivals %d" % [
 		int(snapshot.get("food_quantity", -1)),
+		int(snapshot.get("near_food_quantity", -1)),
+		int(snapshot.get("far_food_quantity", -1)),
+		float(snapshot.get("observed_food_empty_confidence", 0.0)),
 		int(snapshot.get("project_contributions", 0)),
 		"" if bool(snapshot.get("project_active", false)) else " ✓",
 		String(snapshot.get("gerald_mode", &"")),
