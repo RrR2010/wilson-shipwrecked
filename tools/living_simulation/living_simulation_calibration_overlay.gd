@@ -42,6 +42,36 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+		return
+	if _simulation == null or _inspector_picker == null:
+		return
+	var camera = _simulation.get_node_or_null("Camera3D") as Camera3D
+	if camera == null:
+		return
+	var candidates: Array[String] = ["Wilson"]
+	candidates.append_array(_inspector_keys)
+	var best_name := ""
+	var best_distance := 38.0
+	for node_name in candidates:
+		var anchor = _simulation.get_node_or_null(node_name) as Node3D
+		if anchor == null or camera.is_position_behind(anchor.global_position):
+			continue
+		var screen_point: Vector2 = camera.unproject_position(anchor.global_position + Vector3.UP * 1.2)
+		var distance: float = screen_point.distance_to(event.position)
+		if distance < best_distance:
+			best_distance = distance
+			best_name = node_name
+	if best_name == "":
+		return
+	var index := 1 if best_name == "Wilson" else _inspector_keys.find(best_name) + 2
+	if index > 0:
+		_inspector_picker.select(index)
+		_render_inspector()
+		get_viewport().set_input_as_handled()
+
+
 func toggle_pause() -> bool:
 	if is_zero_approx(_speed_multiplier):
 		return set_speed_multiplier(_resume_speed)
