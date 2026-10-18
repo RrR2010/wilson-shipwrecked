@@ -46,6 +46,9 @@ func toggle_pause() -> bool:
 
 
 func _exit_tree() -> void:
+	var host = _simulation.get_node_or_null("GodotSimulationHost") if _simulation != null else null
+	if host != null:
+		host.set_physics_process(true)
 	Engine.time_scale = 1.0
 
 
@@ -65,6 +68,11 @@ func set_speed_multiplier(multiplier: float) -> bool:
 		_resume_speed = multiplier
 	_speed_multiplier = multiplier
 	Engine.time_scale = multiplier
+	# Godot may still dispatch zero-delta physics callbacks while time_scale is 0.
+	# Disable the semantic host directly to guarantee that paused time/steps do not advance.
+	var host = _simulation.get_node_or_null("GodotSimulationHost") if _simulation != null else null
+	if host != null:
+		host.set_physics_process(multiplier > 0.0)
 	if _speed_label != null:
 		_speed_label.text = "PAUSED" if is_zero_approx(multiplier) else "%.0fx" % multiplier
 	return true
