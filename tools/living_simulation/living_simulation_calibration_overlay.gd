@@ -5,11 +5,12 @@ extends CanvasLayer
 ## The overlay consumes observation_snapshot() and never mutates simulation owners.
 ## Engine.time_scale remains a tooling-only execution control.
 
-const ALLOWED_SPEEDS: Array[float] = [1.0, 4.0, 16.0]
+const ALLOWED_SPEEDS: Array[float] = [0.0, 1.0, 4.0, 16.0]
 const MAX_RECENT_TRANSITIONS := 6
 
 var _simulation
 var _speed_multiplier := 1.0
+var _resume_speed := 1.0
 var _previous_snapshot: Dictionary = {}
 var _previous_weather := ""
 var _previous_daylight := ""
@@ -32,6 +33,18 @@ func _ready() -> void:
 	set_speed_multiplier(1.0)
 
 
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_P or event.keycode == KEY_SPACE):
+		toggle_pause()
+		get_viewport().set_input_as_handled()
+
+
+func toggle_pause() -> bool:
+	if is_zero_approx(_speed_multiplier):
+		return set_speed_multiplier(_resume_speed)
+	return set_speed_multiplier(0.0)
+
+
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
@@ -48,10 +61,12 @@ func _process(_delta: float) -> void:
 func set_speed_multiplier(multiplier: float) -> bool:
 	if not ALLOWED_SPEEDS.has(multiplier):
 		return false
+	if multiplier > 0.0:
+		_resume_speed = multiplier
 	_speed_multiplier = multiplier
 	Engine.time_scale = multiplier
 	if _speed_label != null:
-		_speed_label.text = "%.0fx" % multiplier
+		_speed_label.text = "PAUSED" if is_zero_approx(multiplier) else "%.0fx" % multiplier
 	return true
 
 
@@ -89,12 +104,12 @@ func _build_ui() -> void:
 	header.add_theme_constant_override("separation", 8)
 	vbox.add_child(header)
 	var title := Label.new()
-	title.text = "LIVING ISLAND"
+	title.text = "LIVING ISLAND · Space/P pause"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 	for multiplier in ALLOWED_SPEEDS:
 		var button := Button.new()
-		button.text = "%.0fx" % multiplier
+		button.text = "⏸" if is_zero_approx(multiplier) else "%.0fx" % multiplier
 		button.pressed.connect(set_speed_multiplier.bind(multiplier))
 		header.add_child(button)
 
@@ -128,7 +143,8 @@ func _build_ui() -> void:
 
 
 func _render(snapshot: Dictionary) -> void:
-	_runtime_label.text = "t=%.0fs · %s · step %d" % [
+	_runtime_label.text = "%s t=%.0fs · %s · step %d" % [
+		"PAUSED ·" if is_zero_approx(_speed_multiplier) else "",
 		float(snapshot.get("simulation_time", -1.0)),
 		String(snapshot.get("weather", &"")),
 		int(snapshot.get("semantic_step", -1)),
