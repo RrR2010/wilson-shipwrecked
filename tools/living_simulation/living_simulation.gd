@@ -711,6 +711,59 @@ func observation_snapshot() -> Dictionary:
 	}
 
 
+## Developer-only, bounded read model. This does not grant beliefs or world access
+## to Wilson; labels must always distinguish authoritative state from belief.
+func debug_object_snapshot() -> Dictionary:
+	if _owners == null or _tool_world_query == null:
+		return {}
+	var objects := {
+		"FoodPatch": _food_ref,
+		"FoodPatchFar": _second_food_ref,
+		"Shelter": _shelter_ref,
+		"CuriositySpot": _curiosity_ref,
+		"SpyglassLocation": _spyglass_ref,
+	}
+	var display: Dictionary = {}
+	for node_name in objects.keys():
+		var ref = objects[node_name]
+		var world_items: Array[String] = []
+		var quantity = _tool_world_query.get_quantity(ref)
+		if quantity != null:
+			world_items.append("qty=%s" % str(quantity))
+		var holders = _tool_world_query.find_relations(DomainId.relation_type(&"held_by"), ref, _wilson_ref)
+		if not holders.is_empty():
+			world_items.append("held by Wilson")
+		var belief_items: Array[String] = []
+		for entry in _owners.beliefs.entries():
+			if entry == null or entry.proposition == null or entry.proposition.claim == null:
+				continue
+			var claim = entry.proposition.claim
+			var relevant := claim.subject.equals(ref)
+			if claim.kind == EpistemicClaim.Kind.RELATION and claim.object != null:
+				relevant = relevant or claim.object.equals(ref)
+			if not relevant or entry.confidence < 0.05:
+				continue
+			var short_claim := ""
+			match claim.kind:
+				EpistemicClaim.Kind.PROPERTY:
+					short_claim = "%s=%s" % [String(claim.semantic_id.value), str(claim.value)]
+				EpistemicClaim.Kind.QUANTITY:
+					short_claim = "qty=%s" % str(claim.value)
+				EpistemicClaim.Kind.RELATION:
+					short_claim = String(claim.semantic_id.value)
+				EpistemicClaim.Kind.EVENT:
+					short_claim = "event:%s" % String(claim.semantic_id.value)
+			belief_items.append("%s (%.2f)" % [short_claim, entry.confidence])
+		belief_items.sort()
+		if belief_items.size() > 3:
+			belief_items.resize(3)
+		display[node_name] = {
+			"world": ", ".join(world_items) if not world_items.is_empty() else "present",
+			"wilson": ", ".join(belief_items) if not belief_items.is_empty() else "unknown",
+		}
+	return display
+
+
 func _empty_food_belief_confidence() -> float:
 	if _owners == null or _food_ref == null:
 		return 0.0
