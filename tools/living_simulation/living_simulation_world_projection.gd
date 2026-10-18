@@ -21,6 +21,7 @@ var _cross_beam: MeshInstance3D
 var _roof_a: MeshInstance3D
 var _roof_b: MeshInstance3D
 var _roof_c: MeshInstance3D
+var _spatial_debug_labels: Dictionary = {}
 var _sleeping_area: MeshInstance3D
 
 var _clear_background := Color(0.16, 0.37, 0.55, 1.0)
@@ -73,6 +74,7 @@ func _process(_delta: float) -> void:
 	_project_exposed_food("FoodPatchFar", int(snapshot.get("far_food_quantity", 0)))
 	_project_wilson(snapshot)
 	_project_gerald(snapshot)
+	_project_spatial_diagnostics()
 
 
 ## Visual only: the fruit props reflect World quantity but never grant perception.
@@ -167,3 +169,42 @@ func _project_gerald(snapshot: Dictionary) -> void:
 			_gerald_bubble.text = "👀"
 		_:
 			_gerald_bubble.text = "🐦"
+
+
+## Labels follow visual nodes, not screen corners. Data is a read-only debug
+## projection and explicitly labels World truth vs Wilson's inferred knowledge.
+func _project_spatial_diagnostics() -> void:
+	if not _simulation.has_method("debug_object_snapshot"):
+		return
+	var items: Dictionary = _simulation.debug_object_snapshot()
+	var aliases := {
+		"FoodPatch": "Food (near)",
+		"FoodPatchFar": "Food (far)",
+		"Shelter": "Shelter",
+		"CuriositySpot": "Shipwreck relic",
+		"SpyglassLocation": "Spyglass",
+	}
+	for node_name in items.keys():
+		var anchor = _simulation.get_node_or_null(node_name) as Node3D
+		if anchor == null:
+			continue
+		if not _spatial_debug_labels.has(node_name):
+			var label := Label3D.new()
+			label.name = "DebugObjectLabel"
+			label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+			label.no_depth_test = true
+			label.fixed_size = true
+			label.font_size = 28
+			label.outline_size = 8
+			label.pixel_size = 0.0025
+			label.position = Vector3(0, 2.2, 0)
+			label.modulate = Color(0.94, 0.96, 1.0)
+			anchor.add_child(label)
+			_spatial_debug_labels[node_name] = label
+		var label: Label3D = _spatial_debug_labels[node_name]
+		var state: Dictionary = items[node_name]
+		label.text = "%s\nDEV World: %s\nWilson believes: %s" % [
+			aliases.get(node_name, node_name),
+			String(state.get("world", "")),
+			String(state.get("wilson", "unknown")),
+		]
