@@ -194,9 +194,9 @@ func _project_spatial_diagnostics() -> void:
 			label.name = "DebugObjectLabel"
 			label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 			label.no_depth_test = true
-			label.fixed_size = false
-			label.font_size = 18
-			label.outline_size = 3
+			label.fixed_size = true
+			label.font_size = 14
+			label.outline_size = 4
 			label.pixel_size = 0.002
 			label.position = Vector3(0, 1.55, 0)
 			label.modulate = Color(0.94, 0.96, 1.0)
@@ -204,11 +204,7 @@ func _project_spatial_diagnostics() -> void:
 			_spatial_debug_labels[node_name] = label
 		var label: Label3D = _spatial_debug_labels[node_name]
 		var state: Dictionary = items[node_name]
-		label.text = "%s · W: %s\nB: %s" % [
-			aliases.get(node_name, node_name),
-			_compact_debug_text(String(state.get("world", "")), 22),
-			_compact_debug_text(String(state.get("wilson", "unknown")), 34),
-		]
+		label.text = String(aliases.get(node_name, node_name))
 
 
 func _project_wilson_diagnostics() -> void:
@@ -222,20 +218,16 @@ func _project_wilson_diagnostics() -> void:
 		label.name = "DebugWilsonLabel"
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		label.no_depth_test = true
-		label.fixed_size = false
-		label.font_size = 18
-		label.outline_size = 3
+		label.fixed_size = true
+		label.font_size = 14
+		label.outline_size = 4
 		label.pixel_size = 0.002
 		label.position = Vector3(0, 2.55, 0)
 		anchor.add_child(label)
 		_spatial_debug_labels["Wilson"] = label
 	var state: Dictionary = _simulation.debug_wilson_snapshot()
 	var label: Label3D = _spatial_debug_labels["Wilson"]
-	label.text = "Wilson · %s\n%s · beliefs %d" % [
-		String(state.get("carried", "none")),
-		_compact_debug_text(String(state.get("intention", "idle")), 22),
-		int(state.get("belief_count", 0)),
-	]
+	label.text = "Wilson"
 
 
 func _compact_debug_text(value: String, limit: int) -> String:
