@@ -23,6 +23,7 @@ var _world_label: Label
 var _health_label: Label
 var _inspector_picker: OptionButton
 var _inspector_detail: Label
+var _inventory_sidebar: RichTextLabel
 var _inspector_keys: Array[String] = []
 var _recent_label: Label
 
@@ -92,6 +93,7 @@ func _process(_delta: float) -> void:
 	_observe_transitions(snapshot)
 	_render(snapshot)
 	_render_inspector()
+	_render_inventory_sidebar()
 	_previous_snapshot = snapshot.duplicate(true)
 
 
@@ -205,6 +207,25 @@ func _build_ui() -> void:
 	_inspector_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_inspector_detail.text = "Pause with Space/P, then select an object.\nW = developer World truth\nB = Wilson's current belief"
 	inspector_stack.add_child(_inspector_detail)
+
+	var inventory_panel := PanelContainer.new()
+	inventory_panel.name = "InventorySidebar"
+	inventory_panel.anchor_left = 0.0
+	inventory_panel.anchor_right = 0.0
+	inventory_panel.anchor_top = 0.0
+	inventory_panel.anchor_bottom = 1.0
+	inventory_panel.offset_left = 12.0
+	inventory_panel.offset_right = 308.0
+	inventory_panel.offset_top = 185.0
+	inventory_panel.offset_bottom = -20.0
+	add_child(inventory_panel)
+	_inventory_sidebar = RichTextLabel.new()
+	_inventory_sidebar.bbcode_enabled = true
+	_inventory_sidebar.scroll_active = true
+	_inventory_sidebar.scroll_following = false
+	_inventory_sidebar.fit_content = false
+	_inventory_sidebar.add_theme_font_size_override("normal_font_size", 14)
+	inventory_panel.add_child(_inventory_sidebar)
 
 	_speed_label = Label.new()
 	_speed_label.visible = false
@@ -359,3 +380,27 @@ func _render_inspector() -> void:
 			String(state.get("world", "unknown")),
 			String(state.get("wilson", "unknown")),
 		]
+
+
+func _render_inventory_sidebar() -> void:
+	if _inventory_sidebar == null or _simulation == null or not _simulation.has_method("debug_inventory_sidebar_snapshot"):
+		return
+	var state: Dictionary = _simulation.debug_inventory_sidebar_snapshot()
+	var lines: Array[String] = ["[b]INVENTORIES · DEV World[/b]", "[color=gray]B = Wilson's quantity belief[/color]"]
+	for inventory in state.get("inventories", []):
+		lines.append("")
+		lines.append("[b]%s[/b]" % String(inventory.get("name", "")))
+		var items: Array = inventory.get("items", [])
+		if items.is_empty():
+			lines.append("  [color=gray][empty][/color]")
+		for item in items:
+			lines.append("  • %s ×%s" % [String(item.get("name", "item")), str(item.get("quantity", 1))])
+			lines.append("    B: %s" % String(item.get("belief", "unknown")))
+	lines.append("")
+	lines.append("[b]──────────[/b]")
+	lines.append("[b]WILSON · BELIEFS[/b]")
+	for belief in state.get("beliefs", []):
+		lines.append("  • %s" % String(belief).replace("[", "(").replace("]", ")"))
+	var previous_scroll := _inventory_sidebar.get_v_scroll_bar().value
+	_inventory_sidebar.text = "\n".join(lines)
+	_inventory_sidebar.get_v_scroll_bar().value = previous_scroll
