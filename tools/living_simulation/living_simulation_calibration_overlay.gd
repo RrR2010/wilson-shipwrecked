@@ -21,6 +21,9 @@ var _runtime_label: Label
 var _behavior_label: Label
 var _world_label: Label
 var _health_label: Label
+var _inspector_picker: OptionButton
+var _inspector_detail: Label
+var _inspector_keys: Array[String] = []
 var _recent_label: Label
 
 
@@ -58,6 +61,7 @@ func _process(_delta: float) -> void:
 	var snapshot: Dictionary = _simulation.observation_snapshot()
 	_observe_transitions(snapshot)
 	_render(snapshot)
+	_render_inspector()
 	_previous_snapshot = snapshot.duplicate(true)
 
 
@@ -144,6 +148,33 @@ func _build_ui() -> void:
 	_recent_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_recent_label.text = "—"
 	vbox.add_child(_recent_label)
+
+	var inspector_panel := PanelContainer.new()
+	inspector_panel.name = "ObjectInspector"
+	inspector_panel.anchor_left = 0.0
+	inspector_panel.anchor_right = 0.0
+	inspector_panel.offset_left = 20.0
+	inspector_panel.offset_right = 355.0
+	inspector_panel.offset_top = 25.0
+	inspector_panel.offset_bottom = 170.0
+	add_child(inspector_panel)
+	var inspector_margin := MarginContainer.new()
+	inspector_margin.add_theme_constant_override("margin_left", 10)
+	inspector_margin.add_theme_constant_override("margin_right", 10)
+	inspector_margin.add_theme_constant_override("margin_top", 8)
+	inspector_margin.add_theme_constant_override("margin_bottom", 8)
+	inspector_panel.add_child(inspector_margin)
+	var inspector_stack := VBoxContainer.new()
+	inspector_margin.add_child(inspector_stack)
+	_inspector_picker = OptionButton.new()
+	_inspector_picker.add_item("Select object to inspect")
+	_inspector_picker.add_item("Wilson")
+	_inspector_picker.select(0)
+	inspector_stack.add_child(_inspector_picker)
+	_inspector_detail = Label.new()
+	_inspector_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_inspector_detail.text = "Pause with Space/P, then select an object.\nW = developer World truth\nB = Wilson's current belief"
+	inspector_stack.add_child(_inspector_detail)
 
 	_speed_label = Label.new()
 	_speed_label.visible = false
@@ -263,3 +294,38 @@ func _short_intention(value: String) -> String:
 	if value.contains("seek_safer_cover"):
 		return "🌧 seek cover"
 	return value
+
+
+func _render_inspector() -> void:
+	if _simulation == null or not _simulation.has_method("debug_object_snapshot") or _inspector_picker == null:
+		return
+	var objects: Dictionary = _simulation.debug_object_snapshot()
+	var keys: Array[String] = []
+	for key in objects.keys():
+		keys.append(String(key))
+	keys.sort()
+	if keys != _inspector_keys:
+		var selected := _inspector_picker.get_selected_id()
+		_inspector_keys = keys
+		_inspector_picker.clear()
+		_inspector_picker.add_item("Select object to inspect")
+		_inspector_picker.add_item("Wilson")
+		for key in keys:
+			_inspector_picker.add_item(key)
+		_inspector_picker.select(mini(selected, keys.size() + 1))
+	var index := _inspector_picker.selected
+	if index == 1 and _simulation.has_method("debug_wilson_snapshot"):
+		var state: Dictionary = _simulation.debug_wilson_snapshot()
+		_inspector_detail.text = "World carrying: %s\nIntention: %s\nTarget: %s\nBeliefs recorded: %d" % [
+			String(state.get("carried", "none")),
+			String(state.get("intention", "idle")),
+			String(state.get("target", "none")),
+			int(state.get("belief_count", 0)),
+		]
+	elif index >= 2 and index - 2 < keys.size():
+		var key := keys[index - 2]
+		var state: Dictionary = objects.get(key, {})
+		_inspector_detail.text = "W · %s\nB · %s" % [
+			String(state.get("world", "unknown")),
+			String(state.get("wilson", "unknown")),
+		]
