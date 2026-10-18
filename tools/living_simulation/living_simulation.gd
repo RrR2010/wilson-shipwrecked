@@ -738,7 +738,7 @@ func debug_object_snapshot() -> Dictionary:
 			if entry == null or entry.proposition == null or entry.proposition.claim == null:
 				continue
 			var claim = entry.proposition.claim
-			var relevant := claim.subject.equals(ref)
+			var relevant: bool = bool(claim.subject.equals(ref))
 			if claim.kind == EpistemicClaim.Kind.RELATION and claim.object != null:
 				relevant = relevant or claim.object.equals(ref)
 			if not relevant or entry.confidence < 0.05:
