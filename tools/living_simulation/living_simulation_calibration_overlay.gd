@@ -183,6 +183,7 @@ func _build_ui() -> void:
 
 	var inspector_panel := PanelContainer.new()
 	inspector_panel.name = "ObjectInspector"
+	inspector_panel.visible = false
 	inspector_panel.anchor_left = 0.0
 	inspector_panel.anchor_right = 0.0
 	inspector_panel.offset_left = 20.0
@@ -216,7 +217,7 @@ func _build_ui() -> void:
 	inventory_panel.anchor_bottom = 1.0
 	inventory_panel.offset_left = 12.0
 	inventory_panel.offset_right = 308.0
-	inventory_panel.offset_top = 185.0
+	inventory_panel.offset_top = 32.0
 	inventory_panel.offset_bottom = -20.0
 	add_child(inventory_panel)
 	_inventory_sidebar = RichTextLabel.new()
@@ -389,10 +390,13 @@ func _render_inventory_sidebar() -> void:
 	var lines: Array[String] = ["[b]INVENTORIES · DEV World[/b]", "[color=gray]B = Wilson's quantity belief[/color]"]
 	for inventory in state.get("inventories", []):
 		lines.append("")
-		lines.append("[b]%s[/b]" % String(inventory.get("name", "")))
+		var group_name := String(inventory.get("name", ""))
+		var selected_name := "Wilson" if _inspector_picker.selected == 1 else (_inspector_keys[_inspector_picker.selected - 2] if _inspector_picker.selected >= 2 and _inspector_picker.selected - 2 < _inspector_keys.size() else "")
+		var selected_label := _inspector_sidebar_group_name(selected_name)
+		lines.append("[b]%s%s[/b]" % ["▸ " if group_name == selected_label else "", group_name])
 		var items: Array = inventory.get("items", [])
 		if items.is_empty():
-			lines.append("  [color=gray][empty][/color]")
+			lines.append("  [color=gray](empty)[/color]")
 		for item in items:
 			lines.append("  • %s ×%s" % [String(item.get("name", "item")), str(item.get("quantity", 1))])
 			lines.append("    B: %s" % String(item.get("belief", "unknown")))
@@ -404,3 +408,12 @@ func _render_inventory_sidebar() -> void:
 	var previous_scroll := _inventory_sidebar.get_v_scroll_bar().value
 	_inventory_sidebar.text = "\n".join(lines)
 	_inventory_sidebar.get_v_scroll_bar().value = previous_scroll
+
+
+func _inspector_sidebar_group_name(node_name: String) -> String:
+	match node_name:
+		"FoodPatch": return "Food (near)"
+		"FoodPatchFar": return "Food (far)"
+		"CuriositySpot": return "Shipwreck relic"
+		"SpyglassLocation": return "Spyglass"
+		_: return node_name
