@@ -75,6 +75,7 @@ func _process(_delta: float) -> void:
 	_project_wilson(snapshot)
 	_project_gerald(snapshot)
 	_project_spatial_diagnostics()
+	_project_wilson_diagnostics()
 
 
 ## Visual only: the fruit props reflect World quantity but never grant perception.
@@ -208,3 +209,31 @@ func _project_spatial_diagnostics() -> void:
 			String(state.get("world", "")),
 			String(state.get("wilson", "unknown")),
 		]
+
+
+func _project_wilson_diagnostics() -> void:
+	if not _simulation.has_method("debug_wilson_snapshot"):
+		return
+	var anchor = _simulation.get_node_or_null("Wilson") as Node3D
+	if anchor == null:
+		return
+	if not _spatial_debug_labels.has("Wilson"):
+		var label := Label3D.new()
+		label.name = "DebugWilsonLabel"
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.no_depth_test = true
+		label.fixed_size = true
+		label.font_size = 28
+		label.outline_size = 8
+		label.pixel_size = 0.0025
+		label.position = Vector3(0, 3.9, 0)
+		anchor.add_child(label)
+		_spatial_debug_labels["Wilson"] = label
+	var state: Dictionary = _simulation.debug_wilson_snapshot()
+	var label: Label3D = _spatial_debug_labels["Wilson"]
+	label.text = "Wilson · carrying: %s\nDoing: %s\nTarget: %s · beliefs: %d" % [
+		String(state.get("carried", "none")),
+		String(state.get("intention", "idle")),
+		String(state.get("target", "none")),
+		int(state.get("belief_count", 0)),
+	]
