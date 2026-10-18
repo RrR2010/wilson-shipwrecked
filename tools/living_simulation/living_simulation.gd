@@ -764,6 +764,36 @@ func debug_object_snapshot() -> Dictionary:
 	return display
 
 
+func debug_wilson_snapshot() -> Dictionary:
+	if _owners == null or _tool_world_query == null:
+		return {}
+	var held_relation = DomainId.relation_type(&"held_by")
+	var carried_by = DomainId.relation_type(&"carried_by")
+	var held_items: Array[String] = []
+	for item in _tool_world_query.get_held_items(_wilson_ref, held_relation):
+		held_items.append(String(item.id.value))
+	for relation in _tool_world_query.get_incoming_relations(_wilson_ref, carried_by):
+		if relation.subject.kind == RuntimeWorldRef.Kind.ENTITY:
+			held_items.append(String(relation.subject.id.value))
+	held_items.sort()
+	var intention := "idle"
+	var target := "none"
+	var current = _owners.current_intention.current()
+	if current != null:
+		if current.intention_id != null:
+			intention = String(current.intention_id.value)
+		if current.bindings != null and current.bindings.has(&"target"):
+			var target_ref = current.bindings.get_subject(&"target")
+			if target_ref != null:
+				target = target_ref.sort_key()
+	return {
+		"carried": "none" if held_items.is_empty() else ", ".join(held_items),
+		"intention": intention,
+		"target": target,
+		"belief_count": _owners.beliefs.entry_count(),
+	}
+
+
 func _empty_food_belief_confidence() -> float:
 	if _owners == null or _food_ref == null:
 		return 0.0
