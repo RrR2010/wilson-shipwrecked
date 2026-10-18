@@ -194,20 +194,20 @@ func _project_spatial_diagnostics() -> void:
 			label.name = "DebugObjectLabel"
 			label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 			label.no_depth_test = true
-			label.fixed_size = true
-			label.font_size = 28
-			label.outline_size = 8
-			label.pixel_size = 0.0025
-			label.position = Vector3(0, 2.2, 0)
+			label.fixed_size = false
+			label.font_size = 18
+			label.outline_size = 3
+			label.pixel_size = 0.002
+			label.position = Vector3(0, 1.55, 0)
 			label.modulate = Color(0.94, 0.96, 1.0)
 			anchor.add_child(label)
 			_spatial_debug_labels[node_name] = label
 		var label: Label3D = _spatial_debug_labels[node_name]
 		var state: Dictionary = items[node_name]
-		label.text = "%s\nDEV World: %s\nWilson believes: %s" % [
+		label.text = "%s · W: %s\nB: %s" % [
 			aliases.get(node_name, node_name),
-			String(state.get("world", "")),
-			String(state.get("wilson", "unknown")),
+			_compact_debug_text(String(state.get("world", "")), 22),
+			_compact_debug_text(String(state.get("wilson", "unknown")), 34),
 		]
 
 
@@ -222,18 +222,23 @@ func _project_wilson_diagnostics() -> void:
 		label.name = "DebugWilsonLabel"
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		label.no_depth_test = true
-		label.fixed_size = true
-		label.font_size = 28
-		label.outline_size = 8
-		label.pixel_size = 0.0025
-		label.position = Vector3(0, 3.9, 0)
+		label.fixed_size = false
+		label.font_size = 18
+		label.outline_size = 3
+		label.pixel_size = 0.002
+		label.position = Vector3(0, 2.55, 0)
 		anchor.add_child(label)
 		_spatial_debug_labels["Wilson"] = label
 	var state: Dictionary = _simulation.debug_wilson_snapshot()
 	var label: Label3D = _spatial_debug_labels["Wilson"]
-	label.text = "Wilson · carrying: %s\nDoing: %s\nTarget: %s · beliefs: %d" % [
+	label.text = "Wilson · %s\n%s · beliefs %d" % [
 		String(state.get("carried", "none")),
-		String(state.get("intention", "idle")),
-		String(state.get("target", "none")),
+		_compact_debug_text(String(state.get("intention", "idle")), 22),
 		int(state.get("belief_count", 0)),
 	]
+
+
+func _compact_debug_text(value: String, limit: int) -> String:
+	if value.length() <= limit:
+		return value
+	return value.substr(0, limit - 1) + "…"
