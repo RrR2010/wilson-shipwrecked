@@ -764,6 +764,61 @@ func debug_object_snapshot() -> Dictionary:
 	return display
 
 
+## Operator-only inventory projection; never used to generate Wilson's decisions.
+## A quantity belief is matched by subject, not by assuming Wilson knows World stock.
+func debug_inventory_sidebar_snapshot() -> Dictionary:
+	if _owners == null or _tool_world_query == null:
+		return {}
+	var sources := {
+		"Wilson": _wilson_ref,
+		"Food (near)": _food_ref,
+		"Food (far)": _second_food_ref,
+		"Shelter": _shelter_ref,
+		"Shipwreck relic": _curiosity_ref,
+		"Spyglass": _spyglass_ref,
+	}
+	var inventories: Array[Dictionary] = []
+	var inside = DomainId.relation_type(&"inside")
+	var held_by = DomainId.relation_type(&"held_by")
+	for label in sources.keys():
+		var holder = sources[label]
+		var rows: Array[Dictionary] = []
+		if label == "Wilson":
+			for item in _tool_world_query.get_held_items(_wilson_ref, held_by):
+				rows.append(_debug_item_row(item, _tool_world_query.get_quantity(item)))
+		else:
+			var amount = _tool_world_query.get_quantity(holder)
+			if amount != null and float(amount) > 0.0:
+				rows.append(_debug_item_row(holder, amount))
+			for item in _tool_world_query.get_container_contents(holder, inside):
+				rows.append(_debug_item_row(item, _tool_world_query.get_quantity(item)))
+		rows.sort_custom(func(a, b): return String(a["name"]) < String(b["name"]))
+		inventories.append({"name": label, "items": rows})
+	var beliefs: Array[String] = []
+	for entry in _owners.beliefs.entries():
+		if entry == null or entry.proposition == null:
+			continue
+		beliefs.append("%s (%.2f)" % [entry.proposition.sort_key(), entry.confidence])
+	return {"inventories": inventories, "beliefs": beliefs}
+
+
+func _debug_item_row(item, amount: Variant) -> Dictionary:
+	var confidence := -1.0
+	var believed_amount: Variant = null
+	for entry in _owners.beliefs.entries():
+		var claim = entry.proposition.claim
+		if claim.kind != EpistemicClaim.Kind.QUANTITY or not claim.subject.equals(item):
+			continue
+		if entry.confidence > confidence:
+			confidence = entry.confidence
+			believed_amount = claim.value
+	return {
+		"name": String(item.id.value),
+		"quantity": 1 if amount == null else amount,
+		"belief": "unknown" if confidence < 0.0 else "%s (%.2f conf)" % [str(believed_amount), confidence],
+	}
+
+
 func debug_wilson_snapshot() -> Dictionary:
 	if _owners == null or _tool_world_query == null:
 		return {}
