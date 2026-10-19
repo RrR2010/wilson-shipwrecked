@@ -1,0 +1,65 @@
+extends SceneTree
+
+const DomainId = preload("res://src/domain/core/domain_id.gd")
+const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
+const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
+const ActionOutcome = preload("res://src/domain/actions/action_outcome.gd")
+const WorldCommitResult = preload("res://src/domain/world/world_commit_result.gd")
+const EntityInstance = preload("res://src/domain/world/entity_instance.gd")
+const EntityStore = preload("res://src/domain/world/entity_store.gd")
+const WorldRelation = preload("res://src/domain/world/world_relation.gd")
+const WorldRelationStore = preload("res://src/domain/world/world_relation_store.gd")
+const DefaultWorldQuery = preload("res://src/domain/world/default_world_query.gd")
+const ContentRegistry = preload("res://src/domain/content/content_registry.gd")
+const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
+const BeliefProposition = preload("res://src/domain/cognition/belief_proposition.gd")
+const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
+const BeliefLearningCoordinator = preload("res://src/application/simulation/belief_learning_coordinator.gd")
+const BeliefLearningService = preload("res://src/domain/cognition/belief_learning_service.gd")
+const GroundedContainerInspectionEvidenceSource = preload("res://src/application/simulation/grounded_container_inspection_evidence_source.gd")
+
+var failures: Array[String] = []
+
+func _init() -> void:
+	var chest = RuntimeWorldRef.entity(DomainId.entity(&"opaque_chest"))
+	var fruit = RuntimeWorldRef.entity(DomainId.entity(&"sealed_fruit"))
+	var inside = DomainId.relation_type(&"inside")
+	var action = DomainId.action(&"inspect_chest")
+	var event = DomainId.event_definition(&"chest_opened")
+	var entities = EntityStore.new()
+	var place = DomainId.place(&"camp")
+	entities.add_entity(EntityInstance.new(chest.id, DomainId.entity_type(&"chest"), place))
+	entities.add_entity(EntityInstance.new(fruit.id, DomainId.entity_type(&"food"), place, {}, 4))
+	var relations = WorldRelationStore.new()
+	relations.add_relation(WorldRelation.new(inside, fruit, chest))
+	var world = DefaultWorldQuery.new(entities, relations, ContentRegistry.new())
+	var beliefs = BeliefStore.new()
+	var learner = BeliefLearningCoordinator.new(BeliefLearningService.new(), beliefs)
+	var source = GroundedContainerInspectionEvidenceSource.new(world, action, event, inside)
+	var binding = RoleBinding.new()
+	binding.bind(&"target", chest)
+	var outcome = ActionOutcome.new(&"inspect_exec", action, binding, [], event)
+	var rejected = WorldCommitResult.new(false, [], [], ["interrupted before commit"])
+	_check(source.collect(outcome, rejected).evidence.is_empty(), "Rejected inspection does not reveal contents")
+	_check(source.collect(null, null).evidence.is_empty(), "Without action outcome there is no content evidence")
+	var contents_belief = BeliefProposition.new(EpistemicClaim.relation_claim(fruit, inside, chest))
+	var quantity_belief = BeliefProposition.new(EpistemicClaim.quantity_claim(fruit, 4))
+	_check(beliefs.get_entry(contents_belief) == null, "Closed chest never seeds knowledge")
+	var accepted = WorldCommitResult.new(true, [], [])
+	var observed = source.collect(outcome, accepted)
+	_check(observed.evidence.size() == 2, "Committed inspection reveals identity and exact quantity")
+	learner.process(observed)
+	_check(beliefs.get_entry(contents_belief) != null, "Inspection creates learned containment belief")
+	_check(beliefs.get_entry(quantity_belief) != null, "Inspection creates learned quantity belief")
+	if failures.is_empty():
+		print("PASS opaque_chest_inspection_test")
+		quit(0)
+	else:
+		for failure in failures:
+			push_error(failure)
+		print("FAIL opaque_chest_inspection_test: %d failure(s)" % failures.size())
+		quit(1)
+
+func _check(ok: bool, label: String) -> void:
+	if not ok:
+		failures.append(label)
