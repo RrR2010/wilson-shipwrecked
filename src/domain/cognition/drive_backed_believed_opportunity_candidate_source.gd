@@ -65,6 +65,8 @@ func generate() -> Array:
 						"claim_kind": claim.kind,
 						"claim_key": claim.sort_key(),
 						"evidence_count": entry.evidence_count,
+						"belief_source_execution_id": String(entry.last_source_execution_id),
+						"belief_modality": String(entry.last_modality),
 					}
 				))
 	result.sort_custom(func(a, b): return a.stable_key() < b.stable_key())

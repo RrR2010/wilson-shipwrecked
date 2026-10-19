@@ -276,7 +276,6 @@ func _bootstrap_and_start() -> void:
 	_gerald_ref = RuntimeWorldRef.entity(gerald_entity_id)
 
 	var known_food = BeliefProposition.new(EpistemicClaim.property_claim(_food_ref, edible_property, true))
-	var known_second_food = BeliefProposition.new(EpistemicClaim.property_claim(_second_food_ref, edible_property, true))
 	var known_rest = BeliefProposition.new(EpistemicClaim.property_claim(_rest_ref, restful_property, true))
 	var known_curiosity = BeliefProposition.new(EpistemicClaim.property_claim(_curiosity_ref, interesting_property, true))
 	var known_spyglass = BeliefProposition.new(EpistemicClaim.relation_claim(_wilson_ref, DomainId.relation_type(&"perceptibly_near"), _spyglass_ref))
@@ -321,7 +320,6 @@ func _bootstrap_and_start() -> void:
 		[RelationBootstrapSeed.new(inside_relation, _chest_item_ref, _chest_ref)],
 		[
 			BeliefBootstrapSeed.new(known_food, 0.9, 1, &"new_run_seed", &"memory"),
-			BeliefBootstrapSeed.new(known_second_food, 0.75, 1, &"new_run_seed", &"memory"),
 			BeliefBootstrapSeed.new(known_rest, 0.9, 1, &"new_run_seed", &"memory"),
 			BeliefBootstrapSeed.new(known_curiosity, 0.85, 1, &"new_run_seed", &"memory"),
 		],
@@ -602,7 +600,9 @@ func _bootstrap_and_start() -> void:
 		FOOD_VISIBILITY_RADIUS,
 		&"vision",
 		0.95,
-		runtime.world_query
+		runtime.world_query,
+		null,
+		[edible_property]
 	)
 	var belief_learner = BeliefLearningService.new()
 	var perceptual_learning = BeliefLearningCoordinator.new(
@@ -722,10 +722,15 @@ func observation_snapshot() -> Dictionary:
 		gerald_entity = _owners.entities.get_entity(_gerald_ref.id)
 		gerald_affinity = _owners.actor_relationships.affinity(_gerald_ref, _wilson_ref)
 	var intention_key := ""
+	var intention_target_key := ""
 	if _owners != null and _owners.current_intention.has_current():
 		var selected = _owners.current_intention.current()
 		if selected != null and selected.intention_id != null:
 			intention_key = selected.intention_id.sort_key()
+			if selected.bindings != null and selected.bindings.has(&"target"):
+				var target = selected.bindings.get_subject(&"target")
+				if target != null:
+					intention_target_key = target.sort_key()
 	return {
 		"live": is_live(),
 		"simulation_time": -1.0 if _host == null else _host.simulation_time(),
@@ -738,6 +743,7 @@ func observation_snapshot() -> Dictionary:
 		"stimulation_band": -1 if _owners == null else _owners.drives.band(DriveState.STIMULATION),
 		"has_intention": false if _owners == null else _owners.current_intention.has_current(),
 		"intention_key": intention_key,
+		"intention_target_key": intention_target_key,
 		"motion_status": -1 if _motion == null or _wilson_ref == null else _motion.get_status(_wilson_ref),
 		"wilson_position": $Wilson.global_position,
 		"trace_count": _trace_sink.traces.size(),
@@ -745,6 +751,7 @@ func observation_snapshot() -> Dictionary:
 		"food_quantity": null if _owners == null else int(_owners.entities.get_quantity(_food_ref.id)) + int(_owners.entities.get_quantity(_second_food_ref.id)),
 		"near_food_quantity": null if _owners == null else _owners.entities.get_quantity(_food_ref.id),
 		"far_food_quantity": null if _owners == null else _owners.entities.get_quantity(_second_food_ref.id),
+		"far_food_edible_confidence": _far_food_edible_confidence(),
 		"observed_food_empty_confidence": _empty_food_belief_confidence(),
 		"grounded_rests": _trace_sink.grounded_rests,
 		"grounded_explorations": _trace_sink.grounded_explorations,
@@ -997,3 +1004,10 @@ func _motion_status_name(status: int) -> String:
 func _fail_boot(message: String) -> void:
 	_boot_error = message
 	push_error("[LIVING_SIM] %s" % message)
+
+func _far_food_edible_confidence() -> float:
+	if _owners == null or _second_food_ref == null:
+		return -1.0
+	var claim = BeliefProposition.new(EpistemicClaim.property_claim(_second_food_ref, DomainId.property(&"edible"), true))
+	var entry = _owners.beliefs.get_entry(claim)
+	return -1.0 if entry == null else entry.confidence
