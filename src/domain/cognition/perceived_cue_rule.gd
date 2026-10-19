@@ -2,6 +2,7 @@ class_name PerceivedCueRule
 extends RefCounted
 
 const DomainId = preload("res://src/domain/core/domain_id.gd")
+const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 
 ## Authored mapping from current Wilson-relative perceptual evidence to a semantic
 ## context cue that may activate learned habits. This consumes perception only and
@@ -34,7 +35,7 @@ func _init(
 
 
 func matches(evidence) -> bool:
-	if evidence == null or evidence.claim == null:
+	if evidence == null or evidence.claim == null or evidence.claim.kind != EpistemicClaim.Kind.EVENT:
 		return false
 	if evidence.confidence < minimum_confidence:
 		return false
