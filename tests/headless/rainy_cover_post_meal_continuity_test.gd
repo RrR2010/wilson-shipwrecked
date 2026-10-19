@@ -1,22 +1,28 @@
 extends SceneTree
 
 const DomainId = preload("res://src/domain/core/domain_id.gd")
+const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
 const RoleBinding = preload("res://src/domain/actions/role_binding.gd")
 const PerceivedHabitCandidateSource = preload("res://src/domain/cognition/perceived_habit_candidate_source.gd")
-const PerceptionResult = preload("res://src/domain/cognition/perception_result.gd")
+const PerceivedCueService = preload("res://src/domain/cognition/perceived_cue_service.gd")
+const ObservablePropertyCueRule = preload("res://src/domain/cognition/observable_property_cue_rule.gd")
+const ObservableAmbientWeatherSource = preload("res://src/application/simulation/observable_ambient_weather_source.gd")
+const AlreadyProtectedCandidateFilter = preload("res://src/application/simulation/already_protected_candidate_filter.gd")
 const DecisionCandidate = preload("res://src/domain/cognition/decision_candidate.gd")
 
 var _failures: Array[String] = []
 
 
-class EventOnlyWeatherCue:
+class WeatherStub:
 	extends RefCounted
-	var rain_transition_present := true
-	func derive(_perception_result) -> Array[StringName]:
-		var cues: Array[StringName] = []
-		if rain_transition_present:
-			cues.append(&"dangerous_weather")
-		return cues
+	var weather: StringName = &"rain"
+
+
+class DistanceStub:
+	extends RefCounted
+	var distance := 5.0
+	func metric_distance(_from, _to) -> float:
+		return distance
 
 
 class HabitStoreStub:
@@ -39,19 +45,30 @@ func _init() -> void:
 
 func _run() -> void:
 	var cover = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"seek_safer_cover")
-	var cue = EventOnlyWeatherCue.new()
-	var source = PerceivedHabitCandidateSource.new(
-		cue, HabitStoreStub.new(cover), 0.5, 0.2, DecisionCandidate.Scope.TACTICAL
-	)
-	_expect(_contains(source.generate(PerceptionResult.new()), cover), "Rain transition initially activates cover habit")
+	var rainy = DomainId.property(&"ambient_rain")
+	var observer = RuntimeWorldRef.wilson()
+	var shelter = RuntimeWorldRef.entity(DomainId.entity(&"shelter_001"))
+	var weather = WeatherStub.new()
+	var distance = DistanceStub.new()
+	var observer_source = ObservableAmbientWeatherSource.new(weather, observer, rainy)
+	var cues = PerceivedCueService.new([ObservablePropertyCueRule.new(rainy, true, &"dangerous_weather")])
+	var habit = HabitStoreStub.new(cover)
+	var filter = AlreadyProtectedCandidateFilter.new(distance, observer, shelter)
+	var source = PerceivedHabitCandidateSource.new(cues, habit, 0.5, 0.2, DecisionCandidate.Scope.TACTICAL, filter)
 
-	# No new weather event is emitted when hunger interrupts shelter for eating.
-	# The rain remains active, but event-only cue derivation forgets the context.
-	cue.rain_transition_present = false
-	_expect(
-		_contains(source.generate(PerceptionResult.new()), cover),
-		"RED: grounded meal completion during persistent rain should make cover eligible for reconsideration"
-	)
+	_expect(_contains(source.generate(observer_source.collect()), cover), "Ongoing perceived rain activates cover")
+	# Meal completion does not require another weather-worsened transition.
+	_expect(_contains(source.generate(observer_source.collect()), cover), "Persistent rain keeps cover eligible after a meal")
+	# Fresh clear-weather observation invalidates the old motivation.
+	weather.weather = &"clear"
+	_expect(source.generate(observer_source.collect()).is_empty(), "Perceived clear weather invalidates cover")
+	weather.weather = &"rain"
+	distance.distance = 0.3
+	_expect(source.generate(observer_source.collect()).is_empty(), "Already protected Wilson must not seek cover again")
+	distance.distance = 5.0
+	# Restore re-composes the observer and habit source from durable weather.
+	var restored_source = ObservableAmbientWeatherSource.new(weather, observer, rainy)
+	_expect(_contains(source.generate(restored_source.collect()), cover), "Restore recovers rain cue through legitimate observation")
 	_finish()
 
 
