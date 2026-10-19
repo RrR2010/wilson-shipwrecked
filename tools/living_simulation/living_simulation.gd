@@ -30,6 +30,7 @@ const DriveState = preload("res://src/domain/cognition/drive_state.gd")
 const DriveProgressionService = preload("res://src/domain/cognition/drive_progression_service.gd")
 const DriveCandidateDefinition = preload("res://src/domain/cognition/drive_candidate_definition.gd")
 const DriveCandidateSource = preload("res://src/domain/cognition/drive_candidate_source.gd")
+const NeedDrivenInvestigationCandidateSource = preload("res://src/domain/cognition/need_driven_investigation_candidate_source.gd")
 const DriveConsequenceDefinition = preload("res://src/domain/cognition/drive_consequence_definition.gd")
 const IntentionCompletionDefinition = preload("res://src/domain/cognition/intention_completion_definition.gd")
 const PerceivedOpportunityDefinition = preload("res://src/domain/cognition/perceived_opportunity_definition.gd")
@@ -425,6 +426,7 @@ func _bootstrap_and_start() -> void:
 	})
 	# Hunger needs a believed food target; never route an unbound food intention.
 	var drive_source = DriveCandidateSource.new(_owners.drives, [energy_definition, stimulation_definition])
+	var need_investigation = NeedDrivenInvestigationCandidateSource.new(_owners.drives, _owners.beliefs, edible_property, interesting_property, seek_stimulation)
 	var grounded_opportunities = DriveBackedBelievedOpportunityCandidateSource.new(
 		_owners.drives,
 		_owners.beliefs,
@@ -640,7 +642,7 @@ func _bootstrap_and_start() -> void:
 		drive_source,
 		project_contribution,
 		project_source,
-		[grounded_opportunities, spyglass_opportunities, chest_opportunities],
+		[grounded_opportunities, need_investigation, spyglass_opportunities, chest_opportunities],
 		null,
 		null,
 		exposed_food,
