@@ -4,6 +4,9 @@ const DomainId = preload("res://src/domain/core/domain_id.gd")
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
 const DriveCandidateDefinition = preload("res://src/domain/cognition/drive_candidate_definition.gd")
 const DriveCandidateSource = preload("res://src/domain/cognition/drive_candidate_source.gd")
+const NeedDrivenInvestigationCandidateSource = preload("res://src/domain/cognition/need_driven_investigation_candidate_source.gd")
+const BeliefProposition = preload("res://src/domain/cognition/belief_proposition.gd")
+const RuntimeWorldRef = preload("res://src/domain/core/runtime_world_ref.gd")
 const DriveBackedBelievedOpportunityCandidateSource = preload("res://src/domain/cognition/drive_backed_believed_opportunity_candidate_source.gd")
 const BeliefStore = preload("res://src/domain/cognition/belief_store.gd")
 const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
@@ -33,7 +36,10 @@ func _run() -> void:
 	# Baseline scene intentionally omits unbound seek_food; a critical hunger
 	# scenario needs a separate lawful information-seeking opportunity.
 	# RED: with no discovered food and no exploration policy, no candidate survives.
-	var scene_drive_source = DriveCandidateSource.new(drives, [])
+	var curiosity = DomainId.property(&"interesting")
+	var known_place = RuntimeWorldRef.entity(DomainId.entity(&"known_curiosity"))
+	empty_beliefs.restore_entry(BeliefProposition.new(EpistemicClaim.property_claim(known_place, curiosity, true)), 0.85, 1, &"initial", &"memory")
+	var scene_drive_source = NeedDrivenInvestigationCandidateSource.new(drives, empty_beliefs, edible, curiosity, investigate)
 	var candidates = scene_drive_source.generate()
 	candidates.append_array(targeted.generate())
 	var has_investigation := false
@@ -41,6 +47,9 @@ func _run() -> void:
 		if candidate.intention_id.equals(investigate):
 			has_investigation = true
 	_expect(has_investigation, "Critical hunger without known food should motivate an admissible investigation, not idle")
+	_expect(candidates.size() == 1 and candidates[0].bindings.get(&"target").equals(known_place), "Investigation must only target known curiosity")
+	drives.set_value(DriveState.HUNGER, 0.1)
+	_expect(scene_drive_source.generate().is_empty(), "No fallback investigation under low hunger")
 	_finish()
 
 
