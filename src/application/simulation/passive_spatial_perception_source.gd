@@ -11,10 +11,11 @@ const PerceptionResult = preload("res://src/domain/cognition/perception_result.g
 ## sight are revalidated through SpatialQueryPort before evidence is emitted. Optional
 ## semantic exposure prevents contained objects from leaking through engine broadphase.
 ##
-## Positive relation evidence is edge-driven. Quantity evidence is snapshot-driven:
-## while a subject remains exposed, a changed authoritative quantity emits a new
-## observation on the next bounded refresh. Semantic World changes can request that
-## refresh without directly injecting hidden truth into Wilson cognition.
+## Positive relation evidence is edge-driven. Quantity and explicitly configured
+## observable-property evidence are snapshot-driven: while a subject remains exposed,
+## changed authoritative values emit new observations on the next bounded refresh.
+## World values are consulted only after metric/LOS/exposure access succeeds, so this
+## source cannot inject hidden truth into Wilson cognition.
 
 var _candidate_source
 var _spatial_query
@@ -25,9 +26,11 @@ var _modality: StringName
 var _confidence: float
 var _world_query
 var _exposure_resolver
+var _observable_property_ids: Array = []
 var _sequence: int = 0
 var _accessible_by_key: Dictionary = {}
 var _quantity_by_key: Dictionary = {}
+var _property_value_by_key: Dictionary = {}
 
 
 func _init(
@@ -39,7 +42,8 @@ func _init(
 	modality: StringName = &"vision",
 	confidence: float = 0.9,
 	world_query = null,
-	exposure_resolver = null
+	exposure_resolver = null,
+	observable_property_ids: Array = []
 ) -> void:
 	assert(candidate_source != null, "PassiveSpatialPerceptionSource requires candidate source")
 	assert(spatial_query != null, "PassiveSpatialPerceptionSource requires SpatialQueryPort")
@@ -49,6 +53,7 @@ func _init(
 	assert(modality != &"", "modality cannot be empty")
 	assert(confidence >= 0.0 and confidence <= 1.0, "confidence must be within [0,1]")
 	assert(exposure_resolver == null or world_query != null, "Semantic exposure requires WorldQuery")
+	assert(observable_property_ids.is_empty() or world_query != null, "Observable properties require WorldQuery")
 	_candidate_source = candidate_source
 	_spatial_query = spatial_query
 	_observer = observer
@@ -58,6 +63,7 @@ func _init(
 	_confidence = confidence
 	_world_query = world_query
 	_exposure_resolver = exposure_resolver
+	_observable_property_ids = observable_property_ids.duplicate()
 
 
 func notify_semantic_changes(change_set) -> void:
@@ -107,6 +113,14 @@ func collect(_step_context = null):
 				if not _quantity_by_key.has(key) or _quantity_by_key[key] != quantity:
 					_quantity_by_key[key] = quantity
 					evidence.append(_evidence(EpistemicClaim.quantity_claim(subject, quantity)))
+			for property_id in _observable_property_ids:
+				var value = _world_query.get_instance_property(subject, property_id)
+				if value == null:
+					continue
+				var property_key := "%s|%s" % [String(key), String(property_id.key())]
+				if not _property_value_by_key.has(property_key) or _property_value_by_key[property_key] != value:
+					_property_value_by_key[property_key] = value
+					evidence.append(_evidence(EpistemicClaim.property_claim(subject, property_id, value)))
 
 	# Candidate removal also clears access snapshots so a later re-entry emits fresh
 	# relation and quantity observations. Wilson's durable memory lives elsewhere.
@@ -130,3 +144,5 @@ func _evidence(claim):
 func _clear_access(key: Variant) -> void:
 	_accessible_by_key.erase(key)
 	_quantity_by_key.erase(key)
+	for property_id in _observable_property_ids:
+		_property_value_by_key.erase("%s|%s" % [String(key), String(property_id.key())])
