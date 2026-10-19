@@ -711,6 +711,144 @@ func observation_snapshot() -> Dictionary:
 	}
 
 
+## Developer-only, bounded read model. This does not grant beliefs or world access
+## to Wilson; labels must always distinguish authoritative state from belief.
+func debug_object_snapshot() -> Dictionary:
+	if _owners == null or _tool_world_query == null:
+		return {}
+	var objects := {
+		"FoodPatch": _food_ref,
+		"FoodPatchFar": _second_food_ref,
+		"Shelter": _shelter_ref,
+		"CuriositySpot": _curiosity_ref,
+		"SpyglassLocation": _spyglass_ref,
+	}
+	var display: Dictionary = {}
+	for node_name in objects.keys():
+		var ref = objects[node_name]
+		var world_items: Array[String] = []
+		var quantity = _tool_world_query.get_quantity(ref)
+		if quantity != null:
+			world_items.append("qty=%s" % str(quantity))
+		var holders = _tool_world_query.find_relations(DomainId.relation_type(&"held_by"), ref, _wilson_ref)
+		if not holders.is_empty():
+			world_items.append("held by Wilson")
+		var belief_items: Array[String] = []
+		for entry in _owners.beliefs.entries():
+			if entry == null or entry.proposition == null or entry.proposition.claim == null:
+				continue
+			var claim = entry.proposition.claim
+			var relevant: bool = bool(claim.subject.equals(ref))
+			if claim.kind == EpistemicClaim.Kind.RELATION and claim.object != null:
+				relevant = relevant or claim.object.equals(ref)
+			if not relevant or entry.confidence < 0.05:
+				continue
+			var short_claim := ""
+			match claim.kind:
+				EpistemicClaim.Kind.PROPERTY:
+					short_claim = "%s=%s" % [String(claim.semantic_id.value), str(claim.value)]
+				EpistemicClaim.Kind.QUANTITY:
+					short_claim = "qty=%s" % str(claim.value)
+				EpistemicClaim.Kind.RELATION:
+					short_claim = String(claim.semantic_id.value)
+				EpistemicClaim.Kind.EVENT:
+					short_claim = "event:%s" % String(claim.semantic_id.value)
+			belief_items.append("%s (%.2f)" % [short_claim, entry.confidence])
+		belief_items.sort()
+		if belief_items.size() > 3:
+			belief_items.resize(3)
+		display[node_name] = {
+			"world": ", ".join(world_items) if not world_items.is_empty() else "present",
+			"wilson": ", ".join(belief_items) if not belief_items.is_empty() else "unknown",
+		}
+	return display
+
+
+## Operator-only inventory projection; never used to generate Wilson's decisions.
+## A quantity belief is matched by subject, not by assuming Wilson knows World stock.
+func debug_inventory_sidebar_snapshot() -> Dictionary:
+	if _owners == null or _tool_world_query == null:
+		return {}
+	var sources := {
+		"Wilson": _wilson_ref,
+		"Food (near)": _food_ref,
+		"Food (far)": _second_food_ref,
+		"Shelter": _shelter_ref,
+		"Shipwreck relic": _curiosity_ref,
+		"Spyglass": _spyglass_ref,
+	}
+	var inventories: Array[Dictionary] = []
+	var inside = DomainId.relation_type(&"inside")
+	var held_by = DomainId.relation_type(&"held_by")
+	for label in sources.keys():
+		var holder = sources[label]
+		var rows: Array[Dictionary] = []
+		if label == "Wilson":
+			for item in _tool_world_query.get_held_items(_wilson_ref, held_by):
+				rows.append(_debug_item_row(item, _tool_world_query.get_quantity(item)))
+		else:
+			var amount = _tool_world_query.get_quantity(holder)
+			if amount != null and float(amount) > 0.0:
+				rows.append(_debug_item_row(holder, amount))
+			for item in _tool_world_query.get_container_contents(holder, inside):
+				rows.append(_debug_item_row(item, _tool_world_query.get_quantity(item)))
+		rows.sort_custom(func(a, b): return String(a["name"]) < String(b["name"]))
+		inventories.append({"name": label, "items": rows})
+	var beliefs: Array[String] = []
+	for entry in _owners.beliefs.entries():
+		if entry == null or entry.proposition == null:
+			continue
+		beliefs.append("%s (%.2f)" % [entry.proposition.sort_key(), entry.confidence])
+	return {"inventories": inventories, "beliefs": beliefs}
+
+
+func _debug_item_row(item, amount: Variant) -> Dictionary:
+	var confidence := -1.0
+	var believed_amount: Variant = null
+	for entry in _owners.beliefs.entries():
+		var claim = entry.proposition.claim
+		if claim.kind != EpistemicClaim.Kind.QUANTITY or not claim.subject.equals(item):
+			continue
+		if entry.confidence > confidence:
+			confidence = entry.confidence
+			believed_amount = claim.value
+	return {
+		"name": String(item.id.value),
+		"quantity": 1 if amount == null else amount,
+		"belief": "unknown" if confidence < 0.0 else "%s (%.2f conf)" % [str(believed_amount), confidence],
+	}
+
+
+func debug_wilson_snapshot() -> Dictionary:
+	if _owners == null or _tool_world_query == null:
+		return {}
+	var held_relation = DomainId.relation_type(&"held_by")
+	var carried_by = DomainId.relation_type(&"carried_by")
+	var held_items: Array[String] = []
+	for item in _tool_world_query.get_held_items(_wilson_ref, held_relation):
+		held_items.append(String(item.id.value))
+	for relation in _tool_world_query.get_incoming_relations(_wilson_ref, carried_by):
+		if relation.subject.kind == RuntimeWorldRef.Kind.ENTITY:
+			held_items.append(String(relation.subject.id.value))
+	held_items.sort()
+	var intention := "idle"
+	var target := "none"
+	var current = _owners.current_intention.current()
+	if current != null:
+		if current.intention_id != null:
+			intention = String(current.intention_id.value)
+		if current.bindings != null and current.bindings.has(&"target"):
+			var target_ref = current.bindings.get_subject(&"target")
+			if target_ref != null:
+				target = target_ref.sort_key()
+	return {
+		"carried": "none" if held_items.is_empty() else ", ".join(held_items),
+		"intention": intention,
+		"target": target,
+		"belief_count": _owners.beliefs.entry_count(),
+	}
+
+
 func _empty_food_belief_confidence() -> float:
 	if _owners == null or _food_ref == null:
 		return 0.0
