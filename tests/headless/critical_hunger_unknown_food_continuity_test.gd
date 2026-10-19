@@ -47,7 +47,7 @@ func _run() -> void:
 		if candidate.intention_id.equals(investigate):
 			has_investigation = true
 	_expect(has_investigation, "Critical hunger without known food should motivate an admissible investigation, not idle")
-	_expect(candidates.size() == 1 and candidates[0].bindings.get(&"target").equals(known_place), "Investigation must only target known curiosity")
+	_expect(candidates.size() == 1 and candidates[0].bindings.get_subject(&"target").equals(known_place), "Investigation must only target known curiosity")
 	drives.set_value(DriveState.HUNGER, 0.1)
 	_expect(scene_drive_source.generate().is_empty(), "No fallback investigation under low hunger")
 	_finish()
