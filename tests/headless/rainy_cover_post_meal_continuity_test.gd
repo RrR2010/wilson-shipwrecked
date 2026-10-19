@@ -13,7 +13,10 @@ class EventOnlyWeatherCue:
 	extends RefCounted
 	var rain_transition_present := true
 	func derive(_perception_result) -> Array[StringName]:
-		return [&"dangerous_weather"] if rain_transition_present else []
+		var cues: Array[StringName] = []
+		if rain_transition_present:
+			cues.append(&"dangerous_weather")
+		return cues
 
 
 class HabitStoreStub:
