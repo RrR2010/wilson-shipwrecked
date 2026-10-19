@@ -48,6 +48,10 @@ func _run() -> void:
 			has_investigation = true
 	_expect(has_investigation, "Critical hunger without known food should motivate an admissible investigation, not idle")
 	_expect(candidates.size() == 1 and candidates[0].bindings.get_subject(&"target").equals(known_place), "Investigation must only target known curiosity")
+	var known_food_ref = RuntimeWorldRef.entity(DomainId.entity(&"exhausted_food"))
+	empty_beliefs.restore_entry(BeliefProposition.new(EpistemicClaim.property_claim(known_food_ref, edible, true)), 0.95, 1)
+	empty_beliefs.restore_entry(BeliefProposition.new(EpistemicClaim.quantity_claim(known_food_ref, 0)), 0.95, 1)
+	_expect(scene_drive_source.generate().size() == 1, "Believed depleted food must not suppress motivated investigation")
 	drives.set_value(DriveState.HUNGER, 0.1)
 	_expect(scene_drive_source.generate().is_empty(), "No fallback investigation under low hunger")
 	_finish()
