@@ -35,7 +35,7 @@ func generate() -> Array:
 		if claim.kind != EpistemicClaim.Kind.PROPERTY or claim.value != true:
 			continue
 		if claim.semantic_id.equals(_resource_property):
-			known_food = true
+			known_food = known_food or not _believes_empty(claim.subject)
 		elif claim.semantic_id.equals(_investigation_property):
 			var bindings = RoleBinding.new()
 			bindings.bind(&"target", claim.subject)
@@ -49,3 +49,18 @@ func generate() -> Array:
 		return []
 	investigations.sort_custom(func(a, b): return a.stable_key() < b.stable_key())
 	return investigations
+
+
+## Known edible identity is not a usable opportunity if Wilson's strongest
+## current quantity expectation says the resource is empty.
+func _believes_empty(subject) -> bool:
+	var confidence := -1.0
+	var expected: Variant = null
+	for entry in _beliefs.entries():
+		var claim = entry.proposition.claim
+		if claim.kind != EpistemicClaim.Kind.QUANTITY or not claim.subject.equals(subject):
+			continue
+		if entry.confidence > confidence:
+			confidence = entry.confidence
+			expected = claim.value
+	return expected != null and float(expected) <= 0.0
