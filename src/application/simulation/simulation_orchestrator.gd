@@ -48,6 +48,7 @@ var _drive_due_gate
 var _grounded_drive_consequence
 var _perceived_habit_candidate_source
 var _grounded_intention_completion
+var _container_inspection_evidence
 var _malformed_candidate_reported := false
 
 
@@ -80,7 +81,8 @@ func _init(
 	drive_due_gate = null,
 	grounded_drive_consequence = null,
 	perceived_habit_candidate_source = null,
-	grounded_intention_completion = null
+	grounded_intention_completion = null,
+	container_inspection_evidence = null
 ) -> void:
 	assert(world_advance != null, "SimulationOrchestrator requires world advance service")
 	assert(action_execution != null, "SimulationOrchestrator requires action execution")
@@ -147,6 +149,7 @@ func _init(
 	_grounded_drive_consequence = grounded_drive_consequence
 	_perceived_habit_candidate_source = perceived_habit_candidate_source
 	_grounded_intention_completion = grounded_intention_completion
+	_container_inspection_evidence = container_inspection_evidence
 
 
 func advance(step):
@@ -216,6 +219,10 @@ func advance(step):
 		assert(passive_perception != null, "Passive perception source must return PerceptionResult")
 	trace.record_result(&"passive_perception", passive_perception)
 	var perception_result = _merge_perception(event_perception, passive_perception)
+	if _container_inspection_evidence != null:
+		var inspection = _container_inspection_evidence.collect(null if action_progress == null else action_progress.new_outcome, commit_result)
+		trace.record_result(&"container_inspection_perception", inspection)
+		perception_result = _merge_perception(perception_result, inspection)
 	trace.record_result(&"perception", perception_result)
 
 	var learning_result = _learning.process(perception_result)
