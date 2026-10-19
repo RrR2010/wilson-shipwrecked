@@ -184,6 +184,7 @@ func _project_spatial_diagnostics() -> void:
 		"Shelter": "Shelter",
 		"CuriositySpot": "Shipwreck relic",
 		"SpyglassLocation": "Spyglass",
+		"OpaqueChestLocation": "Chest",
 	}
 	for node_name in items.keys():
 		var anchor = _simulation.get_node_or_null(node_name) as Node3D
