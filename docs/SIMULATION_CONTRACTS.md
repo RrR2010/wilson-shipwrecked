@@ -47,6 +47,8 @@ Perception, salience, expectations, candidate evaluations, causal hypotheses, re
 
 Evidence/decision contracts preserve enough source information to distinguish direct observation, ambiguity, repetition, inference/coincidence and externally suggested but unconfirmed ideas.
 
+Target-specific candidates must be grounded in Wilson-owned evidence for the semantic identity that makes the target relevant. Authoritative World properties may become perceptual evidence only after observer-relative access succeeds (for example metric range + line-of-sight + semantic exposure); candidate generation must not query hidden World properties or quantity as a shortcut. Authored bootstrap memory remains valid evidence and must stay distinguishable from recent observation in candidate provenance.
+
 ## Values are finite/guardable
 
 No contract uses NaN, infinity or huge sentinel priorities as semantics. Immediate threat is a distinct regime.
