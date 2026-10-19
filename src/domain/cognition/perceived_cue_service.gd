@@ -26,8 +26,6 @@ func derive(perception_result) -> Array[StringName]:
 	for evidence in perception_result.evidence:
 		if evidence == null or evidence.claim == null:
 			continue
-		if evidence.claim.kind != EpistemicClaim.Kind.EVENT:
-			continue
 		for rule in _rules:
 			if not rule.has_method("matches") or not rule.matches(evidence):
 				continue
