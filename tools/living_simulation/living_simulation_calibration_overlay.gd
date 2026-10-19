@@ -416,4 +416,5 @@ func _inspector_sidebar_group_name(node_name: String) -> String:
 		"FoodPatchFar": return "Food (far)"
 		"CuriositySpot": return "Shipwreck relic"
 		"SpyglassLocation": return "Spyglass"
+		"OpaqueChestLocation": return "Opaque chest"
 		_: return node_name
