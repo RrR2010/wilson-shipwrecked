@@ -67,6 +67,8 @@ func _run() -> void:
 	_expect(source.generate(observer_source.collect()).is_empty(), "Already protected Wilson must not seek cover again")
 	distance.distance = 5.0
 	# Restore re-composes the observer and habit source from durable weather.
+	for _interrupt in range(3):
+		_expect(_contains(source.generate(observer_source.collect()), cover), "Repeated unrelated completions must preserve ongoing shelter need")
 	var restored_source = ObservableAmbientWeatherSource.new(weather, observer, rainy)
 	_expect(_contains(source.generate(restored_source.collect()), cover), "Restore recovers rain cue through legitimate observation")
 	_finish()
