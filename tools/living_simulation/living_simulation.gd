@@ -779,6 +779,7 @@ func debug_object_snapshot() -> Dictionary:
 		"Shelter": _shelter_ref,
 		"CuriositySpot": _curiosity_ref,
 		"SpyglassLocation": _spyglass_ref,
+		"OpaqueChestLocation": _chest_ref,
 	}
 	var display: Dictionary = {}
 	for node_name in objects.keys():
@@ -833,6 +834,7 @@ func debug_inventory_sidebar_snapshot() -> Dictionary:
 		"Shelter": _shelter_ref,
 		"Shipwreck relic": _curiosity_ref,
 		"Spyglass": _spyglass_ref,
+		"Opaque chest": _chest_ref,
 	}
 	var inventories: Array[Dictionary] = []
 	var inside = DomainId.relation_type(&"inside")
@@ -848,7 +850,7 @@ func debug_inventory_sidebar_snapshot() -> Dictionary:
 			if amount != null and float(amount) > 0.0:
 				rows.append(_debug_item_row(holder, amount))
 			for item in _tool_world_query.get_container_contents(holder, inside):
-				rows.append(_debug_item_row(item, _tool_world_query.get_quantity(item)))
+				rows.append(_debug_item_row(item, _tool_world_query.get_quantity(item), holder))
 		rows.sort_custom(func(a, b): return String(a["name"]) < String(b["name"]))
 		inventories.append({"name": label, "items": rows})
 	var beliefs: Array[String] = []
@@ -859,7 +861,7 @@ func debug_inventory_sidebar_snapshot() -> Dictionary:
 	return {"inventories": inventories, "beliefs": beliefs}
 
 
-func _debug_item_row(item, amount: Variant) -> Dictionary:
+func _debug_item_row(item, amount: Variant, container = null) -> Dictionary:
 	var confidence := -1.0
 	var believed_amount: Variant = null
 	for entry in _owners.beliefs.entries():
@@ -869,10 +871,16 @@ func _debug_item_row(item, amount: Variant) -> Dictionary:
 		if entry.confidence > confidence:
 			confidence = entry.confidence
 			believed_amount = claim.value
+	var belief_summary := "unknown" if confidence < 0.0 else "%s (%.2f conf)" % [str(believed_amount), confidence]
+	if container != null:
+		var containment_claim = BeliefProposition.new(EpistemicClaim.relation_claim(item, DomainId.relation_type(&"inside"), container))
+		var containment_entry = _owners.beliefs.get_entry(containment_claim)
+		if containment_entry == null or containment_entry.confidence < 0.5:
+			belief_summary = "unknown contents"
 	return {
 		"name": String(item.id.value),
 		"quantity": 1 if amount == null else amount,
-		"belief": "unknown" if confidence < 0.0 else "%s (%.2f conf)" % [str(believed_amount), confidence],
+		"belief": belief_summary,
 	}
 
 
