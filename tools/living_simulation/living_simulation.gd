@@ -7,6 +7,7 @@ const ContentRegistry = preload("res://src/domain/content/content_registry.gd")
 const EventDefinition = preload("res://src/domain/content/event_definition.gd")
 const PropertyDefinition = preload("res://src/domain/content/property_definition.gd")
 const EntityBootstrapSeed = preload("res://src/application/bootstrap/entity_bootstrap_seed.gd")
+const RelationBootstrapSeed = preload("res://src/application/bootstrap/relation_bootstrap_seed.gd")
 const BeliefBootstrapSeed = preload("res://src/application/bootstrap/belief_bootstrap_seed.gd")
 const ProjectBootstrapSeed = preload("res://src/application/bootstrap/project_bootstrap_seed.gd")
 const HabitBootstrapSeed = preload("res://src/application/bootstrap/habit_bootstrap_seed.gd")
@@ -23,6 +24,8 @@ const BeliefProposition = preload("res://src/domain/cognition/belief_proposition
 const EpistemicClaim = preload("res://src/domain/cognition/epistemic_claim.gd")
 const DecisionCandidate = preload("res://src/domain/cognition/decision_candidate.gd")
 const AuthoredToolOpportunitySource = preload("res://src/domain/cognition/authored_tool_opportunity_source.gd")
+const AuthoredChestOpportunitySource = preload("res://src/domain/cognition/authored_chest_opportunity_source.gd")
+const GroundedContainerInspectionEvidenceSource = preload("res://src/application/simulation/grounded_container_inspection_evidence_source.gd")
 const DriveState = preload("res://src/domain/cognition/drive_state.gd")
 const DriveProgressionService = preload("res://src/domain/cognition/drive_progression_service.gd")
 const DriveCandidateDefinition = preload("res://src/domain/cognition/drive_candidate_definition.gd")
@@ -87,6 +90,8 @@ var _shelter_ref
 var _rest_ref
 var _curiosity_ref
 var _spyglass_ref
+var _chest_ref
+var _chest_item_ref
 var _tool_world_query
 var _gerald_ref
 var _shelter_project_id
@@ -169,8 +174,10 @@ func _bootstrap_and_start() -> void:
 	var weather_worsened = DomainId.event_definition(&"weather_worsened")
 	var weather_improved = DomainId.event_definition(&"weather_improved")
 	var hunger_relief_property = DomainId.property(&"hunger_relief")
+	var chest_open_property = DomainId.property(&"chest_open")
 	var authored_results: Array = [
 		content.register_property_definition(PropertyDefinition.new(hunger_relief_property, PropertyDefinition.ValueFamily.NUMBER, 0.0, 1.0)),
+		content.register_property_definition(PropertyDefinition.new(chest_open_property, PropertyDefinition.ValueFamily.BOOLEAN)),
 		content.register_event_definition(EventDefinition.new(
 			weather_worsened,
 			[] as Array[StringName],
@@ -211,6 +218,10 @@ func _bootstrap_and_start() -> void:
 	var rest_entity_id = DomainId.entity(&"rest_mat_001")
 	var curiosity_entity_id = DomainId.entity(&"shipwreck_relic_001")
 	var spyglass_entity_id = DomainId.entity(&"spyglass_001")
+	var chest_entity_id = DomainId.entity(&"opaque_chest_001")
+	var chest_item_id = DomainId.entity(&"chest_food_001")
+	var inside_relation = DomainId.relation_type(&"inside")
+	var chest_cycle_receipt = DomainId.relation_type(&"chest_cycle_completed")
 	var collectible_property = DomainId.property(&"collectible")
 	var held_by_relation = DomainId.relation_type(&"held_by")
 	var explored_with_tool_receipt = DomainId.relation_type(&"tool_exploration_receipt")
@@ -230,6 +241,9 @@ func _bootstrap_and_start() -> void:
 	var seek_cover = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"seek_safer_cover")
 	var collect_tool = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"collect_spyglass")
 	var investigate_with_tool = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"investigate_with_spyglass")
+	var inspect_chest_intention = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"inspect_chest")
+	var withdraw_chest_intention = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"withdraw_chest_item")
+	var deposit_chest_intention = DomainId.new(DomainId.Kind.SEMANTIC_INTENTION, &"deposit_chest_item")
 	var consume_food = DomainId.action(&"consume_food")
 	var rest_action = DomainId.action(&"rest")
 	var inspect_curiosity = DomainId.action(&"inspect_curiosity")
@@ -238,6 +252,12 @@ func _bootstrap_and_start() -> void:
 	var use_spyglass = DomainId.action(&"use_spyglass")
 	var tool_picked_up = DomainId.event_definition(&"tool_picked_up")
 	var tool_inspected = DomainId.event_definition(&"tool_inspected")
+	var inspect_chest_action = DomainId.action(&"inspect_chest")
+	var withdraw_chest_action = DomainId.action(&"withdraw_chest_item")
+	var deposit_chest_action = DomainId.action(&"deposit_chest_item")
+	var chest_opened_event = DomainId.event_definition(&"chest_opened")
+	var chest_withdrawn_event = DomainId.event_definition(&"chest_withdrawn")
+	var chest_deposited_event = DomainId.event_definition(&"chest_deposited")
 	var food_consumed = DomainId.event_definition(&"food_consumed")
 	var rest_completed = DomainId.event_definition(&"rest_completed")
 	var curiosity_inspected = DomainId.event_definition(&"curiosity_inspected")
@@ -251,6 +271,8 @@ func _bootstrap_and_start() -> void:
 	_rest_ref = RuntimeWorldRef.entity(rest_entity_id)
 	_curiosity_ref = RuntimeWorldRef.entity(curiosity_entity_id)
 	_spyglass_ref = RuntimeWorldRef.entity(spyglass_entity_id)
+	_chest_ref = RuntimeWorldRef.entity(chest_entity_id)
+	_chest_item_ref = RuntimeWorldRef.entity(chest_item_id)
 	_gerald_ref = RuntimeWorldRef.entity(gerald_entity_id)
 
 	var known_food = BeliefProposition.new(EpistemicClaim.property_claim(_food_ref, edible_property, true))
@@ -258,6 +280,8 @@ func _bootstrap_and_start() -> void:
 	var known_rest = BeliefProposition.new(EpistemicClaim.property_claim(_rest_ref, restful_property, true))
 	var known_curiosity = BeliefProposition.new(EpistemicClaim.property_claim(_curiosity_ref, interesting_property, true))
 	var known_spyglass = BeliefProposition.new(EpistemicClaim.relation_claim(_wilson_ref, DomainId.relation_type(&"perceptibly_near"), _spyglass_ref))
+	var known_chest = BeliefProposition.new(EpistemicClaim.relation_claim(_wilson_ref, DomainId.relation_type(&"perceptibly_near"), _chest_ref))
+	var known_chest_content = BeliefProposition.new(EpistemicClaim.relation_claim(_chest_item_ref, inside_relation, _chest_ref))
 	var shelter_project_bindings = RoleBinding.new()
 	shelter_project_bindings.bind(&"target", _shelter_ref)
 	shelter_project_bindings.bind(&"planks", RuntimeWorldRef.entity(plank_entity_id))
@@ -290,9 +314,11 @@ func _bootstrap_and_start() -> void:
 			EntityBootstrapSeed.new(rest_entity_id, DomainId.entity_type(&"rest_spot"), island_place_id, 0, {restful_property.key(): true}),
 			EntityBootstrapSeed.new(curiosity_entity_id, DomainId.entity_type(&"shipwreck_relic"), island_place_id, 0, {interesting_property.key(): true}),
 			EntityBootstrapSeed.new(spyglass_entity_id, DomainId.entity_type(&"spyglass"), island_place_id, 0, {collectible_property.key(): true}),
+			EntityBootstrapSeed.new(chest_entity_id, DomainId.entity_type(&"opaque_chest"), island_place_id, 0, {chest_open_property.key(): false}),
+			EntityBootstrapSeed.new(chest_item_id, DomainId.entity_type(&"stored_food"), island_place_id, 0, {edible_property.key(): true, hunger_relief_property.key(): 0.30}, 2),
 			EntityBootstrapSeed.new(gerald_entity_id, DomainId.entity_type(&"seagull"), gerald_roost),
 		],
-		[],
+		[RelationBootstrapSeed.new(inside_relation, _chest_item_ref, _chest_ref)],
 		[
 			BeliefBootstrapSeed.new(known_food, 0.9, 1, &"new_run_seed", &"memory"),
 			BeliefBootstrapSeed.new(known_second_food, 0.75, 1, &"new_run_seed", &"memory"),
@@ -337,6 +363,10 @@ func _bootstrap_and_start() -> void:
 	spyglass_marker.name = "SpyglassLocation"
 	add_child(spyglass_marker)
 	spyglass_marker.global_position = $CuriositySpot.global_position + Vector3(1.5, 0.0, 0.0)
+	var chest_marker = Marker3D.new()
+	chest_marker.name = "OpaqueChestLocation"
+	add_child(chest_marker)
+	chest_marker.global_position = $Shelter.global_position + Vector3(2.5, 0.0, 1.5)
 	var spatial_bindings: Array = [
 		[_wilson_ref, wilson_body],
 		[_food_ref, $FoodPatch],
@@ -345,6 +375,7 @@ func _bootstrap_and_start() -> void:
 		[_rest_ref, $RestSpot],
 		[_curiosity_ref, $CuriositySpot],
 		[_spyglass_ref, spyglass_marker],
+		[_chest_ref, chest_marker],
 		[_gerald_ref, gerald_body],
 		[RuntimeWorldRef.place(gerald_roost), $GeraldTargets/Roost],
 		[RuntimeWorldRef.place(gerald_beach), $GeraldTargets/Beach],
@@ -479,12 +510,31 @@ func _bootstrap_and_start() -> void:
 	)
 	var pickup_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, collect_tool, pickup_definition, pickup_resolution)
 	var tool_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, investigate_with_tool, use_tool_definition, use_tool_resolution)
+	var inspect_chest_definition = ActionDefinition.new(inspect_chest_action, [&"actor", &"target", &"chest", &"item"] as Array[StringName], RequirementPredicate.property_compare(&"chest", chest_open_property, RequirementPredicate.CompareOp.EQ, false), ActionDefinition.InterruptionClass.ANYTIME)
+	var inspect_chest_resolution = ActionResolutionDefinition.new(inspect_chest_action, 2.2, 0.65, [ActionEffect.new(ActionEffect.Kind.SET_PROPERTY, &"chest", chest_open_property, true)], chest_opened_event, &"open_opaque_chest")
+	var withdraw_definition = ActionDefinition.new(withdraw_chest_action, [&"actor", &"target", &"chest", &"item"] as Array[StringName], RequirementPredicate.has_relation(&"item", inside_relation, &"chest"), ActionDefinition.InterruptionClass.ANYTIME)
+	var withdraw_resolution = ActionResolutionDefinition.new(withdraw_chest_action, 1.1, 0.55, [
+		ActionEffect.new(ActionEffect.Kind.REMOVE_RELATION, &"item", inside_relation, null, &"chest"),
+		ActionEffect.new(ActionEffect.Kind.CREATE_RELATION, &"item", held_by_relation, null, &"actor"),
+	], chest_withdrawn_event, &"withdraw_chest_food")
+	var deposit_definition = ActionDefinition.new(deposit_chest_action, [&"actor", &"target", &"chest", &"item"] as Array[StringName], RequirementPredicate.has_relation(&"item", held_by_relation, &"actor"), ActionDefinition.InterruptionClass.ANYTIME)
+	var deposit_resolution = ActionResolutionDefinition.new(deposit_chest_action, 1.1, 0.55, [
+		ActionEffect.new(ActionEffect.Kind.REMOVE_RELATION, &"item", held_by_relation, null, &"actor"),
+		ActionEffect.new(ActionEffect.Kind.CREATE_RELATION, &"item", inside_relation, null, &"chest"),
+		ActionEffect.record_execution_receipt(&"chest", chest_cycle_receipt),
+	], chest_deposited_event, &"redeposit_chest_food")
+	var inspect_chest_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, inspect_chest_intention, inspect_chest_definition, inspect_chest_resolution)
+	var withdraw_chest_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, withdraw_chest_intention, withdraw_definition, withdraw_resolution)
+	var deposit_chest_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, deposit_chest_intention, deposit_definition, deposit_resolution)
 	var food_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, seek_food, consume_definition, consume_resolution)
 	var rest_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, seek_rest, rest_definition, rest_resolution)
 	var explore_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, seek_stimulation, explore_definition, explore_resolution)
 	var project_executor = TargetedActionExecutionCoordinator.new(_motion, runtime.action_execution, _wilson_ref, continue_shelter, shelter_action_definition, shelter_action_resolution)
 	var cover_executor = DirectTargetMotionExecutionCoordinator.new(_motion, _wilson_ref, [seek_cover])
 	var executor = CompositeSelectedIntentionExecutor.new([
+		inspect_chest_executor,
+		withdraw_chest_executor,
+		deposit_chest_executor,
 		pickup_executor,
 		tool_executor,
 		food_executor,
@@ -511,6 +561,9 @@ func _bootstrap_and_start() -> void:
 			IntentionCompletionDefinition.new(seek_stimulation, inspect_curiosity, curiosity_inspected),
 			IntentionCompletionDefinition.new(collect_tool, pick_up_tool, tool_picked_up),
 			IntentionCompletionDefinition.new(investigate_with_tool, use_spyglass, tool_inspected),
+			IntentionCompletionDefinition.new(inspect_chest_intention, inspect_chest_action, chest_opened_event),
+			IntentionCompletionDefinition.new(withdraw_chest_intention, withdraw_chest_action, chest_withdrawn_event),
+			IntentionCompletionDefinition.new(deposit_chest_intention, deposit_chest_action, chest_deposited_event),
 		]
 	)
 	var shelter_project_definition = ProjectDefinition.new(
@@ -542,7 +595,7 @@ func _bootstrap_and_start() -> void:
 	spatial_query.visual_observer_height = 1.45
 	spatial_query.visual_target_height = 1.0
 	var exposed_food = PassiveSpatialPerceptionSource.new(
-		ExposedWorldCandidates.new([_food_ref, _second_food_ref, _spyglass_ref]),
+		ExposedWorldCandidates.new([_food_ref, _second_food_ref, _spyglass_ref, _chest_ref]),
 		spatial_query,
 		_wilson_ref,
 		DomainId.relation_type(&"perceptibly_near"),
@@ -564,6 +617,8 @@ func _bootstrap_and_start() -> void:
 		base_decision_commit,
 		seek_food
 	)
+	var chest_opportunities = AuthoredChestOpportunitySource.new(runtime.world_query, _owners.beliefs, _wilson_ref, _chest_ref, _chest_item_ref, known_chest, known_chest_content, chest_open_property, inside_relation, held_by_relation, chest_cycle_receipt, inspect_chest_intention, withdraw_chest_intention, deposit_chest_intention)
+	var inspection_evidence = GroundedContainerInspectionEvidenceSource.new(runtime.world_query, inspect_chest_action, chest_opened_event, inside_relation)
 	var spyglass_opportunities = AuthoredToolOpportunitySource.new(runtime.world_query, _owners.beliefs, _spyglass_ref, _wilson_ref, _curiosity_ref, known_spyglass, known_curiosity, held_by_relation, explored_with_tool_receipt, collect_tool, investigate_with_tool)
 	_tool_world_query = runtime.world_query
 	var orchestrator = SimulationOrchestrator.new(
@@ -585,7 +640,7 @@ func _bootstrap_and_start() -> void:
 		drive_source,
 		project_contribution,
 		project_source,
-		[grounded_opportunities, spyglass_opportunities],
+		[grounded_opportunities, spyglass_opportunities, chest_opportunities],
 		null,
 		null,
 		exposed_food,
@@ -595,7 +650,8 @@ func _bootstrap_and_start() -> void:
 		drive_due_gate,
 		drive_consequence,
 		weather_habit_source,
-		intention_completion
+		intention_completion,
+		inspection_evidence
 	)
 
 	var gerald_profile = ActorProfileDefinition.new(&"gerald", &"roost", 4.0)
@@ -692,6 +748,9 @@ func observation_snapshot() -> Dictionary:
 		"observed_food_empty_confidence": _empty_food_belief_confidence(),
 		"grounded_rests": _trace_sink.grounded_rests,
 		"grounded_explorations": _trace_sink.grounded_explorations,
+		"chest_open": false if _tool_world_query == null else _tool_world_query.get_instance_property(_chest_ref, DomainId.property(&"chest_open")) == true,
+		"chest_contents_known": false if _owners == null else _owners.beliefs.get_entry(BeliefProposition.new(EpistemicClaim.relation_claim(_chest_item_ref, DomainId.relation_type(&"inside"), _chest_ref))) != null,
+		"chest_item_held": false if _tool_world_query == null else not _tool_world_query.find_relations(DomainId.relation_type(&"held_by"), _chest_item_ref, _wilson_ref).is_empty(),
 		"spyglass_held": false if _tool_world_query == null else not _tool_world_query.get_held_items(_wilson_ref, DomainId.relation_type(&"held_by")).is_empty(),
 		"grounded_intention_completions": _trace_sink.grounded_intention_completions,
 		"project_contributions": 0 if project == null else project.contribution_count,
@@ -711,8 +770,6 @@ func observation_snapshot() -> Dictionary:
 	}
 
 
-## Developer-only, bounded read model. This does not grant beliefs or world access
-## to Wilson; labels must always distinguish authoritative state from belief.
 func debug_object_snapshot() -> Dictionary:
 	if _owners == null or _tool_world_query == null:
 		return {}
@@ -722,6 +779,7 @@ func debug_object_snapshot() -> Dictionary:
 		"Shelter": _shelter_ref,
 		"CuriositySpot": _curiosity_ref,
 		"SpyglassLocation": _spyglass_ref,
+		"OpaqueChestLocation": _chest_ref,
 	}
 	var display: Dictionary = {}
 	for node_name in objects.keys():
@@ -776,6 +834,7 @@ func debug_inventory_sidebar_snapshot() -> Dictionary:
 		"Shelter": _shelter_ref,
 		"Shipwreck relic": _curiosity_ref,
 		"Spyglass": _spyglass_ref,
+		"Opaque chest": _chest_ref,
 	}
 	var inventories: Array[Dictionary] = []
 	var inside = DomainId.relation_type(&"inside")
@@ -791,7 +850,7 @@ func debug_inventory_sidebar_snapshot() -> Dictionary:
 			if amount != null and float(amount) > 0.0:
 				rows.append(_debug_item_row(holder, amount))
 			for item in _tool_world_query.get_container_contents(holder, inside):
-				rows.append(_debug_item_row(item, _tool_world_query.get_quantity(item)))
+				rows.append(_debug_item_row(item, _tool_world_query.get_quantity(item), holder))
 		rows.sort_custom(func(a, b): return String(a["name"]) < String(b["name"]))
 		inventories.append({"name": label, "items": rows})
 	var beliefs: Array[String] = []
@@ -802,7 +861,7 @@ func debug_inventory_sidebar_snapshot() -> Dictionary:
 	return {"inventories": inventories, "beliefs": beliefs}
 
 
-func _debug_item_row(item, amount: Variant) -> Dictionary:
+func _debug_item_row(item, amount: Variant, container = null) -> Dictionary:
 	var confidence := -1.0
 	var believed_amount: Variant = null
 	for entry in _owners.beliefs.entries():
@@ -812,10 +871,16 @@ func _debug_item_row(item, amount: Variant) -> Dictionary:
 		if entry.confidence > confidence:
 			confidence = entry.confidence
 			believed_amount = claim.value
+	var belief_summary := "unknown" if confidence < 0.0 else "%s (%.2f conf)" % [str(believed_amount), confidence]
+	if container != null:
+		var containment_claim = BeliefProposition.new(EpistemicClaim.relation_claim(item, DomainId.relation_type(&"inside"), container))
+		var containment_entry = _owners.beliefs.get_entry(containment_claim)
+		if containment_entry == null or containment_entry.confidence < 0.5:
+			belief_summary = "unknown contents"
 	return {
 		"name": String(item.id.value),
 		"quantity": 1 if amount == null else amount,
-		"belief": "unknown" if confidence < 0.0 else "%s (%.2f conf)" % [str(believed_amount), confidence],
+		"belief": belief_summary,
 	}
 
 
@@ -902,11 +967,14 @@ func _update_debug_projection() -> void:
 		_motion_status_name(_motion.get_status(_gerald_ref)),
 		_gerald_arrivals,
 	]
-	_trace_label.text = "Weather=%s   recent traces=%d   grounded work=%d   carrying=%s" % [
+	_trace_label.text = "Weather=%s   recent traces=%d   grounded work=%d   carrying=%s   chest=%s / known=%s / held=%s" % [
 		String(_owners.environment.weather),
 		_trace_sink.traces.size(),
 		_trace_sink.grounded_project_contributions,
 		"Spyglass" if _tool_world_query != null and not _tool_world_query.get_held_items(_wilson_ref, DomainId.relation_type(&"held_by")).is_empty() else "nothing",
+		"open" if _tool_world_query != null and _tool_world_query.get_instance_property(_chest_ref, DomainId.property(&"chest_open")) == true else "closed",
+		"yes" if _owners.beliefs.get_entry(BeliefProposition.new(EpistemicClaim.relation_claim(_chest_item_ref, DomainId.relation_type(&"inside"), _chest_ref))) != null else "no",
+		"yes" if _tool_world_query != null and not _tool_world_query.find_relations(DomainId.relation_type(&"held_by"), _chest_item_ref, _wilson_ref).is_empty() else "no",
 	]
 
 

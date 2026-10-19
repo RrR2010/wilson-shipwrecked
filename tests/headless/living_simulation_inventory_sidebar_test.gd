@@ -29,6 +29,18 @@ func _run() -> void:
 					found_food = true
 					_check(int(items[0].get("quantity", -1)) == 8, "World quantity is not replaced with belief")
 		_check(found_food, "Far food is visible in developer inventory")
+		var found_chest := false
+		for group in groups:
+			if group.get("name", "") != "Opaque chest":
+				continue
+			found_chest = true
+			var items: Array = group.get("items", [])
+			_check(items.size() == 1, "World displays physical chest contents")
+			if items.size() == 1:
+				_check(String(items[0].get("name", "")) == "chest_food_001", "Chest contains authored item")
+				_check(int(items[0].get("quantity", -1)) == 2, "Chest stock is conserved before transfer")
+				_check(String(items[0].get("belief", "")) == "unknown contents", "Wilson cannot know closed chest contents from developer inventory")
+		_check(found_chest, "Sidebar includes opaque chest group")
 	await _finish(scene)
 
 func _finish(scene) -> void:
