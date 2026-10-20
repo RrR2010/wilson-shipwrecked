@@ -30,6 +30,11 @@ const DriveState = preload("res://src/domain/cognition/drive_state.gd")
 const DriveProgressionService = preload("res://src/domain/cognition/drive_progression_service.gd")
 const DriveCandidateDefinition = preload("res://src/domain/cognition/drive_candidate_definition.gd")
 const DriveCandidateSource = preload("res://src/domain/cognition/drive_candidate_source.gd")
+const NeedDrivenInvestigationCandidateSource = preload("res://src/domain/cognition/need_driven_investigation_candidate_source.gd")
+const ObservableAmbientWeatherSource = preload("res://src/application/simulation/observable_ambient_weather_source.gd")
+const ObservablePropertyCueRule = preload("res://src/domain/cognition/observable_property_cue_rule.gd")
+const CompositePassivePerceptionSource = preload("res://src/application/simulation/composite_passive_perception_source.gd")
+const AlreadyProtectedCandidateFilter = preload("res://src/application/simulation/already_protected_candidate_filter.gd")
 const DriveConsequenceDefinition = preload("res://src/domain/cognition/drive_consequence_definition.gd")
 const IntentionCompletionDefinition = preload("res://src/domain/cognition/intention_completion_definition.gd")
 const PerceivedOpportunityDefinition = preload("res://src/domain/cognition/perceived_opportunity_definition.gd")
@@ -425,6 +430,7 @@ func _bootstrap_and_start() -> void:
 	})
 	# Hunger needs a believed food target; never route an unbound food intention.
 	var drive_source = DriveCandidateSource.new(_owners.drives, [energy_definition, stimulation_definition])
+	var need_investigation = NeedDrivenInvestigationCandidateSource.new(_owners.drives, _owners.beliefs, edible_property, interesting_property, seek_stimulation)
 	var grounded_opportunities = DriveBackedBelievedOpportunityCandidateSource.new(
 		_owners.drives,
 		_owners.beliefs,
@@ -577,7 +583,13 @@ func _bootstrap_and_start() -> void:
 	)
 	var project_contribution = ProjectContributionService.new(_owners.projects, [shelter_project_definition], runtime.world_query)
 	var project_source = ProjectCandidateSource.new(_owners.projects, [shelter_project_definition])
+	var ambient_rain_property = DomainId.property(&"ambient_rain")
+	var spatial_query = GodotSpatialQueryAdapter.new(registry)
+	spatial_query.physics_space_state = get_world_3d().direct_space_state
+	spatial_query.visual_observer_height = 1.45
+	spatial_query.visual_target_height = 1.0
 	var weather_cues = PerceivedCueService.new([
+		ObservablePropertyCueRule.new(ambient_rain_property, true, &"dangerous_weather"),
 		ObservedEventCueRule.new(weather_worsened, &"dangerous_weather", &"hearing")
 	])
 	var weather_habit_source = PerceivedHabitCandidateSource.new(
@@ -585,13 +597,10 @@ func _bootstrap_and_start() -> void:
 		_owners.habits,
 		0.5,
 		0.2,
-		DecisionCandidate.Scope.TACTICAL
+		DecisionCandidate.Scope.TACTICAL,
+		AlreadyProtectedCandidateFilter.new(spatial_query, _wilson_ref, _shelter_ref)
 	)
 	var context_trigger_source = PerceivedContextTransitionTriggerSource.new(content, true)
-	var spatial_query = GodotSpatialQueryAdapter.new(registry)
-	spatial_query.physics_space_state = get_world_3d().direct_space_state
-	spatial_query.visual_observer_height = 1.45
-	spatial_query.visual_target_height = 1.0
 	var exposed_food = PassiveSpatialPerceptionSource.new(
 		ExposedWorldCandidates.new([_food_ref, _second_food_ref, _spyglass_ref, _chest_ref]),
 		spatial_query,
@@ -640,10 +649,10 @@ func _bootstrap_and_start() -> void:
 		drive_source,
 		project_contribution,
 		project_source,
-		[grounded_opportunities, spyglass_opportunities, chest_opportunities],
+		[grounded_opportunities, need_investigation, spyglass_opportunities, chest_opportunities],
 		null,
 		null,
-		exposed_food,
+		CompositePassivePerceptionSource.new([exposed_food, ObservableAmbientWeatherSource.new(_owners.environment, _wilson_ref, ambient_rain_property)]),
 		context_trigger_source,
 		null,
 		executor,

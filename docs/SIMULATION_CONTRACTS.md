@@ -129,6 +129,23 @@ Static property/relation/quantity evidence may arise without a fake WorldEvent w
 
 For exposed finite resources, a fresh quantity observation (including zero) requires validated perceptual exposure, metric range, and line of sight. A hidden World quantity mutation is only an invalidation opportunity, never belief evidence or direct decision input. A subsequent accessible observation can reconcile Wilson's former quantity belief and re-enable a previously empty resource after restocking. Closed opaque containment remains concealed until a separately authored interaction justifies access; proximity alone grants no access to the interior.
 
+## Current ambient context and motivation continuity
+
+Ongoing ambient conditions are distinct from transition events. An authored
+perception source may project a currently accessible environmental condition as
+fresh typed evidence during each decision step, including after restore; this is
+a sensing-boundary read, **not** permission for cognition candidate sources to
+read authoritative environment state. A positive ongoing cue may be rederived
+after a meal or other interrupting action without replaying a transition event.
+A newly observed contradictory condition (e.g. clear sky after rain) invalidates
+the previous active cue for that step. Defensive/habit candidates remain subject
+to current satisfaction checks (e.g. already at adequate shelter) before routing.
+
+Critical hunger may increase the value of an *already known* investigable
+affordance if no usable food target is supported by Wilson-owned beliefs.
+It never manufactures food identity, location or a universal navigation target,
+and cannot bypass ordinary candidate competition.
+
 ## PerceptionResult
 
 Bounded Wilson-accessible context for learning/reconsideration, conceptually aggregating:

@@ -13,6 +13,7 @@ var _habit_store
 var _max_contribution: float
 var _minimum_strength: float
 var _scope: int
+var _candidate_eligibility
 
 
 func _init(
@@ -20,7 +21,8 @@ func _init(
 	habit_store,
 	max_contribution: float = 0.35,
 	minimum_strength: float = 0.2,
-	scope: int = DecisionCandidate.Scope.INTENTIONAL
+	scope: int = DecisionCandidate.Scope.INTENTIONAL,
+	candidate_eligibility = null
 ) -> void:
 	assert(cue_service != null and cue_service.has_method("derive"), "PerceivedHabitCandidateSource requires cue service")
 	assert(habit_store != null and habit_store.has_method("entries"), "PerceivedHabitCandidateSource requires HabitStore")
@@ -32,15 +34,19 @@ func _init(
 	_max_contribution = max_contribution
 	_minimum_strength = minimum_strength
 	_scope = scope
+	_candidate_eligibility = candidate_eligibility
 
 
 func generate(perception_result) -> Array:
 	assert(perception_result != null, "PerceivedHabitCandidateSource requires PerceptionResult")
 	var active_cues: Array[StringName] = _cue_service.derive(perception_result)
-	return HabitCandidateSource.new(
+	var candidates: Array = HabitCandidateSource.new(
 		_habit_store,
 		active_cues,
 		_max_contribution,
 		_minimum_strength,
 		_scope
 	).generate()
+	if _candidate_eligibility == null:
+		return candidates
+	return candidates.filter(func(candidate): return _candidate_eligibility.allows(candidate))
