@@ -352,12 +352,18 @@ def fit_orthographic_camera(
     aspect: float,
     margin: float,
 ) -> float:
-    inv = camera.matrix_world.inverted()
+    # Review cameras are unparented and may not have a dependency-graph update
+    # yet. Read the authored transform rather than a stale matrix_world.
+    inv = mathutils.Matrix.LocRotScale(
+        camera.location, camera.rotation_euler.to_quaternion(), camera.scale
+    ).inverted()
     local = [inv @ point for point in bounds_corners(bounds)]
     width = max(p.x for p in local) - min(p.x for p in local)
     height = max(p.y for p in local) - min(p.y for p in local)
-    required_vertical = max(height, width / max(aspect, 1e-6), 0.001)
-    scale = required_vertical * margin
+    # Fix the fit axis explicitly: Blender's AUTO uses the horizontal frame
+    # for landscape output, so treating ortho_scale as vertical clips assets.
+    camera.data.sensor_fit = "HORIZONTAL"
+    scale = max(width, height * max(aspect, 1e-6), 0.001) * margin
     camera.data.ortho_scale = scale
     return scale
 
