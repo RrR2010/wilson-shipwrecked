@@ -124,9 +124,13 @@ class TraceSink:
 	var grounded_explorations := 0
 	var grounded_intention_completions := 0
 	var grounded_project_contributions := 0
+	var need_driven_investigation_offers := 0
 
 	func record(trace) -> void:
 		traces.append(trace)
+		for candidate in trace.stage_results.get(&"decision_candidates", []):
+			if candidate != null and candidate.provenance.get("source", "") == "need_driven_investigation":
+				need_driven_investigation_offers += 1
 		var action_progress = trace.stage_results.get(&"action_progress")
 		if action_progress != null and action_progress.new_outcome != null:
 			var action_value := String(action_progress.new_outcome.action_id.value)
@@ -769,6 +773,7 @@ func observation_snapshot() -> Dictionary:
 		"chest_item_held": false if _tool_world_query == null else not _tool_world_query.find_relations(DomainId.relation_type(&"held_by"), _chest_item_ref, _wilson_ref).is_empty(),
 		"spyglass_held": false if _tool_world_query == null else not _tool_world_query.get_held_items(_wilson_ref, DomainId.relation_type(&"held_by")).is_empty(),
 		"grounded_intention_completions": _trace_sink.grounded_intention_completions,
+		"need_driven_investigation_offers": _trace_sink.need_driven_investigation_offers,
 		"project_contributions": 0 if project == null else project.contribution_count,
 		"project_active": false if project == null else project.is_active(),
 		"grounded_project_contributions": _trace_sink.grounded_project_contributions,
