@@ -9,6 +9,7 @@ const ObservablePropertyCueRule = preload("res://src/domain/cognition/observable
 const ObservableAmbientWeatherSource = preload("res://src/application/simulation/observable_ambient_weather_source.gd")
 const AlreadyProtectedCandidateFilter = preload("res://src/application/simulation/already_protected_candidate_filter.gd")
 const DecisionCandidate = preload("res://src/domain/cognition/decision_candidate.gd")
+const ProjectInstance = preload("res://src/domain/projects/project_instance.gd")
 
 var _failures: Array[String] = []
 
@@ -23,6 +24,18 @@ class DistanceStub:
 	var distance := 5.0
 	func metric_distance(_from, _to) -> float:
 		return distance
+
+
+class ProjectStoreStub:
+	extends RefCounted
+	var lifecycle: int = ProjectInstance.Lifecycle.ACTIVE
+	class Entry:
+		extends RefCounted
+		var lifecycle: int
+		func _init(value: int) -> void:
+			lifecycle = value
+	func get_instance(_project_id):
+		return Entry.new(lifecycle)
 
 
 class HabitStoreStub:
@@ -53,7 +66,8 @@ func _run() -> void:
 	var observer_source = ObservableAmbientWeatherSource.new(weather, observer, rainy)
 	var cues = PerceivedCueService.new([ObservablePropertyCueRule.new(rainy, true, &"dangerous_weather")])
 	var habit = HabitStoreStub.new(cover)
-	var filter = AlreadyProtectedCandidateFilter.new(distance, observer, shelter)
+	var projects = ProjectStoreStub.new()
+	var filter = AlreadyProtectedCandidateFilter.new(distance, observer, shelter, 1.5, projects, &"shelter_test")
 	var source = PerceivedHabitCandidateSource.new(cues, habit, 0.5, 0.2, DecisionCandidate.Scope.TACTICAL, filter)
 
 	_expect(_contains(source.generate(observer_source.collect()), cover), "Ongoing perceived rain activates cover")
@@ -64,6 +78,8 @@ func _run() -> void:
 	_expect(source.generate(observer_source.collect()).is_empty(), "Perceived clear weather invalidates cover")
 	weather.weather = &"rain"
 	distance.distance = 0.3
+	_expect(_contains(source.generate(observer_source.collect()), cover), "Proximity to unfinished shelter does not count as protection")
+	projects.lifecycle = ProjectInstance.Lifecycle.COMPLETED
 	_expect(source.generate(observer_source.collect()).is_empty(), "Already protected Wilson must not seek cover again")
 	distance.distance = 5.0
 	# Restore re-composes the observer and habit source from durable weather.
