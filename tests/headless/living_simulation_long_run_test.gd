@@ -79,6 +79,9 @@ func _run() -> void:
 	var max_stalled_frames := 0
 	var project_completed := false
 	var meals_at_project_completion := -1
+	var food_at_project_completion := -1
+	var investigation_offers_at_completion := -1
+	var investigation_offers_after_completion := false
 	var meals_after_project_completion := false
 	var saw_project_progress := previous_project > 0
 	var final: Dictionary = initial
@@ -162,8 +165,12 @@ func _run() -> void:
 		if project_progress == 100 and not bool(final.get("project_active", true)) and not project_completed:
 			project_completed = true
 			meals_at_project_completion = meals
+			food_at_project_completion = int(final.get("food_quantity", -1))
+			investigation_offers_at_completion = int(final.get("need_driven_investigation_offers", 0))
 		if project_completed and meals > meals_at_project_completion:
 			meals_after_project_completion = true
+		if project_completed and int(final.get("need_driven_investigation_offers", 0)) > investigation_offers_at_completion:
+			investigation_offers_after_completion = true
 
 		previous = final.duplicate(true)
 		if simulation_time >= target_time:
@@ -190,15 +197,22 @@ func _run() -> void:
 		)
 	if int(final.get("project_contributions", 0)) != int(final.get("grounded_project_contributions", 0)):
 		_failures.append("Project owner progress diverged from grounded contribution count")
-	if not meals_after_project_completion:
-		_failures.append(
-			"Simulation did not continue grounded hunger behavior after project completion " +
-			"(project_completed=%s progress=%d meals=%d)" % [
-				str(project_completed),
-				int(final.get("project_contributions", 0)),
-				int(final.get("grounded_consumptions", 0)),
-			]
-		)
+	# Do not demand an impossible twelfth meal after finite food is exhausted.
+	# The post-project hunger opportunity must still exist without a privileged
+	# destination; track its explicit provenance rather than any ordinary explore.
+	if project_completed and not meals_after_project_completion:
+		if food_at_project_completion > 0:
+			_failures.append("Known available food did not lead to a grounded meal after project completion")
+		elif food_at_project_completion == 0 and not investigation_offers_after_completion:
+			_failures.append(
+				"After food depletion and project completion, critical hunger never offered investigation " +
+				"(meals=%d food=%d hunger=%.2f offers=%d)" % [
+					int(final.get("grounded_consumptions", 0)),
+					int(final.get("food_quantity", -1)),
+					float(final.get("hunger", -1.0)),
+					int(final.get("need_driven_investigation_offers", 0)),
+				]
+			)
 
 	var final_meals := int(final.get("grounded_consumptions", 0))
 	var final_food_quantity := int(final.get("food_quantity", -1))
