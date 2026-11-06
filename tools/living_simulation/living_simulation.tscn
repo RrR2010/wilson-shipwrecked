@@ -477,7 +477,7 @@ mesh = SubResource("SmallBoxMesh")
 material_override = SubResource("WoodMaterial")
 
 [node name="CuriositySpot" type="Node3D" parent="."]
-position = Vector3(-6.0, 0, -4.2)
+position = Vector3(-4.4, 0, -1.8)
 
 [node name="Crate" type="MeshInstance3D" parent="CuriositySpot"]
 position = Vector3(0.55, 0.45, 0.35)
