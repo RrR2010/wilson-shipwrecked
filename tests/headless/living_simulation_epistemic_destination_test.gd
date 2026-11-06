@@ -40,6 +40,15 @@ func _run() -> void:
 		await _cleanup(scene)
 		return
 
+	# A known exploration landmark must not visually coincide with unknown food.
+	# Otherwise legitimate landmark navigation appears omniscient in the scene.
+	var curiosity: Node3D = scene.get_node_or_null("CuriositySpot")
+	var far_food: Node3D = scene.get_node_or_null("FoodPatchFar")
+	if curiosity == null or far_food == null:
+		_failures.append("Scene lacks authored exploration landmark or far food")
+	elif curiosity.global_position.distance_to(far_food.global_position) < 3.0:
+		_failures.append("Exploration landmark is too close to unknown far food; intent appears omniscient")
+
 	var initial: Dictionary = scene.observation_snapshot()
 	var initial_far_quantity := int(initial.get("far_food_quantity", -1))
 	if float(initial.get("far_food_edible_confidence", 0.0)) >= 0.0:
@@ -61,6 +70,14 @@ func _run() -> void:
 		var intention := String(snapshot.get("intention_key", ""))
 		var target := String(snapshot.get("intention_target_key", ""))
 		var targeting_far := intention.contains("seek_food") and target.contains("food_patch_002")
+
+		# Generic exploration must not carry the unknown food as its bound target.
+		if target.contains("food_patch_002") and far_conf < 0.5:
+			_failures.append("Pre-discovery intention bound unknown distant food instead of its legitimate exploration anchor")
+			break
+		if intention.contains("seek_stimulation") and far_conf < 0.5 and target != "" and not target.contains("shipwreck_relic_001"):
+			_failures.append("Pre-discovery exploration changed to an unauthored target: %s" % target)
+			break
 
 		if targeting_far and far_conf < 0.5:
 			_failures.append("Wilson targeted distant food before learning edible identity")
