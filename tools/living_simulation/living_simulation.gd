@@ -598,7 +598,7 @@ func _bootstrap_and_start() -> void:
 		0.5,
 		0.2,
 		DecisionCandidate.Scope.TACTICAL,
-		AlreadyProtectedCandidateFilter.new(spatial_query, _wilson_ref, _shelter_ref)
+		AlreadyProtectedCandidateFilter.new(spatial_query, _wilson_ref, _shelter_ref, 1.5, _owners.projects, _shelter_project_id)
 	)
 	var context_trigger_source = PerceivedContextTransitionTriggerSource.new(content, true)
 	var exposed_food = PassiveSpatialPerceptionSource.new(
